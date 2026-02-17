@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="EdTheStatMan.com – Team-by-team betting trends for NFL, NBA, College Football, and College Basketball. ATS records, over/under patterns, and situational edges.">
+  <meta name="keywords" content="betting trends, ATS records, over under, sports betting, NFL, NBA, college football, college basketball, handicapping">
+  <title>Betting Trends – EdTheStatMan.com</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+  <!-- Background Effects -->
+  <div class="bg-grid"></div>
+  <div class="bg-glow bg-glow--cyan"></div>
+  <div class="bg-glow bg-glow--purple"></div>
+
+  <!-- Navigation -->
+  <nav class="nav" role="navigation" aria-label="Main navigation">
+    <div class="nav__inner">
+      <a href="index.html" class="nav__logo">
+        <div class="nav__logo-icon">E</div>
+        <span>EdTheStatMan</span>
+      </a>
+
+      <div class="nav__links">
+        <a href="index.html" class="nav__link">Today's Action</a>
+        <a href="betting-systems.html" class="nav__link">Betting Systems</a>
+        <a href="betting-trends.html" class="nav__link active">Betting Trends</a>
+
+        <a href="blog.html" class="nav__link">Blog</a>
+        <a href="results.html" class="nav__link">Results</a>
+        <a href="contact.html" class="nav__link">Contact</a>
+      </div>
+
+      <div class="nav__actions">
+        <a href="https://t.me/edthestatman" class="nav__cta" target="_blank" rel="noopener">
+          <span class="btn__icon">&#9889;</span> Join Telegram
+        </a>
+      </div>
+
+      <button class="nav__hamburger" aria-label="Toggle menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Mobile Menu -->
+  <div class="mobile-menu">
+    <a href="index.html" class="mobile-menu__link">Today's Action</a>
+    <a href="betting-systems.html" class="mobile-menu__link">Betting Systems</a>
+    <a href="betting-trends.html" class="mobile-menu__link active">Betting Trends</a>
+
+    <a href="blog.html" class="mobile-menu__link">Blog</a>
+    <a href="results.html" class="mobile-menu__link">Results</a>
+    <a href="contact.html" class="mobile-menu__link">Contact</a>
+    <a href="https://t.me/edthestatman" class="mobile-menu__cta" target="_blank" rel="noopener">
+      &#9889; Join Telegram
+    </a>
+  </div>
+
+  <!-- Page Header -->
+  <header class="page-header">
+    <div class="container">
+      <div class="reveal">
+        <span class="section-label">Team-by-Team Analysis</span>
+        <h1 class="page-header__title">Betting Trends</h1>
+        <p class="page-header__subtitle">ATS records, over/under patterns, home/away splits, and situational trends for every team across NFL, College Football, NBA, and College Basketball.</p>
+      </div>
+    </div>
+  </header>
+
+  <!-- Trends Section -->
+  <section class="section">
+    <div class="container">
+      <div class="reveal">
+        <span class="section-label">Explore Trends</span>
+        <h2 class="section-title">Team Betting Trends</h2>
+        <p class="section-subtitle">Filter by sport and search for teams to discover ATS and O/U patterns.</p>
+      </div>
+
+      <div class="sport-tabs reveal" style="margin-top: 32px;">
+        <button class="sport-tab" data-tab="nfl">NFL</button>
+        <button class="sport-tab" data-tab="cfb">College Football</button>
+        <button class="sport-tab active" data-tab="nba">NBA</button>
+        <button class="sport-tab" data-tab="cbb">College Basketball</button>
+      </div>
+
+      <div class="team-search reveal" style="margin-top: 24px;">
+        <input type="search" class="team-search__input" placeholder="Search teams..." aria-label="Search teams">
+      </div>
+
+      <p class="reveal text-muted" style="font-size: 0.9rem; margin-bottom: 24px;">
+        Showing 3 of 15+ trends per team. Unlock all trends with a Pro membership.
+      </p>
+
+      <div class="trends-table-wrap reveal">
+        <table class="trends-table">
+          <thead>
+            <tr>
+              <th>Team</th>
+              <th>ATS Record</th>
+              <th>O/U Record</th>
+              <th>Home ATS</th>
+              <th>Away ATS</th>
+              <th>Trend</th>
+            </tr>
+          </thead>
+          <tbody class="stagger-children">
+            <tr class="trends-row" data-sport="nba" data-team="Boston Celtics">
+              <td><strong>Boston Celtics</strong></td>
+              <td><span class="trend-badge trend-badge--win">30-18</span></td>
+              <td><span class="text-muted">25-23</span></td>
+              <td><span class="trend-badge trend-badge--win">17-7</span></td>
+              <td><span class="text-muted">13-11</span></td>
+              <td>
+                <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
+                  <span class="trend-badge trend-badge--win">8-2 ATS L10</span>
+                  <span class="trend-badge trend-badge--win">5-1 O/U home</span>
+                  <span class="trend-badge trend-badge--win">12-4 as fav</span>
+                  <span class="trend-locked">&#128274; Unlock with Pro</span>
+                </div>
+              </td>
+            </tr>
+            <tr class="trends-row" data-sport="nba" data-team="Milwaukee Bucks">
+              <td><strong>Milwaukee Bucks</strong></td>
+              <td><span class="trend-badge trend-badge--loss">22-26</span></td>
+              <td><span class="trend-badge trend-badge--win">28-20</span></td>
+              <td><span class="trend-badge trend-badge--win">14-10</span></td>
+              <td><span class="trend-badge trend-badge--loss">8-16</span></td>
+              <td>
+                <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
+                  <span class="trend-badge trend-badge--win">12-8 ATS L20</span>
+                  <span class="trend-badge trend-badge--win">6-2 over away</span>
+                  <span class="trend-badge trend-badge--loss">3-7 as dog</span>
+                  <span class="trend-locked">&#128274; Unlock with Pro</span>
+                </div>
+              </td>
+            </tr>
+            <tr class="trends-row" data-sport="nba" data-team="Denver Nuggets">
+              <td><strong>Denver Nuggets</strong></td>
+              <td><span class="trend-badge trend-badge--win">26-22</span></td>
+              <td><span class="text-muted">24-24</span></td>
+              <td><span class="trend-badge trend-badge--win">15-9</span></td>
+              <td><span class="text-muted">11-13</span></td>
+              <td>
+                <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
+                  <span class="trend-badge trend-badge--win">7-3 ATS L10</span>
+                  <span class="trend-badge trend-badge--win">4-2 under home</span>
+                  <span class="trend-badge trend-badge--win">9-5 as fav</span>
+                  <span class="trend-locked">&#128274; Unlock with Pro</span>
+                </div>
+              </td>
+            </tr>
+            <tr class="trends-row" data-sport="nba" data-team="LA Lakers">
+              <td><strong>LA Lakers</strong></td>
+              <td><span class="text-muted">24-24</span></td>
+              <td><span class="trend-badge trend-badge--win">30-18</span></td>
+              <td><span class="trend-badge trend-badge--win">14-10</span></td>
+              <td><span class="text-muted">10-14</span></td>
+              <td>
+                <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
+                  <span class="trend-badge trend-badge--loss">5-5 ATS L10</span>
+                  <span class="trend-badge trend-badge--win">8-4 over total</span>
+                  <span class="trend-badge trend-badge--win">6-2 home dog</span>
+                  <span class="trend-locked">&#128274; Unlock with Pro</span>
+                </div>
+              </td>
+            </tr>
+            <tr class="trends-row" data-sport="nba" data-team="Golden State Warriors">
+              <td><strong>Golden State Warriors</strong></td>
+              <td><span class="trend-badge trend-badge--loss">20-28</span></td>
+              <td><span class="trend-badge trend-badge--loss">22-26</span></td>
+              <td><span class="text-muted">12-12</span></td>
+              <td><span class="trend-badge trend-badge--loss">8-16</span></td>
+              <td>
+                <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
+                  <span class="trend-badge trend-badge--win">6-4 ATS L10</span>
+                  <span class="trend-badge trend-badge--loss">3-7 as dog</span>
+                  <span class="trend-badge trend-badge--loss">4-4 home</span>
+                  <span class="trend-locked">&#128274; Unlock with Pro</span>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="trends-empty reveal" style="display: none; text-align: center; padding: 48px 24px; color: var(--text-muted);">
+        <p style="font-size: 1.1rem;">No teams match your search. Try a different term or sport.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section - Upgrade Membership -->
+  <section class="section" style="background: var(--bg-secondary);">
+    <div class="container">
+      <div class="reveal" style="text-align: center;">
+        <span class="section-label">Unlock Full Access</span>
+        <h2 class="section-title">Get All <span class="text-gradient">15+ Trends</span> Per Team</h2>
+        <p class="section-subtitle" style="margin: 0 auto;">
+          Pro members get unlimited access to every trend: situational splits, rest patterns, conference play, and more.
+        </p>
+      </div>
+
+      <div class="cta-box reveal-scale" style="margin-top: 40px;">
+        <h2 class="cta-box__title">
+          Upgrade to Pro. <span class="text-gradient">Unlock Every Edge.</span>
+        </h2>
+        <p class="cta-box__text">
+          Join Pro to access all betting trends, full betting systems, Telegram alerts, and EdTheStatBot.
+        </p>
+        <div class="cta-box__actions">
+          <a href="https://t.me/edthestatman" class="btn btn--primary btn--lg" target="_blank" rel="noopener">
+            <span class="btn__icon">&#9889;</span> Upgrade to Pro
+          </a>
+          <a href="betting-systems.html" class="btn btn--secondary btn--lg">
+            View Plans
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section class="cta-section">
+    <div class="container">
+      <div class="cta-box reveal-scale">
+        <h2 class="cta-box__title">
+          Get Every Pick. <span class="text-gradient">Never Miss an Edge.</span>
+        </h2>
+        <p class="cta-box__text">
+          Join our Telegram channel for instant notifications on all betting systems, picks, and trend alerts.
+        </p>
+        <div class="cta-box__actions">
+          <a href="https://t.me/edthestatman" class="btn btn--primary btn--lg" target="_blank" rel="noopener">
+            <span class="btn__icon">&#9889;</span> Join Telegram
+          </a>
+          <a href="https://discord.gg/gqPrVBg4Aw" class="btn btn--secondary btn--lg" target="_blank" rel="noopener">
+            <span class="btn__icon">&#128172;</span> Join Discord
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer__grid">
+        <div class="footer__brand">
+          <a href="index.html" class="nav__logo">
+            <div class="nav__logo-icon">E</div>
+            <span>EdTheStatMan</span>
+          </a>
+          <p>Data-driven betting systems and trends. Where handicappers get sharp and bettors win.</p>
+          <div class="social-strip">
+            <a href="https://t.me/edthestatman" class="social-link" target="_blank" rel="noopener" aria-label="Telegram">&#9889;</a>
+            <a href="https://discord.gg/gqPrVBg4Aw" class="social-link" target="_blank" rel="noopener" aria-label="Discord">&#128172;</a>
+          </div>
+        </div>
+
+        <div>
+          <h4 class="footer__heading">Navigation</h4>
+          <div class="footer__links">
+            <a href="index.html" class="footer__link">Today's Action</a>
+            <a href="betting-systems.html" class="footer__link">Betting Systems</a>
+            <a href="betting-trends.html" class="footer__link">Betting Trends</a>
+
+            <a href="blog.html" class="footer__link">Blog</a>
+          </div>
+        </div>
+
+        <div>
+          <h4 class="footer__heading">Resources</h4>
+          <div class="footer__links">
+            <a href="results.html" class="footer__link">Results</a>
+            <a href="contact.html" class="footer__link">Contact</a>
+            <a href="betting-systems.html" class="footer__link">Memberships</a>
+          </div>
+        </div>
+
+        <div>
+          <h4 class="footer__heading">Sportsbooks</h4>
+          <div class="footer__links">
+            <a href="#" class="footer__link">DraftKings</a>
+            <a href="#" class="footer__link">FanDuel</a>
+            <a href="#" class="footer__link">BetMGM</a>
+            <a href="#" class="footer__link">Caesars</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer__bottom">
+        <span class="footer__copyright">&copy; 2026 EdTheStatMan.com. All rights reserved.</span>
+        <div class="footer__legal">
+          <a href="#">Privacy Policy</a>
+          <a href="#">Terms of Service</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Back to Top -->
+  <button class="back-to-top" aria-label="Back to top">&#8593;</button>
+
+  <!-- Scripts -->
+  <script src="js/main.js"></script>
+  <script>
+    // Betting trends page: sport tabs and team search
+    document.addEventListener('DOMContentLoaded', () => {
+      const tabs = document.querySelectorAll('.sport-tab');
+      const rows = document.querySelectorAll('.trends-row');
+      const searchInput = document.querySelector('.team-search__input');
+      const tableWrap = document.querySelector('.trends-table-wrap');
+      const emptyState = document.querySelector('.trends-empty');
+
+      function filterRows() {
+        const activeTab = document.querySelector('.sport-tab.active');
+        const sport = activeTab ? activeTab.dataset.tab : 'nba';
+        const query = (searchInput?.value || '').toLowerCase().trim();
+
+        let visibleCount = 0;
+        rows.forEach(row => {
+          const rowSport = row.dataset.sport;
+          const teamName = (row.dataset.team || '').toLowerCase();
+          const sportMatch = rowSport === sport;
+          const searchMatch = !query || teamName.includes(query);
+
+          if (sportMatch && searchMatch) {
+            row.style.display = '';
+            visibleCount++;
+          } else {
+            row.style.display = 'none';
+          }
+        });
+
+        // Show empty state when no results
+        if (emptyState && tableWrap) {
+          if (visibleCount === 0) {
+            tableWrap.style.display = 'none';
+            emptyState.style.display = 'block';
+          } else {
+            tableWrap.style.display = '';
+            emptyState.style.display = 'none';
+          }
+        }
+      }
+
+      tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+          tabs.forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          filterRows();
+        });
+      });
+
+      if (searchInput) {
+        searchInput.addEventListener('input', filterRows);
+        searchInput.addEventListener('keyup', filterRows);
+      }
+
+      filterRows(); // Initial filter (NBA active)
+    });
+  </script>
+</body>
+</html>

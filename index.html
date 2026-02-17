@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="EdTheStatMan.com – Winning sports betting picks, systems and trends. Where handicappers get sharp and bettors win.">
+  <meta name="keywords" content="sports betting, betting systems, betting trends, handicapping, NFL, NBA, college football, college basketball">
+  <title>EdTheStatMan.com – Winning Sports Betting Picks, Systems &amp; Trends</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+  <!-- Background Effects -->
+  <div class="bg-grid"></div>
+  <div class="bg-glow bg-glow--cyan"></div>
+  <div class="bg-glow bg-glow--purple"></div>
+
+  <!-- Navigation -->
+  <nav class="nav" role="navigation" aria-label="Main navigation">
+    <div class="nav__inner">
+      <a href="index.html" class="nav__logo">
+        <div class="nav__logo-icon">E</div>
+        <span>EdTheStatMan</span>
+      </a>
+
+      <div class="nav__links">
+        <a href="index.html" class="nav__link active">Today's Action</a>
+        <a href="betting-systems.html" class="nav__link">Betting Systems</a>
+        <a href="betting-trends.html" class="nav__link">Betting Trends</a>
+
+        <a href="blog.html" class="nav__link">Blog</a>
+        <a href="results.html" class="nav__link">Results</a>
+        <a href="contact.html" class="nav__link">Contact</a>
+      </div>
+
+      <div class="nav__actions">
+        <a href="https://t.me/edthestatman" class="nav__cta" target="_blank" rel="noopener">
+          <span class="btn__icon">&#9889;</span> Join Telegram
+        </a>
+      </div>
+
+      <button class="nav__hamburger" aria-label="Toggle menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Live Ticker (pinned under nav) -->
+  <div class="ticker">
+    <div class="ticker__track">
+      <div class="ticker__item">
+        <span class="ticker__sport">NFL</span>
+        <span class="ticker__record">Betting Systems: 10-34</span>
+      </div>
+      <div class="ticker__item">
+        <span class="ticker__sport">College Football</span>
+        <span class="ticker__record">Betting Systems: 3-3</span>
+      </div>
+      <div class="ticker__item">
+        <span class="ticker__sport">NBA</span>
+        <span class="ticker__record">Betting Systems: 101-108</span>
+      </div>
+      <div class="ticker__item">
+        <span class="ticker__sport">College Basketball</span>
+        <span class="ticker__record">Betting Systems: 2-0</span>
+        <span class="ticker__trend ticker__trend--up">&#9650; Hot</span>
+      </div>
+      <div class="ticker__item">
+        <span class="ticker__sport">Bankroll</span>
+        <span class="ticker__record">+10.19% in 2026</span>
+        <span class="ticker__trend ticker__trend--up">&#9650;</span>
+      </div>
+      <div class="ticker__item">
+        <span class="ticker__sport">Super Bowl LX</span>
+        <span class="ticker__record">Systems: 19-4 ATS</span>
+        <span class="ticker__trend ticker__trend--up">&#9989; Winner</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mobile Menu -->
+  <div class="mobile-menu">
+    <a href="index.html" class="mobile-menu__link active">Today's Action</a>
+    <a href="betting-systems.html" class="mobile-menu__link">Betting Systems</a>
+    <a href="betting-trends.html" class="mobile-menu__link">Betting Trends</a>
+
+    <a href="blog.html" class="mobile-menu__link">Blog</a>
+    <a href="results.html" class="mobile-menu__link">Results</a>
+    <a href="contact.html" class="mobile-menu__link">Contact</a>
+    <a href="https://t.me/edthestatman" class="mobile-menu__cta" target="_blank" rel="noopener">
+      &#9889; Join Telegram
+    </a>
+  </div>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="hero__bg">
+      <div class="hero__particles"></div>
+      <div class="hero__gradient"></div>
+    </div>
+
+    <div class="container">
+      <div class="hero__content">
+        <div class="hero__badge">
+          <span class="pulse-dot"></span>
+          Systems Active &mdash; Basketball Season
+        </div>
+
+        <h1 class="hero__title">
+          Winning Trends.<br>
+          <span class="accent">Proven Systems.</span>
+        </h1>
+
+        <p class="hero__description">
+          Where handicappers get sharp and bettors win. Data-driven betting systems
+          and trends backed by deep statistical analysis.
+        </p>
+
+        <div class="hero__actions">
+          <a href="betting-systems.html" class="btn btn--primary btn--lg">
+            <span class="btn__icon">&#128202;</span> View Betting Systems
+          </a>
+          <a href="#todays-action" class="btn btn--secondary btn--lg">
+            Today's Action &#8595;
+          </a>
+        </div>
+
+        <div class="hero__stats">
+          <div class="hero__stat">
+            <div class="hero__stat-value" data-count="10.19" data-prefix="+" data-suffix="%" data-decimals="2">0%</div>
+            <div class="hero__stat-label">2026 Bankroll</div>
+          </div>
+          <div class="hero__stat">
+            <div class="hero__stat-value" data-count="19" data-suffix="-4">0</div>
+            <div class="hero__stat-label">Super Bowl LX Systems</div>
+          </div>
+          <div class="hero__stat">
+            <div class="hero__stat-value" data-count="4" data-suffix=" Sports">0</div>
+            <div class="hero__stat-label">Active Leagues</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- Today's Action Section -->
+  <section id="todays-action" class="section todays-action">
+    <div class="container">
+      <div class="reveal">
+        <span class="section-label">Today's Action</span>
+        <h2 class="section-title">Monday February 16th, 2026</h2>
+        <p class="section-subtitle">Stay updated with the latest picks, active systems, and daily analysis.</p>
+      </div>
+
+      <div class="action-card reveal" style="margin-top: 40px;">
+        <div class="action-card__header">
+          <span class="action-card__date">Monday, February 16th 2026 &mdash; Final Update</span>
+          <span class="action-card__status action-card__status--final">
+            <span>&#128308;</span> Final Update
+          </span>
+        </div>
+        <div class="action-card__body">
+          <p class="action-card__message">
+            No Betting Systems are active on Monday. Check back tomorrow for updated systems and picks.
+          </p>
+
+          <div class="action-card__highlight">
+            <p>&#127942; Super Bowl LX Betting Systems were <strong>19-4 ATS</strong>, and <strong>17-1 ATS</strong> in the Super Bowl &mdash; both proved to be winners with the Seahawks.</p>
+          </div>
+
+          <div class="action-card__bankroll">
+            <p>Bankroll stands at <span>+10.19%</span> for 2026.</p>
+          </div>
+
+          <div style="margin-top: 24px; display: flex; gap: 12px; flex-wrap: wrap;">
+            <a href="https://t.me/edthestatman" class="btn btn--primary btn--sm" target="_blank" rel="noopener">
+              &#9889; Get Picks on Telegram
+            </a>
+            <a href="https://discord.gg/gqPrVBg4Aw" class="btn btn--secondary btn--sm" target="_blank" rel="noopener">
+              &#128172; Join Discord
+            </a>
+            <a href="betting-systems.html" class="btn btn--outline btn--sm">
+              &#128202; View All Systems
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Systems Overview -->
+  <section class="section">
+    <div class="container">
+      <div class="reveal">
+        <span class="section-label">Active Systems</span>
+        <h2 class="section-title">2026 Betting Systems</h2>
+        <p class="section-subtitle">Real-time records across all active sports. Basketball systems are posted daily.</p>
+      </div>
+
+      <div class="sys-grid stagger-children">
+
+        <!-- NFL -->
+        <div class="sys-card sys-card--nfl">
+          <div class="sys-card__top">
+            <div class="sys-card__icon">&#127944;</div>
+            <div class="sys-card__status sys-card__status--ended">Season Ended</div>
+          </div>
+          <h3 class="sys-card__name">NFL</h3>
+          <p class="sys-card__label">Betting Systems</p>
+          <div class="sys-card__stats">
+            <div class="sys-card__ring" data-pct="23">
+              <svg viewBox="0 0 80 80">
+                <circle cx="40" cy="40" r="34" class="sys-card__ring-bg"/>
+                <circle cx="40" cy="40" r="34" class="sys-card__ring-fill" style="--pct: 23;"/>
+              </svg>
+              <span class="sys-card__ring-text">23%</span>
+            </div>
+            <div class="sys-card__numbers">
+              <div class="sys-card__record">10-34</div>
+              <div class="sys-card__split">
+                <span class="sys-card__w">10 W</span>
+                <span class="sys-card__l">34 L</span>
+              </div>
+            </div>
+          </div>
+          <div class="sys-card__bar">
+            <div class="sys-card__bar-fill" data-width="23"></div>
+          </div>
+        </div>
+
+        <!-- College Football -->
+        <div class="sys-card sys-card--cfb">
+          <div class="sys-card__top">
+            <div class="sys-card__icon">&#127945;</div>
+            <div class="sys-card__status sys-card__status--ended">Season Ended</div>
+          </div>
+          <h3 class="sys-card__name">College Football</h3>
+          <p class="sys-card__label">Betting Systems</p>
+          <div class="sys-card__stats">
+            <div class="sys-card__ring" data-pct="50">
+              <svg viewBox="0 0 80 80">
+                <circle cx="40" cy="40" r="34" class="sys-card__ring-bg"/>
+                <circle cx="40" cy="40" r="34" class="sys-card__ring-fill" style="--pct: 50;"/>
+              </svg>
+              <span class="sys-card__ring-text">50%</span>
+            </div>
+            <div class="sys-card__numbers">
+              <div class="sys-card__record">3-3</div>
+              <div class="sys-card__split">
+                <span class="sys-card__w">3 W</span>
+                <span class="sys-card__l">3 L</span>
+              </div>
+            </div>
+          </div>
+          <div class="sys-card__bar">
+            <div class="sys-card__bar-fill" data-width="50"></div>
+          </div>
+        </div>
+
+        <!-- NBA -->
+        <div class="sys-card sys-card--nba">
+          <div class="sys-card__top">
+            <div class="sys-card__icon">&#127936;</div>
+            <div class="sys-card__status sys-card__status--active">
+              <span class="pulse-dot"></span> Active
+            </div>
+          </div>
+          <h3 class="sys-card__name">NBA</h3>
+          <p class="sys-card__label">Betting Systems</p>
+          <div class="sys-card__stats">
+            <div class="sys-card__ring" data-pct="48">
+              <svg viewBox="0 0 80 80">
+                <circle cx="40" cy="40" r="34" class="sys-card__ring-bg"/>
+                <circle cx="40" cy="40" r="34" class="sys-card__ring-fill" style="--pct: 48;"/>
+              </svg>
+              <span class="sys-card__ring-text">48%</span>
+            </div>
+            <div class="sys-card__numbers">
+              <div class="sys-card__record">101-108</div>
+              <div class="sys-card__split">
+                <span class="sys-card__w">101 W</span>
+                <span class="sys-card__l">108 L</span>
+              </div>
+            </div>
+          </div>
+          <div class="sys-card__bar">
+            <div class="sys-card__bar-fill" data-width="48"></div>
+          </div>
+        </div>
+
+        <!-- College Basketball -->
+        <div class="sys-card sys-card--cbb">
+          <div class="sys-card__top">
+            <div class="sys-card__icon">&#127936;</div>
+            <div class="sys-card__status sys-card__status--hot">
+              &#128293; Hot Streak
+            </div>
+          </div>
+          <h3 class="sys-card__name">College Basketball</h3>
+          <p class="sys-card__label">Betting Systems</p>
+          <div class="sys-card__stats">
+            <div class="sys-card__ring" data-pct="100">
+              <svg viewBox="0 0 80 80">
+                <circle cx="40" cy="40" r="34" class="sys-card__ring-bg"/>
+                <circle cx="40" cy="40" r="34" class="sys-card__ring-fill" style="--pct: 100;"/>
+              </svg>
+              <span class="sys-card__ring-text">100%</span>
+            </div>
+            <div class="sys-card__numbers">
+              <div class="sys-card__record">2-0</div>
+              <div class="sys-card__split">
+                <span class="sys-card__w">2 W</span>
+                <span class="sys-card__l">0 L</span>
+              </div>
+            </div>
+          </div>
+          <div class="sys-card__bar">
+            <div class="sys-card__bar-fill" data-width="100"></div>
+          </div>
+        </div>
+
+      </div>
+
+      <div style="text-align: center; margin-top: 48px;" class="reveal">
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 16px;">Records based on calendar year 2026</p>
+        <a href="betting-systems.html" class="btn btn--primary">
+          View All Betting Systems &#8594;
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- What We Offer Section -->
+  <section class="section" style="background: var(--bg-secondary);">
+    <div class="container">
+      <div class="reveal" style="text-align: center;">
+        <span class="section-label">What We Offer</span>
+        <h2 class="section-title">Your <span class="text-gradient">Edge</span> Starts Here</h2>
+        <p class="section-subtitle" style="margin: 0 auto;">
+          Data-driven tools and analysis to make smarter sports betting decisions.
+        </p>
+      </div>
+
+      <div class="features-grid stagger-children">
+        <div class="feature-card">
+          <div class="card__icon card__icon--cyan">&#128202;</div>
+          <div class="feature-card__number">01</div>
+          <h3 class="feature-card__title">Betting Systems</h3>
+          <p class="feature-card__text">
+            Proven, data-backed betting systems across NFL, College Football, NBA, and College Basketball. Updated daily with live records.
+          </p>
+          <a href="betting-systems.html" class="feature-card__link">
+            Explore Systems <span>&#8594;</span>
+          </a>
+        </div>
+
+        <div class="feature-card">
+          <div class="card__icon card__icon--purple">&#128200;</div>
+          <div class="feature-card__number">02</div>
+          <h3 class="feature-card__title">Betting Trends</h3>
+          <p class="feature-card__text">
+            Team-by-team trend analysis for every major sport. Discover ATS records, over/under patterns, and situational edges.
+          </p>
+          <a href="betting-trends.html" class="feature-card__link">
+            View Trends <span>&#8594;</span>
+          </a>
+        </div>
+
+        <div class="feature-card">
+          <div class="card__icon card__icon--green">&#129302;</div>
+          <div class="feature-card__number">03</div>
+          <h3 class="feature-card__title">EdTheStatBot</h3>
+          <p class="feature-card__text">
+            Ask questions about our database and get instant statistical insights. AI-powered analysis at your fingertips.
+          </p>
+          <a href="betting-systems.html" class="feature-card__link">
+            Learn More <span>&#8594;</span>
+          </a>
+        </div>
+
+        <div class="feature-card">
+          <div class="card__icon card__icon--gold">&#127942;</div>
+          <div class="feature-card__number">04</div>
+          <h3 class="feature-card__title">Proven Results</h3>
+          <p class="feature-card__text">
+            Full transparency with historical performance records. Track our systems and verify our track record over time.
+          </p>
+          <a href="results.html" class="feature-card__link">
+            See Results <span>&#8594;</span>
+          </a>
+        </div>
+
+        <div class="feature-card">
+          <div class="card__icon card__icon--cyan">&#128240;</div>
+          <div class="feature-card__number">05</div>
+          <h3 class="feature-card__title">Expert Blog</h3>
+          <p class="feature-card__text">
+            In-depth articles explaining key systems, trend breakdowns, and educational content to sharpen your handicapping skills.
+          </p>
+          <a href="blog.html" class="feature-card__link">
+            Read Blog <span>&#8594;</span>
+          </a>
+        </div>
+
+        <div class="feature-card">
+          <div class="card__icon card__icon--purple">&#128276;</div>
+          <div class="feature-card__number">06</div>
+          <h3 class="feature-card__title">Instant Alerts</h3>
+          <p class="feature-card__text">
+            Get notified the moment picks drop via Telegram and Discord. Never miss an edge with real-time betting alerts.
+          </p>
+          <a href="https://t.me/edthestatman" class="feature-card__link" target="_blank" rel="noopener">
+            Join Now <span>&#8594;</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- EdTheStatBot Preview -->
+  <section class="section">
+    <div class="container">
+      <div class="statbot-section reveal-scale">
+        <div>
+          <span class="section-label">Coming Soon</span>
+          <h2 class="section-title">Meet <span class="text-gradient">EdTheStatBot</span></h2>
+          <p style="color: var(--text-secondary); margin-bottom: 24px; line-height: 1.8;">
+            Ask questions. Get answers. Our AI-powered statistical assistant lets you query our entire database for trends, records, and insights across every sport we cover.
+          </p>
+          <ul style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 32px;">
+            <li style="display: flex; align-items: center; gap: 10px; color: var(--text-secondary);">
+              <span style="color: var(--accent-green);">&#10003;</span> Query team ATS records in any situation
+            </li>
+            <li style="display: flex; align-items: center; gap: 10px; color: var(--text-secondary);">
+              <span style="color: var(--accent-green);">&#10003;</span> Find over/under trends by team and venue
+            </li>
+            <li style="display: flex; align-items: center; gap: 10px; color: var(--text-secondary);">
+              <span style="color: var(--accent-green);">&#10003;</span> Discover edges with custom filters
+            </li>
+            <li style="display: flex; align-items: center; gap: 10px; color: var(--text-secondary);">
+              <span style="color: var(--accent-green);">&#10003;</span> Natural language &mdash; no coding required
+            </li>
+          </ul>
+          <a href="betting-systems.html" class="btn btn--primary">Learn More &#8594;</a>
+        </div>
+
+        <div class="statbot-chat">
+          <div class="statbot-chat__header">
+            <div class="statbot-chat__avatar">&#129302;</div>
+            <div>
+              <div class="statbot-chat__name">EdTheStatBot</div>
+              <div class="statbot-chat__status">&#9679; Online</div>
+            </div>
+          </div>
+          <div class="statbot-chat__messages">
+            <div class="chat-message chat-message--user">
+              What's the Lakers ATS record as home underdogs this season?
+            </div>
+            <div class="chat-message chat-message--bot">
+              The Lakers are 7-2 ATS as home underdogs this season, covering by an average of 4.3 points. This represents one of the strongest situational trends in the NBA this year.
+            </div>
+            <div class="chat-message chat-message--user">
+              How about Chiefs games and the over?
+            </div>
+            <div class="chat-message chat-message--bot">
+              The over has hit in 8 of the last 10 Chiefs games, with an average combined score of 51.2 points. Particularly strong in primetime matchups (6-1 over).
+            </div>
+          </div>
+          <div class="statbot-chat__input">
+            <input type="text" placeholder="Ask EdTheStatBot a question...">
+            <button>Ask</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section class="cta-section">
+    <div class="container">
+      <div class="cta-box reveal-scale">
+        <h2 class="cta-box__title">
+          Get Every Pick. <span class="text-gradient">Never Miss an Edge.</span>
+        </h2>
+        <p class="cta-box__text">
+          Join our Telegram channel for instant notifications on all betting systems, picks, and trend alerts.
+        </p>
+        <div class="cta-box__actions">
+          <a href="https://t.me/edthestatman" class="btn btn--primary btn--lg" target="_blank" rel="noopener">
+            <span class="btn__icon">&#9889;</span> Join Telegram
+          </a>
+          <a href="https://discord.gg/gqPrVBg4Aw" class="btn btn--secondary btn--lg" target="_blank" rel="noopener">
+            <span class="btn__icon">&#128172;</span> Join Discord
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer__grid">
+        <div class="footer__brand">
+          <a href="index.html" class="nav__logo">
+            <div class="nav__logo-icon">E</div>
+            <span>EdTheStatMan</span>
+          </a>
+          <p>Data-driven betting systems and trends. Where handicappers get sharp and bettors win.</p>
+          <div class="social-strip">
+            <a href="https://t.me/edthestatman" class="social-link" target="_blank" rel="noopener" aria-label="Telegram">&#9889;</a>
+            <a href="https://discord.gg/gqPrVBg4Aw" class="social-link" target="_blank" rel="noopener" aria-label="Discord">&#128172;</a>
+          </div>
+        </div>
+
+        <div>
+          <h4 class="footer__heading">Navigation</h4>
+          <div class="footer__links">
+            <a href="index.html" class="footer__link">Today's Action</a>
+            <a href="betting-systems.html" class="footer__link">Betting Systems</a>
+            <a href="betting-trends.html" class="footer__link">Betting Trends</a>
+
+            <a href="blog.html" class="footer__link">Blog</a>
+          </div>
+        </div>
+
+        <div>
+          <h4 class="footer__heading">Resources</h4>
+          <div class="footer__links">
+            <a href="results.html" class="footer__link">Results</a>
+            <a href="contact.html" class="footer__link">Contact</a>
+            <a href="betting-systems.html" class="footer__link">Memberships</a>
+          </div>
+        </div>
+
+        <div>
+          <h4 class="footer__heading">Sportsbooks</h4>
+          <div class="footer__links">
+            <a href="#" class="footer__link">DraftKings</a>
+            <a href="#" class="footer__link">FanDuel</a>
+            <a href="#" class="footer__link">BetMGM</a>
+            <a href="#" class="footer__link">Caesars</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer__bottom">
+        <span class="footer__copyright">&copy; 2026 EdTheStatMan.com. All rights reserved.</span>
+        <div class="footer__legal">
+          <a href="#">Privacy Policy</a>
+          <a href="#">Terms of Service</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Back to Top -->
+  <button class="back-to-top" aria-label="Back to top">&#8593;</button>
+
+  <!-- Scripts -->
+  <script src="js/main.js"></script>
+</body>
+</html>
