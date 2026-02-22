@@ -82,9 +82,9 @@ export default function ClientScripts() {
 
     // Smooth anchor scrolling
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-      anchor.addEventListener('click', function (e) {
-        const targetId = this.getAttribute('href')
-        if (targetId === '#') return
+      anchor.addEventListener('click', (e) => {
+        const targetId = (anchor as HTMLAnchorElement).getAttribute('href')
+        if (!targetId || targetId === '#') return
 
         const target = document.querySelector(targetId)
         if (target) {
