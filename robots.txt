@@ -1,0 +1,6 @@
+# EdTheStatMan.com - robots.txt
+User-agent: *
+Allow: /
+
+# Sitemap location (update base URL if you use a custom domain)
+Sitemap: https://edwardjones7.github.io/EdTheStatMan-Website/sitemap.xml
