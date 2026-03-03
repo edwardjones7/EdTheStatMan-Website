@@ -1,53 +1,21 @@
-# EdTheStatMan Website - Next.js
+# EdTheStatMan Website
 
-This is a Next.js conversion of the EdTheStatMan website.
+A Next.js-based website for **EdTheStatMan.com** — a sports betting analytics and insights platform.  
+This project contains the converted Next.js implementation of the site, originally built with static HTML. It features pages for betting systems, trends, results, blog, and contact info for bettors seeking data-driven edges.
 
-## Getting Started
+---
 
-First, install dependencies:
+## 📌 Main Features
 
-```bash
-npm install
-```
+✔ Data-driven sports betting systems and trends across multiple leagues  
+✔ Daily updated results and performance records  
+✔ Blog content for strategy and statistical analysis  
+✔ Contact page & community links  
+✔ Converted from legacy static HTML to modern Next.js React framework  
 
-Then, run the development server:
-
-```bash
-npm run dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-## Building for Production
-
-To build for static export (GitHub Pages):
-
-```bash
-npm run build
-```
-
-This will create an `out` directory with static files ready to deploy.
-
-## Project Structure
-
-- `app/` - Next.js app directory with pages and layout
-- `components/` - React components
-- `hooks/` - Custom React hooks
-- `app/globals.css` - Global styles (migrated from `css/styles.css`)
-- `js/main.js` - Original JavaScript (functionality converted to React hooks/components)
-
-## Pages
-
-- `/` - Homepage
-- `/betting-systems` - Betting Systems page
-- `/betting-trends` - Betting Trends page
-- `/blog` - Blog page
-- `/results` - Results page
-- `/contact` - Contact page
-
-## Next Steps
-
-1. Complete the content for each page (currently has headers/placeholders)
-2. Add any missing animations/interactions
-3. Test all functionality
-4. Deploy to GitHub Pages or your preferred hosting
+The live site (rendered HTML in repo) shows content such as:
+- Winning trends & betting system records  
+- Active season stats  
+- Links to Telegram & Discord communities  
+- Calls to action for analytics tools and pick services  
+- Structured sections for systems, trends, results, and blog content :contentReference[oaicite:1]{index=1}
