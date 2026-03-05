@@ -6,6 +6,7 @@ import Footer from '@/components/Footer'
 import BackgroundEffects from '@/components/BackgroundEffects'
 import BackToTop from '@/components/BackToTop'
 import ClientScripts from '@/components/ClientScripts'
+import { Suspense } from 'react'
 
 const inter = Inter({ 
   subsets: ['latin'],
@@ -80,7 +81,9 @@ export default function RootLayout({
       </head>
       <body>
         <BackgroundEffects />
-        <Navigation />
+        <Suspense>
+          <Navigation />
+        </Suspense>
         {children}
         <Footer />
         <BackToTop />

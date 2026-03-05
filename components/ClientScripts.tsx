@@ -1,8 +1,11 @@
 'use client'
 
 import { useEffect } from 'react'
+import { usePathname } from 'next/navigation'
 
 export default function ClientScripts() {
+  const pathname = usePathname()
+
   useEffect(() => {
     // Scroll animations
     const observerOptions = {
@@ -80,6 +83,25 @@ export default function ClientScripts() {
       requestAnimationFrame(update)
     }
 
+    // Chart bar animations
+    const chartContainer = document.querySelector('.chart-bars')
+    if (chartContainer) {
+      const chartObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            const bars = entry.target.querySelectorAll('.chart-bar')
+            bars.forEach((bar, index) => {
+              setTimeout(() => {
+                (bar as HTMLElement).style.height = (bar as HTMLElement).dataset.height + '%'
+              }, index * 50)
+            })
+            chartObserver.unobserve(entry.target)
+          }
+        })
+      }, { threshold: 0.3 })
+      chartObserver.observe(chartContainer)
+    }
+
     // Smooth anchor scrolling
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
       anchor.addEventListener('click', (e) => {
@@ -101,7 +123,7 @@ export default function ClientScripts() {
       barObserver.disconnect()
       counterObserver.disconnect()
     }
-  }, [])
+  }, [pathname])
 
   return null
 }
