@@ -23,21 +23,27 @@ export async function login(formData: FormData) {
 export async function signup(formData: FormData) {
   const supabase = await createClient()
 
+  const password = formData.get('password') as string
+  if (
+    password.length < 8 ||
+    !/[A-Z]/.test(password) ||
+    !/[a-z]/.test(password) ||
+    !/[^A-Za-z0-9]/.test(password)
+  ) {
+    redirect('/signup?error=auth')
+  }
+
   const { error } = await supabase.auth.signUp({
     email: formData.get('email') as string,
-    password: formData.get('password') as string,
-    options: {
-      data: {
-        full_name: formData.get('full_name') as string,
-      },
-    },
+    password,
   })
 
   if (error) {
     redirect('/signup?error=auth')
   }
 
-  redirect('/login?message=Check your email to confirm your account')
+  const email = formData.get('email') as string
+  redirect(`/signup/verify?email=${encodeURIComponent(email)}`)
 }
 
 export async function loginWithGoogle() {

@@ -3,12 +3,58 @@
 import { useState } from 'react'
 import { signup, loginWithGoogle } from '@/app/actions/auth'
 
+function Eye() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+      <circle cx="12" cy="12" r="3"/>
+    </svg>
+  )
+}
+
+function EyeOff() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+      <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+      <line x1="1" y1="1" x2="23" y2="23"/>
+    </svg>
+  )
+}
+
+const rules = [
+  { key: 'length',    label: 'At least 8 characters',  test: (p: string) => p.length >= 8 },
+  { key: 'upper',     label: 'One uppercase letter',    test: (p: string) => /[A-Z]/.test(p) },
+  { key: 'lower',     label: 'One lowercase letter',    test: (p: string) => /[a-z]/.test(p) },
+  { key: 'symbol',    label: 'One symbol (!@#$…)',      test: (p: string) => /[^A-Za-z0-9]/.test(p) },
+]
+
 export default function SignupForm() {
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
+  const [password, setPassword] = useState('')
+  const [confirm, setConfirm] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [touched, setTouched] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirm, setShowConfirm] = useState(false)
+
+  const allRulesPassed = rules.every(r => r.test(password))
+  const passwordsMatch = password === confirm
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
+    setError(null)
+
+    if (!allRulesPassed) {
+      setError('Password does not meet the requirements.')
+      return
+    }
+    if (!passwordsMatch) {
+      setError('Passwords do not match.')
+      return
+    }
+
     setLoading(true)
     const formData = new FormData(e.currentTarget)
     await signup(formData)
@@ -41,18 +87,6 @@ export default function SignupForm() {
 
       <form onSubmit={handleSubmit}>
         <div className="form-group">
-          <label htmlFor="full_name">Full Name</label>
-          <input
-            id="full_name"
-            name="full_name"
-            type="text"
-            className="form-input"
-            placeholder="Your name"
-            required
-            autoComplete="name"
-          />
-        </div>
-        <div className="form-group">
           <label htmlFor="email">Email</label>
           <input
             id="email"
@@ -66,18 +100,71 @@ export default function SignupForm() {
         </div>
         <div className="form-group">
           <label htmlFor="password">Password</label>
-          <input
-            id="password"
-            name="password"
-            type="password"
-            className="form-input"
-            placeholder="••••••••"
-            required
-            minLength={8}
-            autoComplete="new-password"
-          />
+          <div className="input-reveal">
+            <input
+              id="password"
+              name="password"
+              type={showPassword ? 'text' : 'password'}
+              className="form-input"
+              placeholder="••••••••"
+              required
+              value={password}
+              onChange={e => { setPassword(e.target.value); setTouched(true) }}
+              autoComplete="new-password"
+            />
+            <button type="button" className="input-reveal__btn" onClick={() => setShowPassword(v => !v)} aria-label={showPassword ? 'Hide password' : 'Show password'}>
+              {showPassword ? <EyeOff /> : <Eye />}
+            </button>
+          </div>
+          {touched && (
+            <ul className="password-rules">
+              {rules.map(r => (
+                <li key={r.key} className={`password-rule ${r.test(password) ? 'password-rule--pass' : 'password-rule--fail'}`}>
+                  <span className="password-rule__icon">{r.test(password) ? '✓' : '✗'}</span>
+                  {r.label}
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
-        <button type="submit" className="btn btn--primary" style={{ width: '100%', justifyContent: 'center', marginTop: '8px' }} disabled={loading}>
+        <div className="form-group">
+          <label htmlFor="confirm_password">Confirm Password</label>
+          <div className="input-reveal">
+            <input
+              id="confirm_password"
+              name="confirm_password"
+              type={showConfirm ? 'text' : 'password'}
+              className="form-input"
+              placeholder="••••••••"
+              required
+              value={confirm}
+              onChange={e => setConfirm(e.target.value)}
+              autoComplete="new-password"
+            />
+            <button type="button" className="input-reveal__btn" onClick={() => setShowConfirm(v => !v)} aria-label={showConfirm ? 'Hide password' : 'Show password'}>
+              {showConfirm ? <EyeOff /> : <Eye />}
+            </button>
+          </div>
+          {confirm && !passwordsMatch && (
+            <p className="password-rule password-rule--fail" style={{ listStyle: 'none', margin: '4px 0 0' }}>
+              <span className="password-rule__icon">✗</span> Passwords do not match
+            </p>
+          )}
+          {confirm && passwordsMatch && (
+            <p className="password-rule password-rule--pass" style={{ listStyle: 'none', margin: '4px 0 0' }}>
+              <span className="password-rule__icon">✓</span> Passwords match
+            </p>
+          )}
+        </div>
+
+        {error && <div className="auth-error">{error}</div>}
+
+        <button
+          type="submit"
+          className="btn btn--primary"
+          style={{ width: '100%', justifyContent: 'center', marginTop: '8px' }}
+          disabled={loading}
+        >
           {loading ? 'Creating account...' : 'Create Account'}
         </button>
       </form>

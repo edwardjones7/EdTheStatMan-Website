@@ -10,11 +10,13 @@ export default async function Navigation() {
 
   let profile = null
   if (user) {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('profiles')
       .select('full_name, subscription_tier, is_admin')
       .eq('id', user.id)
       .single()
+
+    if (error) console.error('[Navigation] profile fetch error:', error)
 
     profile = {
       email: user.email!,

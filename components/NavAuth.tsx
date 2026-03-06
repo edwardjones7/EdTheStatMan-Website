@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { logout } from '@/app/actions/auth'
 import type { SubscriptionTier } from '@/lib/supabase/types'
@@ -15,7 +15,31 @@ interface NavAuthProps {
 }
 
 export default function NavAuth({ user }: NavAuthProps) {
-  const [menuOpen, setMenuOpen] = useState(false)
+  const [hovered, setHovered] = useState(false)
+  const [pinned, setPinned] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const isOpen = hovered || pinned
+
+  // Clean up hover timer on unmount
+  useEffect(() => () => { if (closeTimer.current) clearTimeout(closeTimer.current) }, [])
+
+  // Click outside closes the pinned state
+  useEffect(() => {
+    if (!pinned) return
+    function handleOutside(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setPinned(false)
+      }
+    }
+    document.addEventListener('mousedown', handleOutside)
+    return () => document.removeEventListener('mousedown', handleOutside)
+  }, [pinned])
+
+  function close() {
+    setPinned(false)
+    setHovered(false)
+  }
 
   if (!user) {
     return (
@@ -37,33 +61,44 @@ export default function NavAuth({ user }: NavAuthProps) {
   const initial = (user.full_name ?? user.email).charAt(0).toUpperCase()
 
   return (
-    <div className="nav__user" onMouseLeave={() => setMenuOpen(false)}>
+    <div
+      ref={containerRef}
+      className="nav__user"
+      onMouseEnter={() => {
+        if (closeTimer.current) clearTimeout(closeTimer.current)
+        setHovered(true)
+      }}
+      onMouseLeave={() => {
+        closeTimer.current = setTimeout(() => setHovered(false), 200)
+      }}
+    >
       <button
         className="nav__user-btn"
-        onClick={() => setMenuOpen(o => !o)}
+        onClick={() => setPinned(p => !p)}
         aria-label="Account menu"
+        aria-expanded={isOpen}
       >
         <div className="nav__user-avatar">{initial}</div>
         <span className={`nav__user-tier nav__user-tier--${user.is_admin ? 'admin' : user.subscription_tier}`}>{tierLabel}</span>
       </button>
 
-      {menuOpen && (
+      {isOpen && (
         <div className="nav__user-menu">
           <div className="nav__user-menu-header">
             <div className="nav__user-menu-name">{user.full_name ?? user.email}</div>
             <div className="nav__user-menu-email">{user.email}</div>
           </div>
           <div className="nav__user-menu-items">
-            <Link href="/account" className="nav__user-menu-item" onClick={() => setMenuOpen(false)}>
+            <Link href="/account" className="nav__user-menu-item" onClick={close}>
               &#128100; My Account
             </Link>
             {user.subscription_tier === 'free' && (
-              <Link href="/betting-systems#pricing" className="nav__user-menu-item nav__user-menu-item--upgrade" onClick={() => setMenuOpen(false)}>
+              <Link href="/betting-systems#pricing" className="nav__user-menu-item nav__user-menu-item--upgrade" onClick={close}>
                 &#9889; Upgrade Plan
               </Link>
             )}
             {user.is_admin && (
-              <Link href="/admin" className="nav__user-menu-item" onClick={() => setMenuOpen(false)}>
+              <Link href="/admin" className="nav__user-menu-item" onClick={close}>
                 &#9881; Admin Dashboard
               </Link>
             )}
