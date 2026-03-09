@@ -31,12 +31,16 @@ export default async function Blog() {
   if (session) {
     const { data: profile } = await supabase
       .from('profiles')
-      .select('subscription_tier, subscription_status')
+      .select('subscription_tier, subscription_status, is_admin')
       .eq('id', session.user.id)
       .single()
-    userTier = profile?.subscription_tier ?? 'free'
-    if (userTier !== 'free' && profile?.subscription_status !== 'active') {
-      userTier = 'free'
+    if ((profile as any)?.is_admin) {
+      userTier = 'premium'
+    } else {
+      userTier = (profile as any)?.subscription_tier ?? 'free'
+      if (userTier !== 'free' && (profile as any)?.subscription_status !== 'active') {
+        userTier = 'free'
+      }
     }
   }
 

@@ -3409,6 +3409,17 @@ textarea.form-input {
 }
 
 /* --- Sign Out Row --- */
+.account-success-banner {
+  background: rgba(52, 211, 153, 0.1);
+  border: 1px solid rgba(52, 211, 153, 0.3);
+  color: var(--accent-green);
+  padding: 14px 20px;
+  border-radius: var(--radius-md);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  margin-bottom: 24px;
+}
+
 .account-signout {
   display: flex;
   align-items: center;
@@ -3941,6 +3952,266 @@ textarea.form-input {
   .admin-search { min-width: unset; }
   .admin-header { flex-direction: column; align-items: flex-start; }
 }
+
+/* ============================================
+   Admin Inline Form
+   ============================================ */
+
+.admin-inline-form {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.admin-inline-form__title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-heading);
+  margin-bottom: 20px;
+}
+
+.admin-inline-form__error {
+  background: rgba(248, 113, 113, 0.1);
+  border: 1px solid rgba(248, 113, 113, 0.3);
+  color: var(--accent-red);
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  margin-bottom: 16px;
+}
+
+.admin-inline-form__actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border-color);
+}
+
+.admin-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.admin-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.admin-form-field--wide {
+  grid-column: span 2;
+}
+
+.admin-form-field--checks {
+  grid-column: span 2;
+  flex-direction: row;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.admin-form-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.admin-form-input {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 9px 12px;
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  font-family: var(--font-body);
+  transition: border-color var(--transition-fast);
+  width: 100%;
+}
+
+.admin-form-input:focus {
+  outline: none;
+  border-color: var(--accent-cyan);
+}
+
+.admin-form-select {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 9px 12px;
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: border-color var(--transition-fast);
+  width: 100%;
+}
+
+.admin-form-select:focus {
+  outline: none;
+  border-color: var(--accent-cyan);
+}
+
+.admin-form-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.admin-form-check input[type="checkbox"] {
+  accent-color: var(--accent-cyan);
+  width: 15px;
+  height: 15px;
+}
+
+.admin-form-section-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 20px 0 12px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-color);
+}
+
+.admin-form-record {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.admin-form-record__sep {
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.admin-form-tag-row {
+  grid-template-columns: 1fr auto;
+  align-items: end;
+}
+
+.admin-action-btn--danger {
+  color: var(--accent-red);
+}
+
+.admin-action-btn--danger:hover {
+  border-color: rgba(248, 113, 113, 0.3);
+  color: var(--accent-red);
+  background: rgba(248, 113, 113, 0.05);
+}
+
+/* ============================================
+   Content Gate (Betting Systems / Trends)
+   ============================================ */
+
+.content-gate-wrap {
+  position: relative;
+}
+
+.content-gate-blurred {
+  filter: blur(5px);
+  user-select: none;
+  pointer-events: none;
+}
+
+.content-gate-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10, 10, 11, 0.65);
+  backdrop-filter: blur(2px);
+  border-radius: var(--radius-lg);
+  z-index: 10;
+  padding: 24px;
+}
+
+.content-gate-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  padding: 40px 36px;
+  text-align: center;
+  max-width: 420px;
+  width: 100%;
+  box-shadow: var(--shadow-lg);
+}
+
+.content-gate-card__icon {
+  font-size: 2.25rem;
+  margin-bottom: 16px;
+}
+
+.content-gate-card__title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text-heading);
+  margin-bottom: 10px;
+  font-family: var(--font-heading);
+}
+
+.content-gate-card__desc {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+
+.content-gate-card__actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.trends-row--locked td {
+  opacity: 0.45;
+}
+
+.trends-row--locked td:first-child {
+  opacity: 1;
+}
+
+.row-lock-badge {
+  display: inline-block;
+  margin-left: 10px;
+  background: rgba(129, 140, 248, 0.1);
+  border: 1px solid rgba(129, 140, 248, 0.2);
+  color: var(--accent-purple);
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  vertical-align: middle;
+}
+
+.gate-nudge {
+  margin-top: 16px;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+.gate-nudge__link {
+  color: var(--accent-cyan);
+  text-decoration: none;
+  font-weight: 600;
+  transition: opacity var(--transition-fast);
+}
+
+.gate-nudge__link:hover { opacity: 0.8; }
 
 /* ============================================
    Post Editor

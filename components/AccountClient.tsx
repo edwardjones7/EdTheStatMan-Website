@@ -2,8 +2,10 @@
 
 import { useState, useTransition } from 'react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import { logout } from '@/app/actions/auth'
 import { updateProfile, updatePassword } from '@/app/account/actions'
+import ManageBillingButton from '@/components/ManageBillingButton'
 import type { SubscriptionTier, SubscriptionStatus } from '@/lib/supabase/types'
 
 interface AccountClientProps {
@@ -34,6 +36,8 @@ function formatDate(dateStr: string) {
 type Msg = { type: 'success' | 'error'; text: string }
 
 export default function AccountClient({ profile, provider }: AccountClientProps) {
+  const searchParams = useSearchParams()
+  const subscribeSuccess = searchParams.get('success') === '1'
   const [isPending, startTransition] = useTransition()
   const [profileMsg, setProfileMsg] = useState<Msg | null>(null)
   const [passwordMsg, setPasswordMsg] = useState<Msg | null>(null)
@@ -86,6 +90,12 @@ export default function AccountClient({ profile, provider }: AccountClientProps)
     <main className="account-page">
       <div className="account-container">
 
+        {subscribeSuccess && (
+          <div className="account-success-banner">
+            &#10003; You&apos;re now subscribed! Welcome to {profile.subscription_tier === 'premium' ? 'Premium' : 'Basic'}.
+          </div>
+        )}
+
         {/* Hero */}
         <div className="account-hero">
           <div className={avatarClass}>{initial}</div>
@@ -126,9 +136,7 @@ export default function AccountClient({ profile, provider }: AccountClientProps)
                   &#9889; Upgrade Plan
                 </Link>
               ) : (
-                <button className="btn btn--outline btn--sm" disabled title="Billing portal coming soon">
-                  Manage Billing
-                </button>
+                <ManageBillingButton />
               )}
             </div>
           )}

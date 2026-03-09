@@ -3,6 +3,8 @@
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import type { SubscriptionTier, SubscriptionStatus, AccessLevel } from '@/lib/supabase/types'
+import AdminSystemsTab, { type BettingSystem } from './AdminSystemsTab'
+import AdminTrendsTab, { type BettingTrend } from './AdminTrendsTab'
 
 interface User {
   id: string
@@ -33,6 +35,8 @@ interface Post {
 interface Props {
   users: User[]
   posts: Post[]
+  systems: BettingSystem[]
+  trends: BettingTrend[]
 }
 
 const TIER_CLASS: Record<string, string> = {
@@ -64,8 +68,8 @@ function isThisMonth(dateStr: string) {
   return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
 }
 
-export default function AdminDashboard({ users, posts }: Props) {
-  const [tab, setTab] = useState<'users' | 'posts'>('users')
+export default function AdminDashboard({ users, posts, systems, trends }: Props) {
+  const [tab, setTab] = useState<'users' | 'posts' | 'systems' | 'trends'>('users')
   const [userSearch, setUserSearch] = useState('')
   const [tierFilter, setTierFilter] = useState<string>('all')
   const [postSearch, setPostSearch] = useState('')
@@ -224,6 +228,12 @@ export default function AdminDashboard({ users, posts }: Props) {
           </button>
           <button className={`admin-tab ${tab === 'posts' ? 'admin-tab--active' : ''}`} onClick={() => setTab('posts')}>
             Posts <span className="admin-tab__count">{posts.length}</span>
+          </button>
+          <button className={`admin-tab ${tab === 'systems' ? 'admin-tab--active' : ''}`} onClick={() => setTab('systems')}>
+            Systems <span className="admin-tab__count">{systems.length}</span>
+          </button>
+          <button className={`admin-tab ${tab === 'trends' ? 'admin-tab--active' : ''}`} onClick={() => setTab('trends')}>
+            Trends <span className="admin-tab__count">{trends.length}</span>
           </button>
         </div>
 
@@ -394,6 +404,12 @@ export default function AdminDashboard({ users, posts }: Props) {
             )}
           </div>
         )}
+
+        {/* ── Systems Tab ── */}
+        {tab === 'systems' && <AdminSystemsTab systems={systems} />}
+
+        {/* ── Trends Tab ── */}
+        {tab === 'trends' && <AdminTrendsTab trends={trends} />}
 
       </div>
     </main>
