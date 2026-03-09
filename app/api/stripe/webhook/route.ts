@@ -3,8 +3,6 @@ import { stripe, priceTier } from '@/lib/stripe'
 import { createAdminClient } from '@/lib/supabase/admin'
 import type Stripe from 'stripe'
 
-export const config = { api: { bodyParser: false } }
-
 async function syncSubscription(
   admin: ReturnType<typeof createAdminClient>,
   customerId: string,
