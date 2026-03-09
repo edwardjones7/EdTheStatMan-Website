@@ -13,7 +13,7 @@ export default async function AdminPage() {
 
   if (!session) redirect('/login')
 
-  const { data: self } = await supabase
+  const { data: self } = await (supabase as any)
     .from('profiles')
     .select('is_admin')
     .eq('id', session.user.id)

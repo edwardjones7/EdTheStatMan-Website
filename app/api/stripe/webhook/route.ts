@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { stripe, priceTier } from '@/lib/stripe'
+import { getStripe, priceTier } from '@/lib/stripe'
 import { createAdminClient } from '@/lib/supabase/admin'
 import type Stripe from 'stripe'
 
@@ -8,7 +8,7 @@ async function syncSubscription(
   customerId: string,
   updates: Record<string, unknown>
 ) {
-  await admin.from('profiles').update(updates).eq('stripe_customer_id', customerId)
+  await (admin as any).from('profiles').update(updates).eq('stripe_customer_id', customerId)
 }
 
 export async function POST(req: Request) {
@@ -19,7 +19,7 @@ export async function POST(req: Request) {
 
   let event: Stripe.Event
   try {
-    event = stripe.webhooks.constructEvent(body, sig, process.env.STRIPE_WEBHOOK_SECRET!)
+    event = getStripe().webhooks.constructEvent(body, sig, process.env.STRIPE_WEBHOOK_SECRET!)
   } catch {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
   }
@@ -35,12 +35,12 @@ export async function POST(req: Request) {
       const customerId = session.customer as string
       const subscriptionId = session.subscription as string
 
-      const subscription = await stripe.subscriptions.retrieve(subscriptionId)
+      const subscription = await getStripe().subscriptions.retrieve(subscriptionId)
       const priceId = subscription.items.data[0]?.price.id
       const tier = priceTier(priceId) ?? 'basic'
 
       if (userId) {
-        await admin.from('profiles').update({
+        await (admin as any).from('profiles').update({
           stripe_customer_id: customerId,
           stripe_subscription_id: subscriptionId,
           subscription_tier: tier,
@@ -75,7 +75,8 @@ export async function POST(req: Request) {
 
     case 'invoice.payment_failed': {
       const invoice = event.data.object as Stripe.Invoice
-      if (invoice.subscription) {
+      const hasSubscription = (invoice as any).subscription || (invoice as any).parent
+      if (hasSubscription) {
         await syncSubscription(admin, invoice.customer as string, {
           subscription_status: 'past_due',
         })

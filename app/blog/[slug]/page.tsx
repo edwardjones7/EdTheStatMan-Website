@@ -14,7 +14,7 @@ function fmtDate(dateStr: string) {
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
   const admin = createAdminClient()
-  const { data: post } = await admin
+  const { data: post } = await (admin as any)
     .from('posts')
     .select('title, excerpt')
     .eq('slug', params.slug)
@@ -30,7 +30,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 
 export default async function BlogPostPage({ params }: { params: { slug: string } }) {
   const admin = createAdminClient()
-  const { data: post } = await admin
+  const { data: post } = await (admin as any)
     .from('posts')
     .select('id, title, slug, content, excerpt, tag, access_level, published_at')
     .eq('slug', params.slug)
@@ -44,7 +44,7 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
 
   let userTier: string | null = null
   if (session) {
-    const { data: profile } = await supabase
+    const { data: profile } = await (supabase as any)
       .from('profiles')
       .select('subscription_tier, subscription_status, is_admin')
       .eq('id', session.user.id)

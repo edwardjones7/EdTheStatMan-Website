@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { stripe } from '@/lib/stripe'
+import { getStripe } from '@/lib/stripe'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 
@@ -19,7 +19,7 @@ export async function POST(req: Request) {
   }
 
   const admin = createAdminClient()
-  const { data: profile } = await admin
+  const { data: profile } = await (admin as any)
     .from('profiles')
     .select('stripe_customer_id')
     .eq('id', session.user.id)
@@ -28,15 +28,15 @@ export async function POST(req: Request) {
   let customerId = (profile as any)?.stripe_customer_id as string | null
 
   if (!customerId) {
-    const customer = await stripe.customers.create({
+    const customer = await getStripe().customers.create({
       email: session.user.email!,
       metadata: { supabaseUserId: session.user.id },
     })
     customerId = customer.id
-    await admin.from('profiles').update({ stripe_customer_id: customerId }).eq('id', session.user.id)
+    await (admin as any).from('profiles').update({ stripe_customer_id: customerId }).eq('id', session.user.id)
   }
 
-  const checkoutSession = await stripe.checkout.sessions.create({
+  const checkoutSession = await getStripe().checkout.sessions.create({
     customer: customerId,
     line_items: [{ price: priceId, quantity: 1 }],
     mode: 'subscription',

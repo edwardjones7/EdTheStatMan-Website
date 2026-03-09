@@ -16,7 +16,7 @@ export default async function AccountPage() {
     redirect('/login')
   }
 
-  const { data: profile } = await supabase
+  const { data: profile } = await (supabase as any)
     .from('profiles')
     .select('full_name, subscription_tier, subscription_status, is_admin, created_at, stripe_customer_id')
     .eq('id', session.user.id)

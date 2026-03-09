@@ -12,7 +12,7 @@ export default async function NewPostPage() {
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) redirect('/login')
 
-  const { data: profile } = await supabase
+  const { data: profile } = await (supabase as any)
     .from('profiles')
     .select('is_admin')
     .eq('id', session.user.id)

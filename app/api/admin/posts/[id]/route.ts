@@ -6,7 +6,7 @@ async function getAdminSession() {
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) return { supabase, session: null, isAdmin: false }
 
-  const { data: profile } = await supabase
+  const { data: profile } = await (supabase as any)
     .from('profiles')
     .select('is_admin')
     .eq('id', session.user.id)
@@ -24,7 +24,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   const { title, slug, content, excerpt, tag, access_level, published } = body
 
   // Fetch current published state to manage published_at
-  const { data: existing } = await supabase
+  const { data: existing } = await (supabase as any)
     .from('posts')
     .select('published, published_at')
     .eq('id', params.id)
@@ -35,7 +35,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
       ? new Date().toISOString()
       : existing?.published_at ?? null
 
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('posts')
     .update({
       title,
@@ -66,7 +66,7 @@ export async function DELETE(_req: Request, { params }: { params: { id: string }
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   if (!isAdmin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
-  const { error } = await supabase
+  const { error } = await (supabase as any)
     .from('posts')
     .delete()
     .eq('id', params.id)

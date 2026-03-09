@@ -5,8 +5,8 @@ async function assertAdmin() {
   const supabase = await createClient()
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) return { supabase, ok: false as const }
-  const { data: p } = await supabase.from('profiles').select('is_admin').eq('id', session.user.id).single()
-  return { supabase, ok: !!(p as any)?.is_admin as boolean }
+  const { data: p } = await (supabase as any).from('profiles').select('is_admin').eq('id', session.user.id).single()
+  return { supabase: supabase as any, ok: !!(p as any)?.is_admin as boolean }
 }
 
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {

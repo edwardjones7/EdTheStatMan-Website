@@ -87,32 +87,39 @@ export default function NavClient({ user }: NavClientProps) {
       </nav>
 
       <div className={`mobile-menu ${mobileOpen ? 'active' : ''}`}>
-        {NAV_LINKS.map(link => (
-          <Link
-            key={link.href}
-            href={link.href}
-            className={`mobile-menu__link ${isActive(link.href) ? 'active' : ''}`}
-          >
-            {link.label}
-          </Link>
-        ))}
-        <a href="https://t.me/edthestatman" className="mobile-menu__cta" target="_blank" rel="noopener">
-          &#9889; Join Telegram
-        </a>
-        {!user ? (
-          <div style={{ display: 'flex', gap: '12px', padding: '16px 24px 0' }}>
-            <Link href="/login" className="btn btn--outline btn--sm" style={{ flex: 1, justifyContent: 'center' }}>Sign In</Link>
-            <Link href="/signup" className="btn btn--primary btn--sm" style={{ flex: 1, justifyContent: 'center' }}>Get Started</Link>
-          </div>
-        ) : (
-          <div style={{ padding: '16px 24px 0', borderTop: '1px solid var(--border-color)', marginTop: '8px' }}>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginBottom: '8px' }}>{user.email}</p>
-            <Link href="/account" className="mobile-menu__link">&#128100; My Account</Link>
-            {user.is_admin && (
-              <Link href="/admin" className="mobile-menu__link">&#9881; Admin Dashboard</Link>
-            )}
-          </div>
-        )}
+        <div className="mobile-menu__links">
+          {NAV_LINKS.map(link => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className={`mobile-menu__link ${isActive(link.href) ? 'active' : ''}`}
+            >
+              {link.label}
+            </Link>
+          ))}
+        </div>
+
+        <div className="mobile-menu__footer">
+          {!user ? (
+            <div className="mobile-menu__auth">
+              <Link href="/login" className="btn btn--outline btn--sm">Sign In</Link>
+              <Link href="/signup" className="btn btn--primary btn--sm">Get Started</Link>
+            </div>
+          ) : (
+            <div className="mobile-menu__user-info">
+              <div className="mobile-menu__user-email">{user.email}</div>
+              <div className="mobile-menu__user-links">
+                <Link href="/account" className="mobile-menu__user-link">&#128100; My Account</Link>
+                {user.is_admin && (
+                  <Link href="/admin" className="mobile-menu__user-link">&#9881; Admin Dashboard</Link>
+                )}
+              </div>
+            </div>
+          )}
+          <a href="https://t.me/edthestatman" className="mobile-menu__cta" target="_blank" rel="noopener">
+            &#9889; Join Telegram
+          </a>
+        </div>
       </div>
     </>
   )

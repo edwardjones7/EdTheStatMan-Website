@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { login, loginWithGoogle } from '@/app/actions/auth'
+import { login } from '@/app/actions/auth'
+import { createClient } from '@/lib/supabase/client'
 
 export default function LoginForm() {
   const [loading, setLoading] = useState(false)
@@ -17,7 +18,13 @@ export default function LoginForm() {
 
   async function handleGoogle() {
     setGoogleLoading(true)
-    await loginWithGoogle()
+    const supabase = createClient()
+    await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    })
   }
 
   return (

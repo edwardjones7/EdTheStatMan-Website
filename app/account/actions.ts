@@ -10,7 +10,7 @@ export async function updateProfile(formData: FormData): Promise<{ error?: strin
 
   const full_name = (formData.get('full_name') as string).trim() || null
 
-  const { error } = await supabase
+  const { error } = await (supabase as any)
     .from('profiles')
     .update({ full_name, updated_at: new Date().toISOString() })
     .eq('id', session.user.id)

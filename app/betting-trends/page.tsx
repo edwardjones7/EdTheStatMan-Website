@@ -18,13 +18,13 @@ export default async function BettingTrends() {
   const admin = createAdminClient()
   const supabase = await createClient()
   const [{ data: trends }, { data: { session } }] = await Promise.all([
-    admin.from('betting_trends').select('*').order('sport').order('sort_order', { ascending: true }),
+    (admin as any).from('betting_trends').select('*').order('sport').order('sort_order', { ascending: true }),
     supabase.auth.getSession(),
   ])
 
   let userTier: string | null = null
   if (session) {
-    const { data: profile } = await supabase
+    const { data: profile } = await (supabase as any)
       .from('profiles')
       .select('subscription_tier, subscription_status, is_admin')
       .eq('id', session.user.id)

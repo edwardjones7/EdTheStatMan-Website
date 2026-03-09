@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { signup, loginWithGoogle } from '@/app/actions/auth'
+import { signup } from '@/app/actions/auth'
+import { createClient } from '@/lib/supabase/client'
 
 function Eye() {
   return (
@@ -63,7 +64,13 @@ export default function SignupForm() {
 
   async function handleGoogle() {
     setGoogleLoading(true)
-    await loginWithGoogle()
+    const supabase = createClient()
+    await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    })
   }
 
   return (

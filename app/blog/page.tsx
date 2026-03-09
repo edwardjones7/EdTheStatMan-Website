@@ -29,7 +29,7 @@ export default async function Blog() {
 
   let userTier: string | null = null
   if (session) {
-    const { data: profile } = await supabase
+    const { data: profile } = await (supabase as any)
       .from('profiles')
       .select('subscription_tier, subscription_status, is_admin')
       .eq('id', session.user.id)

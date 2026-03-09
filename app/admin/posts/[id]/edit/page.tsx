@@ -12,7 +12,7 @@ export default async function EditPostPage({ params }: { params: { id: string } 
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) redirect('/login')
 
-  const { data: profile } = await supabase
+  const { data: profile } = await (supabase as any)
     .from('profiles')
     .select('is_admin')
     .eq('id', session.user.id)
@@ -20,7 +20,7 @@ export default async function EditPostPage({ params }: { params: { id: string } 
 
   if (!profile?.is_admin) redirect('/')
 
-  const { data: post } = await supabase
+  const { data: post } = await (supabase as any)
     .from('posts')
     .select('id, title, slug, content, excerpt, tag, access_level, published')
     .eq('id', params.id)
