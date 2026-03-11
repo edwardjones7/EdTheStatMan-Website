@@ -1,31 +1,55 @@
 import Link from 'next/link'
 import type { StatBotContent } from '@/lib/site-content'
-import AdminEditOverlay from './AdminEditOverlay'
+import EditableText from './EditableText'
 
 interface Props {
   content: StatBotContent
-  isAdmin?: boolean
+  editMode?: boolean
+  onEdit?: (updates: Partial<StatBotContent>) => void
+  resetKey?: number
 }
 
-export default function StatBotPreview({ content, isAdmin }: Props) {
-  return (
-    <section className="section" style={{ position: 'relative' }}>
-      {isAdmin && <AdminEditOverlay section="statbot_preview" label="StatBot Preview" />}
+export default function StatBotPreview({ content, editMode, onEdit, resetKey = 0 }: Props) {
+  const ed = editMode && onEdit
 
+  function patchBullet(i: number, v: string) {
+    if (!onEdit) return
+    const bullets = content.bullets.map((b, j) => j === i ? v : b)
+    onEdit({ bullets })
+  }
+
+  return (
+    <section className="section">
       <div className="container">
         <div className="statbot-section reveal-scale">
           <div>
-            <span className="section-label">{content.label}</span>
+            <span className="section-label">
+              {ed
+                ? <EditableText tag="span" value={content.label} onChange={v => onEdit({ label: v })} resetKey={resetKey} />
+                : content.label}
+            </span>
             <h2 className="section-title">
-              {content.title} <span className="text-gradient">{content.titleAccent}</span>
+              {ed
+                ? <EditableText tag="span" value={content.title} onChange={v => onEdit({ title: v })} resetKey={resetKey} />
+                : content.title}{' '}
+              <span className="text-gradient">
+                {ed
+                  ? <EditableText tag="span" value={content.titleAccent} onChange={v => onEdit({ titleAccent: v })} resetKey={resetKey} />
+                  : content.titleAccent}
+              </span>
             </h2>
             <p style={{ color: 'var(--text-secondary)', marginBottom: '24px', lineHeight: '1.8' }}>
-              {content.description}
+              {ed
+                ? <EditableText tag="span" value={content.description} onChange={v => onEdit({ description: v })} resetKey={resetKey} style={{ display: 'block' }} />
+                : content.description}
             </p>
             <ul style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '32px' }}>
               {content.bullets.map((bullet, i) => (
                 <li key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--text-secondary)' }}>
-                  <span style={{ color: 'var(--accent-green)' }}>&#10003;</span> {bullet}
+                  <span style={{ color: 'var(--accent-green)' }}>&#10003;</span>
+                  {ed
+                    ? <EditableText tag="span" value={bullet} onChange={v => patchBullet(i, v)} resetKey={resetKey} />
+                    : bullet}
                 </li>
               ))}
             </ul>

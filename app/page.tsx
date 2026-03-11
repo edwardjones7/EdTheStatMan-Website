@@ -9,6 +9,7 @@ import SystemsOverview from '@/components/SystemsOverview'
 import Features from '@/components/Features'
 import StatBotPreview from '@/components/StatBotPreview'
 import CTASection from '@/components/CTASection'
+import HomeEditor from '@/components/HomeEditor'
 
 export const metadata: Metadata = {
   title: 'EdTheStatMan.com – Winning Sports Betting Picks, Systems & Trends',
@@ -27,7 +28,6 @@ export const metadata: Metadata = {
 export default async function Home() {
   const supabase = await createClient()
 
-  // Fetch site content (gracefully falls back to defaults if table missing)
   const { data: contentRows } = await (supabase as any)
     .from('site_content')
     .select('key, value')
@@ -46,7 +46,6 @@ export default async function Home() {
     systems_overview: { ...SITE_CONTENT_DEFAULTS.systems_overview, ...(raw.systems_overview as object ?? {}) },
   }
 
-  // Check if current user is admin
   let isAdmin = false
   const { data: { session } } = await supabase.auth.getSession()
   if (session) {
@@ -61,12 +60,20 @@ export default async function Home() {
   return (
     <>
       <LiveTicker />
-      <Hero content={content.hero} isAdmin={isAdmin} />
-      <ActionCard content={content.action_card} isAdmin={isAdmin} />
-      <SystemsOverview content={content.systems_overview} isAdmin={isAdmin} />
-      <Features content={content.features} isAdmin={isAdmin} />
-      <StatBotPreview content={content.statbot_preview} isAdmin={isAdmin} />
-      <CTASection content={content.cta_section} isAdmin={isAdmin} />
+      {isAdmin ? (
+        // Admin gets the interactive editor with a single pencil FAB
+        <HomeEditor content={content} />
+      ) : (
+        // Everyone else gets static server-rendered sections
+        <>
+          <Hero           content={content.hero} />
+          <ActionCard     content={content.action_card} />
+          <SystemsOverview content={content.systems_overview} />
+          <Features       content={content.features} />
+          <StatBotPreview content={content.statbot_preview} />
+          <CTASection     content={content.cta_section} />
+        </>
+      )}
     </>
   )
 }

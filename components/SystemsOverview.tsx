@@ -1,22 +1,36 @@
 import Link from 'next/link'
 import type { SystemsOverviewContent } from '@/lib/site-content'
-import AdminEditOverlay from './AdminEditOverlay'
+import EditableText from './EditableText'
 
 interface Props {
   content: SystemsOverviewContent
-  isAdmin?: boolean
+  editMode?: boolean
+  onEdit?: (updates: Partial<SystemsOverviewContent>) => void
+  resetKey?: number
 }
 
-export default function SystemsOverview({ content, isAdmin }: Props) {
-  return (
-    <section className="section" style={{ position: 'relative' }}>
-      {isAdmin && <AdminEditOverlay section="systems_overview" label="Systems Overview" />}
+export default function SystemsOverview({ content, editMode, onEdit, resetKey = 0 }: Props) {
+  const ed = editMode && onEdit
 
+  return (
+    <section className="section">
       <div className="container">
         <div className="reveal">
-          <span className="section-label">{content.label}</span>
-          <h2 className="section-title">{content.title}</h2>
-          <p className="section-subtitle">{content.subtitle}</p>
+          <span className="section-label">
+            {ed
+              ? <EditableText tag="span" value={content.label} onChange={v => onEdit({ label: v })} resetKey={resetKey} />
+              : content.label}
+          </span>
+          <h2 className="section-title">
+            {ed
+              ? <EditableText tag="span" value={content.title} onChange={v => onEdit({ title: v })} resetKey={resetKey} style={{ display: 'block' }} />
+              : content.title}
+          </h2>
+          <p className="section-subtitle">
+            {ed
+              ? <EditableText tag="span" value={content.subtitle} onChange={v => onEdit({ subtitle: v })} resetKey={resetKey} style={{ display: 'block' }} />
+              : content.subtitle}
+          </p>
         </div>
 
         <div className="sys-grid stagger-children">
@@ -142,7 +156,11 @@ export default function SystemsOverview({ content, isAdmin }: Props) {
         </div>
 
         <div style={{ textAlign: 'center', marginTop: '48px' }} className="reveal">
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '16px' }}>{content.footerNote}</p>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '16px' }}>
+            {ed
+              ? <EditableText tag="span" value={content.footerNote} onChange={v => onEdit({ footerNote: v })} resetKey={resetKey} />
+              : content.footerNote}
+          </p>
           <Link href="/betting-systems" className="btn btn--primary">
             View All Betting Systems &#8594;
           </Link>

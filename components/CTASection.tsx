@@ -1,23 +1,36 @@
 import type { CTAContent } from '@/lib/site-content'
 import { DEFAULT_CTA } from '@/lib/site-content'
-import AdminEditOverlay from './AdminEditOverlay'
+import EditableText from './EditableText'
 
 interface Props {
   content?: CTAContent
-  isAdmin?: boolean
+  editMode?: boolean
+  onEdit?: (updates: Partial<CTAContent>) => void
+  resetKey?: number
 }
 
-export default function CTASection({ content = DEFAULT_CTA, isAdmin }: Props) {
-  return (
-    <section className="cta-section" style={{ position: 'relative' }}>
-      {isAdmin && <AdminEditOverlay section="cta_section" label="CTA Banner" />}
+export default function CTASection({ content = DEFAULT_CTA, editMode, onEdit, resetKey = 0 }: Props) {
+  const ed = editMode && onEdit
 
+  return (
+    <section className="cta-section">
       <div className="container">
         <div className="cta-box reveal-scale">
           <h2 className="cta-box__title">
-            {content.title} <span className="text-gradient">{content.titleAccent}</span>
+            {ed
+              ? <EditableText tag="span" value={content.title} onChange={v => onEdit({ title: v })} resetKey={resetKey} />
+              : content.title}{' '}
+            <span className="text-gradient">
+              {ed
+                ? <EditableText tag="span" value={content.titleAccent} onChange={v => onEdit({ titleAccent: v })} resetKey={resetKey} />
+                : content.titleAccent}
+            </span>
           </h2>
-          <p className="cta-box__text">{content.text}</p>
+          <p className="cta-box__text">
+            {ed
+              ? <EditableText tag="span" value={content.text} onChange={v => onEdit({ text: v })} resetKey={resetKey} style={{ display: 'block' }} />
+              : content.text}
+          </p>
           <div className="cta-box__actions">
             <a href="https://t.me/edthestatman" className="btn btn--primary btn--lg" target="_blank" rel="noopener">
               <span className="btn__icon">&#9889;</span> Join Telegram

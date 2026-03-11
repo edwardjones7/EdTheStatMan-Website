@@ -3,22 +3,22 @@
 import Link from 'next/link'
 import { useEffect, useRef } from 'react'
 import type { HeroContent } from '@/lib/site-content'
-import AdminEditOverlay from './AdminEditOverlay'
+import EditableText from './EditableText'
 
 interface Props {
   content: HeroContent
-  isAdmin?: boolean
+  editMode?: boolean
+  onEdit?: (updates: Partial<HeroContent>) => void
+  resetKey?: number
 }
 
-export default function Hero({ content, isAdmin }: Props) {
+export default function Hero({ content, editMode, onEdit, resetKey = 0 }: Props) {
   const particlesRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (!particlesRef.current) return
-
     const particleCount = 30
     const colors = ['#34d399', '#6ee7b7', '#818cf8', '#06b6d4']
-
     for (let i = 0; i < particleCount; i++) {
       const particle = document.createElement('div')
       particle.className = 'hero__particle'
@@ -33,10 +33,13 @@ export default function Hero({ content, isAdmin }: Props) {
     }
   }, [])
 
-  return (
-    <section className="hero" style={{ position: 'relative' }}>
-      {isAdmin && <AdminEditOverlay section="hero" label="Hero" />}
+  const e = (field: keyof HeroContent) =>
+    editMode && onEdit
+      ? { as: EditableText, value: content[field] as string, onChange: (v: string) => onEdit({ [field]: v }), resetKey }
+      : null
 
+  return (
+    <section className="hero">
       <div className="hero__bg">
         <div className="hero__particles" ref={particlesRef}></div>
         <div className="hero__gradient"></div>
@@ -46,15 +49,28 @@ export default function Hero({ content, isAdmin }: Props) {
         <div className="hero__content">
           <div className="hero__badge">
             <span className="pulse-dot"></span>
-            {content.badge}
+            {editMode && onEdit
+              ? <EditableText tag="span" value={content.badge} onChange={v => onEdit({ badge: v })} resetKey={resetKey} />
+              : content.badge}
           </div>
 
           <h1 className="hero__title">
-            {content.title}<br />
-            <span className="accent">{content.titleAccent}</span>
+            {editMode && onEdit
+              ? <EditableText tag="span" value={content.title} onChange={v => onEdit({ title: v })} resetKey={resetKey} />
+              : content.title}
+            <br />
+            <span className="accent">
+              {editMode && onEdit
+                ? <EditableText tag="span" value={content.titleAccent} onChange={v => onEdit({ titleAccent: v })} resetKey={resetKey} />
+                : content.titleAccent}
+            </span>
           </h1>
 
-          <p className="hero__description">{content.description}</p>
+          <p className="hero__description">
+            {editMode && onEdit
+              ? <EditableText tag="span" value={content.description} onChange={v => onEdit({ description: v })} resetKey={resetKey} style={{ display: 'block' }} />
+              : content.description}
+          </p>
 
           <div className="hero__actions">
             <Link href="/betting-systems" className="btn btn--primary btn--lg">
@@ -76,7 +92,11 @@ export default function Hero({ content, isAdmin }: Props) {
               >
                 0{content.stat1Suffix}
               </div>
-              <div className="hero__stat-label">{content.stat1Label}</div>
+              <div className="hero__stat-label">
+                {editMode && onEdit
+                  ? <EditableText tag="span" value={content.stat1Label} onChange={v => onEdit({ stat1Label: v })} resetKey={resetKey} />
+                  : content.stat1Label}
+              </div>
             </div>
             <div className="hero__stat">
               <div
@@ -86,7 +106,11 @@ export default function Hero({ content, isAdmin }: Props) {
               >
                 0
               </div>
-              <div className="hero__stat-label">{content.stat2Label}</div>
+              <div className="hero__stat-label">
+                {editMode && onEdit
+                  ? <EditableText tag="span" value={content.stat2Label} onChange={v => onEdit({ stat2Label: v })} resetKey={resetKey} />
+                  : content.stat2Label}
+              </div>
             </div>
             <div className="hero__stat">
               <div
@@ -96,7 +120,11 @@ export default function Hero({ content, isAdmin }: Props) {
               >
                 0
               </div>
-              <div className="hero__stat-label">{content.stat3Label}</div>
+              <div className="hero__stat-label">
+                {editMode && onEdit
+                  ? <EditableText tag="span" value={content.stat3Label} onChange={v => onEdit({ stat3Label: v })} resetKey={resetKey} />
+                  : content.stat3Label}
+              </div>
             </div>
           </div>
         </div>
