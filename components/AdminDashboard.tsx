@@ -136,9 +136,6 @@ export default function AdminDashboard({ users, posts, systems, trends, content,
             <h1 className="admin-header__title">Admin Dashboard</h1>
             <p className="admin-header__sub">Full site overview — users, content, and metrics.</p>
           </div>
-          <Link href="/admin/posts/new" className="btn btn--primary btn--sm">
-            + New Post
-          </Link>
         </div>
 
         {/* ── KPI Row ── */}
@@ -357,6 +354,9 @@ export default function AdminDashboard({ users, posts, systems, trends, content,
                   </button>
                 ))}
               </div>
+              <Link href="/admin/posts/new" className="btn btn--primary btn--sm">
+                + New Post
+              </Link>
             </div>
             <p className="admin-count">Showing {filteredPosts.length} of {posts.length} posts</p>
             <div className="admin-table-wrap">
