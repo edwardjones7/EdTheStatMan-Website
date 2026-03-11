@@ -83,43 +83,82 @@ export default function Hero({ content, editMode, onEdit, resetKey = 0 }: Props)
 
           <div className="hero__stats">
             <div className="hero__stat">
-              <div
-                className="hero__stat-value"
-                data-count={content.stat1Count}
-                data-prefix={content.stat1Prefix || undefined}
-                data-suffix={content.stat1Suffix || undefined}
-                data-decimals={content.stat1Decimals || undefined}
-              >
-                0{content.stat1Suffix}
-              </div>
+              {editMode && onEdit ? (
+                <StatInput
+                  value={`${content.stat1Prefix}${content.stat1Count}${content.stat1Suffix}`}
+                  onChange={raw => {
+                    // Parse: leading non-digit chars = prefix, trailing non-digit/dot chars = suffix, middle = count
+                    const match = raw.match(/^([^0-9]*)([0-9.]+)(.*)$/)
+                    if (match) onEdit({ stat1Prefix: match[1], stat1Count: match[2], stat1Suffix: match[3] })
+                    else onEdit({ stat1Count: raw, stat1Prefix: '', stat1Suffix: '' })
+                  }}
+                  resetKey={resetKey}
+                />
+              ) : (
+                <div
+                  className="hero__stat-value"
+                  data-count={content.stat1Count}
+                  data-prefix={content.stat1Prefix || undefined}
+                  data-suffix={content.stat1Suffix || undefined}
+                  data-decimals={content.stat1Decimals || undefined}
+                >
+                  0{content.stat1Suffix}
+                </div>
+              )}
               <div className="hero__stat-label">
                 {editMode && onEdit
                   ? <EditableText tag="span" value={content.stat1Label} onChange={v => onEdit({ stat1Label: v })} resetKey={resetKey} />
                   : content.stat1Label}
               </div>
             </div>
+
             <div className="hero__stat">
-              <div
-                className="hero__stat-value"
-                data-count={content.stat2Count}
-                data-suffix={content.stat2Suffix || undefined}
-              >
-                0
-              </div>
+              {editMode && onEdit ? (
+                <StatInput
+                  value={`${content.stat2Count}${content.stat2Suffix}`}
+                  onChange={raw => {
+                    const match = raw.match(/^([0-9.]+)(.*)$/)
+                    if (match) onEdit({ stat2Count: match[1], stat2Suffix: match[2] })
+                    else onEdit({ stat2Count: raw, stat2Suffix: '' })
+                  }}
+                  resetKey={resetKey}
+                />
+              ) : (
+                <div
+                  className="hero__stat-value"
+                  data-count={content.stat2Count}
+                  data-suffix={content.stat2Suffix || undefined}
+                >
+                  0
+                </div>
+              )}
               <div className="hero__stat-label">
                 {editMode && onEdit
                   ? <EditableText tag="span" value={content.stat2Label} onChange={v => onEdit({ stat2Label: v })} resetKey={resetKey} />
                   : content.stat2Label}
               </div>
             </div>
+
             <div className="hero__stat">
-              <div
-                className="hero__stat-value"
-                data-count={content.stat3Count}
-                data-suffix={content.stat3Suffix || undefined}
-              >
-                0
-              </div>
+              {editMode && onEdit ? (
+                <StatInput
+                  value={`${content.stat3Count}${content.stat3Suffix}`}
+                  onChange={raw => {
+                    const match = raw.match(/^([0-9.]+)(.*)$/)
+                    if (match) onEdit({ stat3Count: match[1], stat3Suffix: match[2] })
+                    else onEdit({ stat3Count: raw, stat3Suffix: '' })
+                  }}
+                  resetKey={resetKey}
+                />
+              ) : (
+                <div
+                  className="hero__stat-value"
+                  data-count={content.stat3Count}
+                  data-suffix={content.stat3Suffix || undefined}
+                >
+                  0
+                </div>
+              )}
               <div className="hero__stat-label">
                 {editMode && onEdit
                   ? <EditableText tag="span" value={content.stat3Label} onChange={v => onEdit({ stat3Label: v })} resetKey={resetKey} />
@@ -130,5 +169,31 @@ export default function Hero({ content, editMode, onEdit, resetKey = 0 }: Props)
         </div>
       </div>
     </section>
+  )
+}
+
+// Styled input that matches .hero__stat-value appearance
+function StatInput({ value, onChange, resetKey }: { value: string; onChange: (v: string) => void; resetKey: number }) {
+  return (
+    <input
+      key={resetKey}
+      type="text"
+      defaultValue={value}
+      onBlur={e => onChange(e.target.value)}
+      style={{
+        background: 'transparent',
+        border: 'none',
+        borderBottom: '1px dashed rgba(52,211,153,0.55)',
+        outline: 'none',
+        color: 'var(--text-primary)',
+        fontSize: 'clamp(1.4rem, 3vw, 2rem)',
+        fontWeight: 800,
+        fontFamily: 'var(--font-mono, monospace)',
+        width: '100%',
+        textAlign: 'center',
+        cursor: 'text',
+        padding: '2px 0',
+      }}
+    />
   )
 }
