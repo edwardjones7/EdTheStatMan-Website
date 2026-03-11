@@ -74,11 +74,21 @@ export interface StatBotContent {
   bullets: string[]
 }
 
+export interface SystemsOverviewCard {
+  sport: 'nfl' | 'cfb' | 'nba' | 'cbb'
+  name: string
+  statusLabel: string
+  statusType: 'ended' | 'active' | 'hot'
+  wins: number
+  losses: number
+}
+
 export interface SystemsOverviewContent {
   label: string
   title: string
   subtitle: string
   footerNote: string
+  cards: SystemsOverviewCard[]
 }
 
 export interface AllSiteContent {
@@ -208,6 +218,12 @@ export const DEFAULT_SYSTEMS_OVERVIEW: SystemsOverviewContent = {
   title: '2026 Betting Systems',
   subtitle: 'Real-time records across all active sports. Basketball systems are posted daily.',
   footerNote: 'Records based on calendar year 2026',
+  cards: [
+    { sport: 'nfl',  name: 'NFL',                statusLabel: 'Season Ended', statusType: 'ended',  wins: 10,  losses: 34 },
+    { sport: 'cfb',  name: 'College Football',    statusLabel: 'Season Ended', statusType: 'ended',  wins: 3,   losses: 3  },
+    { sport: 'nba',  name: 'NBA',                 statusLabel: 'Active',       statusType: 'active', wins: 101, losses: 108 },
+    { sport: 'cbb',  name: 'College Basketball',  statusLabel: 'Hot Streak',   statusType: 'hot',    wins: 2,   losses: 0  },
+  ],
 }
 
 export const SITE_CONTENT_DEFAULTS: AllSiteContent = {
