@@ -1,29 +1,33 @@
 import Link from 'next/link'
+import type { StatBotContent } from '@/lib/site-content'
+import AdminEditOverlay from './AdminEditOverlay'
 
-export default function StatBotPreview() {
+interface Props {
+  content: StatBotContent
+  isAdmin?: boolean
+}
+
+export default function StatBotPreview({ content, isAdmin }: Props) {
   return (
-    <section className="section">
+    <section className="section" style={{ position: 'relative' }}>
+      {isAdmin && <AdminEditOverlay section="statbot_preview" label="StatBot Preview" />}
+
       <div className="container">
         <div className="statbot-section reveal-scale">
           <div>
-            <span className="section-label">Coming Soon</span>
-            <h2 className="section-title">Meet <span className="text-gradient">EdTheStatBot</span></h2>
+            <span className="section-label">{content.label}</span>
+            <h2 className="section-title">
+              {content.title} <span className="text-gradient">{content.titleAccent}</span>
+            </h2>
             <p style={{ color: 'var(--text-secondary)', marginBottom: '24px', lineHeight: '1.8' }}>
-              Ask questions. Get answers. Our AI-powered statistical assistant lets you query our entire database for trends, records, and insights across every sport we cover.
+              {content.description}
             </p>
             <ul style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '32px' }}>
-              <li style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--text-secondary)' }}>
-                <span style={{ color: 'var(--accent-green)' }}>&#10003;</span> Query team ATS records in any situation
-              </li>
-              <li style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--text-secondary)' }}>
-                <span style={{ color: 'var(--accent-green)' }}>&#10003;</span> Find over/under trends by team and venue
-              </li>
-              <li style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--text-secondary)' }}>
-                <span style={{ color: 'var(--accent-green)' }}>&#10003;</span> Discover edges with custom filters
-              </li>
-              <li style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--text-secondary)' }}>
-                <span style={{ color: 'var(--accent-green)' }}>&#10003;</span> Natural language &mdash; no coding required
-              </li>
+              {content.bullets.map((bullet, i) => (
+                <li key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--text-secondary)' }}>
+                  <span style={{ color: 'var(--accent-green)' }}>&#10003;</span> {bullet}
+                </li>
+              ))}
             </ul>
             <Link href="/betting-systems" className="btn btn--primary">Learn More &#8594;</Link>
           </div>

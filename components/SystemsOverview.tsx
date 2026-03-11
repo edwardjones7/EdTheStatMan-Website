@@ -1,13 +1,22 @@
 import Link from 'next/link'
+import type { SystemsOverviewContent } from '@/lib/site-content'
+import AdminEditOverlay from './AdminEditOverlay'
 
-export default function SystemsOverview() {
+interface Props {
+  content: SystemsOverviewContent
+  isAdmin?: boolean
+}
+
+export default function SystemsOverview({ content, isAdmin }: Props) {
   return (
-    <section className="section">
+    <section className="section" style={{ position: 'relative' }}>
+      {isAdmin && <AdminEditOverlay section="systems_overview" label="Systems Overview" />}
+
       <div className="container">
         <div className="reveal">
-          <span className="section-label">Active Systems</span>
-          <h2 className="section-title">2026 Betting Systems</h2>
-          <p className="section-subtitle">Real-time records across all active sports. Basketball systems are posted daily.</p>
+          <span className="section-label">{content.label}</span>
+          <h2 className="section-title">{content.title}</h2>
+          <p className="section-subtitle">{content.subtitle}</p>
         </div>
 
         <div className="sys-grid stagger-children">
@@ -133,7 +142,7 @@ export default function SystemsOverview() {
         </div>
 
         <div style={{ textAlign: 'center', marginTop: '48px' }} className="reveal">
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '16px' }}>Records based on calendar year 2026</p>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '16px' }}>{content.footerNote}</p>
           <Link href="/betting-systems" className="btn btn--primary">
             View All Betting Systems &#8594;
           </Link>

@@ -2,8 +2,15 @@
 
 import Link from 'next/link'
 import { useEffect, useRef } from 'react'
+import type { HeroContent } from '@/lib/site-content'
+import AdminEditOverlay from './AdminEditOverlay'
 
-export default function Hero() {
+interface Props {
+  content: HeroContent
+  isAdmin?: boolean
+}
+
+export default function Hero({ content, isAdmin }: Props) {
   const particlesRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -27,7 +34,9 @@ export default function Hero() {
   }, [])
 
   return (
-    <section className="hero">
+    <section className="hero" style={{ position: 'relative' }}>
+      {isAdmin && <AdminEditOverlay section="hero" label="Hero" />}
+
       <div className="hero__bg">
         <div className="hero__particles" ref={particlesRef}></div>
         <div className="hero__gradient"></div>
@@ -37,18 +46,15 @@ export default function Hero() {
         <div className="hero__content">
           <div className="hero__badge">
             <span className="pulse-dot"></span>
-            Systems Active &mdash; Basketball Season
+            {content.badge}
           </div>
 
           <h1 className="hero__title">
-            Winning Trends.<br />
-            <span className="accent">Proven Systems.</span>
+            {content.title}<br />
+            <span className="accent">{content.titleAccent}</span>
           </h1>
 
-          <p className="hero__description">
-            Where handicappers get sharp and bettors win. Data-driven betting systems
-            and trends backed by deep statistical analysis.
-          </p>
+          <p className="hero__description">{content.description}</p>
 
           <div className="hero__actions">
             <Link href="/betting-systems" className="btn btn--primary btn--lg">
@@ -61,16 +67,36 @@ export default function Hero() {
 
           <div className="hero__stats">
             <div className="hero__stat">
-              <div className="hero__stat-value" data-count="10.19" data-prefix="+" data-suffix="%" data-decimals="2">0%</div>
-              <div className="hero__stat-label">2026 Bankroll</div>
+              <div
+                className="hero__stat-value"
+                data-count={content.stat1Count}
+                data-prefix={content.stat1Prefix || undefined}
+                data-suffix={content.stat1Suffix || undefined}
+                data-decimals={content.stat1Decimals || undefined}
+              >
+                0{content.stat1Suffix}
+              </div>
+              <div className="hero__stat-label">{content.stat1Label}</div>
             </div>
             <div className="hero__stat">
-              <div className="hero__stat-value" data-count="19" data-suffix="-4">0</div>
-              <div className="hero__stat-label">Super Bowl LX Systems</div>
+              <div
+                className="hero__stat-value"
+                data-count={content.stat2Count}
+                data-suffix={content.stat2Suffix || undefined}
+              >
+                0
+              </div>
+              <div className="hero__stat-label">{content.stat2Label}</div>
             </div>
             <div className="hero__stat">
-              <div className="hero__stat-value" data-count="4" data-suffix=" Sports">0</div>
-              <div className="hero__stat-label">Active Leagues</div>
+              <div
+                className="hero__stat-value"
+                data-count={content.stat3Count}
+                data-suffix={content.stat3Suffix || undefined}
+              >
+                0
+              </div>
+              <div className="hero__stat-label">{content.stat3Label}</div>
             </div>
           </div>
         </div>

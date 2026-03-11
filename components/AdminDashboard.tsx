@@ -3,8 +3,10 @@
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import type { SubscriptionTier, SubscriptionStatus, AccessLevel } from '@/lib/supabase/types'
+import type { AllSiteContent } from '@/lib/site-content'
 import AdminSystemsTab, { type BettingSystem } from './AdminSystemsTab'
 import AdminTrendsTab, { type BettingTrend } from './AdminTrendsTab'
+import AdminContentTab from './AdminContentTab'
 
 interface User {
   id: string
@@ -37,6 +39,8 @@ interface Props {
   posts: Post[]
   systems: BettingSystem[]
   trends: BettingTrend[]
+  content: AllSiteContent
+  initialTab?: string
 }
 
 const TIER_CLASS: Record<string, string> = {
@@ -68,8 +72,10 @@ function isThisMonth(dateStr: string) {
   return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
 }
 
-export default function AdminDashboard({ users, posts, systems, trends }: Props) {
-  const [tab, setTab] = useState<'users' | 'posts' | 'systems' | 'trends'>('users')
+export default function AdminDashboard({ users, posts, systems, trends, content, initialTab }: Props) {
+  const [tab, setTab] = useState<'users' | 'posts' | 'systems' | 'trends' | 'content'>(
+    (['users', 'posts', 'systems', 'trends', 'content'].includes(initialTab ?? '') ? initialTab : 'users') as 'users'
+  )
   const [userSearch, setUserSearch] = useState('')
   const [tierFilter, setTierFilter] = useState<string>('all')
   const [postSearch, setPostSearch] = useState('')
@@ -234,6 +240,9 @@ export default function AdminDashboard({ users, posts, systems, trends }: Props)
           </button>
           <button className={`admin-tab ${tab === 'trends' ? 'admin-tab--active' : ''}`} onClick={() => setTab('trends')}>
             Trends <span className="admin-tab__count">{trends.length}</span>
+          </button>
+          <button className={`admin-tab ${tab === 'content' ? 'admin-tab--active' : ''}`} onClick={() => setTab('content')}>
+            Page Content
           </button>
         </div>
 
@@ -410,6 +419,9 @@ export default function AdminDashboard({ users, posts, systems, trends }: Props)
 
         {/* ── Trends Tab ── */}
         {tab === 'trends' && <AdminTrendsTab trends={trends} />}
+
+        {/* ── Content Tab ── */}
+        {tab === 'content' && <AdminContentTab content={content} />}
 
       </div>
     </main>
