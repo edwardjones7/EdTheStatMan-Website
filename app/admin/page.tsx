@@ -2,8 +2,6 @@ import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import AdminDashboard from '@/components/AdminDashboard'
-import { SITE_CONTENT_DEFAULTS } from '@/lib/site-content'
-import type { AllSiteContent } from '@/lib/site-content'
 
 export const metadata: Metadata = {
   title: 'Admin Dashboard – EdTheStatMan',
@@ -27,7 +25,7 @@ export default async function AdminPage({
 
   if (!self?.is_admin) redirect('/')
 
-  const [{ data: users }, { data: posts }, { data: systems }, { data: trends }, { data: contentRows }] = await Promise.all([
+  const [{ data: users }, { data: posts }, { data: systems }, { data: trends }] = await Promise.all([
     supabase
       .from('profiles')
       .select('id, email, full_name, subscription_tier, subscription_status, is_admin, stripe_customer_id, stripe_subscription_id, created_at, updated_at')
@@ -45,24 +43,7 @@ export default async function AdminPage({
       .select('*')
       .order('sport', { ascending: true })
       .order('sort_order', { ascending: true }),
-    (supabase as any)
-      .from('site_content')
-      .select('key, value'),
   ])
-
-  const raw: Record<string, unknown> = {}
-  for (const row of (contentRows ?? []) as { key: string; value: unknown }[]) {
-    raw[row.key] = row.value
-  }
-
-  const content: AllSiteContent = {
-    hero:             { ...SITE_CONTENT_DEFAULTS.hero,             ...(raw.hero             as object ?? {}) },
-    action_card:      { ...SITE_CONTENT_DEFAULTS.action_card,      ...(raw.action_card      as object ?? {}) },
-    features:         { ...SITE_CONTENT_DEFAULTS.features,         ...(raw.features         as object ?? {}) },
-    cta_section:      { ...SITE_CONTENT_DEFAULTS.cta_section,      ...(raw.cta_section      as object ?? {}) },
-    statbot_preview:  { ...SITE_CONTENT_DEFAULTS.statbot_preview,  ...(raw.statbot_preview  as object ?? {}) },
-    systems_overview: { ...SITE_CONTENT_DEFAULTS.systems_overview, ...(raw.systems_overview as object ?? {}) },
-  }
 
   return (
     <AdminDashboard
@@ -70,7 +51,6 @@ export default async function AdminPage({
       posts={posts ?? []}
       systems={(systems ?? []) as any[]}
       trends={(trends ?? []) as any[]}
-      content={content}
       initialTab={searchParams.tab}
     />
   )
