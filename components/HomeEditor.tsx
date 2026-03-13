@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import type { AllSiteContent } from '@/lib/site-content'
+import LiveTicker from './LiveTicker'
 import Hero from './Hero'
 import ActionCard from './ActionCard'
 import SystemsOverview from './SystemsOverview'
@@ -80,6 +81,7 @@ export default function HomeEditor({ content }: Props) {
 
   return (
     <>
+      <LiveTicker     content={draft.ticker}            editMode={editMode} onEdit={u => patch('ticker', u)} />
       <Hero           content={draft.hero}             {...ep('hero')} />
       <ActionCard     content={draft.action_card}       {...ep('action_card')} />
       <SystemsOverview content={draft.systems_overview} {...ep('systems_overview')} />

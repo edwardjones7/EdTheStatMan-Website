@@ -91,6 +91,18 @@ export interface SystemsOverviewContent {
   cards: SystemsOverviewCard[]
 }
 
+export interface TickerItem {
+  tag: string         // e.g. "NFL"
+  text: string        // e.g. "Betting Systems: 10-34"
+  icon?: string       // optional emoji before tag, e.g. "🏈"
+  badge?: string      // optional badge text, e.g. "▲ Hot"
+  badgeType?: 'up' | 'down' | 'neutral'
+}
+
+export interface TickerContent {
+  items: TickerItem[]
+}
+
 export interface AllSiteContent {
   hero: HeroContent
   action_card: ActionCardContent
@@ -98,6 +110,7 @@ export interface AllSiteContent {
   cta_section: CTAContent
   statbot_preview: StatBotContent
   systems_overview: SystemsOverviewContent
+  ticker: TickerContent
 }
 
 export const DEFAULT_HERO: HeroContent = {
@@ -226,6 +239,17 @@ export const DEFAULT_SYSTEMS_OVERVIEW: SystemsOverviewContent = {
   ],
 }
 
+export const DEFAULT_TICKER: TickerContent = {
+  items: [
+    { tag: 'NFL',                icon: '🏈', text: 'Betting Systems: 10-34' },
+    { tag: 'College Football',   icon: '🏈', text: 'Betting Systems: 3-3' },
+    { tag: 'NBA',                icon: '🏀', text: 'Betting Systems: 101-108' },
+    { tag: 'College Basketball', icon: '🏀', text: 'Betting Systems: 2-0',      badge: '▲ Hot',    badgeType: 'up' },
+    { tag: 'Bankroll',           icon: '💰', text: '+10.19% in 2026',           badge: '▲',        badgeType: 'up' },
+    { tag: 'Super Bowl LX',      icon: '🏆', text: 'Systems: 19-4 ATS',         badge: '✅ Winner', badgeType: 'up' },
+  ],
+}
+
 export const SITE_CONTENT_DEFAULTS: AllSiteContent = {
   hero: DEFAULT_HERO,
   action_card: DEFAULT_ACTION_CARD,
@@ -233,4 +257,5 @@ export const SITE_CONTENT_DEFAULTS: AllSiteContent = {
   cta_section: DEFAULT_CTA,
   statbot_preview: DEFAULT_STATBOT,
   systems_overview: DEFAULT_SYSTEMS_OVERVIEW,
+  ticker: DEFAULT_TICKER,
 }

@@ -44,6 +44,7 @@ export default async function Home() {
     cta_section:      { ...SITE_CONTENT_DEFAULTS.cta_section,      ...(raw.cta_section      as object ?? {}) },
     statbot_preview:  { ...SITE_CONTENT_DEFAULTS.statbot_preview,  ...(raw.statbot_preview  as object ?? {}) },
     systems_overview: { ...SITE_CONTENT_DEFAULTS.systems_overview, ...(raw.systems_overview as object ?? {}) },
+    ticker:           { ...SITE_CONTENT_DEFAULTS.ticker,           ...(raw.ticker           as object ?? {}) },
   }
 
   let isAdmin = false
@@ -62,10 +63,12 @@ export default async function Home() {
       <LiveTicker />
       {isAdmin ? (
         // Admin gets the interactive editor with a single pencil FAB
+        // (LiveTicker is rendered inside HomeEditor for admins)
         <HomeEditor content={content} />
       ) : (
         // Everyone else gets static server-rendered sections
         <>
+          <LiveTicker     content={content.ticker} />
           <Hero           content={content.hero} />
           <ActionCard     content={content.action_card} />
           <SystemsOverview content={content.systems_overview} />
