@@ -30,6 +30,17 @@ const BADGE_TEXT_COLORS: Record<string, string> = {
 
 const QUICK_ICONS = ['🏈', '🏀', '⚾', '🏒', '⚽', '🏆', '💰', '📈', '🔥', '✅', '⭐', '🎯']
 
+const QUICK_BADGES: { label: string; type: TickerItem['badgeType'] }[] = [
+  { label: '▲ Hot',    type: 'up'      },
+  { label: '▲ Win',    type: 'up'      },
+  { label: '✅ Winner', type: 'up'      },
+  { label: '🔥 Fire',  type: 'up'      },
+  { label: '▼ Cold',   type: 'down'    },
+  { label: '▼ Loss',   type: 'down'    },
+  { label: '— Active', type: 'neutral' },
+  { label: '— Ended',  type: 'neutral' },
+]
+
 function ItemPreview({ item }: { item: TickerItem }) {
   return (
     <div style={{
@@ -241,6 +252,28 @@ function TickerItemCard({
                   placeholder="e.g. ▲ Hot"
                   style={fieldStyle}
                 />
+                <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginTop: '2px' }}>
+                  {QUICK_BADGES.map(preset => (
+                    <button
+                      key={preset.label}
+                      onClick={() => onPatch({ badge: preset.label, badgeType: preset.type })}
+                      style={{
+                        background: item.badge === preset.label ? BADGE_COLORS[preset.type!] : 'rgba(255,255,255,0.04)',
+                        border: `1px solid ${item.badge === preset.label ? BADGE_TEXT_COLORS[preset.type!] : 'var(--border)'}`,
+                        borderRadius: '10px',
+                        cursor: 'pointer',
+                        color: item.badge === preset.label ? BADGE_TEXT_COLORS[preset.type!] : 'var(--text-muted)',
+                        fontSize: '0.7rem',
+                        fontWeight: 600,
+                        padding: '2px 8px',
+                        whiteSpace: 'nowrap',
+                        lineHeight: 1.6,
+                      }}
+                    >
+                      {preset.label}
+                    </button>
+                  ))}
+                </div>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                 <label style={labelStyle}>Colour</label>
