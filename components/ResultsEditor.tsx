@@ -43,7 +43,7 @@ export default function ResultsEditor({ content }: Props) {
         const j = await r.json()
         throw j.error ?? 'Save failed'
       }
-      window.location.reload()
+      window.location.href = window.location.pathname
     } catch (e: any) {
       setError(typeof e === 'string' ? e : 'Save failed')
     } finally {

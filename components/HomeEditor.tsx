@@ -60,7 +60,7 @@ export default function HomeEditor({ content }: Props) {
           }).then(r => r.ok ? r.json() : r.json().then(j => Promise.reject(j.error)))
         )
       )
-      window.location.reload()
+      window.location.href = window.location.pathname
     } catch (e: any) {
       setError(typeof e === 'string' ? e : 'Save failed')
     } finally {
