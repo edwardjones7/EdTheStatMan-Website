@@ -250,6 +250,83 @@ export const DEFAULT_TICKER: TickerContent = {
   ],
 }
 
+// ── Results page ─────────────────────────────────────────────────────────────
+
+export interface ResultsStatCard {
+  count: string
+  prefix: string
+  suffix: string
+  decimals: string
+  label: string
+}
+
+export interface ResultsChartBar {
+  color: 'green' | 'red'
+  height: number
+  value: string
+}
+
+export interface ResultsYearRow {
+  year: string
+  nfl: string
+  cfb: string
+  nba: string
+  cbb: string
+  overall: string
+  bankroll: string
+  bankrollType: 'win' | 'loss'
+}
+
+export interface ResultsContent {
+  headerLabel: string
+  headerTitle: string
+  headerSubtitle: string
+  statCards: ResultsStatCard[]
+  chartTitle: string
+  chartValue: string
+  chartBars: ResultsChartBar[]
+  tableLabel: string
+  tableTitle: string
+  tableSubtitle: string
+  tableRows: ResultsYearRow[]
+}
+
+export const DEFAULT_RESULTS: ResultsContent = {
+  headerLabel: 'Historical Performance',
+  headerTitle: 'Results',
+  headerSubtitle: 'Full transparency on our betting systems. Track our year-by-year performance, bankroll ROI, and sport-by-sport records.',
+  statCards: [
+    { count: '10.19', prefix: '+', suffix: '%',      decimals: '2', label: 'Total Bankroll' },
+    { count: '19',    prefix: '',  suffix: '-4 ATS',  decimals: '0', label: 'Super Bowl Record' },
+    { count: '4',     prefix: '',  suffix: ' Sports', decimals: '0', label: 'Total Systems Tracked' },
+    { count: '2026',  prefix: '',  suffix: '',         decimals: '0', label: 'Year' },
+  ],
+  chartTitle: '2026 Bankroll Performance',
+  chartValue: '+10.19%',
+  chartBars: [
+    { color: 'green', height: 100, value: '+3.2%' },
+    { color: 'red',   height: 56,  value: '+1.8%' },
+    { color: 'green', height: 5,   value: '—' },
+    { color: 'red',   height: 5,   value: '—' },
+    { color: 'green', height: 5,   value: '—' },
+    { color: 'red',   height: 5,   value: '—' },
+    { color: 'green', height: 5,   value: '—' },
+    { color: 'red',   height: 5,   value: '—' },
+    { color: 'green', height: 5,   value: '—' },
+    { color: 'red',   height: 5,   value: '—' },
+    { color: 'green', height: 5,   value: '—' },
+    { color: 'red',   height: 5,   value: '—' },
+  ],
+  tableLabel: 'Year-by-Year',
+  tableTitle: 'Historical Results',
+  tableSubtitle: 'Complete records across NFL, College Football, NBA, and College Basketball.',
+  tableRows: [
+    { year: '2026', nfl: '10-34',  cfb: '3-3',   nba: '101-108', cbb: '2-0',   overall: '116-145', bankroll: '+10.19%', bankrollType: 'win' },
+    { year: '2025', nfl: '44-38',  cfb: '12-8',  nba: '198-182', cbb: '15-10', overall: '269-238', bankroll: '+15.2%',  bankrollType: 'win' },
+    { year: '2024', nfl: '38-42',  cfb: '8-12',  nba: '175-195', cbb: '12-14', overall: '233-263', bankroll: '-4.8%',   bankrollType: 'loss' },
+  ],
+}
+
 export const SITE_CONTENT_DEFAULTS: AllSiteContent = {
   hero: DEFAULT_HERO,
   action_card: DEFAULT_ACTION_CARD,

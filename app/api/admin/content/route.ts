@@ -41,5 +41,6 @@ export async function PATCH(req: Request) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
   revalidatePath('/')
+  revalidatePath('/results')
   return NextResponse.json({ success: true })
 }
