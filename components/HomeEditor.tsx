@@ -66,6 +66,8 @@ export default function HomeEditor({ content }: Props) {
       setDirtyKeys(new Set())
       setEditMode(false)
       router.refresh()
+      // Re-run counter/bar animations after server data refreshes
+      setTimeout(() => window.dispatchEvent(new Event('reinit-animations')), 300)
     } catch (e: any) {
       setError(typeof e === 'string' ? e : 'Save failed')
     } finally {
