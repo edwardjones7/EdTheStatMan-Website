@@ -14,6 +14,7 @@ export default function Footer() {
             <div className="social-strip">
               <a href="https://t.me/edthestatman" className="social-link" target="_blank" rel="noopener" aria-label="Telegram">&#9889;</a>
               <a href="https://discord.gg/gqPrVBg4Aw" className="social-link" target="_blank" rel="noopener" aria-label="Discord">&#128172;</a>
+              <a href="https://x.com/EdTheStatMan" className="social-link" target="_blank" rel="noopener" aria-label="X / Twitter">&#120143;</a>
             </div>
           </div>
 
