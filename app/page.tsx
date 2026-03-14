@@ -73,7 +73,7 @@ export default async function Home() {
           <ActionCard     content={content.action_card} />
           <SystemsOverview content={content.systems_overview} />
           <Features       content={content.features} />
-          <StatBotPreview content={content.statbot_preview} />
+          {/* <StatBotPreview content={content.statbot_preview} /> */}
           <CTASection     content={content.cta_section} />
         </>
       )}

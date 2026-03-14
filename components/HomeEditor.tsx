@@ -88,7 +88,7 @@ export default function HomeEditor({ content }: Props) {
       <ActionCard     content={draft.action_card}       {...ep('action_card')} />
       <SystemsOverview content={draft.systems_overview} {...ep('systems_overview')} />
       <Features       content={draft.features}          {...ep('features')} />
-      <StatBotPreview content={draft.statbot_preview}   {...ep('statbot_preview')} />
+      {/* <StatBotPreview content={draft.statbot_preview}   {...ep('statbot_preview')} /> */}
       <CTASection     content={draft.cta_section}       {...ep('cta_section')} />
 
       {/* ── Single global FAB ── */}
