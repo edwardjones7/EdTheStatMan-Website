@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import type { AllSiteContent } from '@/lib/site-content'
 import LiveTicker from './LiveTicker'
 import Hero from './Hero'
@@ -23,7 +22,6 @@ export default function HomeEditor({ content }: Props) {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [resetKey, setResetKey] = useState(0)
-  const router = useRouter()
 
   function patch<K extends keyof AllSiteContent>(section: K, updates: Partial<AllSiteContent[K]>) {
     setDraft(prev => ({ ...prev, [section]: { ...prev[section], ...updates } }))
@@ -62,12 +60,7 @@ export default function HomeEditor({ content }: Props) {
           }).then(r => r.ok ? r.json() : r.json().then(j => Promise.reject(j.error)))
         )
       )
-      setDirty(false)
-      setDirtyKeys(new Set())
-      setEditMode(false)
-      router.refresh()
-      // Re-run counter/bar animations after server data refreshes
-      setTimeout(() => window.dispatchEvent(new Event('reinit-animations')), 300)
+      window.location.reload()
     } catch (e: any) {
       setError(typeof e === 'string' ? e : 'Save failed')
     } finally {

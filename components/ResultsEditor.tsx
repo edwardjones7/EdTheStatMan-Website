@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import type { ResultsContent } from '@/lib/site-content'
 import ResultsPage from './ResultsPage'
 import CTASection from './CTASection'
@@ -17,7 +16,6 @@ export default function ResultsEditor({ content }: Props) {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [resetKey, setResetKey] = useState(0)
-  const router = useRouter()
 
   function patch(updates: Partial<ResultsContent>) {
     setDraft(prev => ({ ...prev, ...updates }))
@@ -45,10 +43,7 @@ export default function ResultsEditor({ content }: Props) {
         const j = await r.json()
         throw j.error ?? 'Save failed'
       }
-      setDirty(false)
-      setEditMode(false)
-      router.refresh()
-      setTimeout(() => window.dispatchEvent(new Event('reinit-animations')), 300)
+      window.location.reload()
     } catch (e: any) {
       setError(typeof e === 'string' ? e : 'Save failed')
     } finally {
