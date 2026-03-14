@@ -1,3 +1,5 @@
+'use client'
+
 import Link from 'next/link'
 import type { StatBotContent } from '@/lib/site-content'
 import EditableText from './EditableText'

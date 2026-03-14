@@ -1,3 +1,5 @@
+'use client'
+
 import Link from 'next/link'
 import type { ActionCardContent } from '@/lib/site-content'
 import { DEFAULT_ACTION_CARD } from '@/lib/site-content'

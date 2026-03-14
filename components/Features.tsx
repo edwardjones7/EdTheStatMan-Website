@@ -1,3 +1,5 @@
+'use client'
+
 import Link from 'next/link'
 import type { FeaturesContent, FeatureCard } from '@/lib/site-content'
 import EditableText from './EditableText'

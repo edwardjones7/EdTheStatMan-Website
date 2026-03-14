@@ -1,6 +1,5 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
 import type { TickerContent, TickerItem } from '@/lib/site-content'
 import { DEFAULT_TICKER } from '@/lib/site-content'
 
@@ -19,16 +18,6 @@ const BADGE_CLASS: Record<string, string> = {
 const QUICK_ICONS = ['🏈', '🏀', '⚾', '🏒', '⚽', '🏆', '💰', '📈', '🔥', '✅', '⭐']
 
 export default function LiveTicker({ content = DEFAULT_TICKER, editMode, onEdit }: Props) {
-  const trackRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (editMode) return
-    const track = trackRef.current
-    if (!track) return
-    const original = track.innerHTML
-    track.innerHTML = original + original
-  }, [editMode, content.items])
-
   // ── Edit mode: expanded row editor ──────────────────────────────────────────
   if (editMode && onEdit) {
     const emit = onEdit
@@ -157,11 +146,12 @@ export default function LiveTicker({ content = DEFAULT_TICKER, editMode, onEdit 
     )
   }
 
-  // ── Normal scrolling ticker ──────────────────────────────────────────────────
+  // ── Normal scrolling ticker — items doubled in JSX for seamless loop ─────────
+  const doubled = [...content.items, ...content.items]
   return (
     <div className="ticker">
-      <div className="ticker__track" ref={trackRef}>
-        {content.items.map((item, i) => (
+      <div className="ticker__track">
+        {doubled.map((item, i) => (
           <div key={i} className="ticker__item">
             {item.icon && <span style={{ marginRight: '5px' }}>{item.icon}</span>}
             <span className="ticker__sport">{item.tag}</span>

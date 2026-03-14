@@ -1,3 +1,5 @@
+'use client'
+
 import type { CTAContent } from '@/lib/site-content'
 import { DEFAULT_CTA } from '@/lib/site-content'
 import EditableText from './EditableText'
