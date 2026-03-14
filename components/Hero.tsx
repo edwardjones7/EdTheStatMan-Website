@@ -101,9 +101,8 @@ export default function Hero({ content, editMode, onEdit, resetKey = 0 }: Props)
                   data-prefix={content.stat1Prefix || undefined}
                   data-suffix={content.stat1Suffix || undefined}
                   data-decimals={content.stat1Decimals || undefined}
-                >
-                  0{content.stat1Suffix}
-                </div>
+                  dangerouslySetInnerHTML={{ __html: `0${content.stat1Suffix}` }}
+                />
               )}
               <div className="hero__stat-label">
                 {editMode && onEdit
@@ -128,9 +127,8 @@ export default function Hero({ content, editMode, onEdit, resetKey = 0 }: Props)
                   className="hero__stat-value"
                   data-count={content.stat2Count}
                   data-suffix={content.stat2Suffix || undefined}
-                >
-                  0
-                </div>
+                  dangerouslySetInnerHTML={{ __html: '0' }}
+                />
               )}
               <div className="hero__stat-label">
                 {editMode && onEdit
@@ -155,9 +153,8 @@ export default function Hero({ content, editMode, onEdit, resetKey = 0 }: Props)
                   className="hero__stat-value"
                   data-count={content.stat3Count}
                   data-suffix={content.stat3Suffix || undefined}
-                >
-                  0
-                </div>
+                  dangerouslySetInnerHTML={{ __html: '0' }}
+                />
               )}
               <div className="hero__stat-label">
                 {editMode && onEdit
