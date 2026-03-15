@@ -5,6 +5,8 @@ import TrendsFilter from '@/components/TrendsFilter'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 
+export const dynamic = 'force-dynamic'
+
 export const metadata: Metadata = {
   title: 'Betting Trends – EdTheStatMan.com',
   description: 'Betting trends for NFL, NBA, College Football, and College Basketball. Situational edges with win percentages and unit performance.',

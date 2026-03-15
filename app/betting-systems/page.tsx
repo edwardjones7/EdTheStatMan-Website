@@ -5,6 +5,8 @@ import CheckoutButton from '@/components/CheckoutButton'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 
+export const dynamic = 'force-dynamic'
+
 export const metadata: Metadata = {
   title: 'Betting Systems – EdTheStatMan.com',
   description: 'Active betting systems for NFL, College Football, NBA, and College Basketball. Data-driven picks with proven track records.',

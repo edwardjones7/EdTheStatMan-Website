@@ -3,8 +3,6 @@
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import type { SubscriptionTier, SubscriptionStatus, AccessLevel } from '@/lib/supabase/types'
-import AdminSystemsTab, { type BettingSystem } from './AdminSystemsTab'
-import AdminTrendsTab, { type BettingTrend } from './AdminTrendsTab'
 
 interface User {
   id: string
@@ -35,8 +33,6 @@ interface Post {
 interface Props {
   users: User[]
   posts: Post[]
-  systems: BettingSystem[]
-  trends: BettingTrend[]
   initialTab?: string
 }
 
@@ -69,9 +65,9 @@ function isThisMonth(dateStr: string) {
   return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
 }
 
-export default function AdminDashboard({ users, posts, systems, trends, initialTab }: Props) {
-  const [tab, setTab] = useState<'users' | 'posts' | 'systems' | 'trends'>(
-    (['users', 'posts', 'systems', 'trends'].includes(initialTab ?? '') ? initialTab : 'users') as 'users'
+export default function AdminDashboard({ users, posts, initialTab }: Props) {
+  const [tab, setTab] = useState<'users' | 'posts'>(
+    (['users', 'posts'].includes(initialTab ?? '') ? initialTab : 'users') as 'users'
   )
   const [userSearch, setUserSearch] = useState('')
   const [tierFilter, setTierFilter] = useState<string>('all')
@@ -228,12 +224,6 @@ export default function AdminDashboard({ users, posts, systems, trends, initialT
           </button>
           <button className={`admin-tab ${tab === 'posts' ? 'admin-tab--active' : ''}`} onClick={() => setTab('posts')}>
             Posts <span className="admin-tab__count">{posts.length}</span>
-          </button>
-          <button className={`admin-tab ${tab === 'systems' ? 'admin-tab--active' : ''}`} onClick={() => setTab('systems')}>
-            Systems <span className="admin-tab__count">{systems.length}</span>
-          </button>
-          <button className={`admin-tab ${tab === 'trends' ? 'admin-tab--active' : ''}`} onClick={() => setTab('trends')}>
-            Trends <span className="admin-tab__count">{trends.length}</span>
           </button>
         </div>
 
@@ -408,11 +398,6 @@ export default function AdminDashboard({ users, posts, systems, trends, initialT
           </div>
         )}
 
-        {/* ── Systems Tab ── */}
-        {tab === 'systems' && <AdminSystemsTab systems={systems} />}
-
-        {/* ── Trends Tab ── */}
-        {tab === 'trends' && <AdminTrendsTab trends={trends} />}
 
 
       </div>

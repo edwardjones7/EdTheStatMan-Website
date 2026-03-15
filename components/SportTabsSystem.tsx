@@ -2,7 +2,6 @@
 
 import { useState, useRef } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import type { BettingSystem } from './AdminSystemsTab'
 
 type Sport = 'all' | 'nfl' | 'cfb' | 'nba' | 'cbb'
@@ -76,7 +75,6 @@ function parseStr(val: unknown): string {
 }
 
 export default function SportTabsSystem({ systems, userTier, isAdmin = false }: Props) {
-  const router = useRouter()
   const [activeTab, setActiveTab] = useState<Sport>('all')
   const [editMode, setEditMode] = useState(false)
 
@@ -162,7 +160,7 @@ export default function SportTabsSystem({ systems, userTier, isAdmin = false }: 
     setSaving(false)
     if (!res.ok) { setFormError(data.error ?? 'Something went wrong.'); return }
     cancelForm()
-    router.refresh()
+    window.location.reload()
   }
 
   async function toggleActive(s: BettingSystem) {
@@ -173,7 +171,7 @@ export default function SportTabsSystem({ systems, userTier, isAdmin = false }: 
       body: JSON.stringify({ is_active: !s.is_active }),
     })
     setToggling(null)
-    router.refresh()
+    window.location.reload()
   }
 
   async function toggleFree(s: BettingSystem) {
@@ -184,14 +182,14 @@ export default function SportTabsSystem({ systems, userTier, isAdmin = false }: 
       body: JSON.stringify({ is_free: !s.is_free }),
     })
     setToggling(null)
-    router.refresh()
+    window.location.reload()
   }
 
   async function deleteRow(id: string, description: string) {
-    if (!confirm(`Delete "${description}"? This cannot be undone.`)) return
+    if (!confirm(`Delete "${description || '(blank row)'}"? This cannot be undone.`)) return
     const res = await fetch(`/api/admin/systems/${id}`, { method: 'DELETE' })
     if (!res.ok) { alert('Delete failed.'); return }
-    router.refresh()
+    window.location.reload()
   }
 
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -226,21 +224,23 @@ export default function SportTabsSystem({ systems, userTier, isAdmin = false }: 
     setImportError(null)
     try {
       const records = xlsxSheets.flatMap((sheet, _i) =>
-        sheet.rows.map((row, j) => ({
-          sport: sheet.sport,
-          description: parseStr(row['description'] ?? row['Description'] ?? row['DESCRIPTION'] ?? row['rule'] ?? row['Rule'] ?? ''),
-          line: parseStr(row['line'] ?? row['Line'] ?? row['LINE'] ?? ''),
-          season: parseStr(row['season'] ?? row['Season'] ?? row['SEASON'] ?? ''),
-          pct: parseNum(row['pct'] ?? row['Pct'] ?? row['PCT'] ?? row['pct%'] ?? row['Pct%'] ?? ''),
-          units: parseNum(row['units'] ?? row['Units'] ?? row['UNITS'] ?? ''),
-          type: parseStr(row['type'] ?? row['Type'] ?? row['TYPE'] ?? ''),
-          w: parseIntVal(row['w'] ?? row['W'] ?? row['wins'] ?? row['Wins'] ?? 0),
-          l: parseIntVal(row['l'] ?? row['L'] ?? row['losses'] ?? row['Losses'] ?? 0),
-          t: parseIntVal(row['t'] ?? row['T'] ?? row['ties'] ?? row['Ties'] ?? 0),
-          is_free: sheet.is_free,
-          is_active: true,
-          sort_order: j,
-        }))
+        sheet.rows
+          .map((row, j) => ({
+            sport: sheet.sport,
+            description: parseStr(row['description'] ?? row['Description'] ?? row['DESCRIPTION'] ?? row['rule'] ?? row['Rule'] ?? ''),
+            line: parseStr(row['line'] ?? row['Line'] ?? row['LINE'] ?? ''),
+            season: parseStr(row['season'] ?? row['Season'] ?? row['SEASON'] ?? ''),
+            pct: parseNum(row['pct'] ?? row['Pct'] ?? row['PCT'] ?? row['pct%'] ?? row['Pct%'] ?? ''),
+            units: parseNum(row['units'] ?? row['Units'] ?? row['UNITS'] ?? ''),
+            type: parseStr(row['type'] ?? row['Type'] ?? row['TYPE'] ?? ''),
+            w: parseIntVal(row['w'] ?? row['W'] ?? row['wins'] ?? row['Wins'] ?? 0),
+            l: parseIntVal(row['l'] ?? row['L'] ?? row['losses'] ?? row['Losses'] ?? 0),
+            t: parseIntVal(row['t'] ?? row['T'] ?? row['ties'] ?? row['Ties'] ?? 0),
+            is_free: sheet.is_free,
+            is_active: true,
+            sort_order: j,
+          }))
+          .filter(r => r.description !== '')
       )
       const res = await fetch('/api/admin/systems/import', {
         method: 'POST',
@@ -251,7 +251,7 @@ export default function SportTabsSystem({ systems, userTier, isAdmin = false }: 
       if (!res.ok) throw new Error(data.error ?? 'Import failed.')
       setXlsxSheets(null)
       setClearBeforeImport(false)
-      router.refresh()
+      window.location.reload()
     } catch (err: unknown) {
       setImportError(err instanceof Error ? err.message : 'Import failed.')
     } finally {
@@ -280,10 +280,31 @@ export default function SportTabsSystem({ systems, userTier, isAdmin = false }: 
     )
   }
 
+  // Stats bar computed values
+  const activeForStats = allVisible.filter(s => s.is_active)
+  const winningCount = activeForStats.filter(s => s.w > s.l).length
+  const bestPct = activeForStats.reduce((max, s) => (s.pct !== null && s.pct > max ? s.pct : max), 0)
+
   return (
     <>
+      {/* Summary stats bar */}
+      <div className="sys-stats-bar reveal" style={{ marginTop: '32px' }}>
+        <div className="sys-stats-chip">
+          <span className="sys-stats-chip__label">Active Systems</span>
+          <span className="sys-stats-chip__value">{activeForStats.length}</span>
+        </div>
+        <div className="sys-stats-chip">
+          <span className="sys-stats-chip__label">Winning Systems</span>
+          <span className="sys-stats-chip__value">{winningCount}</span>
+        </div>
+        <div className="sys-stats-chip">
+          <span className="sys-stats-chip__label">Best Win Rate</span>
+          <span className="sys-stats-chip__value">{activeForStats.length > 0 && bestPct > 0 ? `${Math.round(bestPct * 100)}%` : '—'}</span>
+        </div>
+      </div>
+
       {/* Sport tabs */}
-      <div className="sport-tabs reveal" style={{ marginTop: '32px' }}>
+      <div className="sport-tabs reveal">
         {TABS.map(tab => (
           <button
             key={tab.value}
@@ -311,6 +332,21 @@ export default function SportTabsSystem({ systems, userTier, isAdmin = false }: 
             style={{ borderColor: 'rgba(52,211,153,0.4)', color: 'var(--accent-cyan)' }}
           >
             &#8679; Import XLSX
+          </button>
+          <button
+            className="btn btn--outline btn--sm"
+            onClick={async () => {
+              if (!confirm('Delete ALL systems? This cannot be undone.')) return
+              await fetch('/api/admin/systems/import', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ records: [], clearFirst: true }),
+              })
+              window.location.reload()
+            }}
+            style={{ borderColor: 'rgba(239,68,68,0.4)', color: '#ef4444' }}
+          >
+            Clear All
           </button>
           <input
             ref={fileRef}
@@ -470,147 +506,126 @@ export default function SportTabsSystem({ systems, userTier, isAdmin = false }: 
         </div>
       )}
 
-      {/* Table */}
-      <div className="content-gate-wrap reveal" style={{ marginTop: '24px' }}>
+      {/* Card grid */}
+      <div className="content-gate-wrap" style={{ marginTop: '24px' }}>
         <div className={isLoggedOut ? 'content-gate-blurred' : ''}>
-          <div className="trends-table-wrap">
-            <table className="trends-table">
-              <thead>
-                <tr>
-                  {isAdmin && editMode && <th style={{ width: '180px', minWidth: '180px' }}>Controls</th>}
-                  <th>Description</th>
-                  <th>Sport</th>
-                  <th>Line</th>
-                  <th>Season</th>
-                  <th>Type</th>
-                  <th>W-L-T</th>
-                  <th>Pct</th>
-                </tr>
-              </thead>
-              <tbody>
-                {visible.map(row => {
-                  const locked = !isPaid && !row.is_free && !isAdmin
-                  const style = SPORT_STYLE[row.sport] ?? { bg: 'rgba(255,255,255,0.05)', color: 'var(--text-muted)', label: row.sport.toUpperCase() }
-                  const winning = row.w > row.l
-                  return (
-                    <tr
-                      key={row.id}
-                      className={locked ? 'trends-row--locked' : ''}
-                      style={!row.is_active && isAdmin && editMode ? { opacity: 0.4 } : undefined}
-                    >
-                      {isAdmin && editMode && (
-                        <td>
-                          <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-                            <button
-                              onClick={() => toggleActive(row)}
-                              disabled={toggling === row.id + ':active'}
-                              title={row.is_active ? 'Deactivate' : 'Activate'}
-                              style={{
-                                padding: '3px 9px',
-                                borderRadius: '10px',
-                                border: 'none',
-                                cursor: 'pointer',
-                                fontSize: '0.7rem',
-                                fontWeight: 600,
-                                background: row.is_active ? 'rgba(52,211,153,0.15)' : 'rgba(100,100,100,0.2)',
-                                color: row.is_active ? 'var(--accent-green)' : 'var(--text-muted)',
-                              }}
-                            >
-                              {toggling === row.id + ':active' ? '…' : row.is_active ? 'Active' : 'Inactive'}
-                            </button>
-                            <button
-                              onClick={() => toggleFree(row)}
-                              disabled={toggling === row.id + ':free'}
-                              title={row.is_free ? 'Make Members-only' : 'Make Free'}
-                              style={{
-                                padding: '3px 9px',
-                                borderRadius: '10px',
-                                border: 'none',
-                                cursor: 'pointer',
-                                fontSize: '0.7rem',
-                                fontWeight: 600,
-                                background: row.is_free ? 'rgba(56,189,248,0.15)' : 'rgba(124,58,237,0.15)',
-                                color: row.is_free ? '#38bdf8' : 'var(--accent-purple)',
-                              }}
-                            >
-                              {toggling === row.id + ':free' ? '…' : row.is_free ? 'Free' : 'Members'}
-                            </button>
-                            <button
-                              onClick={() => openEdit(row)}
-                              style={{
-                                padding: '3px 9px',
-                                borderRadius: '10px',
-                                border: '1px solid var(--border)',
-                                cursor: 'pointer',
-                                fontSize: '0.7rem',
-                                background: 'transparent',
-                                color: 'var(--text-secondary)',
-                              }}
-                            >
-                              Edit
-                            </button>
-                            <button
-                              onClick={() => deleteRow(row.id, row.description)}
-                              style={{
-                                padding: '3px 9px',
-                                borderRadius: '10px',
-                                border: 'none',
-                                cursor: 'pointer',
-                                fontSize: '0.7rem',
-                                background: 'rgba(239,68,68,0.1)',
-                                color: '#ef4444',
-                              }}
-                            >
-                              ✕
-                            </button>
-                          </div>
-                        </td>
-                      )}
-                      <td>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                          <span>{row.description || <em style={{ color: 'var(--text-muted)' }}>—</em>}</span>
-                          {locked && <span className="row-lock-badge">Members Only</span>}
+          {visible.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '48px 0', color: 'var(--text-muted)' }}>
+              No systems in this sport.
+            </div>
+          ) : (
+            <div className="sys-card-grid">
+              {visible.map(row => {
+                const locked = !isPaid && !row.is_free && !isAdmin
+                const style = SPORT_STYLE[row.sport] ?? { bg: 'rgba(255,255,255,0.05)', color: 'var(--text-muted)', label: row.sport.toUpperCase() }
+                const winning = row.w > row.l
+                const pctWidth = row.pct !== null ? Math.round(row.pct * 100) : 0
+                return (
+                  <div
+                    key={row.id}
+                    className={[
+                      'sys-row-card',
+                      `sys-row-card--${row.sport}`,
+                      !row.is_active && isAdmin && editMode ? 'sys-row-card--inactive' : '',
+                    ].filter(Boolean).join(' ')}
+                  >
+                    {/* Admin controls */}
+                    {isAdmin && editMode && (
+                      <div className="sys-row-card__admin">
+                        <button
+                          onClick={() => toggleActive(row)}
+                          disabled={toggling === row.id + ':active'}
+                          title={row.is_active ? 'Deactivate' : 'Activate'}
+                          style={{
+                            padding: '3px 9px', borderRadius: '10px', border: 'none', cursor: 'pointer',
+                            fontSize: '0.7rem', fontWeight: 600,
+                            background: row.is_active ? 'rgba(52,211,153,0.15)' : 'rgba(100,100,100,0.2)',
+                            color: row.is_active ? 'var(--accent-green)' : 'var(--text-muted)',
+                          }}
+                        >
+                          {toggling === row.id + ':active' ? '…' : row.is_active ? 'Active' : 'Inactive'}
+                        </button>
+                        <button
+                          onClick={() => toggleFree(row)}
+                          disabled={toggling === row.id + ':free'}
+                          title={row.is_free ? 'Make Members-only' : 'Make Free'}
+                          style={{
+                            padding: '3px 9px', borderRadius: '10px', border: 'none', cursor: 'pointer',
+                            fontSize: '0.7rem', fontWeight: 600,
+                            background: row.is_free ? 'rgba(56,189,248,0.15)' : 'rgba(124,58,237,0.15)',
+                            color: row.is_free ? '#38bdf8' : 'var(--accent-purple)',
+                          }}
+                        >
+                          {toggling === row.id + ':free' ? '…' : row.is_free ? 'Free' : 'Members'}
+                        </button>
+                        <button
+                          onClick={() => openEdit(row)}
+                          style={{
+                            padding: '3px 9px', borderRadius: '10px', border: '1px solid var(--border-color)',
+                            cursor: 'pointer', fontSize: '0.7rem', background: 'transparent', color: 'var(--text-secondary)',
+                          }}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => deleteRow(row.id, row.description)}
+                          style={{
+                            padding: '3px 9px', borderRadius: '10px', border: 'none', cursor: 'pointer',
+                            fontSize: '0.7rem', background: 'rgba(239,68,68,0.1)', color: '#ef4444',
+                          }}
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Header: sport badge + access badge */}
+                    <div className="sys-row-card__header">
+                      <span className="sys-row-card__sport-badge">{style.label}</span>
+                      <span className={`sys-row-card__access-badge ${row.is_free ? 'sys-row-card__access-badge--free' : 'sys-row-card__access-badge--members'}`}>
+                        {row.is_free ? 'Free' : 'Members'}
+                      </span>
+                    </div>
+
+                    {/* Description */}
+                    <div className="sys-row-card__desc">
+                      {row.description || <em style={{ color: 'var(--text-muted)' }}>No description</em>}
+                    </div>
+
+                    {/* Stats or lock */}
+                    {locked ? (
+                      <div className="sys-row-card__lock">
+                        &#128274;{' '}
+                        <Link href="/betting-systems#pricing">Upgrade to view stats</Link>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="sys-row-card__stats">
+                          <span className={`sys-row-card__record sys-row-card__record--${winning ? 'win' : row.w < row.l ? 'loss' : 'neutral'}`}>
+                            {row.w}-{row.l}-{row.t}
+                          </span>
+                          <span className={`sys-row-card__pct sys-row-card__pct--${winning ? 'win' : 'neutral'}`}>
+                            {pctDisplay(row.pct)}
+                          </span>
                         </div>
-                      </td>
-                      <td>
-                        <span className="trend-badge" style={{ background: style.bg, color: style.color }}>
-                          {style.label}
-                        </span>
-                      </td>
-                      <td className="text-muted">{locked ? '—' : (row.line || '—')}</td>
-                      <td className="text-muted">{locked ? '—' : (row.season || '—')}</td>
-                      <td className="text-muted">{locked ? '—' : (row.type || '—')}</td>
-                      <td>
-                        {locked ? (
-                          <span className="text-muted">—</span>
-                        ) : winning ? (
-                          <span className="text-green">{row.w}-{row.l}-{row.t}</span>
-                        ) : row.w < row.l ? (
-                          <span className="trend-badge trend-badge--loss">{row.w}-{row.l}-{row.t}</span>
-                        ) : (
-                          <span className="text-muted">{row.w}-{row.l}-{row.t}</span>
-                        )}
-                      </td>
-                      <td>
-                        {locked ? (
-                          <span className="trend-locked">&#128274; Upgrade to view</span>
-                        ) : (
-                          <span className={winning ? 'text-green' : 'text-muted'}>{pctDisplay(row.pct)}</span>
-                        )}
-                      </td>
-                    </tr>
-                  )
-                })}
-                {visible.length === 0 && (
-                  <tr>
-                    <td colSpan={isAdmin && editMode ? 8 : 7} style={{ textAlign: 'center', padding: '32px', color: 'var(--text-muted)' }}>
-                      No systems in this sport.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                        <div className="sys-row-card__bar">
+                          <div className="sys-row-card__bar-fill" style={{ width: `${pctWidth}%` }} />
+                        </div>
+                      </>
+                    )}
+
+                    {/* Meta footer */}
+                    <div className="sys-row-card__meta">
+                      {locked
+                        ? (row.line || row.season || row.type ? [row.line, row.season].filter(Boolean).join(' · ') : '—')
+                        : ([row.line, row.season, row.type].filter(Boolean).join(' · ') || '—')
+                      }
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
         </div>
 
         {isLoggedOut && (

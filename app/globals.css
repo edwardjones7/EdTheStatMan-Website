@@ -1461,6 +1461,202 @@ input, textarea, select {
   font-size: 0.85rem;
 }
 
+/* ---------- Betting Systems/Trends Card Grid ---------- */
+.sys-stats-bar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.sys-stats-chip {
+  display: flex;
+  flex-direction: column;
+  padding: 12px 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  min-width: 120px;
+  flex: 1;
+}
+
+.sys-stats-chip__label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.sys-stats-chip__value {
+  font-family: var(--font-mono);
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--text-heading);
+  line-height: 1;
+}
+
+.sys-card-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.sys-row-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+  border-left-width: 4px;
+  border-left-style: solid;
+  border-left-color: var(--text-muted);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+  position: relative;
+}
+
+.sys-row-card--nba { border-left-color: var(--accent-gold); }
+.sys-row-card--nfl { border-left-color: #38bdf8; }
+.sys-row-card--cfb { border-left-color: var(--accent-purple); }
+.sys-row-card--cbb { border-left-color: var(--accent-cyan); }
+
+.sys-row-card--inactive { opacity: 0.45; }
+
+.sys-row-card:hover { transform: translateY(-4px); }
+.sys-row-card--nba:hover { box-shadow: 0 8px 30px rgba(251,191,36,0.12); border-color: var(--accent-gold); }
+.sys-row-card--nfl:hover { box-shadow: 0 8px 30px rgba(56,189,248,0.12); border-color: #38bdf8; }
+.sys-row-card--cfb:hover { box-shadow: 0 8px 30px rgba(129,140,248,0.12); border-color: var(--accent-purple); }
+.sys-row-card--cbb:hover { box-shadow: 0 8px 30px rgba(52,211,153,0.12); border-color: var(--accent-cyan); }
+
+.sys-row-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.sys-row-card__sport-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  font-size: 0.72rem;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  letter-spacing: 0.05em;
+}
+
+.sys-row-card--nba .sys-row-card__sport-badge { background: rgba(251,191,36,0.12); color: var(--accent-gold); }
+.sys-row-card--nfl .sys-row-card__sport-badge { background: rgba(56,189,248,0.12); color: #38bdf8; }
+.sys-row-card--cfb .sys-row-card__sport-badge { background: rgba(129,140,248,0.12); color: var(--accent-purple); }
+.sys-row-card--cbb .sys-row-card__sport-badge { background: rgba(52,211,153,0.12); color: var(--accent-cyan); }
+
+.sys-row-card__access-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.sys-row-card__access-badge--free { background: rgba(56,189,248,0.12); color: #38bdf8; }
+.sys-row-card__access-badge--members { background: rgba(129,140,248,0.12); color: var(--accent-purple); }
+
+.sys-row-card__desc {
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  line-height: 1.55;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  flex: 1;
+}
+
+.sys-row-card__stats {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+}
+
+.sys-row-card__record {
+  font-family: var(--font-mono);
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.sys-row-card__record--win { color: var(--accent-green); }
+.sys-row-card__record--loss { color: #ef4444; }
+.sys-row-card__record--neutral { color: var(--text-secondary); }
+
+.sys-row-card__pct {
+  font-family: var(--font-mono);
+  font-size: 1.4rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.sys-row-card__pct--win { color: var(--accent-green); }
+.sys-row-card__pct--neutral { color: var(--text-muted); }
+
+.sys-row-card__lock {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.sys-row-card__lock a {
+  color: var(--accent-purple);
+  text-decoration: none;
+}
+
+.sys-row-card__lock a:hover { text-decoration: underline; }
+
+.sys-row-card__bar {
+  height: 4px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.sys-row-card__bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.6s ease;
+}
+
+.sys-row-card--nba .sys-row-card__bar-fill { background: var(--accent-gold); }
+.sys-row-card--nfl .sys-row-card__bar-fill { background: #38bdf8; }
+.sys-row-card--cfb .sys-row-card__bar-fill { background: var(--accent-purple); }
+.sys-row-card--cbb .sys-row-card__bar-fill { background: var(--accent-cyan); }
+
+.sys-row-card__meta {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.sys-row-card__admin {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+@media (max-width: 768px) {
+  .sys-card-grid { grid-template-columns: 1fr; }
+  .sys-stats-chip { min-width: 80px; }
+}
+
 /* ---------- Sport Tabs ---------- */
 .sport-tabs {
   display: flex;
