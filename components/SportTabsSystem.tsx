@@ -9,6 +9,7 @@ type Sport = 'all' | 'nfl' | 'cfb' | 'nba' | 'cbb'
 interface Props {
   systems: BettingSystem[]
   userTier: string | null
+  isAdmin?: boolean
 }
 
 const TABS: { label: string; value: Sport }[] = [
@@ -26,19 +27,12 @@ const SPORT_STYLE: Record<string, { bg: string; color: string; label: string }> 
   cfb: { bg: 'rgba(124, 58, 237, 0.1)', color: 'var(--accent-purple)', label: 'CFB' },
 }
 
-function streakVariant(s: string): 'win' | 'loss' | null {
-  if (s.startsWith('W')) return 'win'
-  if (s.startsWith('L')) return 'loss'
-  return null
+function pctDisplay(pct: number | null | undefined): string {
+  if (pct === null || pct === undefined) return '—'
+  return `${Math.round(pct * 100)}%`
 }
 
-function recordVariant(w: number, l: number): boolean | null {
-  if (w > l) return true
-  if (w < l) return false
-  return null
-}
-
-export default function SportTabsSystem({ systems, userTier }: Props) {
+export default function SportTabsSystem({ systems, userTier, isAdmin = false }: Props) {
   const [activeTab, setActiveTab] = useState<Sport>('all')
 
   const isPaid = userTier === 'basic' || userTier === 'premium'
@@ -74,57 +68,60 @@ export default function SportTabsSystem({ systems, userTier }: Props) {
             <table className="trends-table">
               <thead>
                 <tr>
-                  <th>System Name</th>
+                  <th>Description</th>
                   <th>Sport</th>
-                  <th>Record</th>
-                  <th>Streak</th>
-                  <th>Status</th>
+                  <th>Line</th>
+                  <th>Season</th>
+                  <th>Type</th>
+                  <th>W-L-T</th>
+                  <th>Pct</th>
                 </tr>
               </thead>
               <tbody>
                 {visible.map(row => {
                   const locked = !isPaid && !row.is_free
+                  const inactive = !row.is_active
                   const style = SPORT_STYLE[row.sport] ?? { bg: 'rgba(255,255,255,0.05)', color: 'var(--text-muted)', label: row.sport.toUpperCase() }
-                  const sv = streakVariant(row.streak)
-                  const rv = recordVariant(row.record_wins, row.record_losses)
+                  const winning = row.w > row.l
                   return (
-                    <tr key={row.id} className={locked ? 'trends-row--locked' : ''}>
+                    <tr
+                      key={row.id}
+                      className={locked ? 'trends-row--locked' : ''}
+                      style={inactive && isAdmin ? { opacity: 0.4 } : undefined}
+                    >
                       <td>
-                        <strong>{row.name}</strong>
-                        {locked && <span className="row-lock-badge">Members Only</span>}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                          <span>{row.description || <em style={{ color: 'var(--text-muted)' }}>—</em>}</span>
+                          {locked && <span className="row-lock-badge">Members Only</span>}
+                          {inactive && isAdmin && (
+                            <span className="admin-badge admin-badge--muted" style={{ fontSize: '0.7rem' }}>Inactive</span>
+                          )}
+                        </div>
                       </td>
                       <td>
                         <span className="trend-badge" style={{ background: style.bg, color: style.color }}>
                           {style.label}
                         </span>
                       </td>
+                      <td className="text-muted">{locked ? '—' : (row.line || '—')}</td>
+                      <td className="text-muted">{locked ? '—' : (row.season || '—')}</td>
+                      <td className="text-muted">{locked ? '—' : (row.type || '—')}</td>
                       <td>
                         {locked ? (
                           <span className="text-muted">—</span>
-                        ) : rv === true ? (
-                          <span className="text-green">{row.record_wins}-{row.record_losses}</span>
-                        ) : rv === false ? (
-                          <span className="trend-badge trend-badge--loss">{row.record_wins}-{row.record_losses}</span>
+                        ) : winning ? (
+                          <span className="text-green">{row.w}-{row.l}-{row.t}</span>
+                        ) : row.w < row.l ? (
+                          <span className="trend-badge trend-badge--loss">{row.w}-{row.l}-{row.t}</span>
                         ) : (
-                          <span className="text-muted">{row.record_wins}-{row.record_losses}</span>
-                        )}
-                      </td>
-                      <td>
-                        {locked ? (
-                          <span className="text-muted">—</span>
-                        ) : sv ? (
-                          <span className={`trend-badge trend-badge--${sv}`}>{row.streak}</span>
-                        ) : (
-                          <span className="text-muted">{row.streak}</span>
+                          <span className="text-muted">{row.w}-{row.l}-{row.t}</span>
                         )}
                       </td>
                       <td>
                         {locked ? (
                           <span className="trend-locked">&#128274; Upgrade to view</span>
-                        ) : row.status_active ? (
-                          <span className="text-green">&#9679; {row.status}</span>
                         ) : (
-                          <span className="text-muted">{row.status}</span>
+                          <span className={winning ? 'text-green' : 'text-muted'}>{pctDisplay(row.pct)}</span>
                         )}
                       </td>
                     </tr>

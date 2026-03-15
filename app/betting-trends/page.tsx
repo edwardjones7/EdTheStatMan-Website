@@ -7,22 +7,20 @@ import { createAdminClient } from '@/lib/supabase/admin'
 
 export const metadata: Metadata = {
   title: 'Betting Trends – EdTheStatMan.com',
-  description: 'Team-by-team betting trends for NFL, NBA, College Football, and College Basketball. ATS records, over/under patterns, and situational edges.',
+  description: 'Betting trends for NFL, NBA, College Football, and College Basketball. Situational edges with win percentages and unit performance.',
   openGraph: {
     title: 'Betting Trends – EdTheStatMan.com',
-    description: 'Team-by-team betting trends for NFL, NBA, College Football, and College Basketball. ATS records, over/under patterns, and situational edges.',
+    description: 'Betting trends for NFL, NBA, College Football, and College Basketball. Situational edges with win percentages and unit performance.',
   },
 }
 
 export default async function BettingTrends() {
   const admin = createAdminClient()
   const supabase = await createClient()
-  const [{ data: trends }, { data: { session } }] = await Promise.all([
-    (admin as any).from('betting_trends').select('*').order('sport').order('sort_order', { ascending: true }),
-    supabase.auth.getSession(),
-  ])
+  const { data: { session } } = await supabase.auth.getSession()
 
   let userTier: string | null = null
+  let isAdmin = false
   if (session) {
     const { data: profile } = await (supabase as any)
       .from('profiles')
@@ -30,6 +28,7 @@ export default async function BettingTrends() {
       .eq('id', session.user.id)
       .single()
     if ((profile as any)?.is_admin) {
+      isAdmin = true
       userTier = 'premium'
     } else {
       userTier = (profile as any)?.subscription_tier ?? 'free'
@@ -39,6 +38,12 @@ export default async function BettingTrends() {
     }
   }
 
+  const trendsQuery = isAdmin
+    ? (admin as any).from('betting_trends').select('*').order('sport').order('sort_order', { ascending: true })
+    : (admin as any).from('betting_trends').select('*').eq('is_active', true).order('sport').order('sort_order', { ascending: true })
+
+  const { data: trends } = await trendsQuery
+
   const isPaid = userTier === 'basic' || userTier === 'premium'
 
   return (
@@ -46,9 +51,9 @@ export default async function BettingTrends() {
       <header className="page-header">
         <div className="container">
           <div className="reveal">
-            <span className="section-label">Team-by-Team Analysis</span>
+            <span className="section-label">Situational Analysis</span>
             <h1 className="page-header__title">Betting Trends</h1>
-            <p className="page-header__subtitle">ATS records, over/under patterns, home/away splits, and situational trends for every team across NFL, College Football, NBA, and College Basketball.</p>
+            <p className="page-header__subtitle">Situational betting trends across NFL, College Football, NBA, and College Basketball. Win percentages, unit performance, and proven edges.</p>
           </div>
         </div>
       </header>
@@ -57,10 +62,10 @@ export default async function BettingTrends() {
         <div className="container">
           <div className="reveal">
             <span className="section-label">Explore Trends</span>
-            <h2 className="section-title">Team Betting Trends</h2>
-            <p className="section-subtitle">Filter by sport and search for teams to discover ATS and O/U patterns.</p>
+            <h2 className="section-title">Betting Trends</h2>
+            <p className="section-subtitle">Filter by sport to discover situational edges and patterns.</p>
           </div>
-          <TrendsFilter trends={(trends ?? []) as any[]} userTier={userTier} />
+          <TrendsFilter trends={(trends ?? []) as any[]} userTier={userTier} isAdmin={isAdmin} />
         </div>
       </section>
 
@@ -69,7 +74,7 @@ export default async function BettingTrends() {
           <div className="container">
             <div className="reveal" style={{ textAlign: 'center' }}>
               <span className="section-label">Unlock Full Access</span>
-              <h2 className="section-title">Get All <span className="text-gradient">15+ Trends</span> Per Team</h2>
+              <h2 className="section-title">Get All <span className="text-gradient">Trends</span></h2>
               <p className="section-subtitle" style={{ margin: '0 auto' }}>
                 Members get unlimited access to every trend: situational splits, rest patterns, conference play, and more.
               </p>

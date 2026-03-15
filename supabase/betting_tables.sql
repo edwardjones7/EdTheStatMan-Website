@@ -7,13 +7,17 @@ drop table if exists public.betting_systems cascade;
 create table public.betting_systems (
   id uuid primary key default gen_random_uuid(),
   sport text not null check (sport in ('nfl', 'cfb', 'nba', 'cbb')),
-  name text not null,
-  record_wins int not null default 0,
-  record_losses int not null default 0,
-  streak text not null default '—',
-  status text not null default 'Active',
-  status_active boolean not null default true,
+  description text not null default '',
+  line text not null default '',
+  season text not null default '',
+  pct numeric,
+  units numeric,
+  type text not null default '',
+  w int not null default 0,
+  l int not null default 0,
+  t int not null default 0,
   is_free boolean not null default false,
+  is_active boolean not null default true,
   sort_order int not null default 0,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -22,17 +26,17 @@ create table public.betting_systems (
 create table public.betting_trends (
   id uuid primary key default gen_random_uuid(),
   sport text not null check (sport in ('nfl', 'cfb', 'nba', 'cbb')),
-  team text not null,
-  ats_wins int not null default 0,
-  ats_losses int not null default 0,
-  ou_wins int not null default 0,
-  ou_losses int not null default 0,
-  home_ats_wins int not null default 0,
-  home_ats_losses int not null default 0,
-  away_ats_wins int not null default 0,
-  away_ats_losses int not null default 0,
-  free_tags jsonb not null default '[]',
-  paid_tag jsonb,
+  description text not null default '',
+  line text not null default '',
+  season text not null default '',
+  pct numeric,
+  units numeric,
+  type text not null default '',
+  w int not null default 0,
+  l int not null default 0,
+  t int not null default 0,
+  is_free boolean not null default false,
+  is_active boolean not null default true,
   sort_order int not null default 0,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -65,3 +69,5 @@ create policy "Admins can manage betting trends"
 
 create index betting_systems_sport_idx on public.betting_systems(sport, sort_order);
 create index betting_trends_sport_idx on public.betting_trends(sport, sort_order);
+create index betting_systems_active_idx on public.betting_systems(is_active);
+create index betting_trends_active_idx on public.betting_trends(is_active);

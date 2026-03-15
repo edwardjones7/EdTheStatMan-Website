@@ -6,13 +6,17 @@ import { useRouter } from 'next/navigation'
 export interface BettingSystem {
   id: string
   sport: string
-  name: string
-  record_wins: number
-  record_losses: number
-  streak: string
-  status: string
-  status_active: boolean
+  description: string
+  line: string
+  season: string
+  pct: number | null
+  units: number | null
+  type: string
+  w: number
+  l: number
+  t: number
   is_free: boolean
+  is_active: boolean
   sort_order: number
 }
 
@@ -20,14 +24,18 @@ const SPORTS = ['nba', 'cbb', 'nfl', 'cfb'] as const
 const SPORT_LABELS: Record<string, string> = { nba: 'NBA', cbb: 'CBB', nfl: 'NFL', cfb: 'CFB' }
 
 const BLANK = {
-  sport: 'nba',
-  name: '',
-  record_wins: 0,
-  record_losses: 0,
-  streak: '—',
-  status: 'Active',
-  status_active: true,
+  sport: 'cbb',
+  description: '',
+  line: '',
+  season: '',
+  pct: '' as number | null | string,
+  units: '' as number | null | string,
+  type: '',
+  w: 0,
+  l: 0,
+  t: 0,
   is_free: false,
+  is_active: true,
   sort_order: 0,
 }
 
@@ -37,7 +45,9 @@ export default function AdminSystemsTab({ systems }: { systems: BettingSystem[] 
   const [editId, setEditId] = useState<string | null>(null)
   const [form, setForm] = useState({ ...BLANK })
   const [saving, setSaving] = useState(false)
+  const [toggling, setToggling] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [sportFilter, setSportFilter] = useState('all')
 
   function openAdd() {
     setForm({ ...BLANK })
@@ -49,13 +59,17 @@ export default function AdminSystemsTab({ systems }: { systems: BettingSystem[] 
   function openEdit(s: BettingSystem) {
     setForm({
       sport: s.sport,
-      name: s.name,
-      record_wins: s.record_wins,
-      record_losses: s.record_losses,
-      streak: s.streak,
-      status: s.status,
-      status_active: s.status_active,
+      description: s.description,
+      line: s.line,
+      season: s.season,
+      pct: s.pct,
+      units: s.units,
+      type: s.type,
+      w: s.w,
+      l: s.l,
+      t: s.t,
       is_free: s.is_free,
+      is_active: s.is_active,
       sort_order: s.sort_order,
     })
     setEditId(s.id)
@@ -74,16 +88,22 @@ export default function AdminSystemsTab({ systems }: { systems: BettingSystem[] 
   }
 
   async function save() {
-    if (!form.name.trim()) { setError('Name is required.'); return }
+    if (!form.description.trim()) { setError('Description is required.'); return }
     setSaving(true)
     setError(null)
+
+    const payload = {
+      ...form,
+      pct: form.pct === '' || form.pct === null ? null : Number(form.pct),
+      units: form.units === '' || form.units === null ? null : Number(form.units),
+    }
 
     const res = await fetch(
       mode === 'edit' ? `/api/admin/systems/${editId}` : '/api/admin/systems',
       {
         method: mode === 'edit' ? 'PATCH' : 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify(payload),
       }
     )
     const data = await res.json()
@@ -93,21 +113,45 @@ export default function AdminSystemsTab({ systems }: { systems: BettingSystem[] 
     router.refresh()
   }
 
-  async function del(id: string, name: string) {
-    if (!confirm(`Delete "${name}"? This cannot be undone.`)) return
+  async function toggleActive(s: BettingSystem) {
+    setToggling(s.id)
+    await fetch(`/api/admin/systems/${s.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ is_active: !s.is_active }),
+    })
+    setToggling(null)
+    router.refresh()
+  }
+
+  async function del(id: string, description: string) {
+    if (!confirm(`Delete "${description}"? This cannot be undone.`)) return
     const res = await fetch(`/api/admin/systems/${id}`, { method: 'DELETE' })
     if (!res.ok) { alert('Delete failed.'); return }
     router.refresh()
   }
 
+  const filtered = sportFilter === 'all' ? systems : systems.filter(s => s.sport === sportFilter)
+
   return (
     <div className="admin-section">
       <div className="admin-section__toolbar">
-        <span className="admin-count">{systems.length} betting system{systems.length !== 1 ? 's' : ''}</span>
+        <div className="admin-filters">
+          {['all', ...SPORTS].map(s => (
+            <button
+              key={s}
+              className={`admin-filter-btn ${sportFilter === s ? 'admin-filter-btn--active' : ''}`}
+              onClick={() => setSportFilter(s)}
+            >
+              {s === 'all' ? 'All' : SPORT_LABELS[s]}
+            </button>
+          ))}
+        </div>
         <button className="btn btn--primary btn--sm" onClick={openAdd} disabled={mode !== 'hidden'}>
           + Add System
         </button>
       </div>
+      <span className="admin-count">{filtered.length} system{filtered.length !== 1 ? 's' : ''}</span>
 
       {/* Form */}
       {mode !== 'hidden' && (
@@ -124,28 +168,48 @@ export default function AdminSystemsTab({ systems }: { systems: BettingSystem[] 
             </div>
 
             <div className="admin-form-field admin-form-field--wide">
-              <label className="admin-form-label">System Name</label>
-              <input className="admin-form-input" value={form.name} onChange={e => set('name', e.target.value)} placeholder="e.g. NBA Betting Systems" />
+              <label className="admin-form-label">Description / Rule</label>
+              <textarea className="admin-form-input" rows={2} value={form.description} onChange={e => set('description', e.target.value)} placeholder="e.g. Teams off 2+ days rest vs teams on back-to-back" />
             </div>
 
             <div className="admin-form-field">
-              <label className="admin-form-label">Record (W)</label>
-              <input className="admin-form-input" type="number" min={0} value={form.record_wins} onChange={e => set('record_wins', +e.target.value)} />
+              <label className="admin-form-label">Line</label>
+              <input className="admin-form-input" value={form.line} onChange={e => set('line', e.target.value)} placeholder="e.g. ATS, O/U, ML" />
             </div>
 
             <div className="admin-form-field">
-              <label className="admin-form-label">Record (L)</label>
-              <input className="admin-form-input" type="number" min={0} value={form.record_losses} onChange={e => set('record_losses', +e.target.value)} />
+              <label className="admin-form-label">Season</label>
+              <input className="admin-form-input" value={form.season} onChange={e => set('season', e.target.value)} placeholder="e.g. 2023-24" />
             </div>
 
             <div className="admin-form-field">
-              <label className="admin-form-label">Streak</label>
-              <input className="admin-form-input" value={form.streak} onChange={e => set('streak', e.target.value)} placeholder="W2 / L1 / —" />
+              <label className="admin-form-label">Type</label>
+              <input className="admin-form-input" value={form.type} onChange={e => set('type', e.target.value)} placeholder="e.g. Situational, Trend" />
             </div>
 
-            <div className="admin-form-field admin-form-field--wide">
-              <label className="admin-form-label">Status Text</label>
-              <input className="admin-form-input" value={form.status} onChange={e => set('status', e.target.value)} placeholder="Active — Daily Posts" />
+            <div className="admin-form-field">
+              <label className="admin-form-label">W</label>
+              <input className="admin-form-input" type="number" min={0} value={form.w} onChange={e => set('w', +e.target.value)} />
+            </div>
+
+            <div className="admin-form-field">
+              <label className="admin-form-label">L</label>
+              <input className="admin-form-input" type="number" min={0} value={form.l} onChange={e => set('l', +e.target.value)} />
+            </div>
+
+            <div className="admin-form-field">
+              <label className="admin-form-label">T</label>
+              <input className="admin-form-input" type="number" min={0} value={form.t} onChange={e => set('t', +e.target.value)} />
+            </div>
+
+            <div className="admin-form-field">
+              <label className="admin-form-label">Pct (e.g. 0.65)</label>
+              <input className="admin-form-input" type="number" step="0.01" min={0} max={1} value={form.pct ?? ''} onChange={e => set('pct', e.target.value)} placeholder="0.65" />
+            </div>
+
+            <div className="admin-form-field">
+              <label className="admin-form-label">Units</label>
+              <input className="admin-form-input" type="number" step="0.1" value={form.units ?? ''} onChange={e => set('units', e.target.value)} placeholder="12.5" />
             </div>
 
             <div className="admin-form-field">
@@ -155,12 +219,12 @@ export default function AdminSystemsTab({ systems }: { systems: BettingSystem[] 
 
             <div className="admin-form-field admin-form-field--checks">
               <label className="admin-form-check">
-                <input type="checkbox" checked={form.status_active} onChange={e => set('status_active', e.target.checked)} />
-                <span>Active status (green dot)</span>
-              </label>
-              <label className="admin-form-check">
                 <input type="checkbox" checked={form.is_free} onChange={e => set('is_free', e.target.checked)} />
                 <span>Free tier access</span>
+              </label>
+              <label className="admin-form-check">
+                <input type="checkbox" checked={form.is_active} onChange={e => set('is_active', e.target.checked)} />
+                <span>Active (visible on public page)</span>
               </label>
             </div>
           </div>
@@ -175,45 +239,57 @@ export default function AdminSystemsTab({ systems }: { systems: BettingSystem[] 
       )}
 
       {/* Table */}
-      {systems.length === 0 ? (
+      {filtered.length === 0 ? (
         <div className="admin-empty-state">
-          <p>No betting systems yet. Add your first one above.</p>
+          <p>{systems.length === 0 ? 'No betting systems yet. Add your first one above.' : 'No systems in this sport.'}</p>
         </div>
       ) : (
         <div className="admin-table-wrap">
           <table className="admin-table">
             <thead>
               <tr>
-                <th>Name</th>
+                <th>Description</th>
                 <th>Sport</th>
-                <th>Record</th>
-                <th>Streak</th>
-                <th>Status</th>
-                <th>Free</th>
+                <th>W-L-T</th>
+                <th>Pct</th>
+                <th>Type</th>
+                <th>Access</th>
+                <th>Visible</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {systems.map(s => (
-                <tr key={s.id}>
-                  <td><div className="admin-post-title">{s.name}</div></td>
-                  <td><span className="admin-tag">{SPORT_LABELS[s.sport] ?? s.sport}</span></td>
-                  <td className="admin-muted">{s.record_wins}-{s.record_losses}</td>
-                  <td className="admin-muted">{s.streak}</td>
+              {filtered.map(s => (
+                <tr key={s.id} style={!s.is_active ? { opacity: 0.5 } : undefined}>
                   <td>
-                    <span className={`admin-badge ${s.status_active ? 'admin-badge--green' : 'admin-badge--muted'}`}>
-                      {s.status_active ? 'Active' : 'Ended'}
-                    </span>
+                    <div className="admin-post-title" style={{ maxWidth: '320px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {s.description || <em className="admin-muted">—</em>}
+                    </div>
                   </td>
+                  <td><span className="admin-tag">{SPORT_LABELS[s.sport] ?? s.sport}</span></td>
+                  <td className="admin-muted">{s.w}-{s.l}-{s.t}</td>
+                  <td className="admin-muted">{s.pct !== null && s.pct !== undefined ? `${Math.round(s.pct * 100)}%` : '—'}</td>
+                  <td className="admin-muted">{s.type || '—'}</td>
                   <td>
                     <span className={`admin-badge ${s.is_free ? 'admin-badge--blue' : 'admin-badge--purple'}`}>
                       {s.is_free ? 'Free' : 'Members'}
                     </span>
                   </td>
                   <td>
+                    <button
+                      className={`admin-badge ${s.is_active ? 'admin-badge--green' : 'admin-badge--muted'}`}
+                      style={{ cursor: 'pointer', border: 'none', background: 'none', padding: 0 }}
+                      onClick={() => toggleActive(s)}
+                      disabled={toggling === s.id}
+                      title={s.is_active ? 'Click to deactivate' : 'Click to activate'}
+                    >
+                      {toggling === s.id ? '…' : s.is_active ? 'Active' : 'Inactive'}
+                    </button>
+                  </td>
+                  <td>
                     <div className="admin-actions">
                       <button className="admin-action-btn" onClick={() => openEdit(s)}>Edit</button>
-                      <button className="admin-action-btn admin-action-btn--danger" onClick={() => del(s.id, s.name)}>Delete</button>
+                      <button className="admin-action-btn admin-action-btn--danger" onClick={() => del(s.id, s.description)}>Delete</button>
                     </div>
                   </td>
                 </tr>

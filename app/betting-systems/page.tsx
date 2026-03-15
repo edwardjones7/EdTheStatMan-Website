@@ -17,12 +17,10 @@ export const metadata: Metadata = {
 export default async function BettingSystems() {
   const admin = createAdminClient()
   const supabase = await createClient()
-  const [{ data: systems }, { data: { session } }] = await Promise.all([
-    (admin as any).from('betting_systems').select('*').order('sort_order', { ascending: true }),
-    supabase.auth.getSession(),
-  ])
+  const { data: { session } } = await supabase.auth.getSession()
 
   let userTier: string | null = null
+  let isAdmin = false
   if (session) {
     const { data: profile } = await (supabase as any)
       .from('profiles')
@@ -30,6 +28,7 @@ export default async function BettingSystems() {
       .eq('id', session.user.id)
       .single()
     if ((profile as any)?.is_admin) {
+      isAdmin = true
       userTier = 'premium'
     } else {
       userTier = (profile as any)?.subscription_tier ?? 'free'
@@ -38,6 +37,12 @@ export default async function BettingSystems() {
       }
     }
   }
+
+  const systemsQuery = isAdmin
+    ? (admin as any).from('betting_systems').select('*').order('sort_order', { ascending: true })
+    : (admin as any).from('betting_systems').select('*').eq('is_active', true).order('sort_order', { ascending: true })
+
+  const { data: systems } = await systemsQuery
 
   const isPaid = userTier === 'basic' || userTier === 'premium'
 
@@ -111,9 +116,9 @@ export default async function BettingSystems() {
           <div className="reveal">
             <span className="section-label">Active Systems</span>
             <h2 className="section-title">Current Betting Systems</h2>
-            <p className="section-subtitle">Filter by sport to view system records, streaks, and status.</p>
+            <p className="section-subtitle">Filter by sport to view system records, win percentages, and more.</p>
           </div>
-          <SportTabsSystem systems={(systems ?? []) as any[]} userTier={userTier} />
+          <SportTabsSystem systems={(systems ?? []) as any[]} userTier={userTier} isAdmin={isAdmin} />
         </div>
       </section>
 

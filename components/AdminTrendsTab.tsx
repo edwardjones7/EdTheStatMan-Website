@@ -6,36 +6,36 @@ import { useRouter } from 'next/navigation'
 export interface BettingTrend {
   id: string
   sport: string
-  team: string
-  ats_wins: number
-  ats_losses: number
-  ou_wins: number
-  ou_losses: number
-  home_ats_wins: number
-  home_ats_losses: number
-  away_ats_wins: number
-  away_ats_losses: number
-  free_tags: Array<{ label: string; variant: 'win' | 'loss' | 'neutral' }>
-  paid_tag: { label: string; variant: 'win' | 'loss' | 'neutral' } | null
+  description: string
+  line: string
+  season: string
+  pct: number | null
+  units: number | null
+  type: string
+  w: number
+  l: number
+  t: number
+  is_free: boolean
+  is_active: boolean
   sort_order: number
 }
 
 const SPORTS = ['nba', 'cbb', 'nfl', 'cfb'] as const
 const SPORT_LABELS: Record<string, string> = { nba: 'NBA', cbb: 'CBB', nfl: 'NFL', cfb: 'CFB' }
-const VARIANTS = ['win', 'loss', 'neutral'] as const
 
-type Tag = { label: string; variant: 'win' | 'loss' | 'neutral' }
-
-const BLANK_TAG: Tag = { label: '', variant: 'win' }
-const BLANK_FORM = {
-  sport: 'nba',
-  team: '',
-  ats_wins: 0, ats_losses: 0,
-  ou_wins: 0, ou_losses: 0,
-  home_ats_wins: 0, home_ats_losses: 0,
-  away_ats_wins: 0, away_ats_losses: 0,
-  free_tags: [{ ...BLANK_TAG }, { ...BLANK_TAG }, { ...BLANK_TAG }] as Tag[],
-  paid_tag: { ...BLANK_TAG } as Tag,
+const BLANK = {
+  sport: 'cbb',
+  description: '',
+  line: '',
+  season: '',
+  pct: '' as number | null | string,
+  units: '' as number | null | string,
+  type: '',
+  w: 0,
+  l: 0,
+  t: 0,
+  is_free: false,
+  is_active: true,
   sort_order: 0,
 }
 
@@ -43,30 +43,33 @@ export default function AdminTrendsTab({ trends }: { trends: BettingTrend[] }) {
   const router = useRouter()
   const [mode, setMode] = useState<'hidden' | 'add' | 'edit'>('hidden')
   const [editId, setEditId] = useState<string | null>(null)
-  const [form, setForm] = useState({ ...BLANK_FORM, free_tags: BLANK_FORM.free_tags.map(t => ({ ...t })), paid_tag: { ...BLANK_FORM.paid_tag } })
+  const [form, setForm] = useState({ ...BLANK })
   const [saving, setSaving] = useState(false)
+  const [toggling, setToggling] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [sportFilter, setSportFilter] = useState('all')
 
   function openAdd() {
-    setForm({ ...BLANK_FORM, free_tags: BLANK_FORM.free_tags.map(t => ({ ...t })), paid_tag: { ...BLANK_FORM.paid_tag } })
+    setForm({ ...BLANK })
     setEditId(null)
     setMode('add')
     setError(null)
   }
 
   function openEdit(t: BettingTrend) {
-    const freeTags = [...t.free_tags]
-    while (freeTags.length < 3) freeTags.push({ ...BLANK_TAG })
     setForm({
       sport: t.sport,
-      team: t.team,
-      ats_wins: t.ats_wins, ats_losses: t.ats_losses,
-      ou_wins: t.ou_wins, ou_losses: t.ou_losses,
-      home_ats_wins: t.home_ats_wins, home_ats_losses: t.home_ats_losses,
-      away_ats_wins: t.away_ats_wins, away_ats_losses: t.away_ats_losses,
-      free_tags: freeTags as Tag[],
-      paid_tag: t.paid_tag ?? { ...BLANK_TAG },
+      description: t.description,
+      line: t.line,
+      season: t.season,
+      pct: t.pct,
+      units: t.units,
+      type: t.type,
+      w: t.w,
+      l: t.l,
+      t: t.t,
+      is_free: t.is_free,
+      is_active: t.is_active,
       sort_order: t.sort_order,
     })
     setEditId(t.id)
@@ -77,26 +80,15 @@ export default function AdminTrendsTab({ trends }: { trends: BettingTrend[] }) {
   function cancel() { setMode('hidden'); setEditId(null); setError(null) }
   function set(field: string, value: unknown) { setForm(f => ({ ...f, [field]: value })) }
 
-  function setFreeTag(i: number, field: 'label' | 'variant', value: string) {
-    setForm(f => {
-      const tags = f.free_tags.map((t, idx) => idx === i ? { ...t, [field]: value } : t)
-      return { ...f, free_tags: tags }
-    })
-  }
-
-  function setPaidTag(field: 'label' | 'variant', value: string) {
-    setForm(f => ({ ...f, paid_tag: { ...f.paid_tag, [field]: value } as Tag }))
-  }
-
   async function save() {
-    if (!form.team.trim()) { setError('Team name is required.'); return }
+    if (!form.description.trim()) { setError('Description is required.'); return }
     setSaving(true)
     setError(null)
 
     const payload = {
       ...form,
-      free_tags: form.free_tags.filter(t => t.label.trim()),
-      paid_tag: form.paid_tag.label.trim() ? form.paid_tag : null,
+      pct: form.pct === '' || form.pct === null ? null : Number(form.pct),
+      units: form.units === '' || form.units === null ? null : Number(form.units),
     }
 
     const res = await fetch(
@@ -114,8 +106,19 @@ export default function AdminTrendsTab({ trends }: { trends: BettingTrend[] }) {
     router.refresh()
   }
 
-  async function del(id: string, team: string) {
-    if (!confirm(`Delete "${team}"? This cannot be undone.`)) return
+  async function toggleActive(t: BettingTrend) {
+    setToggling(t.id)
+    await fetch(`/api/admin/trends/${t.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ is_active: !t.is_active }),
+    })
+    setToggling(null)
+    router.refresh()
+  }
+
+  async function del(id: string, description: string) {
+    if (!confirm(`Delete "${description}"? This cannot be undone.`)) return
     const res = await fetch(`/api/admin/trends/${id}`, { method: 'DELETE' })
     if (!res.ok) { alert('Delete failed.'); return }
     router.refresh()
@@ -141,12 +144,12 @@ export default function AdminTrendsTab({ trends }: { trends: BettingTrend[] }) {
           + Add Trend
         </button>
       </div>
-      <p className="admin-count">{filtered.length} team{filtered.length !== 1 ? 's' : ''}</p>
+      <span className="admin-count">{filtered.length} trend{filtered.length !== 1 ? 's' : ''}</span>
 
       {/* Form */}
       {mode !== 'hidden' && (
         <div className="admin-inline-form">
-          <div className="admin-inline-form__title">{mode === 'add' ? 'New Team Trend' : 'Edit Team Trend'}</div>
+          <div className="admin-inline-form__title">{mode === 'add' ? 'New Betting Trend' : 'Edit Betting Trend'}</div>
           {error && <div className="admin-inline-form__error">{error}</div>}
 
           <div className="admin-form-grid">
@@ -158,74 +161,64 @@ export default function AdminTrendsTab({ trends }: { trends: BettingTrend[] }) {
             </div>
 
             <div className="admin-form-field admin-form-field--wide">
-              <label className="admin-form-label">Team Name</label>
-              <input className="admin-form-input" value={form.team} onChange={e => set('team', e.target.value)} placeholder="e.g. Boston Celtics" />
+              <label className="admin-form-label">Description / Rule</label>
+              <textarea className="admin-form-input" rows={2} value={form.description} onChange={e => set('description', e.target.value)} placeholder="e.g. Teams off 2+ days rest vs teams on back-to-back" />
+            </div>
+
+            <div className="admin-form-field">
+              <label className="admin-form-label">Line</label>
+              <input className="admin-form-input" value={form.line} onChange={e => set('line', e.target.value)} placeholder="e.g. ATS, O/U, ML" />
+            </div>
+
+            <div className="admin-form-field">
+              <label className="admin-form-label">Season</label>
+              <input className="admin-form-input" value={form.season} onChange={e => set('season', e.target.value)} placeholder="e.g. 2023-24" />
+            </div>
+
+            <div className="admin-form-field">
+              <label className="admin-form-label">Type</label>
+              <input className="admin-form-input" value={form.type} onChange={e => set('type', e.target.value)} placeholder="e.g. Situational, Trend" />
+            </div>
+
+            <div className="admin-form-field">
+              <label className="admin-form-label">W</label>
+              <input className="admin-form-input" type="number" min={0} value={form.w} onChange={e => set('w', +e.target.value)} />
+            </div>
+
+            <div className="admin-form-field">
+              <label className="admin-form-label">L</label>
+              <input className="admin-form-input" type="number" min={0} value={form.l} onChange={e => set('l', +e.target.value)} />
+            </div>
+
+            <div className="admin-form-field">
+              <label className="admin-form-label">T</label>
+              <input className="admin-form-input" type="number" min={0} value={form.t} onChange={e => set('t', +e.target.value)} />
+            </div>
+
+            <div className="admin-form-field">
+              <label className="admin-form-label">Pct (e.g. 0.65)</label>
+              <input className="admin-form-input" type="number" step="0.01" min={0} max={1} value={form.pct ?? ''} onChange={e => set('pct', e.target.value)} placeholder="0.65" />
+            </div>
+
+            <div className="admin-form-field">
+              <label className="admin-form-label">Units</label>
+              <input className="admin-form-input" type="number" step="0.1" value={form.units ?? ''} onChange={e => set('units', e.target.value)} placeholder="12.5" />
             </div>
 
             <div className="admin-form-field">
               <label className="admin-form-label">Sort Order</label>
               <input className="admin-form-input" type="number" value={form.sort_order} onChange={e => set('sort_order', +e.target.value)} />
             </div>
-          </div>
 
-          {/* Records */}
-          <div className="admin-form-section-label">Records</div>
-          <div className="admin-form-grid">
-            {([
-              ['ATS', 'ats_wins', 'ats_losses'],
-              ['O/U', 'ou_wins', 'ou_losses'],
-              ['Home ATS', 'home_ats_wins', 'home_ats_losses'],
-              ['Away ATS', 'away_ats_wins', 'away_ats_losses'],
-            ] as [string, keyof typeof form, keyof typeof form][]).map(([label, wKey, lKey]) => (
-              <div key={label} className="admin-form-field">
-                <label className="admin-form-label">{label}</label>
-                <div className="admin-form-record">
-                  <input className="admin-form-input" type="number" min={0} value={form[wKey] as number} onChange={e => set(wKey, +e.target.value)} placeholder="W" />
-                  <span className="admin-form-record__sep">–</span>
-                  <input className="admin-form-input" type="number" min={0} value={form[lKey] as number} onChange={e => set(lKey, +e.target.value)} placeholder="L" />
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Tags */}
-          <div className="admin-form-section-label">Free Trend Tags (up to 3)</div>
-          {form.free_tags.map((tag, i) => (
-            <div key={i} className="admin-form-grid admin-form-tag-row">
-              <div className="admin-form-field admin-form-field--wide">
-                <label className="admin-form-label">Tag {i + 1} Label</label>
-                <input
-                  className="admin-form-input"
-                  value={tag.label}
-                  onChange={e => setFreeTag(i, 'label', e.target.value)}
-                  placeholder="e.g. 8-2 ATS L10"
-                />
-              </div>
-              <div className="admin-form-field">
-                <label className="admin-form-label">Variant</label>
-                <select className="admin-form-select" value={tag.variant} onChange={e => setFreeTag(i, 'variant', e.target.value)}>
-                  {VARIANTS.map(v => <option key={v} value={v}>{v}</option>)}
-                </select>
-              </div>
-            </div>
-          ))}
-
-          <div className="admin-form-section-label">Members-Only Tag</div>
-          <div className="admin-form-grid admin-form-tag-row">
-            <div className="admin-form-field admin-form-field--wide">
-              <label className="admin-form-label">Paid Tag Label</label>
-              <input
-                className="admin-form-input"
-                value={form.paid_tag.label}
-                onChange={e => setPaidTag('label', e.target.value)}
-                placeholder="e.g. 7-1 back-to-back"
-              />
-            </div>
-            <div className="admin-form-field">
-              <label className="admin-form-label">Variant</label>
-              <select className="admin-form-select" value={form.paid_tag.variant} onChange={e => setPaidTag('variant', e.target.value)}>
-                {VARIANTS.map(v => <option key={v} value={v}>{v}</option>)}
-              </select>
+            <div className="admin-form-field admin-form-field--checks">
+              <label className="admin-form-check">
+                <input type="checkbox" checked={form.is_free} onChange={e => set('is_free', e.target.checked)} />
+                <span>Free tier access</span>
+              </label>
+              <label className="admin-form-check">
+                <input type="checkbox" checked={form.is_active} onChange={e => set('is_active', e.target.checked)} />
+                <span>Active (visible on public page)</span>
+              </label>
             </div>
           </div>
 
@@ -241,37 +234,55 @@ export default function AdminTrendsTab({ trends }: { trends: BettingTrend[] }) {
       {/* Table */}
       {filtered.length === 0 ? (
         <div className="admin-empty-state">
-          <p>{trends.length === 0 ? 'No trends yet. Add your first team above.' : 'No teams in this sport.'}</p>
+          <p>{trends.length === 0 ? 'No trends yet. Add your first one above.' : 'No trends in this sport.'}</p>
         </div>
       ) : (
         <div className="admin-table-wrap">
           <table className="admin-table">
             <thead>
               <tr>
-                <th>Team</th>
+                <th>Description</th>
                 <th>Sport</th>
-                <th>ATS</th>
-                <th>O/U</th>
-                <th>Home</th>
-                <th>Away</th>
-                <th>Tags</th>
+                <th>W-L-T</th>
+                <th>Pct</th>
+                <th>Type</th>
+                <th>Access</th>
+                <th>Visible</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               {filtered.map(t => (
-                <tr key={t.id}>
-                  <td><div className="admin-post-title">{t.team}</div></td>
+                <tr key={t.id} style={!t.is_active ? { opacity: 0.5 } : undefined}>
+                  <td>
+                    <div className="admin-post-title" style={{ maxWidth: '320px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {t.description || <em className="admin-muted">—</em>}
+                    </div>
+                  </td>
                   <td><span className="admin-tag">{SPORT_LABELS[t.sport] ?? t.sport}</span></td>
-                  <td className="admin-muted">{t.ats_wins}-{t.ats_losses}</td>
-                  <td className="admin-muted">{t.ou_wins}-{t.ou_losses}</td>
-                  <td className="admin-muted">{t.home_ats_wins}-{t.home_ats_losses}</td>
-                  <td className="admin-muted">{t.away_ats_wins}-{t.away_ats_losses}</td>
-                  <td className="admin-muted">{t.free_tags.length} free{t.paid_tag ? ' + 1 paid' : ''}</td>
+                  <td className="admin-muted">{t.w}-{t.l}-{t.t}</td>
+                  <td className="admin-muted">{t.pct !== null && t.pct !== undefined ? `${Math.round(t.pct * 100)}%` : '—'}</td>
+                  <td className="admin-muted">{t.type || '—'}</td>
+                  <td>
+                    <span className={`admin-badge ${t.is_free ? 'admin-badge--blue' : 'admin-badge--purple'}`}>
+                      {t.is_free ? 'Free' : 'Members'}
+                    </span>
+                  </td>
+                  <td>
+                    <button
+                      className={`admin-badge ${t.is_active ? 'admin-badge--green' : 'admin-badge--muted'}`}
+                      style={{ cursor: 'pointer', border: 'none', background: 'none', padding: 0 }}
+                      onClick={() => toggleActive(t)}
+                      disabled={toggling === t.id}
+                      title={t.is_active ? 'Click to deactivate' : 'Click to activate'}
+                    >
+                      {toggling === t.id ? '…' : t.is_active ? 'Active' : 'Inactive'}
+                    </button>
+                  </td>
                   <td>
                     <div className="admin-actions">
                       <button className="admin-action-btn" onClick={() => openEdit(t)}>Edit</button>
-                      <button className="admin-action-btn admin-action-btn--danger" onClick={() => del(t.id, t.team)}>Delete</button>
+                      <button className="admin-action-btn admin-action-btn--danger" onClick={() => del(t.id, t.description)}>Delete</button>
                     </div>
                   </td>
                 </tr>

@@ -4,49 +4,41 @@ import { useState } from 'react'
 import Link from 'next/link'
 import type { BettingTrend } from './AdminTrendsTab'
 
-type Sport = 'nfl' | 'cfb' | 'nba' | 'cbb'
+type Sport = 'all' | 'nfl' | 'cfb' | 'nba' | 'cbb'
 
 interface Props {
   trends: BettingTrend[]
   userTier: string | null
+  isAdmin?: boolean
 }
 
 const TABS: { label: string; value: Sport }[] = [
+  { label: 'All Sports', value: 'all' },
   { label: 'NFL', value: 'nfl' },
   { label: 'College Football', value: 'cfb' },
   { label: 'NBA', value: 'nba' },
   { label: 'College Basketball', value: 'cbb' },
 ]
 
-type TagVariant = 'win' | 'loss' | 'neutral'
-
-function Badge({ label, variant }: { label: string; variant: TagVariant }) {
-  if (variant === 'neutral') return <span className="text-muted">{label}</span>
-  return <span className={`trend-badge trend-badge--${variant}`}>{label}</span>
+const SPORT_STYLE: Record<string, { bg: string; color: string; label: string }> = {
+  nba: { bg: 'rgba(245, 158, 11, 0.1)', color: 'var(--accent-gold)', label: 'NBA' },
+  cbb: { bg: 'rgba(52, 211, 153, 0.1)', color: 'var(--accent-cyan)', label: 'CBB' },
+  nfl: { bg: 'rgba(56, 189, 248, 0.1)', color: '#38bdf8', label: 'NFL' },
+  cfb: { bg: 'rgba(124, 58, 237, 0.1)', color: 'var(--accent-purple)', label: 'CFB' },
 }
 
-function AtsCell({ w, l }: { w: number; l: number }) {
-  const rec = `${w}-${l}`
-  if (w > l) return <span className="trend-badge trend-badge--win">{rec}</span>
-  if (w < l) return <span className="trend-badge trend-badge--loss">{rec}</span>
-  return <span className="text-muted">{rec}</span>
+function pctDisplay(pct: number | null | undefined): string {
+  if (pct === null || pct === undefined) return '—'
+  return `${Math.round(pct * 100)}%`
 }
 
-export default function TrendsFilter({ trends, userTier }: Props) {
-  const [activeTab, setActiveTab] = useState<Sport>('nba')
-  const [search, setSearch] = useState('')
+export default function TrendsFilter({ trends, userTier, isAdmin = false }: Props) {
+  const [activeTab, setActiveTab] = useState<Sport>('all')
 
   const isPaid = userTier === 'basic' || userTier === 'premium'
   const isLoggedOut = userTier === null
 
-  // Default tab to first sport that has data
-  const availableSports = TABS.map(t => t.value).filter(s => trends.some(t => t.sport === s))
-
-  const visible = trends.filter(row => {
-    const sportMatch = row.sport === activeTab
-    const searchMatch = !search || row.team.toLowerCase().includes(search.toLowerCase())
-    return sportMatch && searchMatch
-  })
+  const visible = trends.filter(row => activeTab === 'all' || row.sport === activeTab)
 
   if (trends.length === 0) {
     return (
@@ -62,7 +54,7 @@ export default function TrendsFilter({ trends, userTier }: Props) {
         {TABS.map(tab => (
           <button
             key={tab.value}
-            className={`sport-tab${activeTab === tab.value ? ' active' : ''}${!availableSports.includes(tab.value) ? ' sport-tab--empty' : ''}`}
+            className={`sport-tab${activeTab === tab.value ? ' active' : ''}`}
             onClick={() => setActiveTab(tab.value)}
           >
             {tab.label}
@@ -70,75 +62,74 @@ export default function TrendsFilter({ trends, userTier }: Props) {
         ))}
       </div>
 
-      <div className="team-search reveal" style={{ marginTop: '24px' }}>
-        <input
-          type="search"
-          className="team-search__input"
-          placeholder="Search teams..."
-          aria-label="Search teams"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-        />
-      </div>
-
-      {!isPaid && !isLoggedOut && (
-        <p className="reveal text-muted" style={{ fontSize: '0.9rem', marginBottom: '24px' }}>
-          Showing free trends per team.{' '}
-          <Link href="/betting-systems#pricing" className="gate-nudge__link">Upgrade for full access →</Link>
-        </p>
-      )}
-
-      <div className="content-gate-wrap">
+      <div className="content-gate-wrap reveal" style={{ marginTop: '24px' }}>
         <div className={isLoggedOut ? 'content-gate-blurred' : ''}>
-          {visible.length > 0 ? (
-            <div className="trends-table-wrap reveal">
-              <table className="trends-table">
-                <thead>
-                  <tr>
-                    <th>Team</th>
-                    <th>ATS Record</th>
-                    <th>O/U Record</th>
-                    <th>Home ATS</th>
-                    <th>Away ATS</th>
-                    <th>Trends</th>
-                  </tr>
-                </thead>
-                <tbody className="stagger-children">
-                  {visible.map(row => (
-                    <tr key={row.id} className="trends-row">
-                      <td><strong>{row.team}</strong></td>
-                      <td><AtsCell w={row.ats_wins} l={row.ats_losses} /></td>
-                      <td><AtsCell w={row.ou_wins} l={row.ou_losses} /></td>
-                      <td><AtsCell w={row.home_ats_wins} l={row.home_ats_losses} /></td>
-                      <td><AtsCell w={row.away_ats_wins} l={row.away_ats_losses} /></td>
+          <div className="trends-table-wrap">
+            <table className="trends-table">
+              <thead>
+                <tr>
+                  <th>Description</th>
+                  <th>Sport</th>
+                  <th>Line</th>
+                  <th>Season</th>
+                  <th>Type</th>
+                  <th>W-L-T</th>
+                  <th>Pct</th>
+                </tr>
+              </thead>
+              <tbody>
+                {visible.map(row => {
+                  const locked = !isPaid && !row.is_free
+                  const inactive = !row.is_active
+                  const style = SPORT_STYLE[row.sport] ?? { bg: 'rgba(255,255,255,0.05)', color: 'var(--text-muted)', label: row.sport.toUpperCase() }
+                  const winning = row.w > row.l
+                  return (
+                    <tr
+                      key={row.id}
+                      className={locked ? 'trends-row--locked' : ''}
+                      style={inactive && isAdmin ? { opacity: 0.4 } : undefined}
+                    >
                       <td>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
-                          {row.free_tags.map((tag, i) => (
-                            <Badge key={i} label={tag.label} variant={tag.variant} />
-                          ))}
-                          {row.paid_tag && (
-                            isPaid ? (
-                              <Badge label={row.paid_tag.label} variant={row.paid_tag.variant} />
-                            ) : (
-                              <span className="trend-locked">&#128274; Upgrade</span>
-                            )
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                          <span>{row.description || <em style={{ color: 'var(--text-muted)' }}>—</em>}</span>
+                          {locked && <span className="row-lock-badge">Members Only</span>}
+                          {inactive && isAdmin && (
+                            <span className="admin-badge admin-badge--muted" style={{ fontSize: '0.7rem' }}>Inactive</span>
                           )}
                         </div>
                       </td>
+                      <td>
+                        <span className="trend-badge" style={{ background: style.bg, color: style.color }}>
+                          {style.label}
+                        </span>
+                      </td>
+                      <td className="text-muted">{locked ? '—' : (row.line || '—')}</td>
+                      <td className="text-muted">{locked ? '—' : (row.season || '—')}</td>
+                      <td className="text-muted">{locked ? '—' : (row.type || '—')}</td>
+                      <td>
+                        {locked ? (
+                          <span className="text-muted">—</span>
+                        ) : winning ? (
+                          <span className="text-green">{row.w}-{row.l}-{row.t}</span>
+                        ) : row.w < row.l ? (
+                          <span className="trend-badge trend-badge--loss">{row.w}-{row.l}-{row.t}</span>
+                        ) : (
+                          <span className="text-muted">{row.w}-{row.l}-{row.t}</span>
+                        )}
+                      </td>
+                      <td>
+                        {locked ? (
+                          <span className="trend-locked">&#128274; Upgrade to view</span>
+                        ) : (
+                          <span className={winning ? 'text-green' : 'text-muted'}>{pctDisplay(row.pct)}</span>
+                        )}
+                      </td>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div className="trends-empty reveal" style={{ textAlign: 'center', padding: '48px 24px', color: 'var(--text-muted)' }}>
-              <p style={{ fontSize: '1.1rem' }}>
-                {availableSports.includes(activeTab)
-                  ? 'No teams match your search.'
-                  : 'No trends added for this sport yet.'}
-              </p>
-            </div>
-          )}
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
 
         {isLoggedOut && (
@@ -147,7 +138,7 @@ export default function TrendsFilter({ trends, userTier }: Props) {
               <div className="content-gate-card__icon">🔒</div>
               <h3 className="content-gate-card__title">Sign in to view betting trends</h3>
               <p className="content-gate-card__desc">
-                Free members see free trends per team. Subscribe for full access to all situational trends.
+                Free members see free trends. Subscribe for full access to all situational trends.
               </p>
               <div className="content-gate-card__actions">
                 <Link href="/login" className="btn btn--primary btn--sm">Sign In</Link>
@@ -157,6 +148,13 @@ export default function TrendsFilter({ trends, userTier }: Props) {
           </div>
         )}
       </div>
+
+      {userTier === 'free' && trends.some(t => !t.is_free) && (
+        <p className="gate-nudge reveal">
+          &#128274; Some trends are for members only.{' '}
+          <Link href="/betting-systems#pricing" className="gate-nudge__link">View plans →</Link>
+        </p>
+      )}
     </>
   )
 }
