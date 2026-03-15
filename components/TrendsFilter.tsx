@@ -529,7 +529,7 @@ export default function TrendsFilter({ trends, userTier, isAdmin = false }: Prop
                       !row.is_active && isAdmin && editMode ? 'sys-row-card--inactive' : '',
                     ].filter(Boolean).join(' ')}
                   >
-                    {/* Admin controls */}
+                    {/* Admin controls strip */}
                     {isAdmin && editMode && (
                       <div className="sys-row-card__admin">
                         <button
@@ -579,47 +579,69 @@ export default function TrendsFilter({ trends, userTier, isAdmin = false }: Prop
                       </div>
                     )}
 
-                    {/* Header: sport badge + access badge */}
-                    <div className="sys-row-card__header">
-                      <span className="sys-row-card__sport-badge">{style.label}</span>
-                      <span className={`sys-row-card__access-badge ${row.is_free ? 'sys-row-card__access-badge--free' : 'sys-row-card__access-badge--members'}`}>
-                        {row.is_free ? 'Free' : 'Members'}
-                      </span>
-                    </div>
-
-                    {/* Description */}
-                    <div className="sys-row-card__desc">
-                      {row.description || <em style={{ color: 'var(--text-muted)' }}>No description</em>}
-                    </div>
-
-                    {/* Stats or lock */}
-                    {locked ? (
-                      <div className="sys-row-card__lock">
-                        &#128274;{' '}
-                        <Link href="/betting-trends#pricing">Upgrade to view stats</Link>
+                    {/* Horizontal data row */}
+                    <div className="sys-row-card__body">
+                      {/* Sport badge */}
+                      <div className="sys-row-card__sport-col">
+                        <span className="sys-row-card__sport-badge">{style.label}</span>
                       </div>
-                    ) : (
-                      <>
-                        <div className="sys-row-card__stats">
+
+                      {/* Description + access badge */}
+                      <div className="sys-row-card__desc-col">
+                        <div className="sys-row-card__desc">
+                          {row.description || <em style={{ color: 'var(--text-muted)' }}>No description</em>}
+                        </div>
+                        <span className={`sys-row-card__access-badge sys-row-card__access-badge--${row.is_free ? 'free' : 'members'}`}>
+                          {row.is_free ? 'Free' : 'Members'}
+                        </span>
+                      </div>
+
+                      {/* Line */}
+                      <div className="sys-row-card__field">
+                        <span className="sys-row-card__field-label">Line</span>
+                        <span className="sys-row-card__field-value">{locked ? '—' : (row.line || '—')}</span>
+                      </div>
+
+                      {/* Season */}
+                      <div className="sys-row-card__field">
+                        <span className="sys-row-card__field-label">Season</span>
+                        <span className="sys-row-card__field-value">{locked ? '—' : (row.season || '—')}</span>
+                      </div>
+
+                      {/* Type */}
+                      <div className="sys-row-card__field sys-row-card__field--wide">
+                        <span className="sys-row-card__field-label">Type</span>
+                        <span className="sys-row-card__field-value">{locked ? '—' : (row.type || '—')}</span>
+                      </div>
+
+                      {/* Record */}
+                      <div className="sys-row-card__field">
+                        <span className="sys-row-card__field-label">Record</span>
+                        {locked ? (
+                          <span className="sys-row-card__lock">&#128274; <Link href="/betting-trends#pricing">Upgrade</Link></span>
+                        ) : (
                           <span className={`sys-row-card__record sys-row-card__record--${winning ? 'win' : row.w < row.l ? 'loss' : 'neutral'}`}>
                             {row.w}-{row.l}-{row.t}
                           </span>
-                          <span className={`sys-row-card__pct sys-row-card__pct--${winning ? 'win' : 'neutral'}`}>
-                            {pctDisplay(row.pct)}
-                          </span>
-                        </div>
-                        <div className="sys-row-card__bar">
-                          <div className="sys-row-card__bar-fill" style={{ width: `${pctWidth}%` }} />
-                        </div>
-                      </>
-                    )}
+                        )}
+                      </div>
 
-                    {/* Meta footer */}
-                    <div className="sys-row-card__meta">
-                      {locked
-                        ? (row.line || row.season ? [row.line, row.season].filter(Boolean).join(' · ') : '—')
-                        : ([row.line, row.season, row.type].filter(Boolean).join(' · ') || '—')
-                      }
+                      {/* Win % */}
+                      <div className="sys-row-card__pct-col">
+                        <span className="sys-row-card__field-label">Win %</span>
+                        {locked ? (
+                          <span className="sys-row-card__pct sys-row-card__pct--neutral">—</span>
+                        ) : (
+                          <>
+                            <span className={`sys-row-card__pct sys-row-card__pct--${winning ? 'win' : 'neutral'}`}>
+                              {pctDisplay(row.pct)}
+                            </span>
+                            <div className="sys-row-card__bar">
+                              <div className="sys-row-card__bar-fill" style={{ width: `${pctWidth}%` }} />
+                            </div>
+                          </>
+                        )}
+                      </div>
                     </div>
                   </div>
                 )
