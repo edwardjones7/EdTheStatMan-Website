@@ -1499,7 +1499,7 @@ input, textarea, select {
 
 .sys-card-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: 1fr;
   gap: 16px;
 }
 
@@ -1653,7 +1653,6 @@ input, textarea, select {
 }
 
 @media (max-width: 768px) {
-  .sys-card-grid { grid-template-columns: 1fr; }
   .sys-stats-chip { min-width: 80px; }
 }
 
