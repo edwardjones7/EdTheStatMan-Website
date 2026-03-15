@@ -105,6 +105,9 @@ export default function ActionCard({ content = DEFAULT_ACTION_CARD, editMode, on
               <Link href="/betting-systems" className="btn btn--outline btn--sm">
                 &#128202; View All Systems
               </Link>
+              <Link href="/betting-trends" className="btn btn--outline btn--sm">
+                &#128200; View All Trends
+              </Link>
             </div>
           </div>
         </div>
