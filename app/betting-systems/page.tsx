@@ -107,7 +107,7 @@ export default async function BettingSystems() {
         <div className="container">
           <div className="reveal">
             <span className="section-label">Active Systems</span>
-            <h2 className="section-title">Current Betting Systems</h2>
+            <h2 className="section-title">Betting Systems</h2>
             <p className="section-subtitle">Filter by sport to view system records, win percentages, and more.</p>
           </div>
           <SportTabsSystem systems={(systems ?? []) as any[]} userTier={userTier} isAdmin={isAdmin} />
