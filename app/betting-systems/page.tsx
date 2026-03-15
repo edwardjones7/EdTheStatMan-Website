@@ -50,16 +50,6 @@ export default async function BettingSystems() {
 
   return (
     <main>
-      <header className="page-header">
-        <div className="container">
-          <div className="reveal">
-            <span className="section-label">2026 Records</span>
-            <h1 className="page-header__title">Betting Systems</h1>
-            <p className="page-header__subtitle">Active betting systems across NFL, College Football, NBA, and College Basketball. Records based on calendar year.</p>
-          </div>
-        </div>
-      </header>
-
       {/* Pricing — only show to non-paid users */}
       {!isPaid && (
         <section className="section" style={{ background: 'var(--bg-secondary)' }} id="pricing">

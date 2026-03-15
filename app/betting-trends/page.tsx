@@ -50,16 +50,6 @@ export default async function BettingTrends() {
 
   return (
     <main>
-      <header className="page-header">
-        <div className="container">
-          <div className="reveal">
-            <span className="section-label">Situational Analysis</span>
-            <h1 className="page-header__title">Betting Trends</h1>
-            <p className="page-header__subtitle">Situational betting trends across NFL, College Football, NBA, and College Basketball. Win percentages, unit performance, and proven edges.</p>
-          </div>
-        </div>
-      </header>
-
       <section className="section">
         <div className="container">
           <div className="reveal">
