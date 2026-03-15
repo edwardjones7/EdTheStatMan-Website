@@ -586,32 +586,11 @@ export default function SportTabsSystem({ systems, userTier, isAdmin = false }: 
                         <span className="sys-row-card__sport-badge">{style.label}</span>
                       </div>
 
-                      {/* Description + access badge */}
+                      {/* Description */}
                       <div className="sys-row-card__desc-col">
                         <div className="sys-row-card__desc">
                           {row.description || <em style={{ color: 'var(--text-muted)' }}>No description</em>}
                         </div>
-                        <span className={`sys-row-card__access-badge sys-row-card__access-badge--${row.is_free ? 'free' : 'members'}`}>
-                          {row.is_free ? 'Free' : 'Members'}
-                        </span>
-                      </div>
-
-                      {/* Line */}
-                      <div className="sys-row-card__field">
-                        <span className="sys-row-card__field-label">Line</span>
-                        <span className="sys-row-card__field-value">{locked ? '—' : (row.line || '—')}</span>
-                      </div>
-
-                      {/* Season */}
-                      <div className="sys-row-card__field">
-                        <span className="sys-row-card__field-label">Season</span>
-                        <span className="sys-row-card__field-value">{locked ? '—' : (row.season || '—')}</span>
-                      </div>
-
-                      {/* Type */}
-                      <div className="sys-row-card__field sys-row-card__field--wide">
-                        <span className="sys-row-card__field-label">Type</span>
-                        <span className="sys-row-card__field-value">{locked ? '—' : (row.type || '—')}</span>
                       </div>
 
                       {/* Record */}
@@ -641,6 +620,12 @@ export default function SportTabsSystem({ systems, userTier, isAdmin = false }: 
                             </div>
                           </>
                         )}
+                      </div>
+
+                      {/* Season */}
+                      <div className="sys-row-card__field">
+                        <span className="sys-row-card__field-label">Season</span>
+                        <span className="sys-row-card__field-value">{row.season || '—'}</span>
                       </div>
                     </div>
                   </div>
