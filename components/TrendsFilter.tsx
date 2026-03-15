@@ -261,9 +261,22 @@ export default function TrendsFilter({ trends, userTier, isAdmin = false }: Prop
 
   if (trends.length === 0 && !editMode) {
     return (
-      <div style={{ textAlign: 'center', padding: '48px 0', color: 'var(--text-muted)' }}>
-        No betting trends available yet. Check back soon.
-      </div>
+      <>
+        <div style={{ textAlign: 'center', padding: '48px 0', color: 'var(--text-muted)' }}>
+          No betting trends available yet. Check back soon.
+        </div>
+        {isAdmin && (
+          <div style={{ position: 'fixed', bottom: '28px', right: '28px', zIndex: 200, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+            <button
+              onClick={() => setEditMode(true)}
+              title="Edit trends"
+              style={{ ...fabStyle, background: 'var(--accent-green)', color: '#000', border: 'none' }}
+            >
+              ✏
+            </button>
+          </div>
+        )}
+      </>
     )
   }
 
