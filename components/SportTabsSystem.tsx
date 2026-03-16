@@ -99,7 +99,8 @@ export default function SportTabsSystem({ systems, userTier, isAdmin = false }: 
   const isLoggedOut = userTier === null
 
   const allVisible = systems.filter(s => activeTab === 'all' || s.sport === activeTab)
-  const visible = editMode ? allVisible : allVisible.filter(s => s.is_active)
+  const visible = (editMode ? allVisible : allVisible.filter(s => s.is_active))
+    .slice().sort((a, b) => Number(b.is_free) - Number(a.is_free))
 
   function openAdd() {
     setForm({ ...BLANK })
@@ -597,6 +598,16 @@ export default function SportTabsSystem({ systems, userTier, isAdmin = false }: 
                       {/* Sport badge */}
                       <div className="sys-row-card__sport-col">
                         <span className="sys-row-card__sport-badge">{style.label}</span>
+                        {isAdmin && (
+                          <span style={{
+                            display: 'inline-block', marginTop: '4px',
+                            padding: '2px 7px', borderRadius: '8px', fontSize: '0.65rem', fontWeight: 700,
+                            background: row.is_free ? 'rgba(56,189,248,0.15)' : 'rgba(124,58,237,0.15)',
+                            color: row.is_free ? '#38bdf8' : 'var(--accent-purple)',
+                          }}>
+                            {row.is_free ? 'Free' : 'Members'}
+                          </span>
+                        )}
                       </div>
 
                       {/* Description */}
