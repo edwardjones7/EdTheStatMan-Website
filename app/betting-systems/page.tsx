@@ -64,9 +64,9 @@ export default async function BettingSystems() {
 
             <div className="pricing-grid stagger-children" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', maxWidth: '800px', margin: '60px auto 0' }}>
               <div className="pricing-card reveal-scale">
-                <div className="pricing-card__name">Basic</div>
+                <div className="pricing-card__name">Monthly</div>
                 <div className="pricing-card__price">$19<span>/mo</span></div>
-                <div className="pricing-card__desc">Essential betting systems access</div>
+                <div className="pricing-card__desc">Full access, billed monthly</div>
                 <ul className="pricing-card__features">
                   <li className="pricing-card__feature"><span className="check">&#10003;</span> Full betting systems</li>
                   <li className="pricing-card__feature"><span className="check">&#10003;</span> All trends unlocked</li>
@@ -81,20 +81,18 @@ export default async function BettingSystems() {
               </div>
 
               <div className="pricing-card pricing-card--featured reveal-scale">
-                <div className="pricing-card__name">Premium</div>
-                <div className="pricing-card__price">$119<span>/mo</span></div>
-                <div className="pricing-card__desc">Complete access with premium features</div>
+                <div className="pricing-card__name">Annual</div>
+                <div className="pricing-card__price">$119<span>/yr</span></div>
+                <div className="pricing-card__desc">Full access, billed yearly — save $109</div>
                 <ul className="pricing-card__features">
-                  <li className="pricing-card__feature"><span className="check">&#10003;</span> Everything in Basic</li>
-                  <li className="pricing-card__feature"><span className="check">&#10003;</span> EdTheStatBot access</li>
-                  <li className="pricing-card__feature"><span className="check">&#10003;</span> Priority support</li>
-                  <li className="pricing-card__feature"><span className="check">&#10003;</span> Early access to new features</li>
-                  <li className="pricing-card__feature"><span className="check">&#10003;</span> Advanced analytics</li>
+                  <li className="pricing-card__feature"><span className="check">&#10003;</span> Full betting systems</li>
+                  <li className="pricing-card__feature"><span className="check">&#10003;</span> All trends unlocked</li>
+                  <li className="pricing-card__feature"><span className="check">&#10003;</span> Telegram alerts</li>
                   <li className="pricing-card__feature"><span className="check">&#10003;</span> Cancel anytime</li>
                 </ul>
                 <CheckoutButton
                   priceId={process.env.NEXT_PUBLIC_STRIPE_PREMIUM_PRICE_ID!}
-                  label="Get Premium →"
+                  label="Get Annual →"
                   variant="primary"
                 />
               </div>

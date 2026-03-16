@@ -102,11 +102,11 @@ export default async function Pricing() {
               ) : null}
             </div>
 
-            {/* Basic */}
+            {/* Monthly */}
             <div className="pricing-card reveal-scale">
-              <div className="pricing-card__name">Basic</div>
+              <div className="pricing-card__name">Monthly</div>
               <div className="pricing-card__price">$19<span>/mo</span></div>
-              <div className="pricing-card__desc">Essential betting access</div>
+              <div className="pricing-card__desc">Full access, billed monthly</div>
               <ul className="pricing-card__features">
                 <li className="pricing-card__feature"><span className="check">&#10003;</span> Full betting systems library</li>
                 <li className="pricing-card__feature"><span className="check">&#10003;</span> All betting trends unlocked</li>
@@ -127,17 +127,16 @@ export default async function Pricing() {
               ) : null}
             </div>
 
-            {/* Premium */}
+            {/* Annual */}
             <div className="pricing-card pricing-card--featured reveal-scale">
-              <div className="pricing-card__name">Premium</div>
-              <div className="pricing-card__price">$119<span>/mo</span></div>
-              <div className="pricing-card__desc">Complete access with premium features</div>
+              <div className="pricing-card__name">Annual</div>
+              <div className="pricing-card__price">$119<span>/yr</span></div>
+              <div className="pricing-card__desc">Full access, billed yearly — save $109</div>
               <ul className="pricing-card__features">
-                <li className="pricing-card__feature"><span className="check">&#10003;</span> Everything in Basic</li>
-                <li className="pricing-card__feature"><span className="check">&#10003;</span> EdTheStatBot access</li>
-                <li className="pricing-card__feature"><span className="check">&#10003;</span> Priority support</li>
-                <li className="pricing-card__feature"><span className="check">&#10003;</span> Early access to features</li>
-                <li className="pricing-card__feature"><span className="check">&#10003;</span> Advanced analytics</li>
+                <li className="pricing-card__feature"><span className="check">&#10003;</span> Full betting systems library</li>
+                <li className="pricing-card__feature"><span className="check">&#10003;</span> All betting trends unlocked</li>
+                <li className="pricing-card__feature"><span className="check">&#10003;</span> All blog posts</li>
+                <li className="pricing-card__feature"><span className="check">&#10003;</span> Telegram &amp; Discord alerts</li>
                 <li className="pricing-card__feature"><span className="check">&#10003;</span> Cancel anytime</li>
               </ul>
               {userTier === 'premium' ? (
@@ -147,13 +146,13 @@ export default async function Pricing() {
               ) : !isPaid ? (
                 <CheckoutButton
                   priceId={process.env.NEXT_PUBLIC_STRIPE_PREMIUM_PRICE_ID!}
-                  label="Get Premium →"
+                  label="Get Annual →"
                   variant="primary"
                 />
               ) : userTier === 'basic' ? (
                 <CheckoutButton
                   priceId={process.env.NEXT_PUBLIC_STRIPE_PREMIUM_PRICE_ID!}
-                  label="Upgrade to Premium →"
+                  label="Switch to Annual →"
                   variant="primary"
                 />
               ) : null}
@@ -164,7 +163,7 @@ export default async function Pricing() {
           {/* FAQ strip */}
           <div className="reveal" style={{ maxWidth: '640px', margin: '64px auto 0', textAlign: 'center' }}>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.8 }}>
-              All plans billed monthly. Cancel anytime from your{' '}
+              Monthly plan billed every month. Annual plan billed once per year. Cancel anytime from your{' '}
               <Link href="/account" style={{ color: 'var(--accent-cyan)' }}>account page</Link>.
               Questions? <Link href="/contact" style={{ color: 'var(--accent-cyan)' }}>Contact us</Link>.
             </p>
