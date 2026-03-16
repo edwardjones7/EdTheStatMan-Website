@@ -34,7 +34,7 @@ export default function Contact() {
                 <div className="contact-info__icon">&#9993;</div>
                 <div>
                   <div className="contact-info__label">Email</div>
-                  <a href="mailto:contact@edthestatman.com" className="contact-info__value">contact@edthestatman.com</a>
+                  <a href="mailto:ed@edthestatman.com" className="contact-info__value">contact@edthestatman.com</a>
                 </div>
               </div>
 
