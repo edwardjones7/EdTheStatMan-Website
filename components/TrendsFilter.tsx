@@ -573,32 +573,24 @@ export default function TrendsFilter({ trends, userTier, isAdmin = false }: Prop
                     {/* Admin controls strip */}
                     {isAdmin && editMode && (
                       <div className="sys-row-card__admin">
-                        <button
-                          onClick={() => toggleActive(row)}
-                          disabled={toggling === row.id + ':active'}
-                          title={row.is_active ? 'Deactivate' : 'Activate'}
-                          style={{
-                            padding: '3px 9px', borderRadius: '10px', border: 'none', cursor: 'pointer',
-                            fontSize: '0.7rem', fontWeight: 600,
-                            background: row.is_active ? 'rgba(52,211,153,0.15)' : 'rgba(100,100,100,0.2)',
-                            color: row.is_active ? 'var(--accent-green)' : 'var(--text-muted)',
-                          }}
-                        >
-                          {toggling === row.id + ':active' ? '…' : row.is_active ? 'Active' : 'Inactive'}
-                        </button>
-                        <button
-                          onClick={() => toggleFree(row)}
-                          disabled={toggling === row.id + ':free'}
-                          title={row.is_free ? 'Make Members-only' : 'Make Free'}
-                          style={{
-                            padding: '3px 9px', borderRadius: '10px', border: 'none', cursor: 'pointer',
-                            fontSize: '0.7rem', fontWeight: 600,
-                            background: row.is_free ? 'rgba(56,189,248,0.15)' : 'rgba(124,58,237,0.15)',
-                            color: row.is_free ? '#38bdf8' : 'var(--accent-purple)',
-                          }}
-                        >
-                          {toggling === row.id + ':free' ? '…' : row.is_free ? 'Free' : 'Members'}
-                        </button>
+                        <label className="sys-admin-check">
+                          <input
+                            type="checkbox"
+                            checked={row.is_active}
+                            disabled={toggling === row.id + ':active'}
+                            onChange={() => toggleActive(row)}
+                          />
+                          <span>Active</span>
+                        </label>
+                        <label className="sys-admin-check">
+                          <input
+                            type="checkbox"
+                            checked={!row.is_free}
+                            disabled={toggling === row.id + ':free'}
+                            onChange={() => toggleFree(row)}
+                          />
+                          <span>Members only</span>
+                        </label>
                         <button
                           onClick={() => openEdit(row)}
                           style={{

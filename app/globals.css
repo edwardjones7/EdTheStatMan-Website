@@ -1554,6 +1554,30 @@ input, textarea, select {
 .sys-row-card--cfb:hover { box-shadow: 0 6px 32px rgba(129,140,248,0.14), inset 3px 0 12px rgba(129,140,248,0.06); border-color: var(--accent-purple); background: linear-gradient(90deg, rgba(129,140,248,0.07) 0%, var(--bg-card) 18%); }
 .sys-row-card--cbb:hover { box-shadow: 0 6px 32px rgba(52,211,153,0.14), inset 3px 0 12px rgba(52,211,153,0.06); border-color: var(--accent-cyan); background: linear-gradient(90deg, rgba(52,211,153,0.07) 0%, var(--bg-card) 18%); }
 
+/* Admin checkbox toggle */
+.sys-admin-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  user-select: none;
+}
+
+.sys-admin-check input[type="checkbox"] {
+  width: 13px;
+  height: 13px;
+  cursor: pointer;
+  accent-color: var(--accent-green);
+}
+
+.sys-admin-check:has(input:disabled) {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* Admin toolbar strip at top */
 .sys-row-card__admin {
   display: flex;
