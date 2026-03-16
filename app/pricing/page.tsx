@@ -6,7 +6,7 @@ import CTASection from '@/components/CTASection'
 
 export const metadata: Metadata = {
   title: 'Pricing – EdTheStatMan.com',
-  description: 'Choose a plan to unlock full access to betting systems, trends, and expert analysis. Basic $19/mo or Premium $119/mo.',
+  description: 'Choose a plan to unlock full access to betting systems, trends, and expert analysis. Basic $19.99/mo or Premium $119.99/mo.',
   openGraph: {
     title: 'Pricing – EdTheStatMan.com',
     description: 'Unlock full access to betting systems, trends, and expert analysis.',
@@ -105,7 +105,7 @@ export default async function Pricing() {
             {/* Monthly */}
             <div className="pricing-card reveal-scale">
               <div className="pricing-card__name">Monthly</div>
-              <div className="pricing-card__price">$19<span>/mo</span></div>
+              <div className="pricing-card__price">$19.99<span>/mo</span></div>
               <div className="pricing-card__desc">Full access, billed monthly</div>
               <ul className="pricing-card__features">
                 <li className="pricing-card__feature"><span className="check">&#10003;</span> Full betting systems library</li>
@@ -130,8 +130,8 @@ export default async function Pricing() {
             {/* Annual */}
             <div className="pricing-card pricing-card--featured reveal-scale">
               <div className="pricing-card__name">Annual</div>
-              <div className="pricing-card__price">$119<span>/yr</span></div>
-              <div className="pricing-card__desc">Full access, billed yearly — save $109</div>
+              <div className="pricing-card__price">$119.99<span>/yr</span></div>
+              <div className="pricing-card__desc">Full access, billed yearly — save $119.89</div>
               <ul className="pricing-card__features">
                 <li className="pricing-card__feature"><span className="check">&#10003;</span> Full betting systems library</li>
                 <li className="pricing-card__feature"><span className="check">&#10003;</span> All betting trends unlocked</li>

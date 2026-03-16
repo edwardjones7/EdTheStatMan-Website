@@ -65,7 +65,7 @@ export default async function BettingSystems() {
             <div className="pricing-grid stagger-children" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', maxWidth: '800px', margin: '60px auto 0' }}>
               <div className="pricing-card reveal-scale">
                 <div className="pricing-card__name">Monthly</div>
-                <div className="pricing-card__price">$19<span>/mo</span></div>
+                <div className="pricing-card__price">$19.99<span>/mo</span></div>
                 <div className="pricing-card__desc">Full access, billed monthly</div>
                 <ul className="pricing-card__features">
                   <li className="pricing-card__feature"><span className="check">&#10003;</span> Full betting systems</li>
@@ -82,8 +82,8 @@ export default async function BettingSystems() {
 
               <div className="pricing-card pricing-card--featured reveal-scale">
                 <div className="pricing-card__name">Annual</div>
-                <div className="pricing-card__price">$119<span>/yr</span></div>
-                <div className="pricing-card__desc">Full access, billed yearly — save $109</div>
+                <div className="pricing-card__price">$119.99<span>/yr</span></div>
+                <div className="pricing-card__desc">Full access, billed yearly — save $119.89</div>
                 <ul className="pricing-card__features">
                   <li className="pricing-card__feature"><span className="check">&#10003;</span> Full betting systems</li>
                   <li className="pricing-card__feature"><span className="check">&#10003;</span> All trends unlocked</li>
