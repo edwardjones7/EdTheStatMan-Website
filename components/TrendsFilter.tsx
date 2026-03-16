@@ -77,6 +77,7 @@ function parseStr(val: unknown): string {
 export default function TrendsFilter({ trends, userTier, isAdmin = false }: Props) {
   const [activeTab, setActiveTab] = useState<Sport>('all')
   const [editMode, setEditMode] = useState(false)
+  const [currentPage, setCurrentPage] = useState(0)
 
   // Row form
   const [formMode, setFormMode] = useState<'hidden' | 'add' | 'edit'>('hidden')
@@ -99,8 +100,34 @@ export default function TrendsFilter({ trends, userTier, isAdmin = false }: Prop
   const isLoggedOut = userTier === null
 
   const allVisible = trends.filter(r => activeTab === 'all' || r.sport === activeTab)
-  const visible = (editMode ? allVisible : allVisible.filter(r => r.is_active))
-    .slice().sort((a, b) => Number(b.is_free) - Number(a.is_free))
+  const baseRows = editMode ? allVisible : allVisible.filter(r => r.is_active)
+
+  const PAGE_SIZE = 20
+  const TEASERS_PER_PAGE = 2
+  const freeRows = baseRows.filter(r => r.is_free)
+  const memberRows = baseRows.filter(r => !r.is_free)
+  const numTeasers = (isPaid || isAdmin) ? 0 : Math.min(TEASERS_PER_PAGE, memberRows.length)
+  const freePerPage = PAGE_SIZE - numTeasers
+  const totalPages = (isPaid || isAdmin)
+    ? Math.max(1, Math.ceil(baseRows.length / PAGE_SIZE))
+    : Math.max(1, Math.ceil(freeRows.length / (freePerPage || PAGE_SIZE)))
+
+  function buildPageRows(page: number): BettingTrend[] {
+    if (isPaid || isAdmin) {
+      return baseRows.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
+    }
+    const fSlice = freeRows.slice(page * freePerPage, (page + 1) * freePerPage)
+    const teasers: BettingTrend[] = []
+    for (let i = 0; i < numTeasers; i++) {
+      teasers.push(memberRows[(page * numTeasers + i) % memberRows.length])
+    }
+    const result = [...fSlice]
+    if (teasers[0]) result.splice(Math.min(6, result.length), 0, teasers[0])
+    if (teasers[1]) result.splice(Math.min(14, result.length), 0, teasers[1])
+    return result
+  }
+
+  const pageRows = buildPageRows(currentPage)
 
   function openAdd() {
     setForm({ ...BLANK })
@@ -310,7 +337,7 @@ export default function TrendsFilter({ trends, userTier, isAdmin = false }: Prop
           <button
             key={tab.value}
             className={`sport-tab${activeTab === tab.value ? ' active' : ''}`}
-            onClick={() => setActiveTab(tab.value)}
+            onClick={() => { setActiveTab(tab.value); setCurrentPage(0) }}
           >
             {tab.label}
           </button>
@@ -510,13 +537,13 @@ export default function TrendsFilter({ trends, userTier, isAdmin = false }: Prop
       {/* Card grid */}
       <div className="content-gate-wrap" style={{ marginTop: '24px' }}>
         <div className={isLoggedOut ? 'content-gate-blurred' : ''}>
-          {visible.length === 0 ? (
+          {baseRows.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '48px 0', color: 'var(--text-muted)' }}>
               No trends in this sport.
             </div>
           ) : (
             <div className="sys-card-grid">
-              {visible.map(row => {
+              {pageRows.map(row => {
                 const locked = !isPaid && !row.is_free && !isAdmin
                 const style = SPORT_STYLE[row.sport] ?? { bg: 'rgba(255,255,255,0.05)', color: 'var(--text-muted)', label: row.sport.toUpperCase() }
                 const winning = row.w > row.l
@@ -670,6 +697,28 @@ export default function TrendsFilter({ trends, userTier, isAdmin = false }: Prop
             </div>
           )}
         </div>
+
+        {totalPages > 1 && (
+          <div className="sys-pagination">
+            <button
+              className="sys-pagination__btn"
+              onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
+              disabled={currentPage === 0}
+            >
+              ← Prev
+            </button>
+            <span className="sys-pagination__info">
+              Page {currentPage + 1} of {totalPages}
+            </span>
+            <button
+              className="sys-pagination__btn"
+              onClick={() => setCurrentPage(p => Math.min(totalPages - 1, p + 1))}
+              disabled={currentPage >= totalPages - 1}
+            >
+              Next →
+            </button>
+          </div>
+        )}
 
         {isLoggedOut && (
           <div className="content-gate-overlay">

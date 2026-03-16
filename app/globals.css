@@ -1746,6 +1746,46 @@ input, textarea, select {
   .sys-stats-chip { min-width: 88px; }
 }
 
+/* ---------- Pagination ---------- */
+.sys-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 24px 0 8px;
+}
+
+.sys-pagination__btn {
+  padding: 8px 20px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-full);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.sys-pagination__btn:hover:not(:disabled) {
+  background: rgba(255,255,255,0.08);
+  border-color: rgba(255,255,255,0.14);
+  color: var(--text-heading);
+}
+
+.sys-pagination__btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.sys-pagination__info {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  min-width: 90px;
+  text-align: center;
+}
+
 /* ---------- Sport Tabs ---------- */
 .sport-tabs {
   display: flex;
