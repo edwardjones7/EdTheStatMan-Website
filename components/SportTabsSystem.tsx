@@ -102,31 +102,8 @@ export default function SportTabsSystem({ systems, userTier, isAdmin = false }: 
   const baseRows = editMode ? allVisible : allVisible.filter(s => s.is_active)
 
   const PAGE_SIZE = 20
-  const TEASERS_PER_PAGE = 2
-  const freeRows = baseRows.filter(s => s.is_free)
-  const memberRows = baseRows.filter(s => !s.is_free)
-  const numTeasers = (isPaid || isAdmin) ? 0 : Math.min(TEASERS_PER_PAGE, memberRows.length)
-  const freePerPage = PAGE_SIZE - numTeasers
-  const totalPages = (isPaid || isAdmin)
-    ? Math.max(1, Math.ceil(baseRows.length / PAGE_SIZE))
-    : Math.max(1, Math.ceil(freeRows.length / (freePerPage || PAGE_SIZE)))
-
-  function buildPageRows(page: number): BettingSystem[] {
-    if (isPaid || isAdmin) {
-      return baseRows.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
-    }
-    const fSlice = freeRows.slice(page * freePerPage, (page + 1) * freePerPage)
-    const teasers: BettingSystem[] = []
-    for (let i = 0; i < numTeasers; i++) {
-      teasers.push(memberRows[(page * numTeasers + i) % memberRows.length])
-    }
-    const result = [...fSlice]
-    if (teasers[0]) result.splice(Math.min(6, result.length), 0, teasers[0])
-    if (teasers[1]) result.splice(Math.min(14, result.length), 0, teasers[1])
-    return result
-  }
-
-  const pageRows = buildPageRows(currentPage)
+  const totalPages = Math.max(1, Math.ceil(baseRows.length / PAGE_SIZE))
+  const pageRows = baseRows.slice(currentPage * PAGE_SIZE, (currentPage + 1) * PAGE_SIZE)
 
   function openAdd() {
     setForm({ ...BLANK })
