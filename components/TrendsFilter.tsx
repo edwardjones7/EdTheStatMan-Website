@@ -520,6 +520,19 @@ export default function TrendsFilter({ trends, userTier, isAdmin = false }: Prop
                 const style = SPORT_STYLE[row.sport] ?? { bg: 'rgba(255,255,255,0.05)', color: 'var(--text-muted)', label: row.sport.toUpperCase() }
                 const winning = row.w > row.l
                 const pctWidth = row.pct !== null ? Math.round(row.pct * 100) : 0
+
+                if (locked) {
+                  return (
+                    <div key={row.id} className="sys-row-card sys-row-card--locked">
+                      <div className="sys-row-card__body" style={{ justifyContent: 'center', padding: '16px 24px', gap: '16px' }}>
+                        <span style={{ fontSize: '1.1rem' }}>🔒</span>
+                        <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>Members Only</span>
+                        <Link href="/betting-systems#pricing" className="btn btn--primary btn--sm">Upgrade to Unlock</Link>
+                      </div>
+                    </div>
+                  )
+                }
+
                 return (
                   <div
                     key={row.id}

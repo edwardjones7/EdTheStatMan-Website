@@ -1523,6 +1523,10 @@ input, textarea, select {
 .sys-row-card--cbb { border-left-color: var(--accent-cyan); }
 
 .sys-row-card--inactive { opacity: 0.45; }
+.sys-row-card--locked {
+  border-color: rgba(129, 140, 248, 0.2);
+  background: rgba(129, 140, 248, 0.04);
+}
 
 .sys-row-card--nba:hover { box-shadow: 0 4px 24px rgba(251,191,36,0.1); border-color: var(--accent-gold); }
 .sys-row-card--nfl:hover { box-shadow: 0 4px 24px rgba(56,189,248,0.1); border-color: #38bdf8; }
