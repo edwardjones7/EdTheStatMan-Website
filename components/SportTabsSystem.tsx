@@ -651,6 +651,18 @@ export default function SportTabsSystem({ systems, userTier, isAdmin = false }: 
                         <span className="sys-row-card__field-label">Season</span>
                         <span className="sys-row-card__field-value">{row.season || '—'}</span>
                       </div>
+
+                      {/* Date */}
+                      <div className="sys-row-card__field">
+                        <span className="sys-row-card__field-label">Date</span>
+                        <span className="sys-row-card__field-value">—</span>
+                      </div>
+
+                      {/* Team */}
+                      <div className="sys-row-card__field">
+                        <span className="sys-row-card__field-label">Team</span>
+                        <span className="sys-row-card__field-value">—</span>
+                      </div>
                     </div>
                   </div>
                 )
