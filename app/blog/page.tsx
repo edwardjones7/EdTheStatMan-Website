@@ -18,21 +18,21 @@ export default async function Blog() {
   const admin = createAdminClient()
   const supabase = await createClient()
 
-  const [{ data: posts }, { data: { session } }] = await Promise.all([
+  const [{ data: posts }, { data: { user } }] = await Promise.all([
     admin
       .from('posts')
       .select('id, title, slug, excerpt, tag, access_level, published_at')
       .eq('published', true)
       .order('published_at', { ascending: false }),
-    supabase.auth.getSession(),
+    supabase.auth.getUser(),
   ])
 
   let userTier: string | null = null
-  if (session) {
+  if (user) {
     const { data: profile } = await (supabase as any)
       .from('profiles')
       .select('subscription_tier, subscription_status, is_admin')
-      .eq('id', session.user.id)
+      .eq('id', user.id)
       .single()
     if ((profile as any)?.is_admin) {
       userTier = 'premium'

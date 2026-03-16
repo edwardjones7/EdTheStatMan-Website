@@ -13,14 +13,14 @@ export default async function AdminPage({
   searchParams: { tab?: string }
 }) {
   const supabase = await createClient()
-  const { data: { session } } = await supabase.auth.getSession()
+  const { data: { user } } = await supabase.auth.getUser()
 
-  if (!session) redirect('/login')
+  if (!user) redirect('/login')
 
   const { data: self } = await (supabase as any)
     .from('profiles')
     .select('is_admin')
-    .eq('id', session.user.id)
+    .eq('id', user.id)
     .single()
 
   if (!self?.is_admin) redirect('/')

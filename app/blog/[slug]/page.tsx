@@ -40,14 +40,14 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
   if (!post) notFound()
 
   const supabase = await createClient()
-  const { data: { session } } = await supabase.auth.getSession()
+  const { data: { user } } = await supabase.auth.getUser()
 
   let userTier: string | null = null
-  if (session) {
+  if (user) {
     const { data: profile } = await (supabase as any)
       .from('profiles')
       .select('subscription_tier, subscription_status, is_admin')
-      .eq('id', session.user.id)
+      .eq('id', user.id)
       .single()
     if ((profile as any)?.is_admin) {
       userTier = 'premium'
@@ -97,7 +97,7 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
 
               <div className="blog-post__gate">
                 <div className="blog-post__gate-icon">🔒</div>
-                {!session ? (
+                {!user ? (
                   <>
                     <h2 className="blog-post__gate-title">
                       {post.access_level === 'free'

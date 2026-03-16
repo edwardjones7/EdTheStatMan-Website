@@ -1,23 +1,23 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
-async function getAdminSession() {
+async function getAdminUser() {
   const supabase = await createClient()
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) return { supabase, session: null, isAdmin: false }
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { supabase, user: null, isAdmin: false }
 
   const { data: profile } = await (supabase as any)
     .from('profiles')
     .select('is_admin')
-    .eq('id', session.user.id)
+    .eq('id', user.id)
     .single()
 
-  return { supabase, session, isAdmin: !!profile?.is_admin }
+  return { supabase, user, isAdmin: !!profile?.is_admin }
 }
 
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
-  const { supabase, session, isAdmin } = await getAdminSession()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const { supabase, user, isAdmin } = await getAdminUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   if (!isAdmin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
   const body = await req.json()
@@ -62,8 +62,8 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
 }
 
 export async function DELETE(_req: Request, { params }: { params: { id: string } }) {
-  const { supabase, session, isAdmin } = await getAdminSession()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const { supabase, user, isAdmin } = await getAdminUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   if (!isAdmin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
   const { error } = await (supabase as any)

@@ -19,15 +19,15 @@ export const metadata: Metadata = {
 export default async function BettingTrends() {
   const admin = createAdminClient()
   const supabase = await createClient()
-  const { data: { session } } = await supabase.auth.getSession()
+  const { data: { user } } = await supabase.auth.getUser()
 
   let userTier: string | null = null
   let isAdmin = false
-  if (session) {
+  if (user) {
     const { data: profile } = await (supabase as any)
       .from('profiles')
       .select('subscription_tier, subscription_status, is_admin')
-      .eq('id', session.user.id)
+      .eq('id', user.id)
       .single()
     if ((profile as any)?.is_admin) {
       isAdmin = true

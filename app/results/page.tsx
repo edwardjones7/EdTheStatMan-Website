@@ -27,12 +27,12 @@ export default async function Results() {
   const content: ResultsContent = { ...DEFAULT_RESULTS, ...((row?.value as object) ?? {}) }
 
   let isAdmin = false
-  const { data: { session } } = await supabase.auth.getSession()
-  if (session) {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (user) {
     const { data: profile } = await (supabase as any)
       .from('profiles')
       .select('is_admin')
-      .eq('id', session.user.id)
+      .eq('id', user.id)
       .single()
     isAdmin = !!(profile as any)?.is_admin
   }

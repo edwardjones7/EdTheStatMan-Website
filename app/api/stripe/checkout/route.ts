@@ -10,8 +10,8 @@ const ALLOWED_PRICES = new Set([
 
 export async function POST(req: Request) {
   const supabase = await createClient()
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { priceId } = await req.json()
   if (!priceId || !ALLOWED_PRICES.has(priceId)) {
@@ -22,18 +22,18 @@ export async function POST(req: Request) {
   const { data: profile } = await (admin as any)
     .from('profiles')
     .select('stripe_customer_id')
-    .eq('id', session.user.id)
+    .eq('id', user.id)
     .single()
 
   let customerId = (profile as any)?.stripe_customer_id as string | null
 
   if (!customerId) {
     const customer = await getStripe().customers.create({
-      email: session.user.email!,
-      metadata: { supabaseUserId: session.user.id },
+      email: user.email!,
+      metadata: { supabaseUserId: user.id },
     })
     customerId = customer.id
-    await (admin as any).from('profiles').update({ stripe_customer_id: customerId }).eq('id', session.user.id)
+    await (admin as any).from('profiles').update({ stripe_customer_id: customerId }).eq('id', user.id)
   }
 
   const checkoutSession = await getStripe().checkout.sessions.create({
@@ -42,8 +42,8 @@ export async function POST(req: Request) {
     mode: 'subscription',
     success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/account?success=1`,
     cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/betting-systems`,
-    metadata: { userId: session.user.id },
-    subscription_data: { metadata: { userId: session.user.id } },
+    metadata: { userId: user.id },
+    subscription_data: { metadata: { userId: user.id } },
     allow_promotion_codes: true,
   })
 

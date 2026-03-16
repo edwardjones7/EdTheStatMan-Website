@@ -4,12 +4,12 @@ import { revalidatePath } from 'next/cache'
 
 async function assertAdmin() {
   const supabase = await createClient()
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) return { supabase: supabase as any, ok: false as const }
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { supabase: supabase as any, ok: false as const }
   const { data: p } = await (supabase as any)
     .from('profiles')
     .select('is_admin')
-    .eq('id', session.user.id)
+    .eq('id', user.id)
     .single()
   return { supabase: supabase as any, ok: !!(p as any)?.is_admin as boolean }
 }

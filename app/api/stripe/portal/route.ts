@@ -5,14 +5,14 @@ import { createAdminClient } from '@/lib/supabase/admin'
 
 export async function POST() {
   const supabase = await createClient()
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const admin = createAdminClient()
   const { data: profile } = await (admin as any)
     .from('profiles')
     .select('stripe_customer_id')
-    .eq('id', session.user.id)
+    .eq('id', user.id)
     .single()
 
   const customerId = (profile as any)?.stripe_customer_id

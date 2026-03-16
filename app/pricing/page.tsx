@@ -15,14 +15,14 @@ export const metadata: Metadata = {
 
 export default async function Pricing() {
   const supabase = await createClient()
-  const { data: { session } } = await supabase.auth.getSession()
+  const { data: { user } } = await supabase.auth.getUser()
 
   let userTier: string | null = null
-  if (session) {
+  if (user) {
     const { data: profile } = await (supabase as any)
       .from('profiles')
       .select('subscription_tier, subscription_status, is_admin')
-      .eq('id', session.user.id)
+      .eq('id', user.id)
       .single()
     if ((profile as any)?.is_admin) {
       userTier = 'premium'
@@ -91,7 +91,7 @@ export default async function Pricing() {
                 <li className="pricing-card__feature pricing-card__feature--muted"><span className="cross">&#10007;</span> Full systems library</li>
                 <li className="pricing-card__feature pricing-card__feature--muted"><span className="cross">&#10007;</span> All betting trends</li>
               </ul>
-              {!session ? (
+              {!user ? (
                 <Link href="/signup" className="btn btn--outline" style={{ width: '100%', justifyContent: 'center' }}>
                   Create Free Account
                 </Link>
