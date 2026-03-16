@@ -26,6 +26,7 @@ create table public.profiles (
   subscription_status subscription_status,
   stripe_customer_id text unique,
   stripe_subscription_id text unique,
+  access_expires_at timestamptz,
   is_admin boolean not null default false,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()

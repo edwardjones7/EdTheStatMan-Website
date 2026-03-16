@@ -26,7 +26,7 @@ export default async function BettingSystems() {
   if (user) {
     const { data: profile } = await (supabase as any)
       .from('profiles')
-      .select('subscription_tier, subscription_status, is_admin')
+      .select('subscription_tier, is_admin, access_expires_at')
       .eq('id', user.id)
       .single()
     if ((profile as any)?.is_admin) {
@@ -34,8 +34,9 @@ export default async function BettingSystems() {
       userTier = 'premium'
     } else {
       userTier = (profile as any)?.subscription_tier ?? 'free'
-      if (userTier !== 'free' && (profile as any)?.subscription_status !== 'active') {
-        userTier = 'free'
+      if (userTier !== 'free') {
+        const expiresAt = (profile as any)?.access_expires_at ? new Date((profile as any).access_expires_at) : null
+        if (!expiresAt || expiresAt < new Date()) userTier = 'free'
       }
     }
   }

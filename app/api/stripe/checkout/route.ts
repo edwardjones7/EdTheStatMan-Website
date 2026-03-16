@@ -39,11 +39,10 @@ export async function POST(req: Request) {
   const checkoutSession = await getStripe().checkout.sessions.create({
     customer: customerId,
     line_items: [{ price: priceId, quantity: 1 }],
-    mode: 'subscription',
+    mode: 'payment',
     success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/account?success=1`,
     cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/betting-systems`,
-    metadata: { userId: user.id },
-    subscription_data: { metadata: { userId: user.id } },
+    metadata: { userId: user.id, priceId },
     allow_promotion_codes: true,
   })
 

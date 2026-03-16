@@ -5,15 +5,14 @@ import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { logout } from '@/app/actions/auth'
 import { updateProfile, updatePassword } from '@/app/account/actions'
-import ManageBillingButton from '@/components/ManageBillingButton'
-import type { SubscriptionTier, SubscriptionStatus } from '@/lib/supabase/types'
+import type { SubscriptionTier } from '@/lib/supabase/types'
 
 interface AccountClientProps {
   profile: {
     email: string
     full_name: string | null
     subscription_tier: SubscriptionTier
-    subscription_status: SubscriptionStatus | null
+    access_expires_at: string | null
     is_admin: boolean
     created_at: string
     stripe_customer_id: string | null
@@ -54,8 +53,9 @@ export default function AccountClient({ profile, provider }: AccountClientProps)
     ? 'account-hero__avatar account-hero__avatar--premium'
     : 'account-hero__avatar'
 
-  const isSubscribed = profile.subscription_status === 'active' || profile.subscription_status === 'trialing'
-  const hasIssue = profile.subscription_status && !isSubscribed
+  const expiresAt = profile.access_expires_at ? new Date(profile.access_expires_at) : null
+  const isActive = !!expiresAt && expiresAt > new Date()
+  const isExpired = !!expiresAt && expiresAt <= new Date()
 
   function handleProfileSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -92,7 +92,7 @@ export default function AccountClient({ profile, provider }: AccountClientProps)
 
         {subscribeSuccess && (
           <div className="account-success-banner">
-            &#10003; You&apos;re now subscribed! Welcome to {profile.subscription_tier === 'premium' ? 'Premium' : 'Basic'}.
+            &#10003; Payment successful! Welcome to {profile.subscription_tier === 'premium' ? 'Annual' : 'Monthly'} access.
           </div>
         )}
 
@@ -120,24 +120,20 @@ export default function AccountClient({ profile, provider }: AccountClientProps)
                 ? 'Full administrative access to all content and settings.'
                 : tierConfig.description}
             </p>
-            {profile.subscription_tier !== 'free' && !profile.is_admin && (
-              <span className={`account-plan__status ${hasIssue ? 'account-plan__status--warn' : 'account-plan__status--active'}`}>
-                {hasIssue
-                  ? (profile.subscription_status ?? '').replace('_', ' ')
-                  : 'Active'}
+            {profile.subscription_tier !== 'free' && !profile.is_admin && expiresAt && (
+              <span className={`account-plan__status ${isExpired ? 'account-plan__status--warn' : 'account-plan__status--active'}`}>
+                {isExpired ? 'Expired' : `Access until ${formatDate(expiresAt.toISOString())}`}
               </span>
             )}
           </div>
 
           {!profile.is_admin && (
             <div className="account-plan__actions">
-              {profile.subscription_tier === 'free' ? (
+              {(profile.subscription_tier === 'free' || isExpired) ? (
                 <Link href="/betting-systems#pricing" className="btn btn--primary btn--sm">
-                  &#9889; Upgrade Plan
+                  &#9889; {isExpired ? 'Renew Access' : 'Upgrade Plan'}
                 </Link>
-              ) : (
-                <ManageBillingButton />
-              )}
+              ) : null}
             </div>
           )}
         </div>

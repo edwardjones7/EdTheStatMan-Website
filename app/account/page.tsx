@@ -18,7 +18,7 @@ export default async function AccountPage() {
 
   const { data: profile } = await (supabase as any)
     .from('profiles')
-    .select('full_name, subscription_tier, subscription_status, is_admin, created_at, stripe_customer_id')
+    .select('full_name, subscription_tier, is_admin, created_at, stripe_customer_id, access_expires_at')
     .eq('id', user.id)
     .single()
 
@@ -30,7 +30,7 @@ export default async function AccountPage() {
         email: user.email!,
         full_name: profile?.full_name ?? null,
         subscription_tier: profile?.subscription_tier ?? 'free',
-        subscription_status: profile?.subscription_status ?? null,
+        access_expires_at: profile?.access_expires_at ?? null,
         is_admin: profile?.is_admin ?? false,
         created_at: profile?.created_at ?? user.created_at,
         stripe_customer_id: profile?.stripe_customer_id ?? null,
