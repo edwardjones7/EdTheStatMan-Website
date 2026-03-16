@@ -281,25 +281,25 @@ export default function SportTabsSystem({ systems, userTier, isAdmin = false }: 
   }
 
   // Stats bar computed values
-  const activeForStats = allVisible.filter(s => s.is_active)
-  const winningCount = activeForStats.filter(s => s.w > s.l).length
-  const bestPct = activeForStats.reduce((max, s) => (s.pct !== null && s.pct > max ? s.pct : max), 0)
+  const memberCount = allVisible.filter(s => !s.is_free).length
+  const freeCount = allVisible.filter(s => s.is_free).length
+  const activeCount = allVisible.filter(s => s.is_active).length
 
   return (
     <>
       {/* Summary stats bar */}
       <div className="sys-stats-bar reveal" style={{ marginTop: '32px' }}>
         <div className="sys-stats-chip">
+          <span className="sys-stats-chip__label">Member Systems</span>
+          <span className="sys-stats-chip__value">{memberCount}</span>
+        </div>
+        <div className="sys-stats-chip">
+          <span className="sys-stats-chip__label">Free Systems</span>
+          <span className="sys-stats-chip__value">{freeCount}</span>
+        </div>
+        <div className="sys-stats-chip">
           <span className="sys-stats-chip__label">Active Systems</span>
-          <span className="sys-stats-chip__value">{activeForStats.length}</span>
-        </div>
-        <div className="sys-stats-chip">
-          <span className="sys-stats-chip__label">Winning Systems</span>
-          <span className="sys-stats-chip__value">{winningCount}</span>
-        </div>
-        <div className="sys-stats-chip">
-          <span className="sys-stats-chip__label">Best Win Rate</span>
-          <span className="sys-stats-chip__value">{activeForStats.length > 0 && bestPct > 0 ? `${Math.round(bestPct * 100)}%` : '—'}</span>
+          <span className="sys-stats-chip__value">{activeCount}</span>
         </div>
       </div>
 

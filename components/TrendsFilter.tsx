@@ -281,25 +281,25 @@ export default function TrendsFilter({ trends, userTier, isAdmin = false }: Prop
   }
 
   // Stats bar computed values
-  const activeForStats = allVisible.filter(r => r.is_active)
-  const winningCount = activeForStats.filter(r => r.w > r.l).length
-  const bestPct = activeForStats.reduce((max, r) => (r.pct !== null && r.pct > max ? r.pct : max), 0)
+  const memberCount = allVisible.filter(r => !r.is_free).length
+  const freeCount = allVisible.filter(r => r.is_free).length
+  const activeCount = allVisible.filter(r => r.is_active).length
 
   return (
     <>
       {/* Summary stats bar */}
       <div className="sys-stats-bar reveal" style={{ marginTop: '32px' }}>
         <div className="sys-stats-chip">
+          <span className="sys-stats-chip__label">Member Trends</span>
+          <span className="sys-stats-chip__value">{memberCount}</span>
+        </div>
+        <div className="sys-stats-chip">
+          <span className="sys-stats-chip__label">Free Trends</span>
+          <span className="sys-stats-chip__value">{freeCount}</span>
+        </div>
+        <div className="sys-stats-chip">
           <span className="sys-stats-chip__label">Active Trends</span>
-          <span className="sys-stats-chip__value">{activeForStats.length}</span>
-        </div>
-        <div className="sys-stats-chip">
-          <span className="sys-stats-chip__label">Winning Trends</span>
-          <span className="sys-stats-chip__value">{winningCount}</span>
-        </div>
-        <div className="sys-stats-chip">
-          <span className="sys-stats-chip__label">Best Win Rate</span>
-          <span className="sys-stats-chip__value">{activeForStats.length > 0 && bestPct > 0 ? `${Math.round(bestPct * 100)}%` : '—'}</span>
+          <span className="sys-stats-chip__value">{activeCount}</span>
         </div>
       </div>
 
