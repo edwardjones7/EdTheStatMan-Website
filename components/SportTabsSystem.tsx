@@ -41,6 +41,8 @@ const BLANK = {
   w: 0,
   l: 0,
   t: 0,
+  date: '',
+  team: '',
   is_free: false,
   is_active: true,
   sort_order: 0,
@@ -85,9 +87,6 @@ export default function SportTabsSystem({ systems, userTier, isAdmin = false }: 
   const [form, setForm] = useState({ ...BLANK })
   const [saving, setSaving] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
-
-  // Per-row toggling
-  const [toggling, setToggling] = useState<string | null>(null)
 
   // XLSX import
   const [importing, setImporting] = useState(false)
@@ -148,6 +147,8 @@ export default function SportTabsSystem({ systems, userTier, isAdmin = false }: 
       w: s.w,
       l: s.l,
       t: s.t,
+      date: s.date ?? '',
+      team: s.team ?? '',
       is_free: s.is_free,
       is_active: s.is_active,
       sort_order: s.sort_order,
@@ -188,28 +189,6 @@ export default function SportTabsSystem({ systems, userTier, isAdmin = false }: 
     setSaving(false)
     if (!res.ok) { setFormError(data.error ?? 'Something went wrong.'); return }
     cancelForm()
-    window.location.reload()
-  }
-
-  async function toggleActive(s: BettingSystem) {
-    setToggling(s.id + ':active')
-    await fetch(`/api/admin/systems/${s.id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ is_active: !s.is_active }),
-    })
-    setToggling(null)
-    window.location.reload()
-  }
-
-  async function toggleFree(s: BettingSystem) {
-    setToggling(s.id + ':free')
-    await fetch(`/api/admin/systems/${s.id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ is_free: !s.is_free }),
-    })
-    setToggling(null)
     window.location.reload()
   }
 
@@ -491,6 +470,14 @@ export default function SportTabsSystem({ systems, userTier, isAdmin = false }: 
               <input className="admin-form-input" value={form.type} onChange={e => setField('type', e.target.value)} placeholder="Situational, Trend" />
             </div>
             <div className="admin-form-field">
+              <label className="admin-form-label">Date</label>
+              <input className="admin-form-input" value={form.date} onChange={e => setField('date', e.target.value)} placeholder="e.g. 2024-01-15" />
+            </div>
+            <div className="admin-form-field">
+              <label className="admin-form-label">Team</label>
+              <input className="admin-form-input" value={form.team} onChange={e => setField('team', e.target.value)} placeholder="e.g. Lakers" />
+            </div>
+            <div className="admin-form-field">
               <label className="admin-form-label">W</label>
               <input className="admin-form-input" type="number" min={0} value={form.w} onChange={e => setField('w', +e.target.value)} />
             </div>
@@ -573,24 +560,6 @@ export default function SportTabsSystem({ systems, userTier, isAdmin = false }: 
                     {/* Admin controls strip */}
                     {isAdmin && editMode && (
                       <div className="sys-row-card__admin">
-                        <label className="sys-admin-check">
-                          <input
-                            type="checkbox"
-                            checked={row.is_active}
-                            disabled={toggling === row.id + ':active'}
-                            onChange={() => toggleActive(row)}
-                          />
-                          <span>Active</span>
-                        </label>
-                        <label className="sys-admin-check">
-                          <input
-                            type="checkbox"
-                            checked={!row.is_free}
-                            disabled={toggling === row.id + ':free'}
-                            onChange={() => toggleFree(row)}
-                          />
-                          <span>Members only</span>
-                        </label>
                         <button
                           onClick={() => openEdit(row)}
                           style={{
@@ -674,13 +643,13 @@ export default function SportTabsSystem({ systems, userTier, isAdmin = false }: 
                       {/* Date */}
                       <div className="sys-row-card__field">
                         <span className="sys-row-card__field-label">Date</span>
-                        <span className="sys-row-card__field-value">—</span>
+                        <span className="sys-row-card__field-value">{row.date || '—'}</span>
                       </div>
 
                       {/* Team */}
                       <div className="sys-row-card__field">
                         <span className="sys-row-card__field-label">Team</span>
-                        <span className="sys-row-card__field-value">—</span>
+                        <span className="sys-row-card__field-value">{row.team || '—'}</span>
                       </div>
                     </div>
                   </div>

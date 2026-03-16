@@ -41,6 +41,8 @@ const BLANK = {
   w: 0,
   l: 0,
   t: 0,
+  date: '',
+  team: '',
   is_free: false,
   is_active: true,
   sort_order: 0,
@@ -85,9 +87,6 @@ export default function TrendsFilter({ trends, userTier, isAdmin = false }: Prop
   const [form, setForm] = useState({ ...BLANK })
   const [saving, setSaving] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
-
-  // Per-row toggling
-  const [toggling, setToggling] = useState<string | null>(null)
 
   // XLSX import
   const [importing, setImporting] = useState(false)
@@ -148,6 +147,8 @@ export default function TrendsFilter({ trends, userTier, isAdmin = false }: Prop
       w: r.w,
       l: r.l,
       t: r.t,
+      date: r.date ?? '',
+      team: r.team ?? '',
       is_free: r.is_free,
       is_active: r.is_active,
       sort_order: r.sort_order,
@@ -188,28 +189,6 @@ export default function TrendsFilter({ trends, userTier, isAdmin = false }: Prop
     setSaving(false)
     if (!res.ok) { setFormError(data.error ?? 'Something went wrong.'); return }
     cancelForm()
-    window.location.reload()
-  }
-
-  async function toggleActive(r: BettingTrend) {
-    setToggling(r.id + ':active')
-    await fetch(`/api/admin/trends/${r.id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ is_active: !r.is_active }),
-    })
-    setToggling(null)
-    window.location.reload()
-  }
-
-  async function toggleFree(r: BettingTrend) {
-    setToggling(r.id + ':free')
-    await fetch(`/api/admin/trends/${r.id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ is_free: !r.is_free }),
-    })
-    setToggling(null)
     window.location.reload()
   }
 
@@ -491,6 +470,14 @@ export default function TrendsFilter({ trends, userTier, isAdmin = false }: Prop
               <input className="admin-form-input" value={form.type} onChange={e => setField('type', e.target.value)} placeholder="Situational, Trend" />
             </div>
             <div className="admin-form-field">
+              <label className="admin-form-label">Date</label>
+              <input className="admin-form-input" value={form.date} onChange={e => setField('date', e.target.value)} placeholder="e.g. 2024-01-15" />
+            </div>
+            <div className="admin-form-field">
+              <label className="admin-form-label">Team</label>
+              <input className="admin-form-input" value={form.team} onChange={e => setField('team', e.target.value)} placeholder="e.g. Lakers" />
+            </div>
+            <div className="admin-form-field">
               <label className="admin-form-label">W</label>
               <input className="admin-form-input" type="number" min={0} value={form.w} onChange={e => setField('w', +e.target.value)} />
             </div>
@@ -573,24 +560,6 @@ export default function TrendsFilter({ trends, userTier, isAdmin = false }: Prop
                     {/* Admin controls strip */}
                     {isAdmin && editMode && (
                       <div className="sys-row-card__admin">
-                        <label className="sys-admin-check">
-                          <input
-                            type="checkbox"
-                            checked={row.is_active}
-                            disabled={toggling === row.id + ':active'}
-                            onChange={() => toggleActive(row)}
-                          />
-                          <span>Active</span>
-                        </label>
-                        <label className="sys-admin-check">
-                          <input
-                            type="checkbox"
-                            checked={!row.is_free}
-                            disabled={toggling === row.id + ':free'}
-                            onChange={() => toggleFree(row)}
-                          />
-                          <span>Members only</span>
-                        </label>
                         <button
                           onClick={() => openEdit(row)}
                           style={{
@@ -674,13 +643,13 @@ export default function TrendsFilter({ trends, userTier, isAdmin = false }: Prop
                       {/* Date */}
                       <div className="sys-row-card__field">
                         <span className="sys-row-card__field-label">Date</span>
-                        <span className="sys-row-card__field-value">—</span>
+                        <span className="sys-row-card__field-value">{row.date || '—'}</span>
                       </div>
 
                       {/* Team */}
                       <div className="sys-row-card__field">
                         <span className="sys-row-card__field-label">Team</span>
-                        <span className="sys-row-card__field-value">—</span>
+                        <span className="sys-row-card__field-value">{row.team || '—'}</span>
                       </div>
                     </div>
                   </div>

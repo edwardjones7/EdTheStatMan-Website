@@ -15,6 +15,8 @@ export interface BettingSystem {
   w: number
   l: number
   t: number
+  date: string
+  team: string
   is_free: boolean
   is_active: boolean
   sort_order: number
