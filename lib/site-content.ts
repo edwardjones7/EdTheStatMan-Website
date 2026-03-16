@@ -172,10 +172,10 @@ export const DEFAULT_FEATURES: FeaturesContent = {
     },
     {
       number: '03',
-      title: 'EdTheStatBot',
-      text: 'Ask questions about our database and get instant statistical insights. AI-powered analysis at your fingertips.',
+      title: 'Sharp Picks',
+      text: 'Curated daily picks across NFL, NBA, College Football, and College Basketball. Every pick is backed by systems and trends data.',
       href: '/betting-systems',
-      linkText: 'Learn More',
+      linkText: 'View Systems',
       iconColor: 'green',
     },
     {
