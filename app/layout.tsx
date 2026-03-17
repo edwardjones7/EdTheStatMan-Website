@@ -6,6 +6,7 @@ import Footer from '@/components/Footer'
 import BackgroundEffects from '@/components/BackgroundEffects'
 import BackToTop from '@/components/BackToTop'
 import ClientScripts from '@/components/ClientScripts'
+import PageViewTracker from '@/components/PageViewTracker'
 import { Suspense } from 'react'
 
 const inter = Inter({ 
@@ -88,6 +89,7 @@ export default function RootLayout({
         <Footer />
         <BackToTop />
         <ClientScripts />
+        <Suspense><PageViewTracker /></Suspense>
       </body>
     </html>
   )

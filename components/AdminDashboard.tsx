@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import type { SubscriptionTier, SubscriptionStatus, AccessLevel } from '@/lib/supabase/types'
+import AdminAnalyticsTab from '@/components/AdminAnalyticsTab'
 
 interface User {
   id: string
@@ -66,8 +67,8 @@ function isThisMonth(dateStr: string) {
 }
 
 export default function AdminDashboard({ users, posts, initialTab }: Props) {
-  const [tab, setTab] = useState<'users' | 'posts'>(
-    (['users', 'posts'].includes(initialTab ?? '') ? initialTab : 'users') as 'users'
+  const [tab, setTab] = useState<'users' | 'posts' | 'analytics'>(
+    (['users', 'posts', 'analytics'].includes(initialTab ?? '') ? initialTab : 'users') as 'users'
   )
   const [userSearch, setUserSearch] = useState('')
   const [tierFilter, setTierFilter] = useState<string>('all')
@@ -224,6 +225,9 @@ export default function AdminDashboard({ users, posts, initialTab }: Props) {
           </button>
           <button className={`admin-tab ${tab === 'posts' ? 'admin-tab--active' : ''}`} onClick={() => setTab('posts')}>
             Posts <span className="admin-tab__count">{posts.length}</span>
+          </button>
+          <button className={`admin-tab ${tab === 'analytics' ? 'admin-tab--active' : ''}`} onClick={() => setTab('analytics')}>
+            Analytics
           </button>
         </div>
 
@@ -399,6 +403,9 @@ export default function AdminDashboard({ users, posts, initialTab }: Props) {
         )}
 
 
+
+        {/* ── Analytics Tab ── */}
+        {tab === 'analytics' && <AdminAnalyticsTab />}
 
       </div>
     </main>

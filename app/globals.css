@@ -4976,6 +4976,61 @@ textarea.form-input {
   }
 }
 
+/* ---------- Analytics Chart ---------- */
+.analytics-chart-wrap {
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.analytics-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 140px;
+  min-width: 480px;
+  padding-bottom: 28px;
+  position: relative;
+}
+
+.analytics-chart__col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  height: 100%;
+  position: relative;
+  cursor: default;
+}
+
+.analytics-chart__bar {
+  width: 100%;
+  background: linear-gradient(to top, var(--accent-green), rgba(52, 211, 153, 0.5));
+  border-radius: 3px 3px 0 0;
+  min-height: 2px;
+  transition: filter 0.15s;
+}
+
+.analytics-chart__col:hover .analytics-chart__bar {
+  filter: brightness(1.25);
+}
+
+.analytics-chart__label {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 9px;
+  color: transparent;
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+}
+
+.analytics-chart__label--show {
+  color: var(--text-muted);
+}
+
 /* ---------- Print Styles ---------- */
 @media print {
   .nav, .footer, .back-to-top, .bg-grid, .bg-glow {
