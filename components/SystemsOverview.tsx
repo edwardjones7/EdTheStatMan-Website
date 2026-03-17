@@ -49,7 +49,7 @@ export default function SystemsOverview({ content, editMode, onEdit, resetKey = 
         </div>
 
         <div className="sys-grid stagger-children">
-          {content.cards.map((card, i) => {
+          {content.cards.filter(c => c.statusType !== 'ended').map((card, i) => {
             const total = card.wins + card.losses
             const pct = total > 0 ? Math.round((card.wins / total) * 100) : 0
             const record = `${card.wins}-${card.losses}`
