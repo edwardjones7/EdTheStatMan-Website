@@ -11,8 +11,8 @@ export async function POST(req: NextRequest) {
     if (path.startsWith('/admin')) {
       return NextResponse.json({ ok: true })
     }
-    const supabase = createAdminClient()
-    await supabase.from('page_views' as any).insert({ path, referrer: referrer || null })
+    const supabase = createAdminClient() as any
+    await supabase.from('page_views').insert({ path, referrer: referrer || null })
     return NextResponse.json({ ok: true })
   } catch {
     return NextResponse.json({ error: 'Failed' }, { status: 500 })
