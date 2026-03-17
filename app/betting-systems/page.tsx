@@ -42,8 +42,8 @@ export default async function BettingSystems() {
   }
 
   const systemsQuery = isAdmin
-    ? (admin as any).from('betting_systems').select('*').order('date', { ascending: true, nullsFirst: false })
-    : (admin as any).from('betting_systems').select('*').eq('is_active', true).order('date', { ascending: true, nullsFirst: false })
+    ? (admin as any).from('betting_systems').select('*').order('date', { ascending: false, nullsFirst: false })
+    : (admin as any).from('betting_systems').select('*').eq('is_active', true).order('date', { ascending: false, nullsFirst: false })
 
   const { data: systems } = await systemsQuery
 
