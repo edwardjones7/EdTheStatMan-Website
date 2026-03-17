@@ -556,6 +556,16 @@ export default function SportTabsSystem({ systems, userTier, isAdmin = false }: 
                           >
                             ✕
                           </button>
+                          <span className={`sys-row-card__access-badge sys-row-card__access-badge--${row.is_free ? 'free' : 'members'}`}>
+                            {row.is_free ? 'Free' : 'Members'}
+                          </span>
+                          <span style={{
+                            padding: '2px 8px', borderRadius: 'var(--radius-full)', fontSize: '0.68rem', fontWeight: 600,
+                            background: row.is_active ? 'rgba(52,211,153,0.12)' : 'rgba(239,68,68,0.12)',
+                            color: row.is_active ? 'var(--accent-green)' : '#ef4444',
+                          }}>
+                            {row.is_active ? 'Active' : 'Inactive'}
+                          </span>
                         </div>
                       )}
 
