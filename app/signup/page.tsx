@@ -20,8 +20,10 @@ export default function SignupPage({
           <p className="auth-card__subtitle">Join EdTheStatMan and start winning</p>
         </div>
 
-        {searchParams.error === 'auth' && (
-          <div className="auth-error">Something went wrong. Please try again.</div>
+        {searchParams.error && (
+          <div className="auth-error">
+            {searchParams.error === 'auth' ? 'Something went wrong. Please try again.' : searchParams.error}
+          </div>
         )}
 
         <SignupForm />
