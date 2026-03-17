@@ -450,10 +450,6 @@ export default function TrendsFilter({ trends, userTier, isAdmin = false }: Prop
               <input className="admin-form-input" value={form.type} onChange={e => setField('type', e.target.value)} placeholder="Situational, Trend" />
             </div>
             <div className="admin-form-field">
-              <label className="admin-form-label">Date</label>
-              <input className="admin-form-input" value={form.date} onChange={e => setField('date', e.target.value)} placeholder="e.g. 2024-01-15" />
-            </div>
-            <div className="admin-form-field">
               <label className="admin-form-label">Team</label>
               <input className="admin-form-input" value={form.team} onChange={e => setField('team', e.target.value)} placeholder="e.g. Lakers" />
             </div>
@@ -621,12 +617,6 @@ export default function TrendsFilter({ trends, userTier, isAdmin = false }: Prop
                         <div className="sys-row-card__field">
                           <span className="sys-row-card__field-label">Season</span>
                           <span className="sys-row-card__field-value">{row.season || '—'}</span>
-                        </div>
-
-                        {/* Date */}
-                        <div className="sys-row-card__field">
-                          <span className="sys-row-card__field-label">Date</span>
-                          <span className="sys-row-card__field-value">{row.date || '—'}</span>
                         </div>
 
                         {/* Team */}
