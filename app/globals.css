@@ -1611,7 +1611,7 @@ input, textarea, select {
 .sys-row-card__desc-col {
   flex: 1 1 160px;
   min-width: 0;
-  max-width: 380px;
+  max-width: 480px;
   padding: 14px 22px;
   display: flex;
   flex-direction: column;
