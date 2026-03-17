@@ -1609,8 +1609,9 @@ input, textarea, select {
 
 /* Description column — grows to fill available space */
 .sys-row-card__desc-col {
-  flex: 1;
+  flex: 1 1 160px;
   min-width: 0;
+  max-width: 260px;
   padding: 14px 22px;
   display: flex;
   flex-direction: column;
@@ -1642,8 +1643,8 @@ input, textarea, select {
 
 /* Data field columns (Line, Season, Type, Record, Pct) */
 .sys-row-card__field {
-  flex: 0 0 96px;
-  width: 96px;
+  flex: 0 0 126px;
+  width: 126px;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -1652,7 +1653,7 @@ input, textarea, select {
   align-self: stretch;
 }
 
-.sys-row-card__field--wide { flex: 0 0 120px; width: 120px; }
+.sys-row-card__field--wide { flex: 0 0 150px; width: 150px; }
 
 .sys-row-card__field-label {
   font-size: 0.62rem;
@@ -1668,8 +1669,7 @@ input, textarea, select {
   font-size: 0.9rem;
   color: var(--text-secondary);
   font-family: var(--font-mono);
-  word-break: break-word;
-  overflow-wrap: break-word;
+  white-space: nowrap;
 }
 
 /* Record field */
