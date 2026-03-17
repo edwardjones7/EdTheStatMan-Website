@@ -1609,9 +1609,8 @@ input, textarea, select {
 
 /* Description column — grows to fill available space */
 .sys-row-card__desc-col {
-  flex: 1 1 160px;
+  flex: 1;
   min-width: 0;
-  max-width: 260px;
   padding: 14px 22px;
   display: flex;
   flex-direction: column;
