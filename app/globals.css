@@ -1654,6 +1654,8 @@ input, textarea, select {
 
 .sys-row-card__field--wide { flex: 0 0 150px; width: 150px; }
 
+.sys-row-card__body .sys-row-card__field:last-child { padding-right: 28px; }
+
 .sys-row-card__field-label {
   font-size: 0.62rem;
   font-weight: 700;
