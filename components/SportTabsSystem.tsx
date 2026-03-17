@@ -630,7 +630,7 @@ export default function SportTabsSystem({ systems, userTier, isAdmin = false }: 
                         </div>
 
                         {/* Team */}
-                        <div className="sys-row-card__field">
+                        <div className="sys-row-card__field sys-row-card__field--wide">
                           <span className="sys-row-card__field-label">Team</span>
                           <span className="sys-row-card__field-value">{row.team || '—'}</span>
                         </div>
