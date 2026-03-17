@@ -45,7 +45,6 @@ const BLANK = {
   team: '',
   is_free: false,
   is_active: true,
-  sort_order: 0,
 }
 
 interface XlsxSheet {
@@ -128,7 +127,6 @@ export default function TrendsFilter({ trends, userTier, isAdmin = false }: Prop
       team: r.team ?? '',
       is_free: r.is_free,
       is_active: r.is_active,
-      sort_order: r.sort_order,
     })
     setEditId(r.id)
     setFormMode('edit')
@@ -473,10 +471,6 @@ export default function TrendsFilter({ trends, userTier, isAdmin = false }: Prop
             <div className="admin-form-field">
               <label className="admin-form-label">Units</label>
               <input className="admin-form-input" type="number" step="0.1" value={form.units ?? ''} onChange={e => setField('units', e.target.value)} placeholder="12.5" />
-            </div>
-            <div className="admin-form-field">
-              <label className="admin-form-label">Sort Order</label>
-              <input className="admin-form-input" type="number" value={form.sort_order} onChange={e => setField('sort_order', +e.target.value)} />
             </div>
             <div className="admin-form-field admin-form-field--checks">
               <label className="admin-form-check">
