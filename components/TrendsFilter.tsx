@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect, Fragment } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import type { BettingTrend } from './AdminTrendsTab'
 
@@ -76,6 +77,7 @@ function parseStr(val: unknown): string {
 }
 
 export default function TrendsFilter({ trends, userTier, isAdmin = false }: Props) {
+  const router = useRouter()
   const [activeTab, setActiveTab] = useState<Sport>('all')
   const [editMode, setEditMode] = useState(false)
 
@@ -92,6 +94,13 @@ export default function TrendsFilter({ trends, userTier, isAdmin = false }: Prop
   const [clearBeforeImport, setClearBeforeImport] = useState(false)
   const [importError, setImportError] = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
+  const inlineFormRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (formMode === 'edit' && editId) {
+      setTimeout(() => inlineFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50)
+    }
+  }, [editId, formMode])
 
   const isPaid = userTier === 'basic' || userTier === 'premium'
   const isLoggedOut = userTier === null
@@ -160,14 +169,14 @@ export default function TrendsFilter({ trends, userTier, isAdmin = false }: Prop
     setSaving(false)
     if (!res.ok) { setFormError(data.error ?? 'Something went wrong.'); return }
     cancelForm()
-    window.location.reload()
+    router.refresh()
   }
 
   async function deleteRow(id: string, description: string) {
     if (!confirm(`Delete "${description || '(blank row)'}"? This cannot be undone.`)) return
     const res = await fetch(`/api/admin/trends/${id}`, { method: 'DELETE' })
     if (!res.ok) { alert('Delete failed.'); return }
-    window.location.reload()
+    router.refresh()
   }
 
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -229,7 +238,7 @@ export default function TrendsFilter({ trends, userTier, isAdmin = false }: Prop
       if (!res.ok) throw new Error(data.error ?? 'Import failed.')
       setXlsxSheets(null)
       setClearBeforeImport(false)
-      window.location.reload()
+      router.refresh()
     } catch (err: unknown) {
       setImportError(err instanceof Error ? err.message : 'Import failed.')
     } finally {
@@ -287,7 +296,7 @@ export default function TrendsFilter({ trends, userTier, isAdmin = false }: Prop
           <button
             key={tab.value}
             className={`sport-tab${activeTab === tab.value ? ' active' : ''}`}
-            onClick={() => setActiveTab(tab.value)
+            onClick={() => { setActiveTab(tab.value); cancelForm() }}
           >
             {tab.label}
           </button>
@@ -320,7 +329,7 @@ export default function TrendsFilter({ trends, userTier, isAdmin = false }: Prop
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ records: [], clearFirst: true }),
               })
-              window.location.reload()
+              router.refresh()
             }}
             style={{ borderColor: 'rgba(239,68,68,0.4)', color: '#ef4444' }}
           >
@@ -412,10 +421,10 @@ export default function TrendsFilter({ trends, userTier, isAdmin = false }: Prop
         </div>
       )}
 
-      {/* Row add / edit form */}
-      {isAdmin && editMode && formMode !== 'hidden' && (
+      {/* Add form only at top */}
+      {isAdmin && editMode && formMode === 'add' && (
         <div className="admin-inline-form" style={{ marginTop: '16px' }}>
-          <div className="admin-inline-form__title">{formMode === 'add' ? 'New Betting Trend' : 'Edit Betting Trend'}</div>
+          <div className="admin-inline-form__title">New Betting Trend</div>
           {formError && <div className="admin-inline-form__error">{formError}</div>}
           <div className="admin-form-grid">
             <div className="admin-form-field">
@@ -505,111 +514,190 @@ export default function TrendsFilter({ trends, userTier, isAdmin = false }: Prop
 
                 if (locked) {
                   return (
-                    <div key={row.id} className="sys-row-card sys-row-card--locked">
-                      <div className="sys-row-card__body" style={{ justifyContent: 'center', padding: '16px 24px', gap: '16px' }}>
-                        <span style={{ fontSize: '1.1rem' }}>🔒</span>
-                        <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>Members Only</span>
-                        <Link href="/betting-systems#pricing" className="btn btn--primary btn--sm">Upgrade to Unlock</Link>
+                    <Fragment key={row.id}>
+                      <div className="sys-row-card sys-row-card--locked">
+                        <div className="sys-row-card__body" style={{ justifyContent: 'center', padding: '16px 24px', gap: '16px' }}>
+                          <span style={{ fontSize: '1.1rem' }}>🔒</span>
+                          <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>Members Only</span>
+                          <Link href="/betting-systems#pricing" className="btn btn--primary btn--sm">Upgrade to Unlock</Link>
+                        </div>
                       </div>
-                    </div>
+                    </Fragment>
                   )
                 }
 
                 return (
-                  <div
-                    key={row.id}
-                    className={[
-                      'sys-row-card',
-                      `sys-row-card--${row.sport}`,
-                      !row.is_active && isAdmin && editMode ? 'sys-row-card--inactive' : '',
-                    ].filter(Boolean).join(' ')}
-                  >
-                    {/* Admin controls strip */}
-                    {isAdmin && editMode && (
-                      <div className="sys-row-card__admin">
-                        <button
-                          onClick={() => openEdit(row)}
-                          style={{
-                            padding: '3px 9px', borderRadius: '10px', border: '1px solid var(--border-color)',
-                            cursor: 'pointer', fontSize: '0.7rem', background: 'transparent', color: 'var(--text-secondary)',
-                          }}
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => deleteRow(row.id, row.description)}
-                          style={{
-                            padding: '3px 9px', borderRadius: '10px', border: 'none', cursor: 'pointer',
-                            fontSize: '0.7rem', background: 'rgba(239,68,68,0.1)', color: '#ef4444',
-                          }}
-                        >
-                          ✕
-                        </button>
-                      </div>
-                    )}
+                  <Fragment key={row.id}>
+                    <div
+                      className={[
+                        'sys-row-card',
+                        `sys-row-card--${row.sport}`,
+                        !row.is_active && isAdmin && editMode ? 'sys-row-card--inactive' : '',
+                      ].filter(Boolean).join(' ')}
+                    >
+                      {/* Admin controls strip */}
+                      {isAdmin && editMode && (
+                        <div className="sys-row-card__admin">
+                          <button
+                            onClick={() => openEdit(row)}
+                            style={{
+                              padding: '3px 9px', borderRadius: '10px', border: '1px solid var(--border-color)',
+                              cursor: 'pointer', fontSize: '0.7rem', background: 'transparent', color: 'var(--text-secondary)',
+                            }}
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => deleteRow(row.id, row.description)}
+                            style={{
+                              padding: '3px 9px', borderRadius: '10px', border: 'none', cursor: 'pointer',
+                              fontSize: '0.7rem', background: 'rgba(239,68,68,0.1)', color: '#ef4444',
+                            }}
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      )}
 
-                    {/* Horizontal data row */}
-                    <div className="sys-row-card__body">
-                      {/* Sport badge */}
-                      <div className="sys-row-card__sport-col">
-                        <span className="sys-row-card__sport-badge">{style.label}</span>
-                      </div>
+                      {/* Horizontal data row */}
+                      <div className="sys-row-card__body">
+                        {/* Sport badge */}
+                        <div className="sys-row-card__sport-col">
+                          <span className="sys-row-card__sport-badge">{style.label}</span>
+                        </div>
 
-                      {/* Description */}
-                      <div className="sys-row-card__desc-col">
-                        <div className="sys-row-card__desc">
-                          {row.description || <em style={{ color: 'var(--text-muted)' }}>No description</em>}
+                        {/* Description */}
+                        <div className="sys-row-card__desc-col">
+                          <div className="sys-row-card__desc">
+                            {row.description || <em style={{ color: 'var(--text-muted)' }}>No description</em>}
+                          </div>
+                        </div>
+
+                        {/* Record */}
+                        <div className="sys-row-card__field">
+                          <span className="sys-row-card__field-label">Record</span>
+                          {locked ? (
+                            <span className="sys-row-card__lock">&#128274; <Link href="/betting-trends#pricing">Upgrade</Link></span>
+                          ) : (
+                            <span className={`sys-row-card__record sys-row-card__record--${winning ? 'win' : row.w < row.l ? 'loss' : 'neutral'}`}>
+                              {row.w}-{row.l}-{row.t}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Win % */}
+                        <div className="sys-row-card__pct-col">
+                          <span className="sys-row-card__field-label">Win %</span>
+                          {locked ? (
+                            <span className="sys-row-card__pct sys-row-card__pct--neutral">—</span>
+                          ) : (
+                            <>
+                              <span className={`sys-row-card__pct sys-row-card__pct--${winning ? 'win' : 'neutral'}`}>
+                                {pctDisplay(row.pct)}
+                              </span>
+                              <div className="sys-row-card__bar">
+                                <div className="sys-row-card__bar-fill" style={{ width: `${pctWidth}%` }} />
+                              </div>
+                            </>
+                          )}
+                        </div>
+
+                        {/* Season */}
+                        <div className="sys-row-card__field">
+                          <span className="sys-row-card__field-label">Season</span>
+                          <span className="sys-row-card__field-value">{row.season || '—'}</span>
+                        </div>
+
+                        {/* Date */}
+                        <div className="sys-row-card__field">
+                          <span className="sys-row-card__field-label">Date</span>
+                          <span className="sys-row-card__field-value">{row.date || '—'}</span>
+                        </div>
+
+                        {/* Team */}
+                        <div className="sys-row-card__field">
+                          <span className="sys-row-card__field-label">Team</span>
+                          <span className="sys-row-card__field-value">{row.team || '—'}</span>
                         </div>
                       </div>
-
-                      {/* Record */}
-                      <div className="sys-row-card__field">
-                        <span className="sys-row-card__field-label">Record</span>
-                        {locked ? (
-                          <span className="sys-row-card__lock">&#128274; <Link href="/betting-trends#pricing">Upgrade</Link></span>
-                        ) : (
-                          <span className={`sys-row-card__record sys-row-card__record--${winning ? 'win' : row.w < row.l ? 'loss' : 'neutral'}`}>
-                            {row.w}-{row.l}-{row.t}
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Win % */}
-                      <div className="sys-row-card__pct-col">
-                        <span className="sys-row-card__field-label">Win %</span>
-                        {locked ? (
-                          <span className="sys-row-card__pct sys-row-card__pct--neutral">—</span>
-                        ) : (
-                          <>
-                            <span className={`sys-row-card__pct sys-row-card__pct--${winning ? 'win' : 'neutral'}`}>
-                              {pctDisplay(row.pct)}
-                            </span>
-                            <div className="sys-row-card__bar">
-                              <div className="sys-row-card__bar-fill" style={{ width: `${pctWidth}%` }} />
-                            </div>
-                          </>
-                        )}
-                      </div>
-
-                      {/* Season */}
-                      <div className="sys-row-card__field">
-                        <span className="sys-row-card__field-label">Season</span>
-                        <span className="sys-row-card__field-value">{row.season || '—'}</span>
-                      </div>
-
-                      {/* Date */}
-                      <div className="sys-row-card__field">
-                        <span className="sys-row-card__field-label">Date</span>
-                        <span className="sys-row-card__field-value">{row.date || '—'}</span>
-                      </div>
-
-                      {/* Team */}
-                      <div className="sys-row-card__field">
-                        <span className="sys-row-card__field-label">Team</span>
-                        <span className="sys-row-card__field-value">{row.team || '—'}</span>
-                      </div>
                     </div>
-                  </div>
+
+                    {/* Inline edit form — renders directly below the matching row */}
+                    {isAdmin && editMode && formMode === 'edit' && editId === row.id && (
+                      <div ref={inlineFormRef} className="admin-inline-form" style={{ margin: '4px 0 12px' }}>
+                        <div className="admin-inline-form__title">Edit Betting Trend</div>
+                        {formError && <div className="admin-inline-form__error">{formError}</div>}
+                        <div className="admin-form-grid">
+                          <div className="admin-form-field">
+                            <label className="admin-form-label">Sport</label>
+                            <select className="admin-form-select" value={form.sport} onChange={e => setField('sport', e.target.value)}>
+                              {SPORTS.map(s => <option key={s} value={s}>{SPORT_LABELS[s]}</option>)}
+                            </select>
+                          </div>
+                          <div className="admin-form-field admin-form-field--wide">
+                            <label className="admin-form-label">Description / Rule</label>
+                            <textarea className="admin-form-input" rows={2} value={form.description} onChange={e => setField('description', e.target.value)} placeholder="e.g. Teams off 2+ days rest vs teams on back-to-back" />
+                          </div>
+                          <div className="admin-form-field">
+                            <label className="admin-form-label">Line</label>
+                            <input className="admin-form-input" value={form.line} onChange={e => setField('line', e.target.value)} placeholder="ATS, O/U, ML" />
+                          </div>
+                          <div className="admin-form-field">
+                            <label className="admin-form-label">Season</label>
+                            <input className="admin-form-input" value={form.season} onChange={e => setField('season', e.target.value)} placeholder="2023-24" />
+                          </div>
+                          <div className="admin-form-field">
+                            <label className="admin-form-label">Type</label>
+                            <input className="admin-form-input" value={form.type} onChange={e => setField('type', e.target.value)} placeholder="Situational, Trend" />
+                          </div>
+                          <div className="admin-form-field">
+                            <label className="admin-form-label">Date</label>
+                            <input className="admin-form-input" value={form.date} onChange={e => setField('date', e.target.value)} placeholder="e.g. 2024-01-15" />
+                          </div>
+                          <div className="admin-form-field">
+                            <label className="admin-form-label">Team</label>
+                            <input className="admin-form-input" value={form.team} onChange={e => setField('team', e.target.value)} placeholder="e.g. Lakers" />
+                          </div>
+                          <div className="admin-form-field">
+                            <label className="admin-form-label">W</label>
+                            <input className="admin-form-input" type="number" min={0} value={form.w} onChange={e => setField('w', +e.target.value)} />
+                          </div>
+                          <div className="admin-form-field">
+                            <label className="admin-form-label">L</label>
+                            <input className="admin-form-input" type="number" min={0} value={form.l} onChange={e => setField('l', +e.target.value)} />
+                          </div>
+                          <div className="admin-form-field">
+                            <label className="admin-form-label">T</label>
+                            <input className="admin-form-input" type="number" min={0} value={form.t} onChange={e => setField('t', +e.target.value)} />
+                          </div>
+                          <div className="admin-form-field">
+                            <label className="admin-form-label">Pct (0.65 = 65%)</label>
+                            <input className="admin-form-input" type="number" step="0.01" min={0} max={1} value={form.pct ?? ''} onChange={e => setField('pct', e.target.value)} placeholder="0.65" />
+                          </div>
+                          <div className="admin-form-field">
+                            <label className="admin-form-label">Units</label>
+                            <input className="admin-form-input" type="number" step="0.1" value={form.units ?? ''} onChange={e => setField('units', e.target.value)} placeholder="12.5" />
+                          </div>
+                          <div className="admin-form-field admin-form-field--checks">
+                            <label className="admin-form-check">
+                              <input type="checkbox" checked={form.is_free} onChange={e => setField('is_free', e.target.checked)} />
+                              <span>Free tier access</span>
+                            </label>
+                            <label className="admin-form-check">
+                              <input type="checkbox" checked={form.is_active} onChange={e => setField('is_active', e.target.checked)} />
+                              <span>Active (visible on public page)</span>
+                            </label>
+                          </div>
+                        </div>
+                        <div className="admin-inline-form__actions">
+                          <button className="btn btn--primary btn--sm" onClick={saveRow} disabled={saving}>
+                            {saving ? 'Saving…' : 'Save'}
+                          </button>
+                          <button className="btn btn--outline btn--sm" onClick={cancelForm} disabled={saving}>Cancel</button>
+                        </div>
+                      </div>
+                    )}
+                  </Fragment>
                 )
               })}
             </div>
