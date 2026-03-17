@@ -42,8 +42,8 @@ export default async function BettingTrends() {
   }
 
   const trendsQuery = isAdmin
-    ? (admin as any).from('betting_trends').select('*').order('created_at', { ascending: false })
-    : (admin as any).from('betting_trends').select('*').eq('is_active', true).order('created_at', { ascending: false })
+    ? (admin as any).from('betting_trends').select('*').order('team', { ascending: true }).order('created_at', { ascending: false })
+    : (admin as any).from('betting_trends').select('*').eq('is_active', true).order('team', { ascending: true }).order('created_at', { ascending: false })
 
   const { data: trends } = await trendsQuery
 
