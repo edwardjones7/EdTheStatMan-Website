@@ -4976,6 +4976,59 @@ textarea.form-input {
   }
 }
 
+/* ---------- Admin Line Chart ---------- */
+.admin-line-chart-wrap {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem 1rem;
+  margin-bottom: 1.75rem;
+}
+
+.admin-line-chart-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.admin-line-chart-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-heading);
+  letter-spacing: 0.01em;
+}
+
+.admin-line-chart-stats {
+  display: flex;
+  gap: 1.25rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.admin-line-chart-stats strong {
+  color: var(--accent-green);
+  font-weight: 600;
+}
+
+.admin-line-chart-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  overflow: visible;
+}
+
+.admin-line-chart-loading {
+  height: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
 /* ---------- Analytics Chart ---------- */
 .analytics-chart-wrap {
   overflow-x: auto;

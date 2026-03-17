@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import type { SubscriptionTier, SubscriptionStatus, AccessLevel } from '@/lib/supabase/types'
 import AdminAnalyticsTab from '@/components/AdminAnalyticsTab'
+import AdminLineChart from '@/components/AdminLineChart'
 
 interface User {
   id: string
@@ -123,6 +124,9 @@ export default function AdminDashboard({ users, posts, initialTab }: Props) {
   return (
     <main className="admin-page">
       <div className="admin-container">
+
+        {/* ── Line Chart ── */}
+        <AdminLineChart />
 
         {/* ── Header ── */}
         <div className="admin-header">
