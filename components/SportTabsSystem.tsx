@@ -630,9 +630,9 @@ export default function SportTabsSystem({ systems, userTier, isAdmin = false }: 
                         </div>
 
                         {/* Team */}
-                        <div className="sys-row-card__field sys-row-card__field--wide">
+                        <div className="sys-row-card__field sys-row-card__field--team">
                           <span className="sys-row-card__field-label">Team</span>
-                          <span className="sys-row-card__field-value">{row.team || '—'}</span>
+                          <span className="sys-row-card__field-value" style={{ whiteSpace: 'normal' }}>{row.team || '—'}</span>
                         </div>
                       </div>
                     </div>

@@ -1653,6 +1653,7 @@ input, textarea, select {
 }
 
 .sys-row-card__field--wide { flex: 0 0 150px; width: 150px; }
+.sys-row-card__field--team { flex: 1 0 150px; max-width: 220px; }
 
 .sys-row-card__body .sys-row-card__field:last-child { padding-right: 28px; }
 
