@@ -1650,7 +1650,6 @@ input, textarea, select {
   padding: 14px 18px;
   border-left: 1px solid rgba(255,255,255,0.06);
   align-self: stretch;
-  overflow: hidden;
 }
 
 .sys-row-card__field--wide { flex: 0 0 120px; width: 120px; }
@@ -1669,9 +1668,8 @@ input, textarea, select {
   font-size: 0.9rem;
   color: var(--text-secondary);
   font-family: var(--font-mono);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 /* Record field */
@@ -1681,8 +1679,6 @@ input, textarea, select {
   font-weight: 800;
   letter-spacing: 0.02em;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .sys-row-card__record--win { color: var(--accent-green); }
