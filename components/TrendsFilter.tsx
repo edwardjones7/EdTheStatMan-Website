@@ -78,7 +78,6 @@ function parseStr(val: unknown): string {
 export default function TrendsFilter({ trends, userTier, isAdmin = false }: Props) {
   const [activeTab, setActiveTab] = useState<Sport>('all')
   const [editMode, setEditMode] = useState(false)
-  const [currentPage, setCurrentPage] = useState(0)
 
   // Row form
   const [formMode, setFormMode] = useState<'hidden' | 'add' | 'edit'>('hidden')
@@ -100,9 +99,6 @@ export default function TrendsFilter({ trends, userTier, isAdmin = false }: Prop
   const allVisible = trends.filter(r => activeTab === 'all' || r.sport === activeTab)
   const baseRows = editMode ? allVisible : allVisible.filter(r => r.is_active)
 
-  const PAGE_SIZE = 20
-  const totalPages = Math.max(1, Math.ceil(baseRows.length / PAGE_SIZE))
-  const pageRows = baseRows.slice(currentPage * PAGE_SIZE, (currentPage + 1) * PAGE_SIZE)
 
   function openAdd() {
     setForm({ ...BLANK })
@@ -291,7 +287,7 @@ export default function TrendsFilter({ trends, userTier, isAdmin = false }: Prop
           <button
             key={tab.value}
             className={`sport-tab${activeTab === tab.value ? ' active' : ''}`}
-            onClick={() => { setActiveTab(tab.value); setCurrentPage(0) }}
+            onClick={() => setActiveTab(tab.value)
           >
             {tab.label}
           </button>
@@ -501,7 +497,7 @@ export default function TrendsFilter({ trends, userTier, isAdmin = false }: Prop
             </div>
           ) : (
             <div className="sys-card-grid">
-              {pageRows.map(row => {
+              {baseRows.map(row => {
                 const locked = !isPaid && !row.is_free && !isAdmin
                 const style = SPORT_STYLE[row.sport] ?? { bg: 'rgba(255,255,255,0.05)', color: 'var(--text-muted)', label: row.sport.toUpperCase() }
                 const winning = row.w > row.l
@@ -620,27 +616,6 @@ export default function TrendsFilter({ trends, userTier, isAdmin = false }: Prop
           )}
         </div>
 
-        {totalPages > 1 && (
-          <div className="sys-pagination">
-            <button
-              className="sys-pagination__btn"
-              onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
-              disabled={currentPage === 0}
-            >
-              ← Prev
-            </button>
-            <span className="sys-pagination__info">
-              Page {currentPage + 1} of {totalPages}
-            </span>
-            <button
-              className="sys-pagination__btn"
-              onClick={() => setCurrentPage(p => Math.min(totalPages - 1, p + 1))}
-              disabled={currentPage >= totalPages - 1}
-            >
-              Next →
-            </button>
-          </div>
-        )}
 
         {isLoggedOut && (
           <div className="content-gate-overlay">
