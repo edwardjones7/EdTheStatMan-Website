@@ -4,15 +4,22 @@ import { useState } from 'react'
 import { login } from '@/app/actions/auth'
 import { createClient } from '@/lib/supabase/client'
 
-export default function LoginForm() {
+interface Props {
+  failedAttempts?: number
+}
+
+export default function LoginForm({ failedAttempts = 0 }: Props) {
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
+  const [attempts, setAttempts] = useState(failedAttempts)
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setLoading(true)
     const formData = new FormData(e.currentTarget)
+    formData.set('attempts', String(attempts))
     await login(formData)
+    setAttempts(a => a + 1)
     setLoading(false)
   }
 
@@ -60,7 +67,14 @@ export default function LoginForm() {
           />
         </div>
         <div className="form-group">
-          <label htmlFor="password">Password</label>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+            <label htmlFor="password">Password</label>
+            {attempts >= 2 && (
+              <a href="/forgot-password" className="auth-link" style={{ fontSize: '0.8rem' }}>
+                Forgot password?
+              </a>
+            )}
+          </div>
           <input
             id="password"
             name="password"
@@ -71,6 +85,14 @@ export default function LoginForm() {
             autoComplete="current-password"
           />
         </div>
+
+        {attempts >= 2 && (
+          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '8px' }}>
+            Having trouble?{' '}
+            <a href="/forgot-password" className="auth-link">Reset your password</a>
+          </p>
+        )}
+
         <button type="submit" className="btn btn--primary" style={{ width: '100%', justifyContent: 'center', marginTop: '8px' }} disabled={loading}>
           {loading ? 'Signing in...' : 'Sign In'}
         </button>
