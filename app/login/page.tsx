@@ -4,6 +4,7 @@ import LoginForm from '@/components/LoginForm'
 export const metadata: Metadata = {
   title: 'Login – EdTheStatMan.com',
   description: 'Sign in to your EdTheStatMan account.',
+  robots: { index: false, follow: false },
 }
 
 export default function LoginPage({

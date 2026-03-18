@@ -30,16 +30,25 @@ const jetbrainsMono = JetBrains_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'EdTheStatMan.com – Winning Sports Betting Picks, Systems & Trends',
+  metadataBase: new URL('https://edthestatman.com'),
+  title: {
+    default: 'EdTheStatMan.com – Winning Sports Betting Picks, Systems & Trends',
+    template: '%s – EdTheStatMan.com',
+  },
   description: 'Winning sports betting picks, systems and trends. Where handicappers get sharp and bettors win.',
   keywords: 'sports betting, betting systems, betting trends, handicapping, NFL, NBA, college football, college basketball',
   openGraph: {
     type: 'website',
     siteName: 'EdTheStatMan',
     locale: 'en_US',
+    images: [{ url: '/opengraph-image', width: 1200, height: 630, alt: 'EdTheStatMan – Winning Sports Betting Picks, Systems & Trends' }],
   },
   twitter: {
     card: 'summary_large_image',
+    images: ['/opengraph-image'],
+  },
+  alternates: {
+    canonical: 'https://edthestatman.com',
   },
 }
 
@@ -51,8 +60,6 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${outfit.variable} ${jetbrainsMono.variable}`}>
       <head>
-        <link rel="canonical" href="https://edthestatman.com" />
-        <meta name="robots" content="index, follow" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{

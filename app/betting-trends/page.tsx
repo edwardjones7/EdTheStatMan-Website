@@ -8,11 +8,20 @@ import { createAdminClient } from '@/lib/supabase/admin'
 export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
-  title: 'Betting Trends – EdTheStatMan.com',
+  title: 'Betting Trends',
   description: 'Betting trends for NFL, NBA, College Football, and College Basketball. Situational edges with win percentages and unit performance.',
+  alternates: { canonical: 'https://edthestatman.com/betting-trends' },
   openGraph: {
     title: 'Betting Trends – EdTheStatMan.com',
     description: 'Betting trends for NFL, NBA, College Football, and College Basketball. Situational edges with win percentages and unit performance.',
+    url: 'https://edthestatman.com/betting-trends',
+    images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Betting Trends – EdTheStatMan.com',
+    description: 'Betting trends for NFL, NBA, College Football, and College Basketball. Situational edges with win percentages and unit performance.',
+    images: ['/opengraph-image'],
   },
 }
 

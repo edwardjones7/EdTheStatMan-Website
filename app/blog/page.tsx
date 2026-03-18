@@ -6,11 +6,20 @@ import { createClient } from '@/lib/supabase/server'
 import type { BlogPost } from '@/components/BlogFilter'
 
 export const metadata: Metadata = {
-  title: 'Blog & Insights – EdTheStatMan.com',
+  title: 'Blog & Insights',
   description: 'Expert analysis, betting system breakdowns, and educational content for sports bettors. NFL, NBA, college football & basketball insights.',
+  alternates: { canonical: 'https://edthestatman.com/blog' },
   openGraph: {
     title: 'Blog & Insights – EdTheStatMan.com',
+    description: 'Expert analysis, betting system breakdowns, and educational content for sports bettors. NFL, NBA, college football & basketball insights.',
+    url: 'https://edthestatman.com/blog',
+    images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Blog & Insights – EdTheStatMan.com',
     description: 'Expert analysis, betting system breakdowns, and educational content for sports bettors.',
+    images: ['/opengraph-image'],
   },
 }
 

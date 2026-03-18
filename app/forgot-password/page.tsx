@@ -3,6 +3,7 @@ import { forgotPassword } from '@/app/actions/auth'
 
 export const metadata: Metadata = {
   title: 'Forgot Password – EdTheStatMan.com',
+  robots: { index: false, follow: false },
 }
 
 export default function ForgotPasswordPage({

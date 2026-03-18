@@ -3,6 +3,7 @@ import { resetPassword } from '@/app/actions/auth'
 
 export const metadata: Metadata = {
   title: 'Reset Password – EdTheStatMan.com',
+  robots: { index: false, follow: false },
 }
 
 export default function ResetPasswordPage({

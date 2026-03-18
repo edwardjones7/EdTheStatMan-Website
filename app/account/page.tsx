@@ -6,6 +6,7 @@ import AccountClient from '@/components/AccountClient'
 export const metadata: Metadata = {
   title: 'My Account – EdTheStatMan.com',
   description: 'Manage your EdTheStatMan account and membership.',
+  robots: { index: false, follow: false },
 }
 
 export default async function AccountPage() {

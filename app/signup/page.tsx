@@ -4,6 +4,7 @@ import SignupForm from '@/components/SignupForm'
 export const metadata: Metadata = {
   title: 'Sign Up – EdTheStatMan.com',
   description: 'Create your EdTheStatMan account.',
+  robots: { index: false, follow: false },
 }
 
 export default function SignupPage({

@@ -14,14 +14,18 @@ import HomeEditor from '@/components/HomeEditor'
 export const metadata: Metadata = {
   title: 'EdTheStatMan.com – Winning Sports Betting Picks, Systems & Trends',
   description: 'Winning sports betting picks, systems and trends. Where handicappers get sharp and bettors win. Data-driven NFL, NBA, college football & basketball.',
+  alternates: { canonical: 'https://edthestatman.com' },
   openGraph: {
     title: 'EdTheStatMan.com – Winning Sports Betting Picks, Systems & Trends',
-    description: 'Winning sports betting picks, systems and trends. Where handicappers get sharp and bettors win.',
+    description: 'Winning sports betting picks, systems and trends. Where handicappers get sharp and bettors win. Data-driven NFL, NBA, college football & basketball.',
     url: 'https://edthestatman.com',
+    images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
   },
   twitter: {
+    card: 'summary_large_image',
     title: 'EdTheStatMan.com – Winning Sports Betting Picks, Systems & Trends',
     description: 'Winning sports betting picks, systems and trends. Where handicappers get sharp and bettors win.',
+    images: ['/opengraph-image'],
   },
 }
 

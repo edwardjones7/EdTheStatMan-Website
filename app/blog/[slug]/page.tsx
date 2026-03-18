@@ -16,15 +16,33 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   const admin = createAdminClient()
   const { data: post } = await (admin as any)
     .from('posts')
-    .select('title, excerpt')
+    .select('title, excerpt, published_at')
     .eq('slug', params.slug)
     .eq('published', true)
     .single()
 
-  if (!post) return { title: 'Post Not Found – EdTheStatMan' }
+  if (!post) return { title: 'Post Not Found' }
+
+  const url = `https://edthestatman.com/blog/${params.slug}`
   return {
-    title: `${post.title} – EdTheStatMan`,
+    title: post.title,
     description: post.excerpt ?? undefined,
+    alternates: { canonical: url },
+    openGraph: {
+      type: 'article',
+      title: post.title,
+      description: post.excerpt ?? undefined,
+      url,
+      siteName: 'EdTheStatMan',
+      images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
+      publishedTime: post.published_at ?? undefined,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: post.title,
+      description: post.excerpt ?? undefined,
+      images: ['/opengraph-image'],
+    },
   }
 }
 
@@ -66,6 +84,21 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
 
   return (
     <main>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'Article',
+            headline: post.title,
+            description: post.excerpt ?? undefined,
+            datePublished: post.published_at ?? undefined,
+            author: { '@type': 'Organization', name: 'EdTheStatMan', url: 'https://edthestatman.com' },
+            publisher: { '@type': 'Organization', name: 'EdTheStatMan', url: 'https://edthestatman.com' },
+            url: `https://edthestatman.com/blog/${post.slug}`,
+          }),
+        }}
+      />
       <article className="blog-post">
         <div className="container">
           <header className="blog-post__header">

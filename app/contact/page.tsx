@@ -2,11 +2,20 @@ import type { Metadata } from 'next'
 import CTASection from '@/components/CTASection'
 
 export const metadata: Metadata = {
-  title: 'Contact Us – EdTheStatMan.com',
+  title: 'Contact Us',
   description: 'Get in touch via email, Telegram, or Discord. We typically respond within 24–48 hours.',
+  alternates: { canonical: 'https://edthestatman.com/contact' },
   openGraph: {
     title: 'Contact Us – EdTheStatMan.com',
     description: 'Get in touch via email, Telegram, or Discord. We typically respond within 24–48 hours.',
+    url: 'https://edthestatman.com/contact',
+    images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Contact Us – EdTheStatMan.com',
+    description: 'Get in touch via email, Telegram, or Discord. We typically respond within 24–48 hours.',
+    images: ['/opengraph-image'],
   },
 }
 
