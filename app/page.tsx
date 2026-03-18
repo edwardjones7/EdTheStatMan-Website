@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'EdTheStatMan.com – Winning Sports Betting Picks, Systems & Trends',
     description: 'Winning sports betting picks, systems and trends. Where handicappers get sharp and bettors win.',
-    url: 'https://edwardjones7.github.io/EdTheStatMan-Website/',
+    url: 'https://edthestatman.com',
   },
   twitter: {
     title: 'EdTheStatMan.com – Winning Sports Betting Picks, Systems & Trends',

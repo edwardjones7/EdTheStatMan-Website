@@ -51,7 +51,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${outfit.variable} ${jetbrainsMono.variable}`}>
       <head>
-        <link rel="canonical" href="https://edwardjones7.github.io/EdTheStatMan-Website/" />
+        <link rel="canonical" href="https://edthestatman.com" />
         <meta name="robots" content="index, follow" />
         <script
           type="application/ld+json"
@@ -61,18 +61,18 @@ export default function RootLayout({
               "@graph": [
                 {
                   "@type": "Organization",
-                  "@id": "https://edwardjones7.github.io/EdTheStatMan-Website/#organization",
+                  "@id": "https://edthestatman.com#organization",
                   "name": "EdTheStatMan",
-                  "url": "https://edwardjones7.github.io/EdTheStatMan-Website/",
+                  "url": "https://edthestatman.com",
                   "description": "Winning sports betting picks, systems and trends. Where handicappers get sharp and bettors win.",
                   "sameAs": ["https://t.me/edthestatman", "https://discord.gg/gqPrVBg4Aw"]
                 },
                 {
                   "@type": "WebSite",
-                  "@id": "https://edwardjones7.github.io/EdTheStatMan-Website/#website",
-                  "url": "https://edwardjones7.github.io/EdTheStatMan-Website/",
+                  "@id": "https://edthestatman.com#website",
+                  "url": "https://edthestatman.com",
                   "name": "EdTheStatMan",
-                  "publisher": { "@id": "https://edwardjones7.github.io/EdTheStatMan-Website/#organization" },
+                  "publisher": { "@id": "https://edthestatman.com#organization" },
                   "description": "Data-driven betting systems and trends for NFL, NBA, College Football, and College Basketball."
                 }
               ]
