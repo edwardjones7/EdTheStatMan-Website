@@ -15,15 +15,34 @@ export async function GET(request: Request) {
   const range = searchParams.get('range') ?? 'month' // 'week' | 'month' | 'year'
 
   const now = new Date()
-  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString()
+
+  // All date bucketing uses America/New_York so views after 7 PM EST don't
+  // bleed into the next calendar day.
+  function toNYDate(date: Date): string {
+    // Returns 'YYYY-MM-DD' in America/New_York timezone
+    return date.toLocaleDateString('en-CA', { timeZone: 'America/New_York' })
+  }
+
+  // Get UTC ISO string for midnight America/New_York on a given NY date
+  function nyMidnightUTC(nyDateStr: string): string {
+    // EST = UTC-5 → midnight NY = 05:00 UTC
+    // EDT = UTC-4 → midnight NY = 04:00 UTC
+    const estCandidate = new Date(nyDateStr + 'T05:00:00Z')
+    if (toNYDate(estCandidate) === nyDateStr) return estCandidate.toISOString()
+    return new Date(nyDateStr + 'T04:00:00Z').toISOString()
+  }
+
+  const todayNY    = toNYDate(now)
+  const todayStart = nyMidnightUTC(todayNY)
 
   let sinceDate: Date
   if (range === 'week') {
-    sinceDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+    // Go back 8 days in UTC to ensure we capture all NY-date rows for the last 7 NY days
+    sinceDate = new Date(now.getTime() - 8 * 24 * 60 * 60 * 1000)
   } else if (range === 'year') {
-    sinceDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000)
+    sinceDate = new Date(now.getTime() - 366 * 24 * 60 * 60 * 1000)
   } else {
-    sinceDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+    sinceDate = new Date(now.getTime() - 31 * 24 * 60 * 60 * 1000)
   }
 
   const [totalRes, rangeRes, todayRes, rowsRes] = await Promise.all([
@@ -46,7 +65,7 @@ export async function GET(request: Request) {
       const weeksAgo = 51 - i
       const bucketStart = nowMs - (weeksAgo + 1) * week
       const bucketEnd   = nowMs - weeksAgo * week
-      const label = new Date(bucketStart).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+      const label = new Date(bucketStart).toLocaleDateString('en-US', { timeZone: 'America/New_York', month: 'short', day: 'numeric' })
       return { label, bucketStart, bucketEnd, count: 0 }
     })
 
@@ -62,20 +81,19 @@ export async function GET(request: Request) {
 
     points = buckets.map(b => ({ label: b.label, count: b.count }))
   } else {
-    // Daily buckets (7 or 30 days)
+    // Daily buckets using NY dates (7 or 30 days)
     const days = range === 'week' ? 7 : 30
     const dailyMap: Record<string, number> = {}
     for (let i = days - 1; i >= 0; i--) {
-      const d = new Date(now)
-      d.setDate(d.getDate() - i)
-      dailyMap[d.toISOString().slice(0, 10)] = 0
+      const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000)
+      dailyMap[toNYDate(d)] = 0
     }
     for (const row of rows) {
-      const key = row.created_at.slice(0, 10)
+      const key = toNYDate(new Date(row.created_at))
       if (key in dailyMap) dailyMap[key]++
     }
-    points = Object.entries(dailyMap).map(([date, count]) => ({
-      label: new Date(date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+    points = Object.entries(dailyMap).map(([nyDate, count]) => ({
+      label: new Date(nyDate + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
       count,
     }))
   }
