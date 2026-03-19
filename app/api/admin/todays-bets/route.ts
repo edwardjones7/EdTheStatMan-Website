@@ -17,14 +17,17 @@ export async function POST(req: Request) {
 
   const body = await req.json()
   const { data, error } = await admin.from('todays_bets').insert({
-    date:   body.date   || null,
-    sport:  body.sport  || null,
-    risk:   body.risk   || null,
-    bet:    body.bet    || null,
-    line:   body.line   || null,
-    win:    body.win    || null,
-    result: body.result || 'pending',
-    note:   body.note   || null,
+    date:            body.date            || null,
+    sport:           body.sport           || null,
+    risk:            body.risk            || null,
+    bet:             body.bet             || null,
+    line:            body.line            || null,
+    win:             body.win             || null,
+    result:          body.result          || 'pending',
+    note:            body.note            || null,
+    is_active:       body.is_active       ?? true,
+    is_free:         body.is_free         ?? true,
+    show_on_results: body.show_on_results ?? false,
   }).select().single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

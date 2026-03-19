@@ -338,48 +338,6 @@ export default function ResultsPage({ content, editMode, onEdit, resetKey = 0 }:
             </div>
           )}
 
-          {/* Year-by-Year Table */}
-          <div className="reveal" style={{ marginTop: '64px' }}>
-            <span className="section-label">{et('tableLabel')}</span>
-            <h2 className="section-title">{et('tableTitle')}</h2>
-            <p className="section-subtitle">{et('tableSubtitle')}</p>
-          </div>
-
-          {e ? (
-            <TableRowEditor
-              rows={content.tableRows}
-              onChange={tableRows => onEdit({ tableRows })}
-            />
-          ) : (
-            <div className="trends-table-wrap reveal" style={{ marginTop: '32px' }}>
-              <table className="trends-table">
-                <thead>
-                  <tr>
-                    <th>Year</th><th>NFL</th><th>College Football</th>
-                    <th>NBA</th><th>College Basketball</th><th>Overall</th><th>Bankroll ROI</th>
-                  </tr>
-                </thead>
-                <tbody className="stagger-children">
-                  {content.tableRows.map((row, i) => (
-                    <tr key={i}>
-                      <td><strong>{row.year}</strong></td>
-                      <td>{row.nfl}</td>
-                      <td>{row.cfb}</td>
-                      <td>{row.nba}</td>
-                      <td>{row.cbb}</td>
-                      <td>{row.overall}</td>
-                      <td>
-                        <span className={`trend-badge trend-badge--${row.bankrollType === 'win' ? 'win' : 'loss'}`}>
-                          {row.bankroll}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-
         </div>
       </section>
     </main>

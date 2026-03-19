@@ -2,14 +2,17 @@
 
 import { useState } from 'react'
 import type { ResultsContent } from '@/lib/site-content'
+import type { TodaysBet } from './TodaysBets'
 import ResultsPage from './ResultsPage'
+import RecentPicksResults from './RecentPicksResults'
 import CTASection from './CTASection'
 
 interface Props {
   content: ResultsContent
+  recentPicks: TodaysBet[]
 }
 
-export default function ResultsEditor({ content }: Props) {
+export default function ResultsEditor({ content, recentPicks }: Props) {
   const [editMode, setEditMode] = useState(false)
   const [draft, setDraft] = useState<ResultsContent>(content)
   const [dirty, setDirty] = useState(false)
@@ -59,6 +62,7 @@ export default function ResultsEditor({ content }: Props) {
         onEdit={patch}
         resetKey={resetKey}
       />
+      <RecentPicksResults rows={recentPicks} isAdmin={true} editMode={editMode} />
       <CTASection />
 
       {/* Pencil FAB */}

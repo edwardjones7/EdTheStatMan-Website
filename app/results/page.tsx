@@ -1,10 +1,12 @@
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { DEFAULT_RESULTS } from '@/lib/site-content'
 import type { ResultsContent } from '@/lib/site-content'
 import ResultsPage from '@/components/ResultsPage'
 import ResultsEditor from '@/components/ResultsEditor'
 import CTASection from '@/components/CTASection'
+import type { TodaysBet } from '@/components/TodaysBets'
 
 export const metadata: Metadata = {
   title: 'Results',
@@ -24,16 +26,19 @@ export const metadata: Metadata = {
   },
 }
 
+export const dynamic = 'force-dynamic'
+
 export default async function Results() {
   const supabase = await createClient()
+  const adminDb  = createAdminClient()
 
-  const { data: row } = await (supabase as any)
-    .from('site_content')
-    .select('value')
-    .eq('key', 'results')
-    .single()
+  const [contentResult, picksResult] = await Promise.all([
+    (supabase as any).from('site_content').select('value').eq('key', 'results').single(),
+    (adminDb  as any).from('todays_bets').select('*').eq('show_on_results', true).order('created_at', { ascending: false }),
+  ])
 
-  const content: ResultsContent = { ...DEFAULT_RESULTS, ...((row?.value as object) ?? {}) }
+  const content: ResultsContent = { ...DEFAULT_RESULTS, ...((contentResult.data?.value as object) ?? {}) }
+  const recentPicks: TodaysBet[] = picksResult.data ?? []
 
   let isAdmin = false
   const { data: { user } } = await supabase.auth.getUser()
@@ -47,12 +52,13 @@ export default async function Results() {
   }
 
   if (isAdmin) {
-    return <ResultsEditor content={content} />
+    return <ResultsEditor content={content} recentPicks={recentPicks} />
   }
 
   return (
     <>
       <ResultsPage content={content} />
+      <RecentPicksResults rows={recentPicks} />
       <CTASection />
     </>
   )

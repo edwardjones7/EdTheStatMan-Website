@@ -60,14 +60,24 @@ export default async function Home() {
   }
 
   let isAdmin = false
+  let userTier: string | null = null  // null = logged out
   const { data: { user } } = await supabase.auth.getUser()
   if (user) {
     const { data: profile } = await (supabase as any)
       .from('profiles')
-      .select('is_admin')
+      .select('is_admin, subscription_tier, access_expires_at')
       .eq('id', user.id)
       .single()
-    isAdmin = !!(profile as any)?.is_admin
+    if ((profile as any)?.is_admin) {
+      isAdmin = true
+      userTier = 'premium'
+    } else {
+      userTier = (profile as any)?.subscription_tier ?? 'free'
+      if (userTier !== 'free') {
+        const exp = (profile as any)?.access_expires_at ? new Date((profile as any).access_expires_at) : null
+        if (!exp || exp < new Date()) userTier = 'free'
+      }
+    }
   }
 
   return (
@@ -82,7 +92,7 @@ export default async function Home() {
         <>
           <LiveTicker      content={content.ticker} />
           <Hero            content={content.hero} />
-          <TodaysBets      rows={todaysBets} isAdmin={isAdmin} />
+          <TodaysBets      rows={todaysBets} isAdmin={isAdmin} userTier={userTier} />
           <SystemsOverview content={content.systems_overview} />
           <Features        content={content.features} />
           <CTASection      content={content.cta_section} />
