@@ -10,6 +10,23 @@ interface Props {
   editMode?: boolean
 }
 
+const MONTH_MAP: Record<string, number> = {
+  jan:1, feb:2, mar:3, apr:4, may:5, jun:6, jul:7, aug:8, sep:9, oct:10, nov:11, dec:12,
+}
+
+function parseDateVal(dateStr: string | null): number {
+  if (!dateStr) return 0
+  const ts = Date.parse(dateStr)
+  if (!isNaN(ts)) return ts
+  // "MMM D" or "MMM DD" e.g. "Mar 19"
+  const m = dateStr.match(/^([a-z]{3})\s+(\d{1,2})$/i)
+  if (m) return (MONTH_MAP[m[1].toLowerCase()] ?? 0) * 100 + parseInt(m[2])
+  // "MM-DD" e.g. "03-19"
+  const m2 = dateStr.match(/^(\d{1,2})[\/\-](\d{1,2})$/)
+  if (m2) return parseInt(m2[1]) * 100 + parseInt(m2[2])
+  return 0
+}
+
 const RESULT_STYLE: Record<string, { bg: string; color: string; label: string }> = {
   win:     { bg: 'rgba(52,211,153,0.15)',  color: '#34d399', label: 'Win' },
   loss:    { bg: 'rgba(239,68,68,0.15)',   color: '#f87171', label: 'Loss' },
@@ -164,7 +181,7 @@ export default function RecentPicksResults({ rows, isAdmin = false, editMode = f
                 </tr>
               </thead>
               <tbody>
-                {rows.map(row => {
+                {[...rows].sort((a, b) => parseDateVal(b.date) - parseDateVal(a.date)).map(row => {
                   const rs = RESULT_STYLE[row.result ?? 'pending'] ?? RESULT_STYLE.pending
                   return (
                     <Fragment key={row.id}>

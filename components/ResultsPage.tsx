@@ -269,6 +269,7 @@ export default function ResultsPage({ content, editMode, onEdit, resetKey = 0 }:
         </div>
       </header>
 
+      {false && (
       <section className="section">
         <div className="container">
 
@@ -340,6 +341,7 @@ export default function ResultsPage({ content, editMode, onEdit, resetKey = 0 }:
 
         </div>
       </section>
+      )}
     </main>
   )
 }
