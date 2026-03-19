@@ -1,13 +1,14 @@
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { SITE_CONTENT_DEFAULTS } from '@/lib/site-content'
 import type { AllSiteContent } from '@/lib/site-content'
 import LiveTicker from '@/components/LiveTicker'
 import Hero from '@/components/Hero'
-import ActionCard from '@/components/ActionCard'
+import TodaysBets from '@/components/TodaysBets'
+import type { TodaysBet } from '@/components/TodaysBets'
 import SystemsOverview from '@/components/SystemsOverview'
 import Features from '@/components/Features'
-import StatBotPreview from '@/components/StatBotPreview'
 import CTASection from '@/components/CTASection'
 import HomeEditor from '@/components/HomeEditor'
 
@@ -29,12 +30,19 @@ export const metadata: Metadata = {
   },
 }
 
+export const dynamic = 'force-dynamic'
+
 export default async function Home() {
   const supabase = await createClient()
+  const adminDb  = createAdminClient()
 
-  const { data: contentRows } = await (supabase as any)
-    .from('site_content')
-    .select('key, value')
+  const [contentResult, betsResult] = await Promise.all([
+    (supabase as any).from('site_content').select('key, value'),
+    (adminDb  as any).from('todays_bets').select('*').order('created_at', { ascending: false }),
+  ])
+
+  const { data: contentRows } = contentResult
+  const todaysBets: TodaysBet[] = betsResult.data ?? []
 
   const raw: Record<string, unknown> = {}
   for (const row of (contentRows ?? []) as { key: string; value: unknown }[]) {
@@ -68,17 +76,16 @@ export default async function Home() {
       {isAdmin ? (
         // Admin gets the interactive editor with a single pencil FAB
         // (LiveTicker is rendered inside HomeEditor for admins)
-        <HomeEditor content={content} />
+        <HomeEditor content={content} todaysBets={todaysBets} />
       ) : (
         // Everyone else gets static server-rendered sections
         <>
-          <LiveTicker     content={content.ticker} />
-          <Hero           content={content.hero} />
-          <ActionCard     content={content.action_card} />
+          <LiveTicker      content={content.ticker} />
+          <Hero            content={content.hero} />
+          <TodaysBets      rows={todaysBets} isAdmin={isAdmin} />
           <SystemsOverview content={content.systems_overview} />
-          <Features       content={content.features} />
-          {/* <StatBotPreview content={content.statbot_preview} /> */}
-          <CTASection     content={content.cta_section} />
+          <Features        content={content.features} />
+          <CTASection      content={content.cta_section} />
         </>
       )}
     </>

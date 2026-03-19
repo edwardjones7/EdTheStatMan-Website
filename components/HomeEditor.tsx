@@ -4,17 +4,18 @@ import { useState } from 'react'
 import type { AllSiteContent } from '@/lib/site-content'
 import LiveTicker from './LiveTicker'
 import Hero from './Hero'
-import ActionCard from './ActionCard'
+import TodaysBets from './TodaysBets'
+import type { TodaysBet } from './TodaysBets'
 import SystemsOverview from './SystemsOverview'
 import Features from './Features'
-import StatBotPreview from './StatBotPreview'
 import CTASection from './CTASection'
 
 interface Props {
   content: AllSiteContent
+  todaysBets: TodaysBet[]
 }
 
-export default function HomeEditor({ content }: Props) {
+export default function HomeEditor({ content, todaysBets }: Props) {
   const [editMode, setEditMode] = useState(false)
   const [draft, setDraft] = useState<AllSiteContent>(content)
   const [dirty, setDirty] = useState(false)
@@ -76,13 +77,12 @@ export default function HomeEditor({ content }: Props) {
 
   return (
     <>
-      <LiveTicker     content={draft.ticker}            editMode={editMode} onEdit={u => patch('ticker', u)} />
-      <Hero           content={draft.hero}             {...ep('hero')} />
-      <ActionCard     content={draft.action_card}       {...ep('action_card')} />
+      <LiveTicker      content={draft.ticker}            editMode={editMode} onEdit={u => patch('ticker', u)} />
+      <Hero            content={draft.hero}             {...ep('hero')} />
+      <TodaysBets      rows={todaysBets} isAdmin={true} />
       <SystemsOverview content={draft.systems_overview} {...ep('systems_overview')} />
-      <Features       content={draft.features}          {...ep('features')} />
-      {/* <StatBotPreview content={draft.statbot_preview}   {...ep('statbot_preview')} /> */}
-      <CTASection     content={draft.cta_section}       {...ep('cta_section')} />
+      <Features        content={draft.features}          {...ep('features')} />
+      <CTASection      content={draft.cta_section}       {...ep('cta_section')} />
 
       {/* ── Single global FAB ── */}
       <div style={{
