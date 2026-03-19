@@ -79,6 +79,9 @@ export default function Hero({ content, isLoggedIn = false, editMode, onEdit, re
                 <Link href="/betting-systems" className="btn btn--primary btn--lg">
                   <span className="btn__icon">&#128202;</span> View Betting Systems
                 </Link>
+                <Link href="/betting-trends" className="btn btn--secondary btn--lg">
+                  <span className="btn__icon">&#128200;</span> View Betting Trends
+                </Link>
                 <a href="#todays-action" className="btn btn--secondary btn--lg">
                   Today&apos;s Action &#8595;
                 </a>
