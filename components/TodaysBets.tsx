@@ -134,7 +134,8 @@ export default function TodaysBets({ rows, isAdmin, userTier, editMode = false }
     return 2
   }
 
-  const sortedRows = [...rows].sort((a, b) => groupOrder(a.note) - groupOrder(b.note))
+  const visibleRows = isAdmin && editMode ? rows : rows.filter(r => !r.show_on_results)
+  const sortedRows = [...visibleRows].sort((a, b) => groupOrder(a.note) - groupOrder(b.note))
   const rs = (result: string | null) => RESULT_STYLE[result ?? 'pending'] ?? RESULT_STYLE.pending
 
   // Placeholder rows shown behind the gate when logged out and no real rows exist
@@ -143,7 +144,7 @@ export default function TodaysBets({ rows, isAdmin, userTier, editMode = false }
     { id: 'ph2', date: 'Today', sport: 'NBA',  risk: '$150', bet: '████████ +5.5',  line: '+105', win: '$157', result: 'win',     note: '—' },
     { id: 'ph3', date: 'Today', sport: 'CFB',  risk: '$200', bet: '████████ O 48.5', line: '-115', win: '$174', result: 'pending', note: '—' },
   ]
-  const displayRows = isLoggedOut && rows.length === 0 ? PLACEHOLDER_ROWS : sortedRows
+  const displayRows = isLoggedOut && visibleRows.length === 0 ? PLACEHOLDER_ROWS : sortedRows
 
   return (
     <section id="todays-action" className="section todays-action">
@@ -176,7 +177,7 @@ export default function TodaysBets({ rows, isAdmin, userTier, editMode = false }
         )}
 
         {/* Logged-in, no rows yet */}
-        {!isLoggedOut && rows.length === 0 && !isAdmin && (
+        {!isLoggedOut && visibleRows.length === 0 && !isAdmin && (
           <div style={{
             background: 'var(--bg-card)',
             border: '1px solid var(--border)',
@@ -191,7 +192,7 @@ export default function TodaysBets({ rows, isAdmin, userTier, editMode = false }
         )}
 
         {/* Table — always rendered when there are rows (or placeholders for gate) */}
-        {(rows.length > 0 || isLoggedOut) && (
+        {(visibleRows.length > 0 || isLoggedOut) && (
           <div className="content-gate-wrap" style={{ marginTop: '28px' }}>
             <div className={isLoggedOut ? 'content-gate-blurred' : ''} style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '700px' }}>

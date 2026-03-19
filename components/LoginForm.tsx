@@ -18,7 +18,11 @@ export default function LoginForm({ failedAttempts = 0 }: Props) {
     setLoading(true)
     const formData = new FormData(e.currentTarget)
     formData.set('attempts', String(attempts))
-    await login(formData)
+    const result = await login(formData)
+    if (result?.success) {
+      window.location.href = '/'
+      return
+    }
     setAttempts(a => a + 1)
     setLoading(false)
   }
