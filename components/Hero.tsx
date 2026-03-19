@@ -7,12 +7,13 @@ import EditableText from './EditableText'
 
 interface Props {
   content: HeroContent
+  isLoggedIn?: boolean
   editMode?: boolean
   onEdit?: (updates: Partial<HeroContent>) => void
   resetKey?: number
 }
 
-export default function Hero({ content, editMode, onEdit, resetKey = 0 }: Props) {
+export default function Hero({ content, isLoggedIn = false, editMode, onEdit, resetKey = 0 }: Props) {
   const particlesRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -73,12 +74,22 @@ export default function Hero({ content, editMode, onEdit, resetKey = 0 }: Props)
           </p>
 
           <div className="hero__actions">
-            <Link href="/betting-systems" className="btn btn--primary btn--lg">
-              <span className="btn__icon">&#128202;</span> View Betting Systems
-            </Link>
-            <a href="#todays-action" className="btn btn--secondary btn--lg">
-              Today&apos;s Action &#8595;
-            </a>
+            {isLoggedIn ? (
+              <>
+                <Link href="/betting-systems" className="btn btn--primary btn--lg">
+                  <span className="btn__icon">&#128202;</span> View Betting Systems
+                </Link>
+                <a href="#todays-action" className="btn btn--secondary btn--lg">
+                  Today&apos;s Action &#8595;
+                </a>
+              </>
+            ) : (
+              <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+                <Link href="/signup" className="btn btn--primary btn--lg">
+                  Sign Up For Free Today
+                </Link>
+              </div>
+            )}
           </div>
 
         </div>

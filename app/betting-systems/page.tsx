@@ -60,6 +60,17 @@ export default async function BettingSystems() {
 
   return (
     <main>
+      <section className="section" style={{ paddingBottom: '40px' }}>
+        <div className="container">
+          <div className="reveal">
+            <span className="section-label">Active Systems</span>
+            <h2 className="section-title">Betting Systems</h2>
+            <p className="section-subtitle">Filter by sport to view system records, win percentages, and more.</p>
+          </div>
+          <SportTabsSystem systems={(systems ?? []) as any[]} userTier={userTier} isAdmin={isAdmin} />
+        </div>
+      </section>
+
       {/* Pricing — only show to non-paid users */}
       {!isPaid && (
         <section className="section" style={{ background: 'var(--bg-secondary)' }} id="pricing">
@@ -110,17 +121,6 @@ export default async function BettingSystems() {
           </div>
         </section>
       )}
-
-      <section className="section" style={{ paddingBottom: '40px' }}>
-        <div className="container">
-          <div className="reveal">
-            <span className="section-label">Active Systems</span>
-            <h2 className="section-title">Betting Systems</h2>
-            <p className="section-subtitle">Filter by sport to view system records, win percentages, and more.</p>
-          </div>
-          <SportTabsSystem systems={(systems ?? []) as any[]} userTier={userTier} isAdmin={isAdmin} />
-        </div>
-      </section>
 
       <CTASection />
     </main>

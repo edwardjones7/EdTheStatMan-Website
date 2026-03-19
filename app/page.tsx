@@ -91,7 +91,7 @@ export default async function Home() {
         // Everyone else gets static server-rendered sections
         <>
           <LiveTicker      content={content.ticker} />
-          <Hero            content={content.hero} />
+          <Hero            content={content.hero} isLoggedIn={userTier !== null} />
           <TodaysBets      rows={todaysBets} isAdmin={isAdmin} userTier={userTier} />
           <SystemsOverview content={content.systems_overview} />
           <Features        content={content.features} />

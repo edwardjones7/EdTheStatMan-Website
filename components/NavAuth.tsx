@@ -45,7 +45,7 @@ export default function NavAuth({ user }: NavAuthProps) {
     return (
       <div className="nav__auth-actions">
         <Link href="/login" className="btn btn--outline btn--sm">Sign In</Link>
-        <Link href="/signup" className="btn btn--primary btn--sm">Get Started</Link>
+        <Link href="/signup" className="btn btn--primary btn--sm">Sign Up</Link>
       </div>
     )
   }

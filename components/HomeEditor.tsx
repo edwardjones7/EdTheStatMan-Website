@@ -78,7 +78,7 @@ export default function HomeEditor({ content, todaysBets }: Props) {
   return (
     <>
       <LiveTicker      content={draft.ticker}            editMode={editMode} onEdit={u => patch('ticker', u)} />
-      <Hero            content={draft.hero}             {...ep('hero')} />
+      <Hero            content={draft.hero}             isLoggedIn={true} {...ep('hero')} />
       <TodaysBets      rows={todaysBets} isAdmin={true} userTier="premium" editMode={editMode} />
       <SystemsOverview content={draft.systems_overview} {...ep('systems_overview')} />
       <Features        content={draft.features}          {...ep('features')} />

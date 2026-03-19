@@ -103,7 +103,7 @@ export default function NavClient({ user }: NavClientProps) {
           {!user ? (
             <div className="mobile-menu__auth">
               <Link href="/login" className="btn btn--outline btn--sm">Sign In</Link>
-              <Link href="/signup" className="btn btn--primary btn--sm">Get Started</Link>
+              <Link href="/signup" className="btn btn--primary btn--sm">Sign Up</Link>
             </div>
           ) : (
             <div className="mobile-menu__user-info">
