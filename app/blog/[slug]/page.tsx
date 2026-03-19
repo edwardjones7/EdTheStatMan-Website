@@ -78,7 +78,7 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
   }
 
   const isPaid = userTier === 'basic' || userTier === 'premium'
-  const canRead = isPaid || (userTier !== null && post.access_level === 'free')
+  const canRead = isPaid || post.access_level !== 'members'
 
   const teaser = stripHtml(post.content).slice(0, 320) + '…'
 
@@ -132,15 +132,9 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
                 <div className="blog-post__gate-icon">🔒</div>
                 {!user ? (
                   <>
-                    <h2 className="blog-post__gate-title">
-                      {post.access_level === 'free'
-                        ? 'Sign in to read this post'
-                        : 'Members only content'}
-                    </h2>
+                    <h2 className="blog-post__gate-title">Members Only Content</h2>
                     <p className="blog-post__gate-desc">
-                      {post.access_level === 'free'
-                        ? 'Create a free account to read this article.'
-                        : 'This post is for Basic and Premium members. Sign in or subscribe to continue reading.'}
+                      This post is for Basic and Premium members. Sign in or subscribe to continue reading.
                     </p>
                     <div className="blog-post__gate-actions">
                       <Link href="/login" className="btn btn--primary">Sign In</Link>
