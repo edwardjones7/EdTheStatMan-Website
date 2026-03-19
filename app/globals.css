@@ -5091,6 +5091,31 @@ textarea.form-input {
   color: var(--text-muted);
 }
 
+.analytics-chart--dense {
+  padding-bottom: 44px;
+}
+
+.analytics-chart--dense .analytics-chart__label--show {
+  transform: translateX(-50%) rotate(-45deg);
+  transform-origin: top center;
+}
+
+.analytics-bar-tooltip {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1a1a1e;
+  border: 1px solid rgba(52, 211, 153, 0.35);
+  color: #e4e4e7;
+  font-size: 10px;
+  white-space: nowrap;
+  padding: 3px 8px;
+  border-radius: 5px;
+  pointer-events: none;
+  z-index: 10;
+}
+
 /* ---------- Print Styles ---------- */
 @media print {
   .nav, .footer, .back-to-top, .bg-grid, .bg-glow {

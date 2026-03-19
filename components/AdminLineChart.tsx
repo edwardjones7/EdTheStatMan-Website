@@ -32,9 +32,11 @@ export default function AdminLineChart() {
   const [range, setRange]     = useState<Range>('month')
   const [data, setData]       = useState<AnalyticsData | null>(null)
   const [loading, setLoading] = useState(true)
+  const [hovered, setHovered] = useState<number | null>(null)
 
   useEffect(() => {
     setLoading(true)
+    setHovered(null)
     fetch(`/api/admin/analytics?range=${range}`)
       .then(r => r.json())
       .then(d => { setData(d); setLoading(false) })
@@ -43,6 +45,8 @@ export default function AdminLineChart() {
 
   const isEmpty = !data || data.points.length === 0
   const maxVal  = data ? Math.max(...data.points.map(p => p.count), 1) : 1
+  const n       = data?.points.length ?? 0
+  const dense   = n > 15
 
   return (
     <div className="admin-line-chart-wrap">
@@ -75,22 +79,26 @@ export default function AdminLineChart() {
         <div className="admin-line-chart-loading">{loading ? 'Loading…' : 'No data yet.'}</div>
       ) : (
         <div className="analytics-chart-wrap">
-          <div className="analytics-chart">
+          <div className={`analytics-chart${dense ? ' analytics-chart--dense' : ''}`}>
             {data!.points.map((p, i) => {
               const heightPct = (p.count / maxVal) * 100
-              const n = data!.points.length
-              const showLabel = i === 0 || i === Math.floor(n / 2) || i === n - 1 || p.count === maxVal
               return (
                 <div
                   key={i}
                   className="analytics-chart__col"
-                  title={`${p.label}: ${p.count} view${p.count !== 1 ? 's' : ''}`}
+                  onMouseEnter={() => setHovered(i)}
+                  onMouseLeave={() => setHovered(null)}
                 >
+                  {hovered === i && (
+                    <div className="analytics-bar-tooltip">
+                      {p.count} view{p.count !== 1 ? 's' : ''}
+                    </div>
+                  )}
                   <div
                     className="analytics-chart__bar"
                     style={{ height: `${Math.max(heightPct, p.count > 0 ? 3 : 0)}%` }}
                   />
-                  <div className={`analytics-chart__label ${showLabel ? 'analytics-chart__label--show' : ''}`}>
+                  <div className="analytics-chart__label analytics-chart__label--show">
                     {p.label}
                   </div>
                 </div>
