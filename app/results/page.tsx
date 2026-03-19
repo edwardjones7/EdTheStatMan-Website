@@ -5,6 +5,7 @@ import { DEFAULT_RESULTS } from '@/lib/site-content'
 import type { ResultsContent } from '@/lib/site-content'
 import ResultsPage from '@/components/ResultsPage'
 import ResultsEditor from '@/components/ResultsEditor'
+import RecentPicksResults from '@/components/RecentPicksResults'
 import CTASection from '@/components/CTASection'
 import type { TodaysBet } from '@/components/TodaysBets'
 
