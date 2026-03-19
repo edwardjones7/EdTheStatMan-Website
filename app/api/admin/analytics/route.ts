@@ -23,17 +23,7 @@ export async function GET(request: Request) {
     return date.toLocaleDateString('en-CA', { timeZone: 'America/New_York' })
   }
 
-  // Get UTC ISO string for midnight America/New_York on a given NY date
-  function nyMidnightUTC(nyDateStr: string): string {
-    // EST = UTC-5 → midnight NY = 05:00 UTC
-    // EDT = UTC-4 → midnight NY = 04:00 UTC
-    const estCandidate = new Date(nyDateStr + 'T05:00:00Z')
-    if (toNYDate(estCandidate) === nyDateStr) return estCandidate.toISOString()
-    return new Date(nyDateStr + 'T04:00:00Z').toISOString()
-  }
-
-  const todayNY    = toNYDate(now)
-  const todayStart = nyMidnightUTC(todayNY)
+  const todayNY = toNYDate(now)
 
   let sinceDate: Date
   if (range === 'week') {
@@ -45,14 +35,16 @@ export async function GET(request: Request) {
     sinceDate = new Date(now.getTime() - 31 * 24 * 60 * 60 * 1000)
   }
 
-  const [totalRes, rangeRes, todayRes, rowsRes] = await Promise.all([
+  const [totalRes, rangeRes, rowsRes] = await Promise.all([
     (admin as any).from('page_views').select('*', { count: 'exact', head: true }),
     (admin as any).from('page_views').select('*', { count: 'exact', head: true }).gte('created_at', sinceDate.toISOString()),
-    (admin as any).from('page_views').select('*', { count: 'exact', head: true }).gte('created_at', todayStart),
     (admin as any).from('page_views').select('path, created_at').gte('created_at', sinceDate.toISOString()),
   ])
 
   const rows: { path: string; created_at: string }[] = rowsRes.data ?? []
+
+  // Compute today's count from rows using NY date — same logic as the chart buckets
+  const viewsToday = rows.filter(r => toNYDate(new Date(r.created_at)) === todayNY).length
 
   // Build chart points
   let points: { label: string; count: number }[]
@@ -111,7 +103,7 @@ export async function GET(request: Request) {
   return NextResponse.json({
     totalViews:   totalRes.count ?? 0,
     viewsInRange: rangeRes.count ?? 0,
-    viewsToday:   todayRes.count ?? 0,
+    viewsToday,
     points,
     topPages,
   })
