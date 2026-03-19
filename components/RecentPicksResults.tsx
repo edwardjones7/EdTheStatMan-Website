@@ -18,8 +18,8 @@ const RESULT_STYLE: Record<string, { bg: string; color: string; label: string }>
 }
 
 const EMPTY_FORM = {
-  date: '', sport: '', risk: '', bet: '', line: '', win: '', result: 'pending', note: '',
-  is_active: true, is_free: true, show_on_results: true,
+  date: '', sport: '', risk: '', bet: '', line: '', vig: '', win: '', result: 'pending', note: '',
+  is_active: true, show_on_results: true,
 }
 
 export default function RecentPicksResults({ rows, isAdmin = false, editMode = false }: Props) {
@@ -55,11 +55,11 @@ export default function RecentPicksResults({ rows, isAdmin = false, editMode = f
       risk:            row.risk   ?? '',
       bet:             row.bet    ?? '',
       line:            row.line   ?? '',
+      vig:             row.vig    ?? '',
       win:             row.win    ?? '',
       result:          row.result ?? 'pending',
       note:            row.note   ?? '',
       is_active:       row.is_active,
-      is_free:         row.is_free,
       show_on_results: row.show_on_results,
     })
     setEditId(row.id)
@@ -157,7 +157,7 @@ export default function RecentPicksResults({ rows, isAdmin = false, editMode = f
             <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '700px' }}>
               <thead>
                 <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                  {['Date', 'Sport', 'Risk', 'Bet', 'Line', 'Win', 'Result', 'Note'].map(col => (
+                  {['Date', 'Sport', 'Risk', 'Bet', 'Line', 'VIG', 'Win', 'Result', 'Note'].map(col => (
                     <th key={col} style={thStyle}>{col}</th>
                   ))}
                   {isAdmin && editMode && <th style={thStyle} />}
@@ -174,6 +174,7 @@ export default function RecentPicksResults({ rows, isAdmin = false, editMode = f
                         <td style={{ ...tdStyle, fontFamily: 'var(--font-mono)' }}>{row.risk ?? '—'}</td>
                         <td style={{ ...tdStyle, fontWeight: 600 }}>{row.bet ?? '—'}</td>
                         <td style={{ ...tdStyle, fontFamily: 'var(--font-mono)' }}>{row.line ?? '—'}</td>
+                        <td style={{ ...tdStyle, fontFamily: 'var(--font-mono)' }}>{row.vig ?? '—'}</td>
                         <td style={{ ...tdStyle, fontFamily: 'var(--font-mono)', color: 'var(--accent-green)' }}>{row.win ?? '—'}</td>
                         <td style={tdStyle}>
                           <span style={{
@@ -267,6 +268,7 @@ function BetForm({ form, setField, onSave, onCancel, saving, error }: BetFormPro
           { name: 'risk',  label: 'Risk',  placeholder: '$100' },
           { name: 'bet',   label: 'Bet',   placeholder: 'Chiefs -3.5' },
           { name: 'line',  label: 'Line',  placeholder: '-110' },
+          { name: 'vig',   label: 'VIG',   placeholder: '-110' },
           { name: 'win',   label: 'Win',   placeholder: '$90' },
         ].map(({ name, label, placeholder }) => (
           <div key={name}>
@@ -303,7 +305,6 @@ function BetForm({ form, setField, onSave, onCancel, saving, error }: BetFormPro
 
       <div style={{ display: 'flex', gap: '10px', marginTop: '16px', flexWrap: 'wrap' }}>
         <ToggleBtn label="Active"          active={form.is_active}       onColor="var(--accent-green)"  onClick={() => setField('is_active', !form.is_active)} />
-        <ToggleBtn label={form.is_free ? 'Free' : 'Members Only'} active={!form.is_free} onColor="var(--accent-purple)" onClick={() => setField('is_free', !form.is_free)} />
         <ToggleBtn label="Show on Results" active={form.show_on_results} onColor="var(--accent-cyan)"   onClick={() => setField('show_on_results', !form.show_on_results)} />
       </div>
 

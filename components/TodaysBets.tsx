@@ -11,6 +11,7 @@ export interface TodaysBet {
   risk: string | null
   bet: string | null
   line: string | null
+  vig: string | null
   win: string | null
   result: string | null
   note: string | null
@@ -35,8 +36,8 @@ const RESULT_STYLE: Record<string, { bg: string; color: string; label: string }>
 }
 
 const EMPTY_FORM = {
-  date: '', sport: '', risk: '', bet: '', line: '', win: '', result: 'pending', note: '',
-  is_active: true, is_free: true, show_on_results: false,
+  date: '', sport: '', risk: '', bet: '', line: '', vig: '', win: '', result: 'pending', note: '',
+  is_active: true, show_on_results: false,
 }
 
 export default function TodaysBets({ rows, isAdmin, userTier, editMode = false }: Props) {
@@ -72,11 +73,11 @@ export default function TodaysBets({ rows, isAdmin, userTier, editMode = false }
       risk:            row.risk   ?? '',
       bet:             row.bet    ?? '',
       line:            row.line   ?? '',
+      vig:             row.vig    ?? '',
       win:             row.win    ?? '',
       result:          row.result ?? 'pending',
       note:            row.note   ?? '',
       is_active:       row.is_active,
-      is_free:         row.is_free,
       show_on_results: row.show_on_results,
     })
     setEditId(row.id)
@@ -126,7 +127,6 @@ export default function TodaysBets({ rows, isAdmin, userTier, editMode = false }
   }
 
   const isLoggedOut = userTier === null
-  const isPaid      = userTier === 'basic' || userTier === 'premium'
 
   function groupOrder(note: string | null) {
     if (note === 'Live')   return 0
@@ -197,7 +197,7 @@ export default function TodaysBets({ rows, isAdmin, userTier, editMode = false }
               <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '700px' }}>
                 <thead>
                   <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                    {['Date', 'Sport', 'Risk', 'Bet', 'Line', 'Win', 'Result', 'Note'].map(col => (
+                    {['Date', 'Sport', 'Risk', 'Bet', 'Line', 'VIG', 'Win', 'Result', 'Note'].map(col => (
                       <th key={col} style={thStyle}>{col}</th>
                     ))}
                     {isAdmin && editMode && <th style={thStyle} />}
@@ -205,36 +205,15 @@ export default function TodaysBets({ rows, isAdmin, userTier, editMode = false }
                 </thead>
                 <tbody>
                   {displayRows.map((row: any) => {
-                    const locked = !isAdmin && !isPaid && !row.is_free
-                    if (locked) {
                       return (
-                        <Fragment key={row.id}>
-                          <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                            <td colSpan={8} style={{ padding: '14px 12px' }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                <span style={{ fontSize: '1rem' }}>🔒</span>
-                                <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>Members Only</span>
-                                <Link href="/pricing" className="btn btn--primary btn--sm">Upgrade to Unlock</Link>
-                              </div>
-                            </td>
-                          </tr>
-                        </Fragment>
-                      )
-                    }
-                    return (
                       <Fragment key={row.id}>
                         <tr style={{ borderBottom: '1px solid var(--border)' }}>
                           <td style={tdStyle}>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                               <span>{row.date ?? '—'}</span>
-                              {!isLoggedOut && (
+                              {!isLoggedOut && row.is_active && (
                                 <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-                                  {row.is_active && (
-                                    <span style={tagStyle('var(--accent-green)', 'rgba(52,211,153,0.12)')}>Active</span>
-                                  )}
-                                  {!row.is_free && (
-                                    <span style={tagStyle('var(--accent-purple)', 'rgba(129,140,248,0.12)')}>Members</span>
-                                  )}
+                                  <span style={tagStyle('var(--accent-green)', 'rgba(52,211,153,0.12)')}>Active</span>
                                 </div>
                               )}
                             </div>
@@ -243,6 +222,7 @@ export default function TodaysBets({ rows, isAdmin, userTier, editMode = false }
                           <td style={{ ...tdStyle, fontFamily: 'var(--font-mono)' }}>{row.risk ?? '—'}</td>
                           <td style={{ ...tdStyle, fontWeight: 600, maxWidth: '200px' }}>{row.bet ?? '—'}</td>
                           <td style={{ ...tdStyle, fontFamily: 'var(--font-mono)' }}>{row.line ?? '—'}</td>
+                          <td style={{ ...tdStyle, fontFamily: 'var(--font-mono)' }}>{row.vig ?? '—'}</td>
                           <td style={{ ...tdStyle, fontFamily: 'var(--font-mono)', color: 'var(--accent-green)' }}>{row.win ?? '—'}</td>
                           <td style={tdStyle}>
                             <span style={{
@@ -371,6 +351,7 @@ function BetForm({ form, setField, onSave, onCancel, saving, error }: BetFormPro
           { name: 'risk',  label: 'Risk',  placeholder: '$100' },
           { name: 'bet',   label: 'Bet',   placeholder: 'Chiefs -3.5' },
           { name: 'line',  label: 'Line',  placeholder: '-110' },
+          { name: 'vig',   label: 'VIG',   placeholder: '-110' },
           { name: 'win',   label: 'Win',   placeholder: '$90' },
         ].map(({ name, label, placeholder }) => (
           <div key={name}>
@@ -412,12 +393,6 @@ function BetForm({ form, setField, onSave, onCancel, saving, error }: BetFormPro
           active={form.is_active}
           onColor="var(--accent-green)"
           onClick={() => setField('is_active', !form.is_active)}
-        />
-        <ToggleBtn
-          label={form.is_free ? 'Free' : 'Members Only'}
-          active={!form.is_free}
-          onColor="var(--accent-purple)"
-          onClick={() => setField('is_free', !form.is_free)}
         />
         <ToggleBtn
           label="Show on Results"

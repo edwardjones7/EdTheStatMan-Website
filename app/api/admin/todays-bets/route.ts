@@ -22,11 +22,12 @@ export async function POST(req: Request) {
     risk:            body.risk            || null,
     bet:             body.bet             || null,
     line:            body.line            || null,
+    vig:             body.vig             || null,
     win:             body.win             || null,
     result:          body.result          || 'pending',
     note:            body.note            || null,
     is_active:       body.is_active       ?? true,
-    is_free:         body.is_free         ?? true,
+    is_free:         true,
     show_on_results: body.show_on_results ?? false,
   }).select().single()
 

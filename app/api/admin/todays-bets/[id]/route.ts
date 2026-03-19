@@ -23,11 +23,12 @@ export async function PUT(req: Request, context: { params: Promise<{ id: string 
     risk:            body.risk            || null,
     bet:             body.bet             || null,
     line:            body.line            || null,
+    vig:             body.vig             || null,
     win:             body.win             || null,
     result:          body.result          || 'pending',
     note:            body.note            || null,
     is_active:       body.is_active       ?? true,
-    is_free:         body.is_free         ?? true,
+    is_free:         true,
     show_on_results: body.show_on_results ?? false,
     updated_at:      new Date().toISOString(),
   }).eq('id', id).select().single()
