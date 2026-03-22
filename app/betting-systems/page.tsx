@@ -54,7 +54,16 @@ export default async function BettingSystems() {
     ? (admin as any).from('betting_systems').select('*').order('date', { ascending: true, nullsFirst: false })
     : (admin as any).from('betting_systems').select('*').eq('is_active', true).order('date', { ascending: true, nullsFirst: false })
 
-  const { data: systems } = await systemsQuery
+  const { data: rawSystems } = await systemsQuery
+
+  const systems = (rawSystems ?? []).sort((a: any, b: any) => {
+    const aDate = a.date || null
+    const bDate = b.date || null
+    if (!aDate && !bDate) return 0
+    if (!aDate) return 1
+    if (!bDate) return -1
+    return aDate.localeCompare(bDate)
+  })
 
   const isPaid = userTier === 'basic' || userTier === 'premium'
 
