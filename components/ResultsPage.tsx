@@ -252,7 +252,7 @@ export default function ResultsPage({ content, editMode, onEdit, resetKey = 0 }:
 
   function et(field: keyof ResultsContent) {
     return e
-      ? <EditableText tag="span" value={content[field] as string} onChange={v => onEdit({ [field]: v })} resetKey={resetKey} />
+      ? <EditableText tag="span" value={content[field] as string} onChange={v => onEdit!({ [field]: v })} resetKey={resetKey} />
       : content[field] as string
   }
 
@@ -282,7 +282,7 @@ export default function ResultsPage({ content, editMode, onEdit, resetKey = 0 }:
                     card={card}
                     onChange={updates => {
                       const statCards = content.statCards.map((c, j) => j === i ? { ...c, ...updates } : c)
-                      onEdit({ statCards })
+                      onEdit!({ statCards })
                     }}
                   />
                 ) : (
@@ -301,18 +301,18 @@ export default function ResultsPage({ content, editMode, onEdit, resetKey = 0 }:
               <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-end', flexWrap: 'wrap' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1, minWidth: '180px' }}>
                   <span style={labelStyle}>Chart Title</span>
-                  <EditableText tag="span" value={content.chartTitle} onChange={v => onEdit({ chartTitle: v })} resetKey={resetKey}
+                  <EditableText tag="span" value={content.chartTitle} onChange={v => onEdit!({ chartTitle: v })} resetKey={resetKey}
                     style={{ display: 'block', fontSize: '1rem', fontWeight: 700 }} />
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                   <span style={labelStyle}>Total Value</span>
-                  <EditableText tag="span" value={content.chartValue} onChange={v => onEdit({ chartValue: v })} resetKey={resetKey}
+                  <EditableText tag="span" value={content.chartValue} onChange={v => onEdit!({ chartValue: v })} resetKey={resetKey}
                     style={{ display: 'block', fontSize: '1rem', fontWeight: 700, color: 'var(--accent-green)' }} />
                 </div>
               </div>
               <ChartBarEditor
                 bars={content.chartBars}
-                onChange={chartBars => onEdit({ chartBars })}
+                onChange={chartBars => onEdit!({ chartBars })}
               />
             </div>
           ) : (
