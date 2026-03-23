@@ -106,7 +106,9 @@ export default function TrendsFilter({ trends, userTier, isAdmin = false }: Prop
   const isLoggedOut = userTier === null
 
   const allVisible = trends.filter(r => activeTab === 'all' || r.sport === activeTab)
-  const baseRows = editMode ? allVisible : allVisible.filter(r => r.is_active)
+  const baseRows = editMode
+    ? [...allVisible].sort((a, b) => Number(b.is_active) - Number(a.is_active))
+    : allVisible.filter(r => r.is_active)
 
 
   function openAdd() {

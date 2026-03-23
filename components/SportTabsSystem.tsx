@@ -106,7 +106,9 @@ export default function SportTabsSystem({ systems, userTier, isAdmin = false }: 
   const isLoggedOut = userTier === null
 
   const allVisible = systems.filter(s => activeTab === 'all' || s.sport === activeTab)
-  const baseRows = editMode ? allVisible : allVisible.filter(s => s.is_active)
+  const baseRows = editMode
+    ? [...allVisible].sort((a, b) => Number(b.is_active) - Number(a.is_active))
+    : allVisible.filter(s => s.is_active)
 
 
   function openAdd() {
