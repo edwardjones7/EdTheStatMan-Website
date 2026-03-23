@@ -87,9 +87,11 @@ export default function AdminTrendsTab({ trends }: { trends: BettingTrend[] }) {
     setSaving(true)
     setError(null)
 
+    const w = Number(form.w) || 0
+    const l = Number(form.l) || 0
     const payload = {
       ...form,
-      pct: form.pct === '' || form.pct === null ? null : Number(form.pct),
+      pct: (w + l) > 0 ? w / (w + l) : null,
       units: form.units === '' || form.units === null ? null : Number(form.units),
     }
 
@@ -195,11 +197,6 @@ export default function AdminTrendsTab({ trends }: { trends: BettingTrend[] }) {
             <div className="admin-form-field">
               <label className="admin-form-label">T</label>
               <input className="admin-form-input" type="number" min={0} value={form.t} onChange={e => set('t', +e.target.value)} />
-            </div>
-
-            <div className="admin-form-field">
-              <label className="admin-form-label">Pct (e.g. 0.65)</label>
-              <input className="admin-form-input" type="number" step="0.01" min={0} max={1} value={form.pct ?? ''} onChange={e => set('pct', e.target.value)} placeholder="0.65" />
             </div>
 
             <div className="admin-form-field">

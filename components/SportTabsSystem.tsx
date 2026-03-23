@@ -152,9 +152,11 @@ export default function SportTabsSystem({ systems, userTier, isAdmin = false }: 
     if (!form.description.trim()) { setFormError('Description is required.'); return }
     setSaving(true)
     setFormError(null)
+    const w = Number(form.w) || 0
+    const l = Number(form.l) || 0
     const payload = {
       ...form,
-      pct: form.pct === '' || form.pct === null ? null : Number(form.pct),
+      pct: (w + l) > 0 ? w / (w + l) : null,
       units: form.units === '' || form.units === null ? null : Number(form.units),
     }
     const res = await fetch(
@@ -212,21 +214,25 @@ export default function SportTabsSystem({ systems, userTier, isAdmin = false }: 
     try {
       const records = xlsxSheets.flatMap((sheet, _i) =>
         sheet.rows
-          .map((row, j) => ({
-            sport: sheet.sport,
-            description: parseStr(row['description'] ?? row['Description'] ?? row['DESCRIPTION'] ?? row['rule'] ?? row['Rule'] ?? ''),
-            line: parseStr(row['line'] ?? row['Line'] ?? row['LINE'] ?? ''),
-            season: parseStr(row['season'] ?? row['Season'] ?? row['SEASON'] ?? ''),
-            pct: parseNum(row['pct'] ?? row['Pct'] ?? row['PCT'] ?? row['pct%'] ?? row['Pct%'] ?? ''),
-            units: parseNum(row['units'] ?? row['Units'] ?? row['UNITS'] ?? ''),
-            type: parseStr(row['type'] ?? row['Type'] ?? row['TYPE'] ?? ''),
-            w: parseIntVal(row['w'] ?? row['W'] ?? row['wins'] ?? row['Wins'] ?? 0),
-            l: parseIntVal(row['l'] ?? row['L'] ?? row['losses'] ?? row['Losses'] ?? 0),
-            t: parseIntVal(row['t'] ?? row['T'] ?? row['ties'] ?? row['Ties'] ?? 0),
-            is_free: sheet.is_free,
-            is_active: true,
-            sort_order: j,
-          }))
+          .map((row, j) => {
+            const w = parseIntVal(row['w'] ?? row['W'] ?? row['wins'] ?? row['Wins'] ?? 0)
+            const l = parseIntVal(row['l'] ?? row['L'] ?? row['losses'] ?? row['Losses'] ?? 0)
+            return {
+              sport: sheet.sport,
+              description: parseStr(row['description'] ?? row['Description'] ?? row['DESCRIPTION'] ?? row['rule'] ?? row['Rule'] ?? ''),
+              line: parseStr(row['line'] ?? row['Line'] ?? row['LINE'] ?? ''),
+              season: parseStr(row['season'] ?? row['Season'] ?? row['SEASON'] ?? ''),
+              pct: (w + l) > 0 ? w / (w + l) : null,
+              units: parseNum(row['units'] ?? row['Units'] ?? row['UNITS'] ?? ''),
+              type: parseStr(row['type'] ?? row['Type'] ?? row['TYPE'] ?? ''),
+              w,
+              l,
+              t: parseIntVal(row['t'] ?? row['T'] ?? row['ties'] ?? row['Ties'] ?? 0),
+              is_free: sheet.is_free,
+              is_active: true,
+              sort_order: j,
+            }
+          })
           .filter(r => r.description !== '')
       )
       const res = await fetch('/api/admin/systems/import', {
@@ -470,10 +476,6 @@ export default function SportTabsSystem({ systems, userTier, isAdmin = false }: 
               <input className="admin-form-input" type="number" min={0} value={form.t} onChange={e => setField('t', +e.target.value)} />
             </div>
             <div className="admin-form-field">
-              <label className="admin-form-label">Pct (0.65 = 65%)</label>
-              <input className="admin-form-input" type="number" step="0.01" min={0} max={1} value={form.pct ?? ''} onChange={e => setField('pct', e.target.value)} placeholder="0.65" />
-            </div>
-            <div className="admin-form-field">
               <label className="admin-form-label">Units</label>
               <input className="admin-form-input" type="number" step="0.1" value={form.units ?? ''} onChange={e => setField('units', e.target.value)} placeholder="12.5" />
             </div>
@@ -684,10 +686,6 @@ export default function SportTabsSystem({ systems, userTier, isAdmin = false }: 
                           <div className="admin-form-field">
                             <label className="admin-form-label">T</label>
                             <input className="admin-form-input" type="number" min={0} value={form.t} onChange={e => setField('t', +e.target.value)} />
-                          </div>
-                          <div className="admin-form-field">
-                            <label className="admin-form-label">Pct (0.65 = 65%)</label>
-                            <input className="admin-form-input" type="number" step="0.01" min={0} max={1} value={form.pct ?? ''} onChange={e => setField('pct', e.target.value)} placeholder="0.65" />
                           </div>
                           <div className="admin-form-field">
                             <label className="admin-form-label">Units</label>
