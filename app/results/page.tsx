@@ -41,6 +41,12 @@ export default async function Results() {
   const content: ResultsContent = { ...DEFAULT_RESULTS, ...((contentResult.data?.value as object) ?? {}) }
   const recentPicks: TodaysBet[] = picksResult.data ?? []
 
+  const wins   = recentPicks.filter(p => p.result === 'win').length
+  const losses = recentPicks.filter(p => p.result === 'loss').length
+  const pushes = recentPicks.filter(p => p.result === 'push').length
+  const winPct = (wins + losses) > 0 ? (wins / (wins + losses)) * 100 : 0
+  const calcStats = { wins, losses, pushes, winPct }
+
   let isAdmin = false
   const { data: { user } } = await supabase.auth.getUser()
   if (user) {
@@ -58,7 +64,7 @@ export default async function Results() {
 
   return (
     <>
-      <ResultsPage content={content} />
+      <ResultsPage content={content} calcStats={calcStats} />
       <RecentPicksResults rows={recentPicks} />
       <CTASection />
     </>

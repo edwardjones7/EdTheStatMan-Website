@@ -31,10 +31,6 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://edthestatman.com'),
-  icons: {
-    icon: '/favicon.svg',
-    shortcut: '/favicon.svg',
-  },
   title: {
     default: 'EdTheStatMan.com – Winning Sports Betting Picks, Systems & Trends',
     template: '%s – EdTheStatMan.com',

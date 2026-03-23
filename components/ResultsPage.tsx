@@ -3,11 +3,19 @@
 import EditableText from './EditableText'
 import type { ResultsContent, ResultsStatCard, ResultsChartBar, ResultsYearRow } from '@/lib/site-content'
 
+interface CalcStats {
+  wins: number
+  losses: number
+  pushes: number
+  winPct: number
+}
+
 interface Props {
   content: ResultsContent
   editMode?: boolean
   onEdit?: (updates: Partial<ResultsContent>) => void
   resetKey?: number
+  calcStats?: CalcStats
 }
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
@@ -247,7 +255,7 @@ function TableRowEditor({
   )
 }
 
-export default function ResultsPage({ content, editMode, onEdit, resetKey = 0 }: Props) {
+export default function ResultsPage({ content, editMode, onEdit, resetKey = 0, calcStats }: Props) {
   const e = editMode && onEdit
 
   function et(field: keyof ResultsContent) {
@@ -258,87 +266,69 @@ export default function ResultsPage({ content, editMode, onEdit, resetKey = 0 }:
 
   return (
     <main>
-      {/* Page Header */}
-      <header className="page-header">
+      {calcStats && (
+      <section className="section" style={{ paddingBottom: '0' }}>
         <div className="container">
-          <div className="reveal">
-            <span className="section-label">{et('headerLabel')}</span>
-            <h1 className="page-header__title">{et('headerTitle')}</h1>
-            <p className="page-header__subtitle">{et('headerSubtitle')}</p>
+          <div className="reveal" style={{ textAlign: 'center', marginBottom: '40px' }}>
+            <span className="section-label">Live Stats</span>
+            <h2 className="section-title" style={{ fontSize: '1.8rem', marginBottom: '0' }}>Performance Summary</h2>
           </div>
-        </div>
-      </header>
-
-      {false && (
-      <section className="section">
-        <div className="container">
-
-          {/* Stat Cards */}
           <div className="results-stats-grid stagger-children">
-            {content.statCards.map((card, i) => (
-              <div key={i} className="results-stat-card">
-                {e ? (
-                  <StatCardEditor
-                    card={card}
-                    onChange={updates => {
-                      const statCards = content.statCards.map((c, j) => j === i ? { ...c, ...updates } : c)
-                      onEdit!({ statCards })
-                    }}
-                  />
-                ) : (
-                  <>
-                    <StatValue card={card} />
-                    <div className="results-stat-card__label">{card.label}</div>
-                  </>
-                )}
-              </div>
-            ))}
-          </div>
 
-          {/* Results Chart */}
-          {e ? (
-            <div style={{ marginTop: '48px' }}>
-              <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-end', flexWrap: 'wrap' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1, minWidth: '180px' }}>
-                  <span style={labelStyle}>Chart Title</span>
-                  <EditableText tag="span" value={content.chartTitle} onChange={v => onEdit!({ chartTitle: v })} resetKey={resetKey}
-                    style={{ display: 'block', fontSize: '1rem', fontWeight: 700 }} />
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  <span style={labelStyle}>Total Value</span>
-                  <EditableText tag="span" value={content.chartValue} onChange={v => onEdit!({ chartValue: v })} resetKey={resetKey}
-                    style={{ display: 'block', fontSize: '1rem', fontWeight: 700, color: 'var(--accent-green)' }} />
-                </div>
-              </div>
-              <ChartBarEditor
-                bars={content.chartBars}
-                onChange={chartBars => onEdit!({ chartBars })}
+            {/* Wins */}
+            <div className="results-stat-card reveal-scale" style={{ borderTop: '3px solid #34d399' }}>
+              <div style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#34d399', marginBottom: '12px' }}>W</div>
+              <div
+                className="results-stat-card__value"
+                data-count={calcStats.wins}
+                data-decimals="0"
+                style={{ color: '#34d399' }}
+                dangerouslySetInnerHTML={{ __html: String(calcStats.wins) }}
               />
+              <div className="results-stat-card__label">Wins</div>
             </div>
-          ) : (
-            <div className="results-chart reveal" style={{ marginTop: '48px' }}>
-              <div className="results-chart__header">
-                <h2 className="results-chart__title">{content.chartTitle}</h2>
-                <span className="results-chart__value">{content.chartValue}</span>
-              </div>
-              <div className="chart-bars">
-                {content.chartBars.map((bar, i) => (
-                  <div
-                    key={i}
-                    className={`chart-bar chart-bar--${bar.color}`}
-                    data-height={bar.height}
-                    data-value={bar.value}
-                  >
-                    <span className="chart-bar__tooltip">{bar.value}</span>
-                  </div>
-                ))}
-              </div>
-              <div className="chart-labels">
-                {MONTHS.map(m => <span key={m}>{m}</span>)}
-              </div>
-            </div>
-          )}
 
+            {/* Losses */}
+            <div className="results-stat-card reveal-scale" style={{ borderTop: '3px solid #f87171' }}>
+              <div style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#f87171', marginBottom: '12px' }}>L</div>
+              <div
+                className="results-stat-card__value"
+                data-count={calcStats.losses}
+                data-decimals="0"
+                style={{ color: '#f87171' }}
+                dangerouslySetInnerHTML={{ __html: String(calcStats.losses) }}
+              />
+              <div className="results-stat-card__label">Losses</div>
+            </div>
+
+            {/* Win % */}
+            <div className="results-stat-card reveal-scale" style={{ borderTop: '3px solid var(--accent-cyan)' }}>
+              <div style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--accent-cyan)', marginBottom: '12px' }}>%</div>
+              <div
+                className="results-stat-card__value"
+                data-count={calcStats.winPct.toFixed(1)}
+                data-suffix="%"
+                data-decimals="1"
+                style={{ color: 'var(--accent-cyan)' }}
+                dangerouslySetInnerHTML={{ __html: `${calcStats.winPct.toFixed(1)}%` }}
+              />
+              <div className="results-stat-card__label">Win Rate</div>
+            </div>
+
+            {/* Pushes */}
+            <div className="results-stat-card reveal-scale" style={{ borderTop: '3px solid #facc15' }}>
+              <div style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#facc15', marginBottom: '12px' }}>P</div>
+              <div
+                className="results-stat-card__value"
+                data-count={calcStats.pushes}
+                data-decimals="0"
+                style={{ color: '#facc15' }}
+                dangerouslySetInnerHTML={{ __html: String(calcStats.pushes) }}
+              />
+              <div className="results-stat-card__label">Pushes</div>
+            </div>
+
+          </div>
         </div>
       </section>
       )}

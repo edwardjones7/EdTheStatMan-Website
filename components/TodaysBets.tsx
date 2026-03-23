@@ -304,7 +304,7 @@ export default function TodaysBets({ rows, isAdmin, userTier, editMode = false }
         )}
 
         {/* Action buttons */}
-        <div style={{ marginTop: '32px', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+        <div style={{ marginTop: '32px', display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'center' }}>
           <a href="https://t.me/edthestatman" className="btn btn--primary btn--sm" target="_blank" rel="noopener">
             ⚡ Get Picks on Telegram
           </a>

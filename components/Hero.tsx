@@ -76,13 +76,13 @@ export default function Hero({ content, isLoggedIn = false, editMode, onEdit, re
           <div className="hero__actions">
             {isLoggedIn ? (
               <>
-                <Link href="/betting-systems" className="btn btn--primary btn--lg">
+                <Link href="/betting-systems" className="btn btn--primary btn--sm">
                   <span className="btn__icon">&#128202;</span> View Betting Systems
                 </Link>
-                <Link href="/betting-trends" className="btn btn--secondary btn--lg">
+                <Link href="/betting-trends" className="btn btn--secondary btn--sm">
                   <span className="btn__icon">&#128200;</span> View Betting Trends
                 </Link>
-                <a href="#todays-action" className="btn btn--secondary btn--lg">
+                <a href="#todays-action" className="btn btn--secondary btn--sm">
                   Today&apos;s Action &#8595;
                 </a>
               </>

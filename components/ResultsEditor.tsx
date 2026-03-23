@@ -54,6 +54,11 @@ export default function ResultsEditor({ content, recentPicks }: Props) {
     }
   }
 
+  const wins   = recentPicks.filter(p => p.result === 'win').length
+  const losses = recentPicks.filter(p => p.result === 'loss').length
+  const pushes = recentPicks.filter(p => p.result === 'push').length
+  const winPct = (wins + losses) > 0 ? (wins / (wins + losses)) * 100 : 0
+
   return (
     <>
       <ResultsPage
@@ -61,6 +66,7 @@ export default function ResultsEditor({ content, recentPicks }: Props) {
         editMode={editMode}
         onEdit={patch}
         resetKey={resetKey}
+        calcStats={{ wins, losses, pushes, winPct }}
       />
       <RecentPicksResults rows={recentPicks} isAdmin={true} editMode={editMode} />
       <CTASection />
