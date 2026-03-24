@@ -2404,6 +2404,19 @@ input, textarea, select {
   color: var(--text-muted);
 }
 
+select.form-input {
+  color: var(--text-primary);
+}
+
+select.form-input option {
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+
+select.form-input option[value=""] {
+  color: var(--text-muted);
+}
+
 textarea.form-input {
   min-height: 140px;
   resize: vertical;
