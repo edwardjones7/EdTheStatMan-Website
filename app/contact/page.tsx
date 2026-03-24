@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import CTASection from '@/components/CTASection'
+import ContactForm from '@/components/ContactForm'
 
 export const metadata: Metadata = {
   title: 'Contact Us',
@@ -86,33 +87,7 @@ export default function Contact() {
 
             {/* Right Column: Contact Form */}
             <div className="contact-form-wrapper reveal-right">
-              <form className="contact-form" action="#" method="post">
-                <div className="form-group">
-                  <label htmlFor="contact-name">Name</label>
-                  <input type="text" id="contact-name" name="name" className="form-input" placeholder="Your name" required />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="contact-email">Email</label>
-                  <input type="email" id="contact-email" name="email" className="form-input" placeholder="your@email.com" required />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="contact-subject">Subject</label>
-                  <select id="contact-subject" name="subject" className="form-input" required>
-                    <option value="">Select a subject</option>
-                    <option value="general">General Inquiry</option>
-                    <option value="systems">Betting Systems</option>
-                    <option value="products">Products &amp; Memberships</option>
-                    <option value="support">Technical Support</option>
-                    <option value="partnership">Partnership / Collaboration</option>
-                    <option value="other">Other</option>
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label htmlFor="contact-message">Message</label>
-                  <textarea id="contact-message" name="message" className="form-input" placeholder="How can we help?" required></textarea>
-                </div>
-                <button type="submit" className="btn btn--primary">Send Message</button>
-              </form>
+              <ContactForm />
             </div>
           </div>
         </div>
