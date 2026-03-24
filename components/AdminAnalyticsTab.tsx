@@ -4,8 +4,11 @@ import { useEffect, useState } from 'react'
 
 type Range = 'week' | 'month' | 'year'
 
-interface Point   { label: string; count: number }
-interface TopPage { path: string; count: number }
+interface Point        { label: string; count: number }
+interface TopPage      { path: string; count: number }
+interface ReferrerItem { source: string; count: number }
+interface DeviceItem   { device: string; count: number }
+interface CountryItem  { country: string; count: number }
 
 interface AnalyticsData {
   totalViews:   number
@@ -13,6 +16,12 @@ interface AnalyticsData {
   viewsToday:   number
   points:       Point[]
   topPages:     TopPage[]
+  referrers:    ReferrerItem[]
+  devices:      DeviceItem[]
+  countries:    CountryItem[]
+  newSignups:   number
+  totalUsers:   number
+  paidUsers:    number
 }
 
 const RANGE_LABELS: Record<Range, string> = {
@@ -150,7 +159,7 @@ export default function AdminAnalyticsTab() {
 
           {/* Top pages */}
           {data.topPages.length > 0 ? (
-            <div className="admin-breakdown-card">
+            <div className="admin-breakdown-card" style={{ marginBottom: '1.5rem' }}>
               <h3 className="admin-breakdown-card__title">Top Pages — {RANGE_LABELS[range]}</h3>
               <div className="admin-breakdown-list">
                 {data.topPages.map(p => (
@@ -165,10 +174,99 @@ export default function AdminAnalyticsTab() {
               </div>
             </div>
           ) : (
-            <div className="admin-breakdown-card">
+            <div className="admin-breakdown-card" style={{ marginBottom: '1.5rem' }}>
               <p className="admin-muted" style={{ textAlign: 'center', padding: '1.5rem 0' }}>
                 No page views recorded yet.
               </p>
+            </div>
+          )}
+
+          {/* Conversion funnel */}
+          <div className="admin-kpi-row" style={{ marginBottom: '1.5rem' }}>
+            <div className="admin-kpi-card">
+              <div className="admin-kpi-card__top">
+                <span className="admin-kpi-card__label">New Signups</span>
+                <span className="admin-kpi-card__badge admin-kpi-card__badge--green">{RANGE_LABELS[range]}</span>
+              </div>
+              <div className="admin-kpi-card__value">{data.newSignups.toLocaleString()}</div>
+              <div className="admin-kpi-card__sub">new accounts created</div>
+              <div className="admin-kpi-card__bar">
+                <div className="admin-kpi-card__bar-fill admin-kpi-card__bar-fill--green" style={{ width: data.totalUsers ? `${(data.newSignups / data.totalUsers) * 100}%` : '0%' }} />
+              </div>
+            </div>
+            <div className="admin-kpi-card">
+              <div className="admin-kpi-card__top">
+                <span className="admin-kpi-card__label">Paid Conversion</span>
+              </div>
+              <div className="admin-kpi-card__value">
+                {data.totalUsers ? `${((data.paidUsers / data.totalUsers) * 100).toFixed(1)}%` : '—'}
+              </div>
+              <div className="admin-kpi-card__sub">{data.paidUsers} of {data.totalUsers} users</div>
+              <div className="admin-kpi-card__bar">
+                <div className="admin-kpi-card__bar-fill admin-kpi-card__bar-fill--purple" style={{ width: data.totalUsers ? `${(data.paidUsers / data.totalUsers) * 100}%` : '0%' }} />
+              </div>
+            </div>
+          </div>
+
+          {/* Traffic sources + Devices side by side */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', marginBottom: '1.5rem' }}>
+
+            {/* Referrer sources */}
+            <div className="admin-breakdown-card">
+              <h3 className="admin-breakdown-card__title">Traffic Sources — {RANGE_LABELS[range]}</h3>
+              {data.referrers.length > 0 ? (
+                <div className="admin-breakdown-list">
+                  {data.referrers.map(r => (
+                    <BreakdownRow
+                      key={r.source}
+                      label={r.source}
+                      value={r.count}
+                      total={totalRangeViews}
+                      color="var(--accent-green)"
+                    />
+                  ))}
+                </div>
+              ) : (
+                <p className="admin-muted" style={{ padding: '1rem 0', fontSize: '0.85rem' }}>No referrer data yet.</p>
+              )}
+            </div>
+
+            {/* Devices */}
+            <div className="admin-breakdown-card">
+              <h3 className="admin-breakdown-card__title">Devices — {RANGE_LABELS[range]}</h3>
+              {data.devices.length > 0 ? (
+                <div className="admin-breakdown-list">
+                  {data.devices.map(d => (
+                    <BreakdownRow
+                      key={d.device}
+                      label={d.device.charAt(0).toUpperCase() + d.device.slice(1)}
+                      value={d.count}
+                      total={totalRangeViews}
+                      color={d.device === 'mobile' ? 'var(--accent-cyan)' : d.device === 'tablet' ? 'var(--accent-gold)' : 'var(--accent-purple)'}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <p className="admin-muted" style={{ padding: '1rem 0', fontSize: '0.85rem' }}>No device data yet.</p>
+              )}
+            </div>
+          </div>
+
+          {/* Countries */}
+          {data.countries.length > 0 && (
+            <div className="admin-breakdown-card">
+              <h3 className="admin-breakdown-card__title">Countries — {RANGE_LABELS[range]}</h3>
+              <div className="admin-breakdown-list">
+                {data.countries.map(c => (
+                  <BreakdownRow
+                    key={c.country}
+                    label={c.country}
+                    value={c.count}
+                    total={totalRangeViews}
+                    color="var(--accent-gold)"
+                  />
+                ))}
+              </div>
             </div>
           )}
         </>

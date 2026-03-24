@@ -1,10 +1,8 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import Link from 'next/link'
 import type { SubscriptionTier, SubscriptionStatus, AccessLevel } from '@/lib/supabase/types'
-import AdminAnalyticsTab from '@/components/AdminAnalyticsTab'
-import AdminLineChart from '@/components/AdminLineChart'
 
 interface User {
   id: string
@@ -17,6 +15,7 @@ interface User {
   stripe_subscription_id: string | null
   created_at: string
   updated_at: string
+  last_seen_at: string | null
 }
 
 interface Post {
@@ -32,10 +31,33 @@ interface Post {
   updated_at: string
 }
 
+interface AnalyticsData {
+  totalViews:   number
+  viewsInRange: number
+  viewsToday:   number
+  points:       { label: string; count: number }[]
+  topPages:     { path: string; count: number }[]
+  referrers:    { source: string; count: number }[]
+  devices:      { device: string; count: number }[]
+  countries:    { country: string; count: number }[]
+  newSignups:   number
+  totalUsers:   number
+  paidUsers:    number
+}
+
+type Range = 'week' | 'month' | 'year'
+
 interface Props {
   users: User[]
   posts: Post[]
   initialTab?: string
+}
+
+const RANGE_LABELS: Record<Range, string> = { week: 'This Week', month: 'This Month', year: 'This Year' }
+const CHART_TITLES: Record<Range, string> = {
+  week:  'Page Views — Last 7 Days',
+  month: 'Page Views — Last 30 Days',
+  year:  'Page Views — Last 12 Months',
 }
 
 const TIER_CLASS: Record<string, string> = {
@@ -61,22 +83,44 @@ function fmtShort(dateStr: string) {
   return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
+function timeAgo(dateStr: string | null): string {
+  if (!dateStr) return 'Never'
+  const diff = Date.now() - new Date(dateStr).getTime()
+  const mins = Math.floor(diff / 60000)
+  if (mins < 1)  return 'Just now'
+  if (mins < 60) return `${mins}m ago`
+  const hrs = Math.floor(mins / 60)
+  if (hrs < 24)  return `${hrs}h ago`
+  const days = Math.floor(hrs / 24)
+  if (days < 30) return `${days}d ago`
+  return fmt(dateStr)
+}
+
 function isThisMonth(dateStr: string) {
-  const d = new Date(dateStr)
-  const now = new Date()
+  const d = new Date(dateStr), now = new Date()
   return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
 }
 
 export default function AdminDashboard({ users, posts, initialTab }: Props) {
-  const [tab, setTab] = useState<'users' | 'posts' | 'analytics'>(
-    (['users', 'posts', 'analytics'].includes(initialTab ?? '') ? initialTab : 'users') as 'users'
+  const [tab, setTab]     = useState<'users' | 'posts'>(
+    (['users', 'posts'].includes(initialTab ?? '') ? initialTab : 'users') as 'users'
   )
-  const [userSearch, setUserSearch] = useState('')
-  const [tierFilter, setTierFilter] = useState<string>('all')
-  const [postSearch, setPostSearch] = useState('')
-  const [postFilter, setPostFilter] = useState<string>('all')
+  const [range, setRange] = useState<Range>('month')
+  const [analytics, setAnalytics]     = useState<AnalyticsData | null>(null)
+  const [analyticsLoading, setALoading] = useState(true)
+  const [userSearch, setUserSearch]   = useState('')
+  const [tierFilter, setTierFilter]   = useState<string>('all')
+  const [postSearch, setPostSearch]   = useState('')
+  const [postFilter, setPostFilter]   = useState<string>('all')
 
-  // ── Stats ──────────────────────────────────────────
+  useEffect(() => {
+    setALoading(true)
+    fetch(`/api/admin/analytics?range=${range}`)
+      .then(r => r.json())
+      .then(d => { setAnalytics(d); setALoading(false) })
+      .catch(() => setALoading(false))
+  }, [range])
+
   const stats = useMemo(() => {
     const freeUsers    = users.filter(u => u.subscription_tier === 'free').length
     const basicUsers   = users.filter(u => u.subscription_tier === 'basic').length
@@ -85,10 +129,10 @@ export default function AdminDashboard({ users, posts, initialTab }: Props) {
     const pastDue      = users.filter(u => u.subscription_status === 'past_due').length
     const newThisMonth = users.filter(u => isThisMonth(u.created_at)).length
     const adminCount   = users.filter(u => u.is_admin).length
-    const publishedPosts  = posts.filter(p => p.published).length
-    const draftPosts      = posts.filter(p => !p.published).length
-    const freePosts       = posts.filter(p => p.access_level === 'free').length
-    const membersPosts    = posts.filter(p => p.access_level === 'members').length
+    const publishedPosts = posts.filter(p => p.published).length
+    const draftPosts     = posts.filter(p => !p.published).length
+    const freePosts      = posts.filter(p => p.access_level === 'free').length
+    const membersPosts   = posts.filter(p => p.access_level === 'members').length
     return {
       totalUsers: users.length, freeUsers, basicUsers, premiumUsers,
       activeUsers, pastDue, newThisMonth, adminCount,
@@ -96,17 +140,15 @@ export default function AdminDashboard({ users, posts, initialTab }: Props) {
     }
   }, [users, posts])
 
-  // ── Filtered users ─────────────────────────────────
   const filteredUsers = useMemo(() => {
     const q = userSearch.toLowerCase()
     return users.filter(u => {
       const matchSearch = !q || u.email.toLowerCase().includes(q) || (u.full_name ?? '').toLowerCase().includes(q)
-      const matchTier = tierFilter === 'all' || u.subscription_tier === tierFilter || (tierFilter === 'admin' && u.is_admin)
+      const matchTier   = tierFilter === 'all' || u.subscription_tier === tierFilter || (tierFilter === 'admin' && u.is_admin)
       return matchSearch && matchTier
     })
   }, [users, userSearch, tierFilter])
 
-  // ── Filtered posts ─────────────────────────────────
   const filteredPosts = useMemo(() => {
     const q = postSearch.toLowerCase()
     return posts.filter(p => {
@@ -114,111 +156,221 @@ export default function AdminDashboard({ users, posts, initialTab }: Props) {
       const matchFilter =
         postFilter === 'all' ||
         (postFilter === 'published' && p.published) ||
-        (postFilter === 'draft' && !p.published) ||
-        (postFilter === 'free' && p.access_level === 'free') ||
-        (postFilter === 'members' && p.access_level === 'members')
+        (postFilter === 'draft'     && !p.published) ||
+        (postFilter === 'free'      && p.access_level === 'free') ||
+        (postFilter === 'members'   && p.access_level === 'members')
       return matchSearch && matchFilter
     })
   }, [posts, postSearch, postFilter])
+
+  const [hoveredBar, setHoveredBar] = useState<number | null>(null)
+
+  const maxBar = analytics ? Math.max(...analytics.points.map(p => p.count), 1) : 1
+  const totalRangeViews = analytics?.points.reduce((s, p) => s + p.count, 0) ?? 0
+  const convPct = analytics?.totalUsers ? ((analytics.paidUsers / analytics.totalUsers) * 100).toFixed(1) : null
 
   return (
     <main className="admin-page">
       <div className="admin-container">
 
-        {/* ── Line Chart ── */}
-        <AdminLineChart />
-
-        {/* ── Header ── */}
+        {/* ── Header + range toggle ── */}
         <div className="admin-header">
           <div>
             <h1 className="admin-header__title">Admin Dashboard</h1>
-            <p className="admin-header__sub">Full site overview — users, content, and metrics.</p>
+            <p className="admin-header__sub">Site overview — users, content &amp; traffic.</p>
+          </div>
+          <div className="admin-filters" style={{ margin: 0 }}>
+            {(['week', 'month', 'year'] as Range[]).map(r => (
+              <button
+                key={r}
+                className={`admin-filter-btn ${range === r ? 'admin-filter-btn--active' : ''}`}
+                onClick={() => setRange(r)}
+              >
+                {r.charAt(0).toUpperCase() + r.slice(1)}
+              </button>
+            ))}
           </div>
         </div>
 
-        {/* ── KPI Row ── */}
-        <div className="admin-kpi-row">
-          <div className="admin-kpi-card">
-            <div className="admin-kpi-card__top">
-              <span className="admin-kpi-card__label">Total Users</span>
-              {stats.newThisMonth > 0 && (
-                <span className="admin-kpi-card__badge admin-kpi-card__badge--green">+{stats.newThisMonth} this month</span>
-              )}
-            </div>
-            <div className="admin-kpi-card__value">{stats.totalUsers}</div>
-            <div className="admin-kpi-card__sub">{stats.freeUsers} free · {stats.basicUsers + stats.premiumUsers} paid</div>
-            <div className="admin-kpi-card__bar">
-              <div className="admin-kpi-card__bar-fill admin-kpi-card__bar-fill--cyan" style={{ width: `${stats.totalUsers ? ((stats.basicUsers + stats.premiumUsers) / stats.totalUsers) * 100 : 0}%` }} />
-            </div>
-          </div>
-
-          <div className="admin-kpi-card">
-            <div className="admin-kpi-card__top">
-              <span className="admin-kpi-card__label">Paid Members</span>
-              <span className="admin-kpi-card__badge admin-kpi-card__badge--green">Active</span>
-            </div>
-            <div className="admin-kpi-card__value">{stats.basicUsers + stats.premiumUsers}</div>
-            <div className="admin-kpi-card__sub">{stats.basicUsers} basic · {stats.premiumUsers} premium</div>
-            <div className="admin-kpi-card__bar">
-              <div className="admin-kpi-card__bar-fill admin-kpi-card__bar-fill--green" style={{ width: `${stats.totalUsers ? ((stats.basicUsers + stats.premiumUsers) / stats.totalUsers) * 100 : 0}%` }} />
-            </div>
-          </div>
-
-          <div className="admin-kpi-card">
-            <div className="admin-kpi-card__top">
-              <span className="admin-kpi-card__label">Subscription Health</span>
-              {stats.pastDue > 0
-                ? <span className="admin-kpi-card__badge admin-kpi-card__badge--red">{stats.pastDue} past due</span>
-                : <span className="admin-kpi-card__badge admin-kpi-card__badge--green">Healthy</span>}
-            </div>
-            <div className="admin-kpi-card__value">{stats.activeUsers}</div>
-            <div className="admin-kpi-card__sub">active subscriptions</div>
-            <div className="admin-kpi-card__bar">
-              <div className="admin-kpi-card__bar-fill admin-kpi-card__bar-fill--purple" style={{ width: `${(stats.basicUsers + stats.premiumUsers) ? (stats.activeUsers / (stats.basicUsers + stats.premiumUsers)) * 100 : 0}%` }} />
-            </div>
-          </div>
-
-          <div className="admin-kpi-card">
-            <div className="admin-kpi-card__top">
-              <span className="admin-kpi-card__label">Published Content</span>
-              {stats.draftPosts > 0 && (
-                <span className="admin-kpi-card__badge admin-kpi-card__badge--muted">{stats.draftPosts} drafts</span>
-              )}
-            </div>
-            <div className="admin-kpi-card__value">{stats.publishedPosts}</div>
-            <div className="admin-kpi-card__sub">{stats.freePosts} free · {stats.membersPosts} members-only</div>
-            <div className="admin-kpi-card__bar">
-              <div className="admin-kpi-card__bar-fill admin-kpi-card__bar-fill--gold" style={{ width: `${stats.totalPosts ? (stats.publishedPosts / stats.totalPosts) * 100 : 0}%` }} />
-            </div>
-          </div>
+        {/* ── Combined KPI strip (6 cards) ── */}
+        <div className="admin-kpi-strip" style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '12px' }}>
+          <KpiCard
+            label="Total Users"
+            value={stats.totalUsers}
+            sub={`${stats.freeUsers} free · ${stats.basicUsers + stats.premiumUsers} paid`}
+            color="cyan"
+            badge={stats.newThisMonth > 0 ? `+${stats.newThisMonth} this mo` : undefined}
+            badgeColor="green"
+          />
+          <KpiCard
+            label="Paid Members"
+            value={stats.basicUsers + stats.premiumUsers}
+            sub={`${stats.basicUsers} basic · ${stats.premiumUsers} premium`}
+            color="green"
+          />
+          <KpiCard
+            label="Conversion"
+            value={convPct ? `${convPct}%` : '—'}
+            sub={analytics ? `${analytics.paidUsers} of ${analytics.totalUsers} users` : 'loading…'}
+            color="purple"
+          />
+          <KpiCard
+            label="Total Views"
+            value={analyticsLoading ? '—' : (analytics?.totalViews ?? 0).toLocaleString()}
+            sub="all time"
+            color="cyan"
+          />
+          <KpiCard
+            label={RANGE_LABELS[range]}
+            value={analyticsLoading ? '—' : (analytics?.viewsInRange ?? 0).toLocaleString()}
+            sub="page views"
+            color="green"
+            badge={analytics?.viewsToday ? `${analytics.viewsToday} today` : undefined}
+            badgeColor="green"
+          />
+          <KpiCard
+            label="New Signups"
+            value={analyticsLoading ? '—' : (analytics?.newSignups ?? 0).toLocaleString()}
+            sub={RANGE_LABELS[range].toLowerCase()}
+            color="gold"
+          />
         </div>
 
-        {/* ── Breakdown Panels ── */}
-        <div className="admin-breakdown-row">
-          <div className="admin-breakdown-card">
-            <h3 className="admin-breakdown-card__title">User Distribution</h3>
-            <div className="admin-breakdown-list">
-              <BreakdownRow label="Free" value={stats.freeUsers} total={stats.totalUsers} color="var(--text-muted)" />
-              <BreakdownRow label="Basic" value={stats.basicUsers} total={stats.totalUsers} color="var(--accent-green)" />
-              <BreakdownRow label="Premium" value={stats.premiumUsers} total={stats.totalUsers} color="var(--accent-purple)" />
-              <BreakdownRow label="Admins" value={stats.adminCount} total={stats.totalUsers} color="var(--accent-gold)" />
+        {/* ── Chart + breakdowns side by side ── */}
+        <div className="admin-chart-grid" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '16px', alignItems: 'start' }}>
+
+          {/* Left: Chart, then Top Pages + Traffic Sources below it */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div className="admin-breakdown-card">
+              <h3 className="admin-breakdown-card__title">
+                {CHART_TITLES[range]}
+                {!analyticsLoading && analytics && (
+                  <span style={{ fontWeight: 400, color: 'var(--text-muted)', fontSize: '0.82rem', marginLeft: '0.6rem' }}>
+                    {totalRangeViews.toLocaleString()} total
+                  </span>
+                )}
+              </h3>
+              {analyticsLoading ? (
+                <div style={{ height: '140px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <span className="admin-muted" style={{ fontSize: '0.85rem' }}>Loading…</span>
+                </div>
+              ) : analytics && analytics.points.length > 0 ? (
+                <div className="analytics-chart-wrap">
+                  <div className={`analytics-chart${analytics.points.length > 15 ? ' analytics-chart--dense' : ''}`}>
+                    {analytics.points.map((p, i) => {
+                      const heightPct = (p.count / maxBar) * 100
+                      const n = analytics.points.length
+                      const showLabel = i === 0 || i === Math.floor(n / 2) || i === n - 1
+                      return (
+                        <div
+                          key={i}
+                          className="analytics-chart__col"
+                          onMouseEnter={() => setHoveredBar(i)}
+                          onMouseLeave={() => setHoveredBar(null)}
+                        >
+                          {hoveredBar === i && (
+                            <div className="analytics-bar-tooltip">
+                              {p.count} view{p.count !== 1 ? 's' : ''}
+                            </div>
+                          )}
+                          <div className="analytics-chart__bar" style={{ height: `${Math.max(heightPct, p.count > 0 ? 3 : 0)}%` }} />
+                          <div className={`analytics-chart__label ${showLabel ? 'analytics-chart__label--show' : ''}`}>{p.label}</div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              ) : (
+                <div style={{ height: '140px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <span className="admin-muted" style={{ fontSize: '0.85rem' }}>No data yet.</span>
+                </div>
+              )}
             </div>
-            <div className="admin-breakdown-footer">
-              <span>{stats.newThisMonth} new users this month</span>
-            </div>
+
+            {analytics && (
+              <>
+                <div className="admin-breakdown-card">
+                  <h3 className="admin-breakdown-card__title">Top Pages — {RANGE_LABELS[range]}</h3>
+                  {analytics.topPages.length > 0 ? (
+                    <div className="admin-breakdown-list">
+                      {analytics.topPages.slice(0, 7).map(p => (
+                        <BreakdownRow key={p.path} label={p.path} value={p.count} total={totalRangeViews} color="var(--accent-cyan)" mono />
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="admin-muted" style={{ padding: '1rem 0', fontSize: '0.82rem' }}>No data yet.</p>
+                  )}
+                </div>
+
+                <div className="admin-breakdown-card">
+                  <h3 className="admin-breakdown-card__title">Traffic Sources — {RANGE_LABELS[range]}</h3>
+                  {analytics.referrers.length > 0 ? (
+                    <div className="admin-breakdown-list">
+                      {analytics.referrers.map(r => (
+                        <BreakdownRow key={r.source} label={r.source} value={r.count} total={totalRangeViews} color="var(--accent-green)" mono />
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="admin-muted" style={{ padding: '1rem 0', fontSize: '0.82rem' }}>No referrer data yet.</p>
+                  )}
+                </div>
+              </>
+            )}
           </div>
 
-          <div className="admin-breakdown-card">
-            <h3 className="admin-breakdown-card__title">Content Overview</h3>
-            <div className="admin-breakdown-list">
-              <BreakdownRow label="Published" value={stats.publishedPosts} total={stats.totalPosts} color="var(--accent-green)" />
-              <BreakdownRow label="Drafts" value={stats.draftPosts} total={stats.totalPosts} color="var(--text-muted)" />
-              <BreakdownRow label="Free Access" value={stats.freePosts} total={stats.totalPosts} color="var(--accent-cyan)" />
-              <BreakdownRow label="Members Only" value={stats.membersPosts} total={stats.totalPosts} color="var(--accent-purple)" />
+          {/* Right: Users, Content, Devices, Countries stacked */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div className="admin-breakdown-card">
+              <h3 className="admin-breakdown-card__title">Users</h3>
+              <div className="admin-breakdown-list">
+                <BreakdownRow label="Free"    value={stats.freeUsers}    total={stats.totalUsers} color="var(--text-muted)" />
+                <BreakdownRow label="Basic"   value={stats.basicUsers}   total={stats.totalUsers} color="var(--accent-green)" />
+                <BreakdownRow label="Premium" value={stats.premiumUsers} total={stats.totalUsers} color="var(--accent-purple)" />
+                <BreakdownRow label="Admins"  value={stats.adminCount}   total={stats.totalUsers} color="var(--accent-gold)" />
+              </div>
+              <div className="admin-breakdown-footer"><span>{stats.newThisMonth} new this month</span></div>
             </div>
-            <div className="admin-breakdown-footer">
-              <span>{stats.totalPosts} total posts</span>
+
+            <div className="admin-breakdown-card">
+              <h3 className="admin-breakdown-card__title">Content</h3>
+              <div className="admin-breakdown-list">
+                <BreakdownRow label="Published"    value={stats.publishedPosts} total={stats.totalPosts} color="var(--accent-green)" />
+                <BreakdownRow label="Drafts"       value={stats.draftPosts}     total={stats.totalPosts} color="var(--text-muted)" />
+                <BreakdownRow label="Free Access"  value={stats.freePosts}      total={stats.totalPosts} color="var(--accent-cyan)" />
+                <BreakdownRow label="Members Only" value={stats.membersPosts}   total={stats.totalPosts} color="var(--accent-purple)" />
+              </div>
+              <div className="admin-breakdown-footer"><span>{stats.totalPosts} total posts</span></div>
             </div>
+
+            {analytics && (
+              <>
+                <div className="admin-breakdown-card">
+                  <h3 className="admin-breakdown-card__title">Devices</h3>
+                  <div className="admin-breakdown-list">
+                    {analytics.devices.map(d => (
+                      <BreakdownRow
+                        key={d.device}
+                        label={d.device.charAt(0).toUpperCase() + d.device.slice(1)}
+                        value={d.count}
+                        total={totalRangeViews}
+                        color={d.device === 'mobile' ? 'var(--accent-cyan)' : d.device === 'tablet' ? 'var(--accent-gold)' : 'var(--accent-purple)'}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                {analytics.countries.length > 0 && (
+                  <div className="admin-breakdown-card">
+                    <h3 className="admin-breakdown-card__title">Countries</h3>
+                    <div className="admin-breakdown-list">
+                      {analytics.countries.slice(0, 5).map(c => (
+                        <BreakdownRow key={c.country} label={c.country} value={c.count} total={totalRangeViews} color="var(--accent-gold)" />
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
           </div>
         </div>
 
@@ -229,9 +381,6 @@ export default function AdminDashboard({ users, posts, initialTab }: Props) {
           </button>
           <button className={`admin-tab ${tab === 'posts' ? 'admin-tab--active' : ''}`} onClick={() => setTab('posts')}>
             Posts <span className="admin-tab__count">{posts.length}</span>
-          </button>
-          <button className={`admin-tab ${tab === 'analytics' ? 'admin-tab--active' : ''}`} onClick={() => setTab('analytics')}>
-            Analytics
           </button>
         </div>
 
@@ -269,7 +418,7 @@ export default function AdminDashboard({ users, posts, initialTab }: Props) {
                     <th>Stripe</th>
                     <th>Admin</th>
                     <th>Joined</th>
-                    <th>Last Updated</th>
+                    <th>Last Active</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -279,9 +428,7 @@ export default function AdminDashboard({ users, posts, initialTab }: Props) {
                     <tr key={user.id}>
                       <td>
                         <div className="admin-user-cell">
-                          <div className="admin-avatar">
-                            {(user.full_name ?? user.email).charAt(0).toUpperCase()}
-                          </div>
+                          <div className="admin-avatar">{(user.full_name ?? user.email).charAt(0).toUpperCase()}</div>
                           <div>
                             <div className="admin-user-name">{user.full_name ?? <span className="admin-muted">—</span>}</div>
                             <div className="admin-user-email">{user.email}</div>
@@ -298,16 +445,12 @@ export default function AdminDashboard({ users, posts, initialTab }: Props) {
                           <span className={`admin-badge ${STATUS_COLOR[user.subscription_status] ?? ''}`}>
                             {user.subscription_status.replace('_', ' ')}
                           </span>
-                        ) : (
-                          <span className="admin-muted">—</span>
-                        )}
+                        ) : <span className="admin-muted">—</span>}
                       </td>
                       <td>
-                        {user.stripe_customer_id ? (
-                          <span className="admin-badge admin-badge--green">Connected</span>
-                        ) : (
-                          <span className="admin-muted">—</span>
-                        )}
+                        {user.stripe_customer_id
+                          ? <span className="admin-badge admin-badge--green">Connected</span>
+                          : <span className="admin-muted">—</span>}
                       </td>
                       <td>
                         {user.is_admin
@@ -315,7 +458,7 @@ export default function AdminDashboard({ users, posts, initialTab }: Props) {
                           : <span className="admin-muted">No</span>}
                       </td>
                       <td className="admin-muted">{fmt(user.created_at)}</td>
-                      <td className="admin-muted">{fmt(user.updated_at)}</td>
+                      <td className="admin-muted">{timeAgo(user.last_seen_at)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -346,9 +489,7 @@ export default function AdminDashboard({ users, posts, initialTab }: Props) {
                   </button>
                 ))}
               </div>
-              <Link href="/admin/posts/new" className="btn btn--primary btn--sm">
-                + New Post
-              </Link>
+              <Link href="/admin/posts/new" className="btn btn--primary btn--sm">+ New Post</Link>
             </div>
             <p className="admin-count">Showing {filteredPosts.length} of {posts.length} posts</p>
             <div className="admin-table-wrap">
@@ -406,23 +547,45 @@ export default function AdminDashboard({ users, posts, initialTab }: Props) {
           </div>
         )}
 
-
-
-        {/* ── Analytics Tab ── */}
-        {tab === 'analytics' && <AdminAnalyticsTab />}
-
       </div>
     </main>
   )
 }
 
-function BreakdownRow({ label, value, total, color }: { label: string; value: number; total: number; color: string }) {
+// ── Shared sub-components ─────────────────────────────────────────────────────
+
+function KpiCard({
+  label, value, sub, color, badge, badgeColor,
+}: {
+  label: string
+  value: string | number
+  sub: string
+  color: 'cyan' | 'green' | 'purple' | 'gold'
+  badge?: string
+  badgeColor?: 'green' | 'muted'
+}) {
+  return (
+    <div className="admin-kpi-card">
+      <div className="admin-kpi-card__top">
+        <span className="admin-kpi-card__label">{label}</span>
+        {badge && <span className={`admin-kpi-card__badge admin-kpi-card__badge--${badgeColor ?? 'green'}`}>{badge}</span>}
+      </div>
+      <div className="admin-kpi-card__value">{value}</div>
+      <div className="admin-kpi-card__sub">{sub}</div>
+      <div className="admin-kpi-card__bar">
+        <div className={`admin-kpi-card__bar-fill admin-kpi-card__bar-fill--${color}`} style={{ width: '100%' }} />
+      </div>
+    </div>
+  )
+}
+
+function BreakdownRow({ label, value, total, color, mono }: { label: string; value: number; total: number; color: string; mono?: boolean }) {
   const pct = total > 0 ? Math.round((value / total) * 100) : 0
   return (
     <div className="admin-breakdown-row">
       <div className="admin-breakdown-row__left">
         <span className="admin-breakdown-row__dot" style={{ background: color }} />
-        <span className="admin-breakdown-row__label">{label}</span>
+        <span className="admin-breakdown-row__label" style={mono ? { fontFamily: 'var(--font-mono)', fontSize: '0.78rem' } : undefined}>{label}</span>
       </div>
       <div className="admin-breakdown-row__right">
         <div className="admin-breakdown-row__bar-track">

@@ -35,13 +35,18 @@ export async function GET(request: Request) {
     sinceDate = new Date(now.getTime() - 31 * 24 * 60 * 60 * 1000)
   }
 
-  const [totalRes, rangeRes, rowsRes] = await Promise.all([
+  const [totalRes, rangeRes, rowsRes, signupsRes, totalUsersRes, paidUsersRes] = await Promise.all([
     (admin as any).from('page_views').select('*', { count: 'exact', head: true }),
     (admin as any).from('page_views').select('*', { count: 'exact', head: true }).gte('created_at', sinceDate.toISOString()),
-    (admin as any).from('page_views').select('path, created_at').gte('created_at', sinceDate.toISOString()),
+    (admin as any).from('page_views').select('path, created_at, referrer, device_type, country').gte('created_at', sinceDate.toISOString()),
+    (admin as any).from('profiles').select('*', { count: 'exact', head: true }).gte('created_at', sinceDate.toISOString()),
+    (admin as any).from('profiles').select('*', { count: 'exact', head: true }),
+    (admin as any).from('profiles').select('*', { count: 'exact', head: true })
+      .in('subscription_tier', ['basic', 'premium'])
+      .gt('access_expires_at', new Date().toISOString()),
   ])
 
-  const rows: { path: string; created_at: string }[] = rowsRes.data ?? []
+  const rows: { path: string; created_at: string; referrer: string | null; device_type: string | null; country: string | null }[] = rowsRes.data ?? []
 
   // Compute today's count from rows using NY date — same logic as the chart buckets
   const viewsToday = rows.filter(r => toNYDate(new Date(r.created_at)) === todayNY).length
@@ -100,11 +105,54 @@ export async function GET(request: Request) {
     .slice(0, 10)
     .map(([path, count]) => ({ path, count }))
 
+  // Referrer sources — extract domain from referrer URL
+  const referrerCounts: Record<string, number> = {}
+  for (const row of rows) {
+    if (!row.referrer) continue
+    let domain = row.referrer
+    try { domain = new URL(row.referrer).hostname.replace(/^www\./, '') } catch {}
+    if (domain) referrerCounts[domain] = (referrerCounts[domain] || 0) + 1
+  }
+  const referrers = Object.entries(referrerCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10)
+    .map(([source, count]) => ({ source, count }))
+
+  // Device breakdown — skip null rows (recorded before device_type column existed)
+  const deviceCounts: Record<string, number> = {}
+  for (const row of rows) {
+    if (!row.device_type) continue
+    deviceCounts[row.device_type] = (deviceCounts[row.device_type] || 0) + 1
+  }
+  const devices = Object.entries(deviceCounts)
+    .sort((a, b) => b[1] - a[1])
+    .map(([device, count]) => ({ device, count }))
+
+  // Country breakdown
+  const countryCounts: Record<string, number> = {}
+  for (const row of rows) {
+    if (!row.country) continue
+    countryCounts[row.country] = (countryCounts[row.country] || 0) + 1
+  }
+  const countries = Object.entries(countryCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10)
+    .map(([country, count]) => ({ country, count }))
+
+  const totalUsers = totalUsersRes.count ?? 0
+  const paidUsers  = paidUsersRes.count ?? 0
+
   return NextResponse.json({
     totalViews:   totalRes.count ?? 0,
     viewsInRange: rangeRes.count ?? 0,
     viewsToday,
     points,
     topPages,
+    referrers,
+    devices,
+    countries,
+    newSignups: signupsRes.count ?? 0,
+    totalUsers,
+    paidUsers,
   })
 }

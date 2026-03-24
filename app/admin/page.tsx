@@ -28,8 +28,8 @@ export default async function AdminPage({
   const [{ data: users }, { data: posts }] = await Promise.all([
     supabase
       .from('profiles')
-      .select('id, email, full_name, subscription_tier, subscription_status, is_admin, stripe_customer_id, stripe_subscription_id, created_at, updated_at')
-      .order('created_at', { ascending: false }),
+      .select('id, email, full_name, subscription_tier, subscription_status, is_admin, stripe_customer_id, stripe_subscription_id, created_at, updated_at, last_seen_at')
+      .order('last_seen_at', { ascending: false, nullsFirst: false }),
     supabase
       .from('posts')
       .select('id, title, slug, tag, access_level, published, published_at, author_id, created_at, updated_at')
