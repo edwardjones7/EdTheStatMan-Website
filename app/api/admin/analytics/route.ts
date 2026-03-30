@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(request: Request) {
   const authClient = await createClient()
   const { data: { user } } = await authClient.auth.getUser()
@@ -15,30 +17,66 @@ export async function GET(request: Request) {
   const range = searchParams.get('range') ?? 'month' // 'week' | 'month' | 'year'
 
   const now = new Date()
+  const DAY = 24 * 60 * 60 * 1000
 
-  // All date bucketing uses America/New_York so views after 7 PM EST don't
-  // bleed into the next calendar day.
   function toNYDate(date: Date): string {
-    // Returns 'YYYY-MM-DD' in America/New_York timezone
     return date.toLocaleDateString('en-CA', { timeZone: 'America/New_York' })
   }
 
   const todayNY = toNYDate(now)
 
+  // For week range, use a specific weekStart date (YYYY-MM-DD); default = 6 days ago
+  const weekStartParam = searchParams.get('weekStart')
+  const weekStartMs = range === 'week' && weekStartParam
+    ? new Date(weekStartParam + 'T12:00:00').getTime()
+    : now.getTime() - 6 * DAY
+  const weekEndMs = weekStartMs + 7 * DAY
+
   let sinceDate: Date
+  let windowEnd: Date | null = null
+
   if (range === 'week') {
-    // Go back 8 days in UTC to ensure we capture all NY-date rows for the last 7 NY days
-    sinceDate = new Date(now.getTime() - 8 * 24 * 60 * 60 * 1000)
+    sinceDate = new Date(weekStartMs - DAY)   // 1-day buffer for NY timezone
+    windowEnd = new Date(weekEndMs + DAY)      // 1-day buffer on the upper end
   } else if (range === 'year') {
-    sinceDate = new Date(now.getTime() - 366 * 24 * 60 * 60 * 1000)
+    sinceDate = new Date(now.getTime() - 366 * DAY)
   } else {
-    sinceDate = new Date(now.getTime() - 31 * 24 * 60 * 60 * 1000)
+    sinceDate = new Date(now.getTime() - 31 * DAY)
   }
 
-  const [totalRes, rangeRes, rowsRes, signupsRes, totalUsersRes, paidUsersRes] = await Promise.all([
+  const baseCountQuery = (admin as any)
+    .from('page_views')
+    .select('*', { count: 'exact', head: true })
+    .gte('created_at', sinceDate.toISOString())
+
+  const rangeQuery = windowEnd ? baseCountQuery.lte('created_at', windowEnd.toISOString()) : baseCountQuery
+
+  // Paginate rows to bypass Supabase project-level 1000-row cap
+  async function fetchAllRows() {
+    const PAGE = 1000
+    let allRows: { path: string; created_at: string; referrer: string | null; device_type: string | null; country: string | null }[] = []
+    let from = 0
+    while (true) {
+      let q = (admin as any)
+        .from('page_views')
+        .select('path, created_at, referrer, device_type, country')
+        .gte('created_at', sinceDate.toISOString())
+        .order('created_at', { ascending: true })
+        .range(from, from + PAGE - 1)
+      if (windowEnd) q = q.lte('created_at', windowEnd.toISOString())
+      const { data, error } = await q
+      if (error || !data || data.length === 0) break
+      allRows = allRows.concat(data)
+      if (data.length < PAGE) break
+      from += PAGE
+    }
+    return allRows
+  }
+
+  const [totalRes, rangeRes, rows, signupsRes, totalUsersRes, paidUsersRes] = await Promise.all([
     (admin as any).from('page_views').select('*', { count: 'exact', head: true }),
-    (admin as any).from('page_views').select('*', { count: 'exact', head: true }).gte('created_at', sinceDate.toISOString()),
-    (admin as any).from('page_views').select('path, created_at, referrer, device_type, country').gte('created_at', sinceDate.toISOString()),
+    rangeQuery,
+    fetchAllRows(),
     (admin as any).from('profiles').select('*', { count: 'exact', head: true }).gte('created_at', sinceDate.toISOString()),
     (admin as any).from('profiles').select('*', { count: 'exact', head: true }),
     (admin as any).from('profiles').select('*', { count: 'exact', head: true })
@@ -46,18 +84,18 @@ export async function GET(request: Request) {
       .gt('access_expires_at', new Date().toISOString()),
   ])
 
-  const rows: { path: string; created_at: string; referrer: string | null; device_type: string | null; country: string | null }[] = rowsRes.data ?? []
 
-  // Compute today's count from rows using NY date — same logic as the chart buckets
-  const viewsToday = rows.filter(r => toNYDate(new Date(r.created_at)) === todayNY).length
+  // viewsToday only meaningful when today falls within the selected week window
+  const viewsToday = (range !== 'week' || (now.getTime() >= weekStartMs && now.getTime() <= weekEndMs))
+    ? rows.filter(r => toNYDate(new Date(r.created_at)) === todayNY).length
+    : 0
 
   // Build chart points
   let points: { label: string; count: number }[]
 
   if (range === 'year') {
-    // 52 weekly buckets — bucket[51] = most recent week, bucket[0] = oldest
     const nowMs = now.getTime()
-    const week = 7 * 24 * 60 * 60 * 1000
+    const week = 7 * DAY
     const buckets = Array.from({ length: 52 }, (_, i) => {
       const weeksAgo = 51 - i
       const bucketStart = nowMs - (weeksAgo + 1) * week
@@ -69,20 +107,19 @@ export async function GET(request: Request) {
     for (const row of rows) {
       const t = new Date(row.created_at).getTime()
       for (const b of buckets) {
-        if (t >= b.bucketStart && t < b.bucketEnd) {
-          b.count++
-          break
-        }
+        if (t >= b.bucketStart && t < b.bucketEnd) { b.count++; break }
       }
     }
 
     points = buckets.map(b => ({ label: b.label, count: b.count }))
   } else {
-    // Daily buckets using NY dates (7 or 30 days)
+    // Daily buckets — for week range anchor to weekStart, otherwise to now
     const days = range === 'week' ? 7 : 30
     const dailyMap: Record<string, number> = {}
-    for (let i = days - 1; i >= 0; i--) {
-      const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000)
+    for (let i = 0; i < days; i++) {
+      const d = range === 'week'
+        ? new Date(weekStartMs + i * DAY)
+        : new Date(now.getTime() - (days - 1 - i) * DAY)
       dailyMap[toNYDate(d)] = 0
     }
     for (const row of rows) {
@@ -95,17 +132,12 @@ export async function GET(request: Request) {
     }))
   }
 
-  // Top pages in range
+  // Top pages
   const pathCounts: Record<string, number> = {}
-  for (const row of rows) {
-    pathCounts[row.path] = (pathCounts[row.path] || 0) + 1
-  }
-  const topPages = Object.entries(pathCounts)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 10)
-    .map(([path, count]) => ({ path, count }))
+  for (const row of rows) pathCounts[row.path] = (pathCounts[row.path] || 0) + 1
+  const topPages = Object.entries(pathCounts).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([path, count]) => ({ path, count }))
 
-  // Referrer sources — extract domain from referrer URL
+  // Referrers
   const referrerCounts: Record<string, number> = {}
   for (const row of rows) {
     if (!row.referrer) continue
@@ -113,31 +145,23 @@ export async function GET(request: Request) {
     try { domain = new URL(row.referrer).hostname.replace(/^www\./, '') } catch {}
     if (domain) referrerCounts[domain] = (referrerCounts[domain] || 0) + 1
   }
-  const referrers = Object.entries(referrerCounts)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 10)
-    .map(([source, count]) => ({ source, count }))
+  const referrers = Object.entries(referrerCounts).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([source, count]) => ({ source, count }))
 
-  // Device breakdown — skip null rows (recorded before device_type column existed)
+  // Devices
   const deviceCounts: Record<string, number> = {}
   for (const row of rows) {
     if (!row.device_type) continue
     deviceCounts[row.device_type] = (deviceCounts[row.device_type] || 0) + 1
   }
-  const devices = Object.entries(deviceCounts)
-    .sort((a, b) => b[1] - a[1])
-    .map(([device, count]) => ({ device, count }))
+  const devices = Object.entries(deviceCounts).sort((a, b) => b[1] - a[1]).map(([device, count]) => ({ device, count }))
 
-  // Country breakdown
+  // Countries
   const countryCounts: Record<string, number> = {}
   for (const row of rows) {
     if (!row.country) continue
     countryCounts[row.country] = (countryCounts[row.country] || 0) + 1
   }
-  const countries = Object.entries(countryCounts)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 10)
-    .map(([country, count]) => ({ country, count }))
+  const countries = Object.entries(countryCounts).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([country, count]) => ({ country, count }))
 
   const totalUsers = totalUsersRes.count ?? 0
   const paidUsers  = paidUsersRes.count ?? 0

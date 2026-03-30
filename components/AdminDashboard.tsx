@@ -55,9 +55,27 @@ interface Props {
 
 const RANGE_LABELS: Record<Range, string> = { week: 'This Week', month: 'This Month', year: 'This Year' }
 const CHART_TITLES: Record<Range, string> = {
-  week:  'Page Views — Last 7 Days',
+  week:  'Page Views — 7 Days',
   month: 'Page Views — Last 30 Days',
   year:  'Page Views — Last 12 Months',
+}
+
+const DAY = 24 * 60 * 60 * 1000
+
+function toDateStr(ms: number): string {
+  return new Date(ms).toISOString().split('T')[0]
+}
+
+function defaultWeekStart(): string {
+  return toDateStr(Date.now() - 6 * DAY)
+}
+
+function weekEndStr(start: string): string {
+  return toDateStr(new Date(start).getTime() + 6 * DAY)
+}
+
+function fmtDate(iso: string): string {
+  return new Date(iso + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
 const TIER_CLASS: Record<string, string> = {
@@ -105,7 +123,8 @@ export default function AdminDashboard({ users, posts, initialTab }: Props) {
   const [tab, setTab]     = useState<'users' | 'posts'>(
     (['users', 'posts'].includes(initialTab ?? '') ? initialTab : 'users') as 'users'
   )
-  const [range, setRange] = useState<Range>('month')
+  const [range, setRange]         = useState<Range>('month')
+  const [weekStart, setWeekStart] = useState(defaultWeekStart)
   const [analytics, setAnalytics]     = useState<AnalyticsData | null>(null)
   const [analyticsLoading, setALoading] = useState(true)
   const [userSearch, setUserSearch]   = useState('')
@@ -113,13 +132,17 @@ export default function AdminDashboard({ users, posts, initialTab }: Props) {
   const [postSearch, setPostSearch]   = useState('')
   const [postFilter, setPostFilter]   = useState<string>('all')
 
+  useEffect(() => { setWeekStart(defaultWeekStart()) }, [range])
+
   useEffect(() => {
     setALoading(true)
-    fetch(`/api/admin/analytics?range=${range}`)
+    const params = new URLSearchParams({ range })
+    if (range === 'week') params.set('weekStart', weekStart)
+    fetch(`/api/admin/analytics?${params}`, { cache: 'no-store' })
       .then(r => r.json())
       .then(d => { setAnalytics(d); setALoading(false) })
       .catch(() => setALoading(false))
-  }, [range])
+  }, [range, weekStart])
 
   const stats = useMemo(() => {
     const freeUsers    = users.filter(u => u.subscription_tier === 'free').length
@@ -242,11 +265,39 @@ export default function AdminDashboard({ users, posts, initialTab }: Props) {
           {/* Left: Chart, then Top Pages + Traffic Sources below it */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div className="admin-breakdown-card">
-              <h3 className="admin-breakdown-card__title">
-                {CHART_TITLES[range]}
-                {!analyticsLoading && analytics && (
-                  <span style={{ fontWeight: 400, color: 'var(--text-muted)', fontSize: '0.82rem', marginLeft: '0.6rem' }}>
-                    {totalRangeViews.toLocaleString()} total
+              <h3 className="admin-breakdown-card__title" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+                <span>
+                  {CHART_TITLES[range]}
+                  {range === 'week' && (
+                    <span style={{ fontWeight: 400, color: 'var(--text-muted)', fontSize: '0.82rem', marginLeft: '0.5rem' }}>
+                      {fmtDate(weekStart)} – {fmtDate(weekEndStr(weekStart))}
+                      {!analyticsLoading && analytics && <> · {totalRangeViews.toLocaleString()} views</>}
+                    </span>
+                  )}
+                  {range !== 'week' && !analyticsLoading && analytics && (
+                    <span style={{ fontWeight: 400, color: 'var(--text-muted)', fontSize: '0.82rem', marginLeft: '0.6rem' }}>
+                      {totalRangeViews.toLocaleString()} total
+                    </span>
+                  )}
+                </span>
+                {range === 'week' && (
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 400 }}>
+                    <button
+                      onClick={() => setWeekStart(s => toDateStr(new Date(s).getTime() - 7 * DAY))}
+                      style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border-color)', borderRadius: '6px', color: 'var(--text-secondary)', cursor: 'pointer', padding: '2px 8px', fontSize: '0.85rem', lineHeight: 1.6 }}
+                    >←</button>
+                    <input
+                      type="date"
+                      value={weekStart}
+                      max={defaultWeekStart()}
+                      onChange={e => e.target.value && setWeekStart(e.target.value)}
+                      style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border-color)', borderRadius: '6px', color: 'var(--text-secondary)', fontSize: '0.8rem', padding: '2px 6px', cursor: 'pointer', colorScheme: 'dark' }}
+                    />
+                    <button
+                      onClick={() => setWeekStart(s => toDateStr(Math.min(new Date(s).getTime() + 7 * DAY, new Date(defaultWeekStart()).getTime())))}
+                      disabled={weekStart >= defaultWeekStart()}
+                      style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border-color)', borderRadius: '6px', color: 'var(--text-secondary)', cursor: weekStart >= defaultWeekStart() ? 'default' : 'pointer', padding: '2px 8px', fontSize: '0.85rem', lineHeight: 1.6, opacity: weekStart >= defaultWeekStart() ? 0.35 : 1 }}
+                    >→</button>
                   </span>
                 )}
               </h3>
