@@ -16,11 +16,11 @@ interface NavClientProps {
 }
 
 const NAV_LINKS = [
-  { href: '/', label: "Today's Action" },
+  { href: '/', label: 'Model Picks' },
+  { href: '/results', label: 'Model Results' },
   { href: '/betting-systems', label: 'Betting Systems' },
   { href: '/betting-trends', label: 'Betting Trends' },
   { href: '/blog', label: 'Blog' },
-  { href: '/results', label: 'Results' },
   { href: '/contact', label: 'Contact' },
 ]
 
