@@ -503,7 +503,7 @@ export default function SportTabsSystem({ systems, userTier, isAdmin = false }: 
 
       {/* Card grid */}
       <div className="content-gate-wrap" style={{ marginTop: '24px' }}>
-        <div className={isLoggedOut ? 'content-gate-blurred' : ''}>
+        <div>
           {baseRows.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '48px 0', color: 'var(--text-muted)' }}>
               No systems in this sport.
@@ -720,24 +720,9 @@ export default function SportTabsSystem({ systems, userTier, isAdmin = false }: 
         </div>
 
 
-        {isLoggedOut && (
-          <div className="content-gate-overlay">
-            <div className="content-gate-card">
-              <div className="content-gate-card__icon">🔒</div>
-              <h3 className="content-gate-card__title">Sign in to view betting systems</h3>
-              <p className="content-gate-card__desc">
-                Free members get access to free-tagged systems. Subscribe for full access.
-              </p>
-              <div className="content-gate-card__actions">
-                <Link href="/login" className="btn btn--primary btn--sm">Sign In</Link>
-                <Link href="/signup" className="btn btn--outline btn--sm">Create Free Account</Link>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
 
-      {userTier === 'free' && systems.some(s => !s.is_free) && (
+      {!isPaid && !isAdmin && systems.some(s => !s.is_free) && (
         <p className="gate-nudge reveal">
           &#128274; Some systems are for members only.{' '}
           <Link href="/betting-systems#pricing" className="gate-nudge__link">View plans &rarr;</Link>

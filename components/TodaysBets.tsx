@@ -144,7 +144,7 @@ export default function TodaysBets({ rows, isAdmin, userTier, editMode = false }
     { id: 'ph2', date: 'Today', sport: 'NBA',  risk: '$150', bet: '████████ +5.5',  line: '+105', win: '$157', result: 'win',     note: '—' },
     { id: 'ph3', date: 'Today', sport: 'CFB',  risk: '$200', bet: '████████ O 48.5', line: '-115', win: '$174', result: 'pending', note: '—' },
   ]
-  const displayRows = isLoggedOut && visibleRows.length === 0 ? PLACEHOLDER_ROWS : sortedRows
+  const displayRows = sortedRows
 
   return (
     <section id="todays-action" className="section todays-action">
@@ -176,8 +176,8 @@ export default function TodaysBets({ rows, isAdmin, userTier, editMode = false }
           />
         )}
 
-        {/* Logged-in, no rows yet */}
-        {!isLoggedOut && visibleRows.length === 0 && !isAdmin && (
+        {/* No rows yet */}
+        {visibleRows.length === 0 && !isAdmin && (
           <div style={{
             background: 'var(--bg-card)',
             border: '1px solid var(--border)',
@@ -191,10 +191,10 @@ export default function TodaysBets({ rows, isAdmin, userTier, editMode = false }
           </div>
         )}
 
-        {/* Table — always rendered when there are rows (or placeholders for gate) */}
-        {(visibleRows.length > 0 || isLoggedOut) && (
+        {/* Table — always rendered when there are rows */}
+        {visibleRows.length > 0 && (
           <div className="content-gate-wrap" style={{ marginTop: '28px' }}>
-            <div className={isLoggedOut ? 'content-gate-blurred' : ''} style={{ overflowX: 'auto' }}>
+            <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '700px' }}>
                 <thead>
                   <tr style={{ borderBottom: '1px solid var(--border)' }}>
@@ -284,22 +284,6 @@ export default function TodaysBets({ rows, isAdmin, userTier, editMode = false }
               </table>
             </div>
 
-            {/* Logged-out gate overlay */}
-            {isLoggedOut && (
-              <div className="content-gate-overlay">
-                <div className="content-gate-card" style={{ maxWidth: '320px', padding: '24px 24px' }}>
-                  <div className="content-gate-card__icon" style={{ fontSize: '1.5rem', marginBottom: '10px' }}>🔒</div>
-                  <h3 className="content-gate-card__title" style={{ fontSize: '1rem', marginBottom: '6px' }}>Sign in to view today's picks</h3>
-                  <p className="content-gate-card__desc" style={{ fontSize: '0.82rem', marginBottom: '16px' }}>
-                    Free members see free-tagged picks. Subscribe for full access.
-                  </p>
-                  <div className="content-gate-card__actions">
-                    <Link href="/login" className="btn btn--primary btn--sm">Sign In</Link>
-                    <Link href="/signup" className="btn btn--outline btn--sm">Create Free Account</Link>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
         )}
 

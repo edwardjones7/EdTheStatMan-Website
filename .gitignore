@@ -44,3 +44,7 @@ next-env.d.ts
 # claude
 CLAUDE.md
 .claude/
+
+data
+data*
+data/wp5f_users.csv

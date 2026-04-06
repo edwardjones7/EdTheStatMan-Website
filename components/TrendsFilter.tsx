@@ -499,7 +499,7 @@ export default function TrendsFilter({ trends, userTier, isAdmin = false }: Prop
 
       {/* Card grid */}
       <div className="content-gate-wrap" style={{ marginTop: '24px' }}>
-        <div className={isLoggedOut ? 'content-gate-blurred' : ''}>
+        <div>
           {baseRows.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '48px 0', color: 'var(--text-muted)' }}>
               No trends in this sport.
@@ -710,24 +710,9 @@ export default function TrendsFilter({ trends, userTier, isAdmin = false }: Prop
         </div>
 
 
-        {isLoggedOut && (
-          <div className="content-gate-overlay">
-            <div className="content-gate-card">
-              <div className="content-gate-card__icon">🔒</div>
-              <h3 className="content-gate-card__title">Sign in to view betting trends</h3>
-              <p className="content-gate-card__desc">
-                Free members see free trends. Subscribe for full access to all situational trends.
-              </p>
-              <div className="content-gate-card__actions">
-                <Link href="/login" className="btn btn--primary btn--sm">Sign In</Link>
-                <Link href="/signup" className="btn btn--outline btn--sm">Create Free Account</Link>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
 
-      {userTier === 'free' && trends.some(t => !t.is_free) && (
+      {!isPaid && !isAdmin && trends.some(t => !t.is_free) && (
         <p className="gate-nudge reveal">
           &#128274; Some trends are for members only.{' '}
           <Link href="/betting-systems#pricing" className="gate-nudge__link">View plans &rarr;</Link>
