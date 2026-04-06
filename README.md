@@ -213,39 +213,6 @@ A Postgres trigger `handle_new_user()` automatically creates a `profiles` row fo
 
 ---
 
-## Running Locally
-
-```bash
-# Install dependencies
-npm install
-
-# Add environment variables
-cp .env.example .env.local
-# Fill in NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY,
-# SUPABASE_SERVICE_ROLE_KEY, STRIPE_SECRET_KEY, etc.
-
-# Run the development server
-npm run dev
-
-# Seed betting data from Excel
-node scripts/seed-data.mjs
-```
-
-**Required environment variables:**
-
-```env
-NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
-SUPABASE_SERVICE_ROLE_KEY=
-STRIPE_SECRET_KEY=
-NEXT_PUBLIC_STRIPE_BASIC_PRICE_ID=
-NEXT_PUBLIC_STRIPE_PREMIUM_PRICE_ID=
-STRIPE_WEBHOOK_SECRET=
-NEXT_PUBLIC_SITE_URL=
-```
-
----
-
 ## Key Design Decisions & Trade-offs
 
 **Why one-time payments instead of subscriptions?**
