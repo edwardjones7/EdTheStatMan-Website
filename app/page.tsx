@@ -1,12 +1,9 @@
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
-import { createAdminClient } from '@/lib/supabase/admin'
 import { SITE_CONTENT_DEFAULTS } from '@/lib/site-content'
 import type { AllSiteContent } from '@/lib/site-content'
 import LiveTicker from '@/components/LiveTicker'
 import Hero from '@/components/Hero'
-import TodaysBets from '@/components/TodaysBets'
-import type { TodaysBet } from '@/components/TodaysBets'
 import SystemsOverview from '@/components/SystemsOverview'
 import Features from '@/components/Features'
 import CTASection from '@/components/CTASection'
@@ -34,15 +31,8 @@ export const dynamic = 'force-dynamic'
 
 export default async function Home() {
   const supabase = await createClient()
-  const adminDb  = createAdminClient()
 
-  const [contentResult, betsResult] = await Promise.all([
-    (supabase as any).from('site_content').select('key, value'),
-    (adminDb  as any).from('todays_bets').select('*').order('created_at', { ascending: false }),
-  ])
-
-  const { data: contentRows } = contentResult
-  const todaysBets: TodaysBet[] = betsResult.data ?? []
+  const { data: contentRows } = await (supabase as any).from('site_content').select('key, value')
 
   const raw: Record<string, unknown> = {}
   for (const row of (contentRows ?? []) as { key: string; value: unknown }[]) {
@@ -57,6 +47,7 @@ export default async function Home() {
     statbot_preview:  { ...SITE_CONTENT_DEFAULTS.statbot_preview,  ...(raw.statbot_preview  as object ?? {}) },
     systems_overview: { ...SITE_CONTENT_DEFAULTS.systems_overview, ...(raw.systems_overview as object ?? {}) },
     ticker:           { ...SITE_CONTENT_DEFAULTS.ticker,           ...(raw.ticker           as object ?? {}) },
+    model_picks:      { ...SITE_CONTENT_DEFAULTS.model_picks,      ...(raw.model_picks      as object ?? {}) },
   }
 
   let isAdmin = false
@@ -86,13 +77,12 @@ export default async function Home() {
       {isAdmin ? (
         // Admin gets the interactive editor with a single pencil FAB
         // (LiveTicker is rendered inside HomeEditor for admins)
-        <HomeEditor content={content} todaysBets={todaysBets} />
+        <HomeEditor content={content} />
       ) : (
         // Everyone else gets static server-rendered sections
         <>
           <LiveTicker      content={content.ticker} />
           <Hero            content={content.hero} isLoggedIn={userTier !== null} />
-          <TodaysBets      rows={todaysBets} isAdmin={isAdmin} userTier={userTier} />
           <SystemsOverview content={content.systems_overview} />
           <Features        content={content.features} />
           <CTASection      content={content.cta_section} />

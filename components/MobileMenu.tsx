@@ -18,8 +18,8 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
 
   return (
     <div className={`mobile-menu ${isOpen ? 'active' : ''}`}>
-      <Link href="/" className={`mobile-menu__link ${isActive('/') ? 'active' : ''}`} onClick={onClose}>
-        Today&apos;s Action
+      <Link href="/model-picks" className={`mobile-menu__link ${isActive('/model-picks') ? 'active' : ''}`} onClick={onClose}>
+        Model Picks
       </Link>
       <Link href="/betting-systems" className={`mobile-menu__link ${isActive('/betting-systems') ? 'active' : ''}`} onClick={onClose}>
         Betting Systems

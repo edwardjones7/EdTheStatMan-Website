@@ -3,6 +3,8 @@
 import { useState, useRef, useEffect, Fragment } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import type { ModelPicksContent } from '@/lib/site-content'
+import EditableText from './EditableText'
 
 export interface TodaysBet {
   id: string
@@ -26,6 +28,9 @@ interface Props {
   isAdmin: boolean
   userTier: string | null  // null = logged out
   editMode?: boolean
+  headerContent?: ModelPicksContent
+  onHeaderEdit?: (updates: Partial<ModelPicksContent>) => void
+  resetKey?: number
 }
 
 const RESULT_STYLE: Record<string, { bg: string; color: string; label: string }> = {
@@ -40,7 +45,7 @@ const EMPTY_FORM = {
   is_active: true, show_on_results: false,
 }
 
-export default function TodaysBets({ rows, isAdmin, userTier, editMode = false }: Props) {
+export default function TodaysBets({ rows, isAdmin, userTier, editMode = false, headerContent, onHeaderEdit, resetKey = 0 }: Props) {
   const router = useRouter()
   const [formMode, setFormMode]   = useState<'hidden' | 'add' | 'edit'>('hidden')
   const [editId, setEditId]       = useState<string | null>(null)
@@ -150,9 +155,19 @@ export default function TodaysBets({ rows, isAdmin, userTier, editMode = false }
     <section id="todays-action" className="section todays-action">
       <div className="container">
         <div className="reveal">
-          <span className="section-label">Daily Picks</span>
-          <h2 className="section-title">What I'm Betting Today</h2>
-          <p className="section-subtitle">My active plays — updated daily.</p>
+          {editMode && onHeaderEdit ? (
+            <>
+              <EditableText tag="span" className="section-label" value={headerContent?.sectionLabel ?? 'Daily Picks'} onChange={v => onHeaderEdit({ sectionLabel: v })} resetKey={resetKey} style={{ display: 'block' }} />
+              <EditableText tag="h2" className="section-title" value={headerContent?.sectionTitle ?? "What I'm Betting Today"} onChange={v => onHeaderEdit({ sectionTitle: v })} resetKey={resetKey} style={{ display: 'block' }} />
+              <EditableText tag="p" className="section-subtitle" value={headerContent?.sectionSubtitle ?? 'My active plays — updated daily.'} onChange={v => onHeaderEdit({ sectionSubtitle: v })} resetKey={resetKey} style={{ display: 'block' }} />
+            </>
+          ) : (
+            <>
+              <span className="section-label">{headerContent?.sectionLabel ?? 'Daily Picks'}</span>
+              <h2 className="section-title">{headerContent?.sectionTitle ?? "What I'm Betting Today"}</h2>
+              <p className="section-subtitle">{headerContent?.sectionSubtitle ?? 'My active plays — updated daily.'}</p>
+            </>
+          )}
         </div>
 
         {/* Add row button (shown when FAB edit mode is active) */}

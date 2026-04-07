@@ -1,45 +1,32 @@
 'use client'
 
 import { useState } from 'react'
-import type { AllSiteContent } from '@/lib/site-content'
-import LiveTicker from './LiveTicker'
-import Hero from './Hero'
-import SystemsOverview from './SystemsOverview'
-import Features from './Features'
-import CTASection from './CTASection'
+import TodaysBets from './TodaysBets'
+import type { TodaysBet } from './TodaysBets'
+import type { ModelPicksContent } from '@/lib/site-content'
 
 interface Props {
-  content: AllSiteContent
+  rows: TodaysBet[]
+  userTier: string | null
+  headerContent: ModelPicksContent
 }
 
-export default function HomeEditor({ content }: Props) {
+export default function ModelPicksEditor({ rows, userTier, headerContent }: Props) {
   const [editMode, setEditMode] = useState(false)
-  const [draft, setDraft] = useState<AllSiteContent>(content)
+  const [draft, setDraft] = useState<ModelPicksContent>(headerContent)
   const [dirty, setDirty] = useState(false)
-  const [dirtyKeys, setDirtyKeys] = useState(new Set<keyof AllSiteContent>())
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [resetKey, setResetKey] = useState(0)
 
-  function patch<K extends keyof AllSiteContent>(section: K, updates: Partial<AllSiteContent[K]>) {
-    setDraft(prev => ({ ...prev, [section]: { ...prev[section], ...updates } }))
+  function onHeaderEdit(updates: Partial<ModelPicksContent>) {
+    setDraft(prev => ({ ...prev, ...updates }))
     setDirty(true)
-    setDirtyKeys(prev => new Set([...prev, section]))
-  }
-
-  function toggleEdit() {
-    if (editMode && dirty) {
-      // Discard on toggle-off if dirty — prompt handled by the UI
-      cancel()
-    } else {
-      setEditMode(e => !e)
-    }
   }
 
   function cancel() {
-    setDraft(content)
+    setDraft(headerContent)
     setDirty(false)
-    setDirtyKeys(new Set())
     setError(null)
     setResetKey(k => k + 1)
     setEditMode(false)
@@ -49,15 +36,15 @@ export default function HomeEditor({ content }: Props) {
     setSaving(true)
     setError(null)
     try {
-      await Promise.all(
-        [...dirtyKeys].map(key =>
-          fetch('/api/admin/content', {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ key, value: draft[key] }),
-          }).then(r => r.ok ? r.json() : r.json().then(j => Promise.reject(j.error)))
-        )
-      )
+      const res = await fetch('/api/admin/content', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: 'model_picks', value: draft }),
+      })
+      if (!res.ok) {
+        const j = await res.json()
+        throw j.error || 'Save failed'
+      }
       window.location.href = window.location.pathname
     } catch (e: any) {
       setError(typeof e === 'string' ? e : 'Save failed')
@@ -66,21 +53,18 @@ export default function HomeEditor({ content }: Props) {
     }
   }
 
-  const ep = (section: keyof AllSiteContent) => ({
-    editMode,
-    onEdit: (updates: any) => patch(section, updates),
-    resetKey,
-  })
-
   return (
     <>
-      <LiveTicker      content={draft.ticker}            editMode={editMode} onEdit={u => patch('ticker', u)} />
-      <Hero            content={draft.hero}             isLoggedIn={true} {...ep('hero')} />
-      <SystemsOverview content={draft.systems_overview} {...ep('systems_overview')} />
-      <Features        content={draft.features}          {...ep('features')} />
-      <CTASection      content={draft.cta_section}       {...ep('cta_section')} />
+      <TodaysBets
+        rows={rows}
+        isAdmin={true}
+        userTier={userTier}
+        editMode={editMode}
+        headerContent={draft}
+        onHeaderEdit={onHeaderEdit}
+        resetKey={resetKey}
+      />
 
-      {/* ── Single global FAB ── */}
       <div style={{
         position: 'fixed',
         bottom: '28px',
@@ -122,7 +106,7 @@ export default function HomeEditor({ content }: Props) {
         ) : (
           <button
             onClick={() => setEditMode(true)}
-            title="Edit page content"
+            title="Edit picks"
             style={{ ...fab, background: 'var(--accent-green)', color: '#000' }}
           >
             ✏
@@ -154,8 +138,8 @@ export default function HomeEditor({ content }: Props) {
             padding: '3px 8px',
             borderRadius: '6px',
             letterSpacing: '0.04em',
-            textTransform: 'uppercase',
-            whiteSpace: 'nowrap',
+            textTransform: 'uppercase' as const,
+            whiteSpace: 'nowrap' as const,
           }}>
             Editing
           </span>

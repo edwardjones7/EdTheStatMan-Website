@@ -82,9 +82,9 @@ export default function Hero({ content, isLoggedIn = false, editMode, onEdit, re
                 <Link href="/betting-trends" className="btn btn--secondary btn--sm">
                   <span className="btn__icon">&#128200;</span> View Betting Trends
                 </Link>
-                <a href="#todays-action" className="btn btn--secondary btn--sm">
+                <Link href="/model-picks" className="btn btn--secondary btn--sm">
                   Today&apos;s Action &#8595;
-                </a>
+                </Link>
               </>
             ) : (
               <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>

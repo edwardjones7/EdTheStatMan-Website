@@ -36,7 +36,7 @@ export default function Footer() {
           <div>
             <h4 className="footer__heading">Navigation</h4>
             <div className="footer__links">
-              <Link href="/" className="footer__link">Today&apos;s Action</Link>
+              <Link href="/model-picks" className="footer__link">Today&apos;s Action</Link>
               <Link href="/betting-systems" className="footer__link">Betting Systems</Link>
               <Link href="/betting-trends" className="footer__link">Betting Trends</Link>
               <Link href="/blog" className="footer__link">Blog</Link>

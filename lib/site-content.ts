@@ -103,6 +103,12 @@ export interface TickerContent {
   items: TickerItem[]
 }
 
+export interface ModelPicksContent {
+  sectionLabel: string
+  sectionTitle: string
+  sectionSubtitle: string
+}
+
 export interface AllSiteContent {
   hero: HeroContent
   action_card: ActionCardContent
@@ -111,6 +117,7 @@ export interface AllSiteContent {
   statbot_preview: StatBotContent
   systems_overview: SystemsOverviewContent
   ticker: TickerContent
+  model_picks: ModelPicksContent
 }
 
 export const DEFAULT_HERO: HeroContent = {
@@ -239,6 +246,12 @@ export const DEFAULT_SYSTEMS_OVERVIEW: SystemsOverviewContent = {
   ],
 }
 
+export const DEFAULT_MODEL_PICKS: ModelPicksContent = {
+  sectionLabel: 'Daily Picks',
+  sectionTitle: "What I'm Betting Today",
+  sectionSubtitle: 'My active plays — updated daily.',
+}
+
 export const DEFAULT_TICKER: TickerContent = {
   items: [
     { tag: 'NFL',                icon: '🏈', text: 'Betting Systems: 10-34' },
@@ -335,4 +348,5 @@ export const SITE_CONTENT_DEFAULTS: AllSiteContent = {
   statbot_preview: DEFAULT_STATBOT,
   systems_overview: DEFAULT_SYSTEMS_OVERVIEW,
   ticker: DEFAULT_TICKER,
+  model_picks: DEFAULT_MODEL_PICKS,
 }
