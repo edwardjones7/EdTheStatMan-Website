@@ -4,7 +4,6 @@ import { SITE_CONTENT_DEFAULTS } from '@/lib/site-content'
 import type { AllSiteContent } from '@/lib/site-content'
 import LiveTicker from '@/components/LiveTicker'
 import Hero from '@/components/Hero'
-import SystemsOverview from '@/components/SystemsOverview'
 import Features from '@/components/Features'
 import CTASection from '@/components/CTASection'
 import HomeEditor from '@/components/HomeEditor'
@@ -83,7 +82,6 @@ export default async function Home() {
         <>
           <LiveTicker      content={content.ticker} />
           <Hero            content={content.hero} isLoggedIn={userTier !== null} />
-          <SystemsOverview content={content.systems_overview} />
           <Features        content={content.features} />
           <CTASection      content={content.cta_section} />
         </>

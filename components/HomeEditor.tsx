@@ -4,7 +4,6 @@ import { useState } from 'react'
 import type { AllSiteContent } from '@/lib/site-content'
 import LiveTicker from './LiveTicker'
 import Hero from './Hero'
-import SystemsOverview from './SystemsOverview'
 import Features from './Features'
 import CTASection from './CTASection'
 
@@ -76,7 +75,6 @@ export default function HomeEditor({ content }: Props) {
     <>
       <LiveTicker      content={draft.ticker}            editMode={editMode} onEdit={u => patch('ticker', u)} />
       <Hero            content={draft.hero}             isLoggedIn={true} {...ep('hero')} />
-      <SystemsOverview content={draft.systems_overview} {...ep('systems_overview')} />
       <Features        content={draft.features}          {...ep('features')} />
       <CTASection      content={draft.cta_section}       {...ep('cta_section')} />
 
