@@ -1,9 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import TodaysBets from './TodaysBets'
 import type { TodaysBet } from './TodaysBets'
 import type { ModelPicksContent } from '@/lib/site-content'
+import ModelPicksPage from './ModelPicksPage'
 
 interface Props {
   rows: TodaysBet[]
@@ -55,7 +55,7 @@ export default function ModelPicksEditor({ rows, userTier, headerContent }: Prop
 
   return (
     <>
-      <TodaysBets
+      <ModelPicksPage
         rows={rows}
         isAdmin={true}
         userTier={userTier}

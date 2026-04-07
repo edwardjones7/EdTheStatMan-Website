@@ -3,8 +3,8 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { DEFAULT_MODEL_PICKS } from '@/lib/site-content'
 import type { ModelPicksContent } from '@/lib/site-content'
-import TodaysBets from '@/components/TodaysBets'
 import type { TodaysBet } from '@/components/TodaysBets'
+import ModelPicksPage from '@/components/ModelPicksPage'
 import ModelPicksEditor from '@/components/ModelPicksEditor'
 
 export const metadata: Metadata = {
@@ -21,7 +21,7 @@ export const metadata: Metadata = {
 
 export const dynamic = 'force-dynamic'
 
-export default async function ModelPicksPage() {
+export default async function ModelPicks() {
   const supabase = await createClient()
   const adminDb = createAdminClient()
 
@@ -60,6 +60,6 @@ export default async function ModelPicksPage() {
   return isAdmin ? (
     <ModelPicksEditor rows={todaysBets} userTier={userTier} headerContent={headerContent} />
   ) : (
-    <TodaysBets rows={todaysBets} isAdmin={false} userTier={userTier} headerContent={headerContent} />
+    <ModelPicksPage rows={todaysBets} isAdmin={false} userTier={userTier} headerContent={headerContent} />
   )
 }
