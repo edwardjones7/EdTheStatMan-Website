@@ -38,10 +38,23 @@ export default async function Home() {
     raw[row.key] = row.value
   }
 
+  // Merge DB overrides with defaults; for features cards, always use correct hrefs/linkTexts from defaults
+  const rawFeatures = raw.features as any ?? {}
+  const mergedFeatures = { ...SITE_CONTENT_DEFAULTS.features, ...rawFeatures }
+  if (rawFeatures.cards && Array.isArray(rawFeatures.cards)) {
+    mergedFeatures.cards = SITE_CONTENT_DEFAULTS.features.cards.map((defaults, i) => ({
+      ...defaults,
+      ...(rawFeatures.cards[i] ?? {}),
+      href: defaults.href,
+      linkText: defaults.linkText,
+      isExternal: defaults.isExternal,
+    }))
+  }
+
   const content: AllSiteContent = {
     hero:             { ...SITE_CONTENT_DEFAULTS.hero,             ...(raw.hero             as object ?? {}) },
     action_card:      { ...SITE_CONTENT_DEFAULTS.action_card,      ...(raw.action_card      as object ?? {}) },
-    features:         { ...SITE_CONTENT_DEFAULTS.features,         ...(raw.features         as object ?? {}) },
+    features:         mergedFeatures,
     cta_section:      { ...SITE_CONTENT_DEFAULTS.cta_section,      ...(raw.cta_section      as object ?? {}) },
     statbot_preview:  { ...SITE_CONTENT_DEFAULTS.statbot_preview,  ...(raw.statbot_preview  as object ?? {}) },
     systems_overview: { ...SITE_CONTENT_DEFAULTS.systems_overview, ...(raw.systems_overview as object ?? {}) },
