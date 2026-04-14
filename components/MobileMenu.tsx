@@ -36,8 +36,8 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
       <Link href="/contact" className={`mobile-menu__link ${isActive('/contact') ? 'active' : ''}`} onClick={onClose}>
         Contact
       </Link>
-      <a href="https://t.me/edthestatman" className="mobile-menu__cta" target="_blank" rel="noopener" onClick={onClose}>
-        &#9889; Join Telegram
+      <a href="https://x.com/EdTheStatMan" className="mobile-menu__cta" target="_blank" rel="noopener" onClick={onClose}>
+        &#9889; Follow on X
       </a>
     </div>
   )

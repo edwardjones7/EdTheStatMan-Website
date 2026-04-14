@@ -120,7 +120,7 @@ export default async function Pricing() {
                 <li className="pricing-card__feature"><span className="check">&#10003;</span> Full betting systems library</li>
                 <li className="pricing-card__feature"><span className="check">&#10003;</span> All betting trends unlocked</li>
                 <li className="pricing-card__feature"><span className="check">&#10003;</span> All blog posts</li>
-                <li className="pricing-card__feature"><span className="check">&#10003;</span> Telegram &amp; Discord alerts</li>
+                <li className="pricing-card__feature"><span className="check">&#10003;</span> X &amp; Discord alerts</li>
                 <li className="pricing-card__feature"><span className="check">&#10003;</span> Cancel anytime</li>
               </ul>
               {userTier === 'basic' ? (
@@ -145,7 +145,7 @@ export default async function Pricing() {
                 <li className="pricing-card__feature"><span className="check">&#10003;</span> Full betting systems library</li>
                 <li className="pricing-card__feature"><span className="check">&#10003;</span> All betting trends unlocked</li>
                 <li className="pricing-card__feature"><span className="check">&#10003;</span> All blog posts</li>
-                <li className="pricing-card__feature"><span className="check">&#10003;</span> Telegram &amp; Discord alerts</li>
+                <li className="pricing-card__feature"><span className="check">&#10003;</span> X &amp; Discord alerts</li>
                 <li className="pricing-card__feature"><span className="check">&#10003;</span> Cancel anytime</li>
               </ul>
               {userTier === 'premium' ? (

@@ -86,11 +86,11 @@ export default function ModelPicksPage({
               margin: '0 auto 28px',
               lineHeight: 1.7,
             }}>
-              Get instant notifications the moment picks drop. Join our Telegram or Discord for real-time alerts, system updates, and community discussion.
+              Get instant notifications the moment picks drop. Follow us on X or join Discord for real-time alerts, system updates, and community discussion.
             </p>
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
-              <a href="https://t.me/edthestatman" className="btn btn--primary btn--sm" target="_blank" rel="noopener">
-                ⚡ Join Telegram
+              <a href="https://x.com/EdTheStatMan" className="btn btn--primary btn--sm" target="_blank" rel="noopener">
+                ⚡ Follow on X
               </a>
               <a href="https://discord.gg/gqPrVBg4Aw" className="btn btn--secondary btn--sm" target="_blank" rel="noopener">
                 💬 Join Discord

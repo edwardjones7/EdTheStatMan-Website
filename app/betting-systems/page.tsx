@@ -100,7 +100,7 @@ export default async function BettingSystems() {
                 <ul className="pricing-card__features">
                   <li className="pricing-card__feature"><span className="check">&#10003;</span> Full betting systems</li>
                   <li className="pricing-card__feature"><span className="check">&#10003;</span> All trends unlocked</li>
-                  <li className="pricing-card__feature"><span className="check">&#10003;</span> Telegram alerts</li>
+                  <li className="pricing-card__feature"><span className="check">&#10003;</span> X &amp; Discord alerts</li>
                   <li className="pricing-card__feature"><span className="check">&#10003;</span> Cancel anytime</li>
                 </ul>
                 <CheckoutButton
@@ -117,7 +117,7 @@ export default async function BettingSystems() {
                 <ul className="pricing-card__features">
                   <li className="pricing-card__feature"><span className="check">&#10003;</span> Full betting systems</li>
                   <li className="pricing-card__feature"><span className="check">&#10003;</span> All trends unlocked</li>
-                  <li className="pricing-card__feature"><span className="check">&#10003;</span> Telegram alerts</li>
+                  <li className="pricing-card__feature"><span className="check">&#10003;</span> X &amp; Discord alerts</li>
                   <li className="pricing-card__feature"><span className="check">&#10003;</span> Cancel anytime</li>
                 </ul>
                 <CheckoutButton

@@ -204,8 +204,8 @@ export const DEFAULT_FEATURES: FeaturesContent = {
     {
       number: '06',
       title: 'Instant Alerts',
-      text: 'Get notified the moment picks drop via Telegram and Discord. Never miss an edge with real-time betting alerts.',
-      href: 'https://t.me/edthestatman',
+      text: 'Get notified the moment picks drop via X and Discord. Never miss an edge with real-time betting alerts.',
+      href: 'https://x.com/EdTheStatMan',
       linkText: 'Join Now',
       iconColor: 'purple',
       isExternal: true,
@@ -216,7 +216,7 @@ export const DEFAULT_FEATURES: FeaturesContent = {
 export const DEFAULT_CTA: CTAContent = {
   title: 'Get Every Pick.',
   titleAccent: 'Never Miss an Edge.',
-  text: 'Join our Telegram channel for instant notifications on all betting systems, picks, and trend alerts.',
+  text: 'Follow us on X for instant notifications on all betting systems, picks, and trend alerts.',
 }
 
 export const DEFAULT_STATBOT: StatBotContent = {

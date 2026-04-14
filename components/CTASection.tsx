@@ -34,8 +34,8 @@ export default function CTASection({ content = DEFAULT_CTA, editMode, onEdit, re
               : content.text}
           </p>
           <div className="cta-box__actions">
-            <a href="https://t.me/edthestatman" className="btn btn--primary btn--lg" target="_blank" rel="noopener">
-              <span className="btn__icon">&#9889;</span> Join Telegram
+            <a href="https://x.com/EdTheStatMan" className="btn btn--primary btn--lg" target="_blank" rel="noopener">
+              <span className="btn__icon">&#9889;</span> Follow on X
             </a>
             <a href="https://discord.gg/gqPrVBg4Aw" className="btn btn--secondary btn--lg" target="_blank" rel="noopener">
               <span className="btn__icon">&#128172;</span> Join Discord

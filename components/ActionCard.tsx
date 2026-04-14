@@ -96,8 +96,8 @@ export default function ActionCard({ content = DEFAULT_ACTION_CARD, editMode, on
             </div>
 
             <div style={{ marginTop: '24px', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-              <a href="https://t.me/edthestatman" className="btn btn--primary btn--sm" target="_blank" rel="noopener">
-                &#9889; Get Picks on Telegram
+              <a href="https://x.com/EdTheStatMan" className="btn btn--primary btn--sm" target="_blank" rel="noopener">
+                &#9889; Follow on X
               </a>
               <a href="https://discord.gg/gqPrVBg4Aw" className="btn btn--secondary btn--sm" target="_blank" rel="noopener">
                 &#128172; Join Discord

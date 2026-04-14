@@ -72,7 +72,7 @@ export default function RootLayout({
                   "name": "EdTheStatMan",
                   "url": "https://edthestatman.com",
                   "description": "Winning sports betting picks, systems and trends. Where handicappers get sharp and bettors win.",
-                  "sameAs": ["https://t.me/edthestatman", "https://discord.gg/gqPrVBg4Aw"]
+                  "sameAs": ["https://x.com/EdTheStatMan", "https://discord.gg/gqPrVBg4Aw"]
                 },
                 {
                   "@type": "WebSite",

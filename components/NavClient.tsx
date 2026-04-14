@@ -117,8 +117,8 @@ export default function NavClient({ user }: NavClientProps) {
               </div>
             </div>
           )}
-          <a href="https://t.me/edthestatman" className="mobile-menu__cta" target="_blank" rel="noopener">
-            &#9889; Join Telegram
+          <a href="https://x.com/EdTheStatMan" className="mobile-menu__cta" target="_blank" rel="noopener">
+            &#9889; Follow on X
           </a>
         </div>
       </div>
