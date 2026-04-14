@@ -213,7 +213,7 @@ export default function TodaysBets({ rows, isAdmin, userTier, editMode = false, 
               <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '700px' }}>
                 <thead>
                   <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                    {['Date', 'Sport', 'Bet', 'Line', 'VIG', 'Result', 'Note'].map(col => (
+                    {['Date', 'Sport', 'Bet', 'Guide Line', 'Closing Line', 'Result', 'Note'].map(col => (
                       <th key={col} style={thStyle}>{col}</th>
                     ))}
                     {isAdmin && editMode && <th style={thStyle} />}
