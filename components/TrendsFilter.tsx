@@ -276,22 +276,12 @@ export default function TrendsFilter({ trends, userTier, isAdmin = false }: Prop
   }
 
   // Stats bar computed values
-  const memberCount = allVisible.filter(r => !r.is_free).length
-  const freeCount = allVisible.filter(r => r.is_free).length
   const activeCount = allVisible.filter(r => r.is_active).length
 
   return (
     <>
       {/* Summary stats bar */}
       <div className="sys-stats-bar reveal" style={{ marginTop: '32px' }}>
-        <div className="sys-stats-chip">
-          <span className="sys-stats-chip__label">Member Trends</span>
-          <span className="sys-stats-chip__value">{memberCount}</span>
-        </div>
-        <div className="sys-stats-chip">
-          <span className="sys-stats-chip__label">Free Trends</span>
-          <span className="sys-stats-chip__value">{freeCount}</span>
-        </div>
         <div className="sys-stats-chip">
           <span className="sys-stats-chip__label">Active Trends</span>
           <span className="sys-stats-chip__value">{activeCount}</span>

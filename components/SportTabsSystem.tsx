@@ -276,22 +276,12 @@ export default function SportTabsSystem({ systems, userTier, isAdmin = false }: 
   }
 
   // Stats bar computed values
-  const memberCount = allVisible.filter(s => !s.is_free).length
-  const freeCount = allVisible.filter(s => s.is_free).length
   const activeCount = allVisible.filter(s => s.is_active).length
 
   return (
     <>
       {/* Summary stats bar */}
       <div className="sys-stats-bar reveal" style={{ marginTop: '32px' }}>
-        <div className="sys-stats-chip">
-          <span className="sys-stats-chip__label">Member Systems</span>
-          <span className="sys-stats-chip__value">{memberCount}</span>
-        </div>
-        <div className="sys-stats-chip">
-          <span className="sys-stats-chip__label">Free Systems</span>
-          <span className="sys-stats-chip__value">{freeCount}</span>
-        </div>
         <div className="sys-stats-chip">
           <span className="sys-stats-chip__label">Active Systems</span>
           <span className="sys-stats-chip__value">{activeCount}</span>
