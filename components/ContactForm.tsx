@@ -8,31 +8,33 @@ export default function ContactForm() {
   const [status, setStatus] = useState<Status>('idle')
   const [errorMsg, setErrorMsg] = useState('')
 
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
+    setStatus('sending')
+    setErrorMsg('')
 
     const form = e.currentTarget
-    const name    = (form.elements.namedItem('name')    as HTMLInputElement).value
-    const email   = (form.elements.namedItem('email')   as HTMLInputElement).value
-    const subject = (form.elements.namedItem('subject') as HTMLSelectElement).value
-    const message = (form.elements.namedItem('message') as HTMLTextAreaElement).value
-
-    const subjectLabels: Record<string, string> = {
-      general: 'General Inquiry',
-      systems: 'Betting Systems',
-      products: 'Products & Memberships',
-      support: 'Technical Support',
-      partnership: 'Partnership / Collaboration',
-      other: 'Other',
+    const data = {
+      name:    (form.elements.namedItem('name')    as HTMLInputElement).value,
+      email:   (form.elements.namedItem('email')   as HTMLInputElement).value,
+      subject: (form.elements.namedItem('subject') as HTMLSelectElement).value,
+      message: (form.elements.namedItem('message') as HTMLTextAreaElement).value,
     }
 
-    const subjectLine = `[Contact] ${subjectLabels[subject] ?? subject} — ${name}`
-    const body = `Name: ${name}\nEmail: ${email}\nSubject: ${subjectLabels[subject] ?? subject}\n\n${message}`
+    const res = await fetch('/api/contact', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    })
 
-    window.location.href = `mailto:ed@edthestatman.com?subject=${encodeURIComponent(subjectLine)}&body=${encodeURIComponent(body)}`
-
-    setStatus('success')
-    form.reset()
+    if (res.ok) {
+      setStatus('success')
+      form.reset()
+    } else {
+      const body = await res.json().catch(() => ({}))
+      setErrorMsg(body.error ?? 'Something went wrong. Please try again.')
+      setStatus('error')
+    }
   }
 
   return (
