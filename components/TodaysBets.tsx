@@ -145,9 +145,9 @@ export default function TodaysBets({ rows, isAdmin, userTier, editMode = false, 
 
   // Placeholder rows shown behind the gate when logged out and no real rows exist
   const PLACEHOLDER_ROWS = [
-    { id: 'ph1', date: 'Today', sport: 'NFL',  risk: '$100', bet: '████████ -3.5',  line: '-110', win: '$90',  result: 'pending', note: '—' },
-    { id: 'ph2', date: 'Today', sport: 'NBA',  risk: '$150', bet: '████████ +5.5',  line: '+105', win: '$157', result: 'win',     note: '—' },
-    { id: 'ph3', date: 'Today', sport: 'CFB',  risk: '$200', bet: '████████ O 48.5', line: '-115', win: '$174', result: 'pending', note: '—' },
+    { id: 'ph1', date: 'Today', sport: 'NFL',  bet: '████████ -3.5',  line: '-110', result: 'pending', note: '—' },
+    { id: 'ph2', date: 'Today', sport: 'NBA',  bet: '████████ +5.5',  line: '+105', result: 'win',     note: '—' },
+    { id: 'ph3', date: 'Today', sport: 'CFB',  bet: '████████ O 48.5', line: '-115', result: 'pending', note: '—' },
   ]
   const displayRows = sortedRows
 
@@ -213,7 +213,7 @@ export default function TodaysBets({ rows, isAdmin, userTier, editMode = false, 
               <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '700px' }}>
                 <thead>
                   <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                    {['Date', 'Sport', 'Risk', 'Bet', 'Line', 'VIG', 'Win', 'Result', 'Note'].map(col => (
+                    {['Date', 'Sport', 'Bet', 'Line', 'VIG', 'Result', 'Note'].map(col => (
                       <th key={col} style={thStyle}>{col}</th>
                     ))}
                     {isAdmin && editMode && <th style={thStyle} />}
@@ -235,11 +235,9 @@ export default function TodaysBets({ rows, isAdmin, userTier, editMode = false, 
                             </div>
                           </td>
                           <td style={{ ...tdStyle, color: 'var(--accent-cyan)', fontWeight: 600 }}>{row.sport ?? '—'}</td>
-                          <td style={{ ...tdStyle, fontFamily: 'var(--font-mono)' }}>{row.risk ?? '—'}</td>
                           <td style={{ ...tdStyle, fontWeight: 600, maxWidth: '200px' }}>{row.bet ?? '—'}</td>
                           <td style={{ ...tdStyle, fontFamily: 'var(--font-mono)' }}>{row.line ?? '—'}</td>
                           <td style={{ ...tdStyle, fontFamily: 'var(--font-mono)' }}>{row.vig ?? '—'}</td>
-                          <td style={{ ...tdStyle, fontFamily: 'var(--font-mono)', color: 'var(--accent-green)' }}>{row.win ?? '—'}</td>
                           <td style={tdStyle}>
                             <span style={{
                               display: 'inline-block',
@@ -278,7 +276,7 @@ export default function TodaysBets({ rows, isAdmin, userTier, editMode = false, 
                         {/* Inline edit form */}
                         {isAdmin && editMode && formMode === 'edit' && editId === row.id && (
                           <tr>
-                            <td colSpan={9} style={{ padding: 0 }}>
+                            <td colSpan={7} style={{ padding: 0 }}>
                               <div ref={inlineFormRef}>
                                 <BetForm
                                   form={form}
@@ -348,11 +346,9 @@ function BetForm({ form, setField, onSave, onCancel, saving, error }: BetFormPro
         {[
           { name: 'date',  label: 'Date',  placeholder: 'Mar 18' },
           { name: 'sport', label: 'Sport', placeholder: 'NFL' },
-          { name: 'risk',  label: 'Risk',  placeholder: '$100' },
           { name: 'bet',   label: 'Bet',   placeholder: 'Chiefs -3.5' },
           { name: 'line',  label: 'Line',  placeholder: '-110' },
           { name: 'vig',   label: 'VIG',   placeholder: '-110' },
-          { name: 'win',   label: 'Win',   placeholder: '$90' },
         ].map(({ name, label, placeholder }) => (
           <div key={name}>
             <label style={labelStyle}>{label}</label>
