@@ -1,0 +1,1 @@
+ALTER TABLE todays_bets ADD COLUMN IF NOT EXISTS opponent TEXT;

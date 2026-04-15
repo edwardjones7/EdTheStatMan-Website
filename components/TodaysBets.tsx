@@ -14,6 +14,7 @@ export interface TodaysBet {
   bet: string | null
   line: string | null
   vig: string | null
+  opponent: string | null
   win: string | null
   result: string | null
   note: string | null
@@ -41,7 +42,7 @@ const RESULT_STYLE: Record<string, { bg: string; color: string; label: string }>
 }
 
 const EMPTY_FORM = {
-  date: '', sport: '', risk: '', bet: '', line: '', vig: '', win: '', result: 'pending', note: '',
+  date: '', sport: '', risk: '', bet: '', line: '', vig: '', opponent: '', win: '', result: 'pending', note: '',
   is_active: true, show_on_results: false,
 }
 
@@ -77,9 +78,10 @@ export default function TodaysBets({ rows, isAdmin, userTier, editMode = false, 
       sport:           row.sport  ?? '',
       risk:            row.risk   ?? '',
       bet:             row.bet    ?? '',
-      line:            row.line   ?? '',
-      vig:             row.vig    ?? '',
-      win:             row.win    ?? '',
+      line:            row.line     ?? '',
+      vig:             row.vig      ?? '',
+      opponent:        row.opponent ?? '',
+      win:             row.win      ?? '',
       result:          row.result ?? 'pending',
       note:            row.note   ?? '',
       is_active:       row.is_active,
@@ -213,7 +215,7 @@ export default function TodaysBets({ rows, isAdmin, userTier, editMode = false, 
               <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '700px' }}>
                 <thead>
                   <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                    {['Date', 'Sport', 'Bet', 'Guide Line', 'Closing Line', 'Result', 'Note'].map(col => (
+                    {['Date', 'Sport', 'Pick', 'Guide Line', 'Closing Line', 'Opponent', 'Result', 'Note'].map(col => (
                       <th key={col} style={thStyle}>{col}</th>
                     ))}
                     {isAdmin && editMode && <th style={thStyle} />}
@@ -238,6 +240,7 @@ export default function TodaysBets({ rows, isAdmin, userTier, editMode = false, 
                           <td style={{ ...tdStyle, fontWeight: 600, maxWidth: '200px' }}>{row.bet ?? '—'}</td>
                           <td style={{ ...tdStyle, fontFamily: 'var(--font-mono)' }}>{row.line ?? '—'}</td>
                           <td style={{ ...tdStyle, fontFamily: 'var(--font-mono)' }}>{row.vig ?? '—'}</td>
+                          <td style={tdStyle}>{row.opponent ?? '—'}</td>
                           <td style={tdStyle}>
                             <span style={{
                               display: 'inline-block',
@@ -276,7 +279,7 @@ export default function TodaysBets({ rows, isAdmin, userTier, editMode = false, 
                         {/* Inline edit form */}
                         {isAdmin && editMode && formMode === 'edit' && editId === row.id && (
                           <tr>
-                            <td colSpan={7} style={{ padding: 0 }}>
+                            <td colSpan={8} style={{ padding: 0 }}>
                               <div ref={inlineFormRef}>
                                 <BetForm
                                   form={form}
@@ -344,11 +347,12 @@ function BetForm({ form, setField, onSave, onCancel, saving, error }: BetFormPro
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '12px' }}>
         {[
-          { name: 'date',  label: 'Date',  placeholder: 'Mar 18' },
-          { name: 'sport', label: 'Sport', placeholder: 'NFL' },
-          { name: 'bet',   label: 'Bet',   placeholder: 'Chiefs -3.5' },
-          { name: 'line',  label: 'Line',  placeholder: '-110' },
-          { name: 'vig',   label: 'VIG',   placeholder: '-110' },
+          { name: 'date',     label: 'Date',         placeholder: 'Mar 18' },
+          { name: 'sport',    label: 'Sport',        placeholder: 'NFL' },
+          { name: 'bet',      label: 'Pick',         placeholder: 'Chiefs -3.5' },
+          { name: 'line',     label: 'Guide Line',   placeholder: '-110' },
+          { name: 'vig',      label: 'Closing Line', placeholder: '-110' },
+          { name: 'opponent', label: 'Opponent',     placeholder: 'Broncos' },
         ].map(({ name, label, placeholder }) => (
           <div key={name}>
             <label style={labelStyle}>{label}</label>

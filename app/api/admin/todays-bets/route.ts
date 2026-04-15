@@ -23,6 +23,7 @@ export async function POST(req: Request) {
     bet:             body.bet             || null,
     line:            body.line            || null,
     vig:             body.vig             || null,
+    opponent:        body.opponent        || null,
     win:             body.win             || null,
     result:          body.result          || 'pending',
     note:            body.note            || null,

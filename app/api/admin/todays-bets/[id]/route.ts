@@ -24,6 +24,7 @@ export async function PUT(req: Request, context: { params: Promise<{ id: string 
     bet:             body.bet             || null,
     line:            body.line            || null,
     vig:             body.vig             || null,
+    opponent:        body.opponent        || null,
     win:             body.win             || null,
     result:          body.result          || 'pending',
     note:            body.note            || null,
