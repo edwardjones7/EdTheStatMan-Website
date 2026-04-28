@@ -43,7 +43,7 @@ const RESULT_STYLE: Record<string, { bg: string; color: string; label: string }>
 
 const EMPTY_FORM = {
   date: '', sport: '', risk: '', bet: '', line: '', vig: '', opponent: '', win: '', result: 'pending', note: '',
-  is_active: true, show_on_results: false,
+  is_active: true, is_free: true, show_on_results: false,
 }
 
 export default function TodaysBets({ rows, isAdmin, userTier, editMode = false, headerContent, onHeaderEdit, resetKey = 0 }: Props) {
@@ -53,6 +53,7 @@ export default function TodaysBets({ rows, isAdmin, userTier, editMode = false, 
   const [form, setForm]           = useState(EMPTY_FORM)
   const [saving, setSaving]       = useState(false)
   const [error, setError]         = useState<string | null>(null)
+  const [tierFilter, setTierFilter] = useState<'free' | 'members'>('free')
   const inlineFormRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -85,6 +86,7 @@ export default function TodaysBets({ rows, isAdmin, userTier, editMode = false, 
       result:          row.result ?? 'pending',
       note:            row.note   ?? '',
       is_active:       row.is_active,
+      is_free:         row.is_free,
       show_on_results: row.show_on_results,
     })
     setEditId(row.id)
@@ -141,8 +143,15 @@ export default function TodaysBets({ rows, isAdmin, userTier, editMode = false, 
     return 2
   }
 
-  const visibleRows = isAdmin && editMode ? rows : rows.filter(r => !r.show_on_results)
-  const sortedRows = [...visibleRows].sort((a, b) => groupOrder(a.note) - groupOrder(b.note))
+  const baseRows = isAdmin && editMode ? rows : rows.filter(r => !r.show_on_results)
+  const visibleRows = (isAdmin && editMode)
+    ? baseRows
+    : baseRows.filter(r => tierFilter === 'free' ? r.is_free : !r.is_free)
+  const sortedRows = [...visibleRows].sort((a, b) => {
+    const grp = groupOrder(a.note) - groupOrder(b.note)
+    if (grp !== 0) return grp
+    return Number(b.is_free) - Number(a.is_free)
+  })
   const rs = (result: string | null) => RESULT_STYLE[result ?? 'pending'] ?? RESULT_STYLE.pending
 
   // Placeholder rows shown behind the gate when logged out and no real rows exist
@@ -193,6 +202,54 @@ export default function TodaysBets({ rows, isAdmin, userTier, editMode = false, 
           />
         )}
 
+        {/* Free / Members toggle (hidden in admin edit mode) */}
+        {!(isAdmin && editMode) && (
+          <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            marginTop: '28px',
+          }}>
+            <div role="tablist" aria-label="Pick access filter" style={{
+              display: 'inline-flex',
+              background: 'var(--bg-card)',
+              border: '1px solid var(--border)',
+              borderRadius: '999px',
+              padding: '4px',
+              gap: '4px',
+            }}>
+              {([
+                { key: 'free',    label: 'Free' },
+                { key: 'members', label: 'Members' },
+              ] as const).map(opt => {
+                const active = tierFilter === opt.key
+                return (
+                  <button
+                    key={opt.key}
+                    role="tab"
+                    aria-selected={active}
+                    onClick={() => setTierFilter(opt.key)}
+                    style={{
+                      padding: '7px 18px',
+                      borderRadius: '999px',
+                      fontSize: '0.82rem',
+                      fontWeight: 700,
+                      letterSpacing: '0.04em',
+                      textTransform: 'uppercase',
+                      cursor: 'pointer',
+                      border: 'none',
+                      background: active ? 'var(--accent-green)' : 'transparent',
+                      color: active ? '#000' : 'var(--text-muted)',
+                      transition: 'all 0.15s',
+                    }}
+                  >
+                    {opt.label}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
         {/* No rows yet */}
         {visibleRows.length === 0 && !isAdmin && (
           <div style={{
@@ -204,7 +261,9 @@ export default function TodaysBets({ rows, isAdmin, userTier, editMode = false, 
             color: 'var(--text-muted)',
             marginTop: '28px',
           }}>
-            No picks posted yet — check back soon.
+            {tierFilter === 'members'
+              ? 'No members-only picks posted yet — check back soon.'
+              : 'No picks posted yet — check back soon.'}
           </div>
         )}
 
@@ -393,6 +452,12 @@ function BetForm({ form, setField, onSave, onCancel, saving, error }: BetFormPro
           active={form.is_active}
           onColor="var(--accent-green)"
           onClick={() => setField('is_active', !form.is_active)}
+        />
+        <ToggleBtn
+          label="Free"
+          active={form.is_free}
+          onColor="var(--accent-green)"
+          onClick={() => setField('is_free', !form.is_free)}
         />
         <ToggleBtn
           label="Show on Results"
