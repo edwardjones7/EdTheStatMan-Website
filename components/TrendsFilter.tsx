@@ -107,8 +107,13 @@ export default function TrendsFilter({ trends, userTier, isAdmin = false }: Prop
 
   const allVisible = trends.filter(r => activeTab === 'all' || r.sport === activeTab)
   const baseRows = editMode
-    ? [...allVisible].sort((a, b) => Number(b.is_active) - Number(a.is_active))
-    : allVisible.filter(r => r.is_active)
+    ? [...allVisible].sort((a, b) =>
+        (Number(b.is_active) - Number(a.is_active)) ||
+        (Number(b.is_free) - Number(a.is_free))
+      )
+    : allVisible
+        .filter(r => r.is_active)
+        .sort((a, b) => Number(b.is_free) - Number(a.is_free))
 
 
   function openAdd() {
