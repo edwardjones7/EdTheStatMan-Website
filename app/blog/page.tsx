@@ -55,17 +55,7 @@ export default async function Blog() {
 
   return (
     <main>
-      <header className="page-header">
-        <div className="container">
-          <div className="reveal">
-            <span className="section-label">EdTheStatMan</span>
-            <h1 className="page-header__title">Blog &amp; Insights</h1>
-            <p className="page-header__subtitle">Expert analysis, system breakdowns, and educational content to sharpen your handicapping edge.</p>
-          </div>
-        </div>
-      </header>
-
-      <section className="section">
+      <section className="section" style={{ paddingTop: 'calc(var(--nav-height) + 100px)' }}>
         <div className="container">
           <div className="reveal">
             <span className="section-label">Latest Articles</span>
