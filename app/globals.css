@@ -324,6 +324,7 @@ input, textarea, select {
   border-radius: var(--radius-sm);
   transition: all var(--transition-fast);
   position: relative;
+  white-space: nowrap;
 }
 
 .nav__link:hover,
@@ -362,6 +363,7 @@ input, textarea, select {
   text-decoration: none;
   transition: all var(--transition-fast);
   box-shadow: 0 0 20px rgba(52, 211, 153, 0.2);
+  white-space: nowrap;
 }
 
 .nav__cta:hover {
@@ -720,6 +722,7 @@ input, textarea, select {
   border: none;
   position: relative;
   overflow: hidden;
+  white-space: nowrap;
 }
 
 .btn--primary {
