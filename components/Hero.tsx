@@ -56,15 +56,19 @@ export default function Hero({ content, isLoggedIn = false, editMode, onEdit, re
           </div>
 
           <h1 className="hero__title">
-            {editMode && onEdit
-              ? <EditableText tag="span" value={content.title} onChange={v => onEdit({ title: v })} resetKey={resetKey} />
-              : content.title}
-            <br />
-            <span className="accent">
-              {editMode && onEdit
-                ? <EditableText tag="span" value={content.titleAccent} onChange={v => onEdit({ titleAccent: v })} resetKey={resetKey} />
-                : content.titleAccent}
-            </span>
+            {editMode && onEdit ? (
+              <>
+                <EditableText tag="span" value={content.title} onChange={v => onEdit({ title: v })} resetKey={resetKey} />
+                <br />
+                <EditableText tag="span" className="accent" value={content.titleAccent} onChange={v => onEdit({ titleAccent: v })} resetKey={resetKey} />
+              </>
+            ) : (
+              <>
+                {content.title}
+                <br />
+                <span className="accent">{content.titleAccent}</span>
+              </>
+            )}
           </h1>
 
           <p className="hero__description">

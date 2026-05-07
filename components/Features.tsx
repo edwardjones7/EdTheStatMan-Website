@@ -32,17 +32,19 @@ export default function Features({ content, editMode, onEdit, resetKey = 0 }: Pr
               : content.label}
           </span>
           <h2 className="section-title">
-            {ed
-              ? <EditableText tag="span" value={content.title} onChange={v => onEdit({ title: v })} resetKey={resetKey} />
-              : content.title}{' '}
-            <span className="text-gradient">
-              {ed
-                ? <EditableText tag="span" value={content.titleAccent} onChange={v => onEdit({ titleAccent: v })} resetKey={resetKey} />
-                : content.titleAccent}
-            </span>{' '}
-            {ed
-              ? <EditableText tag="span" value={content.titleSuffix} onChange={v => onEdit({ titleSuffix: v })} resetKey={resetKey} />
-              : content.titleSuffix}
+            {ed ? (
+              <>
+                <EditableText tag="span" value={content.title} onChange={v => onEdit({ title: v })} resetKey={resetKey} />{' '}
+                <EditableText tag="span" className="text-gradient" value={content.titleAccent} onChange={v => onEdit({ titleAccent: v })} resetKey={resetKey} />{' '}
+                <EditableText tag="span" value={content.titleSuffix} onChange={v => onEdit({ titleSuffix: v })} resetKey={resetKey} />
+              </>
+            ) : (
+              <>
+                {content.title}{' '}
+                <span className="text-gradient">{content.titleAccent}</span>{' '}
+                {content.titleSuffix}
+              </>
+            )}
           </h2>
           <p className="section-subtitle" style={{ margin: '0 auto' }}>
             {ed

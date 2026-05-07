@@ -31,14 +31,17 @@ export default function StatBotPreview({ content, editMode, onEdit, resetKey = 0
                 : content.label}
             </span>
             <h2 className="section-title">
-              {ed
-                ? <EditableText tag="span" value={content.title} onChange={v => onEdit({ title: v })} resetKey={resetKey} />
-                : content.title}{' '}
-              <span className="text-gradient">
-                {ed
-                  ? <EditableText tag="span" value={content.titleAccent} onChange={v => onEdit({ titleAccent: v })} resetKey={resetKey} />
-                  : content.titleAccent}
-              </span>
+              {ed ? (
+                <>
+                  <EditableText tag="span" value={content.title} onChange={v => onEdit({ title: v })} resetKey={resetKey} />{' '}
+                  <EditableText tag="span" className="text-gradient" value={content.titleAccent} onChange={v => onEdit({ titleAccent: v })} resetKey={resetKey} />
+                </>
+              ) : (
+                <>
+                  {content.title}{' '}
+                  <span className="text-gradient">{content.titleAccent}</span>
+                </>
+              )}
             </h2>
             <p style={{ color: 'var(--text-secondary)', marginBottom: '24px', lineHeight: '1.8' }}>
               {ed

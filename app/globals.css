@@ -2948,8 +2948,10 @@ textarea.form-input {
 
 /* ---------- Responsive ---------- */
 
-/* Compress nav before it breaks — tighten links and hide Telegram CTA text */
-@media (max-width: 1380px) {
+/* Compress nav before it breaks — tighten links and right-side buttons.
+   Breakpoint covers common MacBook viewports (1440 / 1512) where the
+   default button sizes look oversized next to the nav links. */
+@media (max-width: 1500px) {
   .nav__link {
     padding: 6px 10px;
     font-size: 0.82rem;
@@ -2960,7 +2962,7 @@ textarea.form-input {
     font-size: 0.78rem;
   }
 
-  .btn--sm {
+  .nav__auth-actions .btn--sm {
     padding: 8px 14px;
     font-size: 0.8rem;
   }

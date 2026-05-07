@@ -19,14 +19,17 @@ export default function CTASection({ content = DEFAULT_CTA, editMode, onEdit, re
       <div className="container">
         <div className="cta-box reveal-scale">
           <h2 className="cta-box__title">
-            {ed
-              ? <EditableText tag="span" value={content.title} onChange={v => onEdit({ title: v })} resetKey={resetKey} />
-              : content.title}{' '}
-            <span className="text-gradient">
-              {ed
-                ? <EditableText tag="span" value={content.titleAccent} onChange={v => onEdit({ titleAccent: v })} resetKey={resetKey} />
-                : content.titleAccent}
-            </span>
+            {ed ? (
+              <>
+                <EditableText tag="span" value={content.title} onChange={v => onEdit({ title: v })} resetKey={resetKey} />{' '}
+                <EditableText tag="span" className="text-gradient" value={content.titleAccent} onChange={v => onEdit({ titleAccent: v })} resetKey={resetKey} />
+              </>
+            ) : (
+              <>
+                {content.title}{' '}
+                <span className="text-gradient">{content.titleAccent}</span>
+              </>
+            )}
           </h2>
           <p className="cta-box__text">
             {ed
