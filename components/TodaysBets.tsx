@@ -28,6 +28,7 @@ interface Props {
   rows: TodaysBet[]
   isAdmin: boolean
   userTier: string | null  // null = logged out
+  isMember: boolean
   editMode?: boolean
   headerContent?: ModelPicksContent
   onHeaderEdit?: (updates: Partial<ModelPicksContent>) => void
@@ -46,7 +47,7 @@ const EMPTY_FORM = {
   is_active: true, is_free: true, show_on_results: false,
 }
 
-export default function TodaysBets({ rows, isAdmin, userTier, editMode = false, headerContent, onHeaderEdit, resetKey = 0 }: Props) {
+export default function TodaysBets({ rows, isAdmin, userTier, isMember, editMode = false, headerContent, onHeaderEdit, resetKey = 0 }: Props) {
   const router = useRouter()
   const [formMode, setFormMode]   = useState<'hidden' | 'add' | 'edit'>('hidden')
   const [editId, setEditId]       = useState<string | null>(null)
@@ -250,8 +251,51 @@ export default function TodaysBets({ rows, isAdmin, userTier, editMode = false, 
           </div>
         )}
 
+        {/* Members-only paywall — shown to non-members on the Members tab */}
+        {!isMember && tierFilter === 'members' && !isAdmin && (
+          <div style={{
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border)',
+            borderRadius: '12px',
+            padding: '2.5rem',
+            textAlign: 'center',
+            marginTop: '28px',
+          }}>
+            <div style={{ fontSize: '1.6rem', marginBottom: '10px' }}>🔒</div>
+            <h3 style={{
+              fontSize: '1.1rem',
+              fontWeight: 700,
+              color: 'var(--text-heading)',
+              marginBottom: '8px',
+            }}>
+              Members-only picks
+            </h3>
+            <p style={{
+              color: 'var(--text-secondary)',
+              fontSize: '0.92rem',
+              lineHeight: 1.6,
+              maxWidth: '440px',
+              margin: '0 auto 20px',
+            }}>
+              {userTier === null
+                ? 'Sign up and grab a membership to unlock every pick — full access to model picks, systems, and trends.'
+                : 'Upgrade to a membership to unlock every pick — full access to model picks, systems, and trends.'}
+            </p>
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
+              {userTier === null && (
+                <Link href="/signup" className="btn btn--outline btn--sm">
+                  Sign Up Free
+                </Link>
+              )}
+              <Link href="/pricing" className="btn btn--primary btn--sm">
+                View Membership
+              </Link>
+            </div>
+          </div>
+        )}
+
         {/* No rows yet */}
-        {visibleRows.length === 0 && !isAdmin && (
+        {visibleRows.length === 0 && !isAdmin && !(!isMember && tierFilter === 'members') && (
           <div style={{
             background: 'var(--bg-card)',
             border: '1px solid var(--border)',
@@ -268,7 +312,7 @@ export default function TodaysBets({ rows, isAdmin, userTier, editMode = false, 
         )}
 
         {/* Table — always rendered when there are rows */}
-        {visibleRows.length > 0 && (
+        {visibleRows.length > 0 && !(!isMember && tierFilter === 'members') && (
           <div className="content-gate-wrap" style={{ marginTop: '28px' }}>
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '700px' }}>

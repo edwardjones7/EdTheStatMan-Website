@@ -9,6 +9,7 @@ interface Props {
   rows: TodaysBet[]
   isAdmin: boolean
   userTier: string | null
+  isMember: boolean
   editMode?: boolean
   headerContent: ModelPicksContent
   onHeaderEdit?: (updates: Partial<ModelPicksContent>) => void
@@ -16,7 +17,7 @@ interface Props {
 }
 
 export default function ModelPicksPage({
-  rows, isAdmin, userTier, editMode = false, headerContent, onHeaderEdit, resetKey = 0,
+  rows, isAdmin, userTier, isMember, editMode = false, headerContent, onHeaderEdit, resetKey = 0,
 }: Props) {
   return (
     <>
@@ -25,6 +26,7 @@ export default function ModelPicksPage({
         rows={rows}
         isAdmin={isAdmin}
         userTier={userTier}
+        isMember={isMember}
         editMode={editMode}
         headerContent={headerContent}
         onHeaderEdit={onHeaderEdit}

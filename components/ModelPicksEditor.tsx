@@ -59,6 +59,7 @@ export default function ModelPicksEditor({ rows, userTier, headerContent }: Prop
         rows={rows}
         isAdmin={true}
         userTier={userTier}
+        isMember={true}
         editMode={editMode}
         headerContent={draft}
         onHeaderEdit={onHeaderEdit}

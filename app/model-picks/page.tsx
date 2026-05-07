@@ -30,7 +30,7 @@ export default async function ModelPicks() {
     (supabase as any).from('site_content').select('value').eq('key', 'model_picks').single(),
   ])
 
-  const todaysBets: TodaysBet[] = betsResult.data ?? []
+  const allBets: TodaysBet[] = betsResult.data ?? []
   const headerContent: ModelPicksContent = {
     ...DEFAULT_MODEL_PICKS,
     ...(contentResult.data?.value as object ?? {}),
@@ -57,9 +57,12 @@ export default async function ModelPicks() {
     }
   }
 
+  const isMember = isAdmin || userTier === 'basic' || userTier === 'premium'
+  const todaysBets = isMember ? allBets : allBets.filter(b => b.is_free)
+
   return isAdmin ? (
     <ModelPicksEditor rows={todaysBets} userTier={userTier} headerContent={headerContent} />
   ) : (
-    <ModelPicksPage rows={todaysBets} isAdmin={false} userTier={userTier} headerContent={headerContent} />
+    <ModelPicksPage rows={todaysBets} isAdmin={false} userTier={userTier} isMember={isMember} headerContent={headerContent} />
   )
 }
