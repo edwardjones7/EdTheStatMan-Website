@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import type { BettingSystem } from './AdminSystemsTab'
 
-type Sport = 'all' | 'nfl' | 'cfb' | 'nba' | 'cbb'
+type Sport = 'all' | 'nfl' | 'nflpre' | 'cfl' | 'nba' | 'wnba' | 'cbb'
 
 interface Props {
   systems: BettingSystem[]
@@ -16,20 +16,24 @@ interface Props {
 const TABS: { label: string; value: Sport }[] = [
   { label: 'All Sports', value: 'all' },
   { label: 'NFL', value: 'nfl' },
-  { label: 'College Football', value: 'cfb' },
+  { label: 'NFL Preseason', value: 'nflpre' },
+  { label: 'CFL', value: 'cfl' },
   { label: 'NBA', value: 'nba' },
+  { label: 'WNBA', value: 'wnba' },
   { label: 'College Basketball', value: 'cbb' },
 ]
 
 const SPORT_STYLE: Record<string, { bg: string; color: string; label: string }> = {
   nba: { bg: 'rgba(245, 158, 11, 0.1)', color: 'var(--accent-gold)', label: 'NBA' },
+  wnba: { bg: 'rgba(251, 146, 60, 0.1)', color: '#fb923c', label: 'WNBA' },
   cbb: { bg: 'rgba(52, 211, 153, 0.1)', color: 'var(--accent-cyan)', label: 'CBB' },
   nfl: { bg: 'rgba(56, 189, 248, 0.1)', color: '#38bdf8', label: 'NFL' },
-  cfb: { bg: 'rgba(124, 58, 237, 0.1)', color: 'var(--accent-purple)', label: 'CFB' },
+  nflpre: { bg: 'rgba(125, 211, 252, 0.1)', color: '#7dd3fc', label: 'NFL Pre' },
+  cfl: { bg: 'rgba(244, 63, 94, 0.1)', color: '#f43f5e', label: 'CFL' },
 }
 
-const SPORTS = ['nba', 'cbb', 'nfl', 'cfb'] as const
-const SPORT_LABELS: Record<string, string> = { nba: 'NBA', cbb: 'CBB', nfl: 'NFL', cfb: 'CFB' }
+const SPORTS = ['nba', 'wnba', 'cbb', 'nfl', 'nflpre', 'cfl'] as const
+const SPORT_LABELS: Record<string, string> = { nba: 'NBA', wnba: 'WNBA', cbb: 'CBB', nfl: 'NFL', nflpre: 'NFL Preseason', cfl: 'CFL' }
 
 const BLANK = {
   sport: 'cbb',
@@ -201,9 +205,11 @@ export default function SportTabsSystem({ systems, userTier, isAdmin = false }: 
         const rows = XLSX.utils.sheet_to_json(ws, { defval: '' }) as Record<string, unknown>[]
         const lower = name.toLowerCase()
         const is_free = lower.includes('free')
-        const sport = lower.includes('nfl') ? 'nfl'
+        const sport = lower.includes('nfl pre') || lower.includes('nflpre') || lower.includes('preseason') ? 'nflpre'
+          : lower.includes('nfl') ? 'nfl'
+          : lower.includes('wnba') ? 'wnba'
           : lower.includes('nba') ? 'nba'
-          : lower.includes('cfb') || lower.includes('college football') ? 'cfb'
+          : lower.includes('cfl') ? 'cfl'
           : 'cbb'
         return { name, rows, sport, is_free }
       })

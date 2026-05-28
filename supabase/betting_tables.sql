@@ -6,7 +6,7 @@ drop table if exists public.betting_systems cascade;
 
 create table public.betting_systems (
   id uuid primary key default gen_random_uuid(),
-  sport text not null check (sport in ('nfl', 'cfb', 'nba', 'cbb')),
+  sport text not null check (sport in ('nfl', 'nflpre', 'cfb', 'cfl', 'nba', 'wnba', 'cbb')),
   description text not null default '',
   line text not null default '',
   season text not null default '',
@@ -27,7 +27,7 @@ create table public.betting_systems (
 
 create table public.betting_trends (
   id uuid primary key default gen_random_uuid(),
-  sport text not null check (sport in ('nfl', 'cfb', 'nba', 'cbb')),
+  sport text not null check (sport in ('nfl', 'nflpre', 'cfb', 'cfl', 'nba', 'wnba', 'cbb')),
   description text not null default '',
   line text not null default '',
   season text not null default '',

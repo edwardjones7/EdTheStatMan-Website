@@ -22,8 +22,8 @@ export interface BettingTrend {
   sort_order: number
 }
 
-const SPORTS = ['nba', 'cbb', 'nfl', 'cfb'] as const
-const SPORT_LABELS: Record<string, string> = { nba: 'NBA', cbb: 'CBB', nfl: 'NFL', cfb: 'CFB' }
+const SPORTS = ['nba', 'wnba', 'cbb', 'nfl', 'nflpre', 'cfl'] as const
+const SPORT_LABELS: Record<string, string> = { nba: 'NBA', wnba: 'WNBA', cbb: 'CBB', nfl: 'NFL', nflpre: 'NFL Preseason', cfl: 'CFL' }
 
 const BLANK = {
   sport: 'cbb',

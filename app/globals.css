@@ -1553,8 +1553,11 @@ input, textarea, select {
 }
 
 .sys-row-card--nba { border-left-color: var(--accent-gold); background: linear-gradient(90deg, rgba(251,191,36,0.035) 0%, var(--bg-card) 18%); }
+.sys-row-card--wnba { border-left-color: #fb923c; background: linear-gradient(90deg, rgba(251,146,60,0.035) 0%, var(--bg-card) 18%); }
 .sys-row-card--nfl { border-left-color: #38bdf8; background: linear-gradient(90deg, rgba(56,189,248,0.035) 0%, var(--bg-card) 18%); }
+.sys-row-card--nflpre { border-left-color: #7dd3fc; background: linear-gradient(90deg, rgba(125,211,252,0.035) 0%, var(--bg-card) 18%); }
 .sys-row-card--cfb { border-left-color: var(--accent-purple); background: linear-gradient(90deg, rgba(129,140,248,0.035) 0%, var(--bg-card) 18%); }
+.sys-row-card--cfl { border-left-color: #f43f5e; background: linear-gradient(90deg, rgba(244,63,94,0.035) 0%, var(--bg-card) 18%); }
 .sys-row-card--cbb { border-left-color: var(--accent-cyan); background: linear-gradient(90deg, rgba(52,211,153,0.035) 0%, var(--bg-card) 18%); }
 
 .sys-row-card--inactive { opacity: 0.45; }
@@ -1564,8 +1567,11 @@ input, textarea, select {
 }
 
 .sys-row-card--nba:hover { box-shadow: 0 6px 32px rgba(251,191,36,0.14), inset 3px 0 12px rgba(251,191,36,0.06); border-color: var(--accent-gold); background: linear-gradient(90deg, rgba(251,191,36,0.07) 0%, var(--bg-card) 18%); }
+.sys-row-card--wnba:hover { box-shadow: 0 6px 32px rgba(251,146,60,0.14), inset 3px 0 12px rgba(251,146,60,0.06); border-color: #fb923c; background: linear-gradient(90deg, rgba(251,146,60,0.07) 0%, var(--bg-card) 18%); }
 .sys-row-card--nfl:hover { box-shadow: 0 6px 32px rgba(56,189,248,0.14), inset 3px 0 12px rgba(56,189,248,0.06); border-color: #38bdf8; background: linear-gradient(90deg, rgba(56,189,248,0.07) 0%, var(--bg-card) 18%); }
+.sys-row-card--nflpre:hover { box-shadow: 0 6px 32px rgba(125,211,252,0.14), inset 3px 0 12px rgba(125,211,252,0.06); border-color: #7dd3fc; background: linear-gradient(90deg, rgba(125,211,252,0.07) 0%, var(--bg-card) 18%); }
 .sys-row-card--cfb:hover { box-shadow: 0 6px 32px rgba(129,140,248,0.14), inset 3px 0 12px rgba(129,140,248,0.06); border-color: var(--accent-purple); background: linear-gradient(90deg, rgba(129,140,248,0.07) 0%, var(--bg-card) 18%); }
+.sys-row-card--cfl:hover { box-shadow: 0 6px 32px rgba(244,63,94,0.14), inset 3px 0 12px rgba(244,63,94,0.06); border-color: #f43f5e; background: linear-gradient(90deg, rgba(244,63,94,0.07) 0%, var(--bg-card) 18%); }
 .sys-row-card--cbb:hover { box-shadow: 0 6px 32px rgba(52,211,153,0.14), inset 3px 0 12px rgba(52,211,153,0.06); border-color: var(--accent-cyan); background: linear-gradient(90deg, rgba(52,211,153,0.07) 0%, var(--bg-card) 18%); }
 
 /* Admin toolbar strip at top */
@@ -1617,8 +1623,11 @@ input, textarea, select {
 }
 
 .sys-row-card--nba .sys-row-card__sport-badge { background: rgba(251,191,36,0.12); color: var(--accent-gold); border: 1px solid rgba(251,191,36,0.25); }
+.sys-row-card--wnba .sys-row-card__sport-badge { background: rgba(251,146,60,0.12); color: #fb923c; border: 1px solid rgba(251,146,60,0.25); }
 .sys-row-card--nfl .sys-row-card__sport-badge { background: rgba(56,189,248,0.12); color: #38bdf8; border: 1px solid rgba(56,189,248,0.25); }
+.sys-row-card--nflpre .sys-row-card__sport-badge { background: rgba(125,211,252,0.12); color: #7dd3fc; border: 1px solid rgba(125,211,252,0.25); }
 .sys-row-card--cfb .sys-row-card__sport-badge { background: rgba(129,140,248,0.12); color: var(--accent-purple); border: 1px solid rgba(129,140,248,0.25); }
+.sys-row-card--cfl .sys-row-card__sport-badge { background: rgba(244,63,94,0.12); color: #f43f5e; border: 1px solid rgba(244,63,94,0.25); }
 .sys-row-card--cbb .sys-row-card__sport-badge { background: rgba(52,211,153,0.12); color: var(--accent-cyan); border: 1px solid rgba(52,211,153,0.25); }
 
 /* Description column — grows to fill available space */
@@ -1736,8 +1745,11 @@ input, textarea, select {
 }
 
 .sys-row-card--nba .sys-row-card__bar-fill { background: var(--accent-gold); box-shadow: 0 0 6px rgba(251,191,36,0.5); }
+.sys-row-card--wnba .sys-row-card__bar-fill { background: #fb923c; box-shadow: 0 0 6px rgba(251,146,60,0.5); }
 .sys-row-card--nfl .sys-row-card__bar-fill { background: #38bdf8; box-shadow: 0 0 6px rgba(56,189,248,0.5); }
+.sys-row-card--nflpre .sys-row-card__bar-fill { background: #7dd3fc; box-shadow: 0 0 6px rgba(125,211,252,0.5); }
 .sys-row-card--cfb .sys-row-card__bar-fill { background: var(--accent-purple); box-shadow: 0 0 6px rgba(129,140,248,0.5); }
+.sys-row-card--cfl .sys-row-card__bar-fill { background: #f43f5e; box-shadow: 0 0 6px rgba(244,63,94,0.5); }
 .sys-row-card--cbb .sys-row-card__bar-fill { background: var(--accent-cyan); box-shadow: 0 0 6px rgba(52,211,153,0.5); }
 
 /* Lock state */
