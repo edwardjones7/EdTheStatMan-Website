@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import type { BettingSystem } from './AdminSystemsTab'
 
-type Sport = 'all' | 'nfl' | 'nflpre' | 'cfl' | 'nba' | 'wnba' | 'cbb'
+type Sport = 'all' | 'nfl' | 'nflpre' | 'cfl' | 'cfb' | 'nba' | 'wnba' | 'cbb'
 
 interface Props {
   systems: BettingSystem[]
@@ -18,6 +18,7 @@ const TABS: { label: string; value: Sport }[] = [
   { label: 'NFL', value: 'nfl' },
   { label: 'NFL Preseason', value: 'nflpre' },
   { label: 'CFL', value: 'cfl' },
+  { label: 'College Football', value: 'cfb' },
   { label: 'NBA', value: 'nba' },
   { label: 'WNBA', value: 'wnba' },
   { label: 'College Basketball', value: 'cbb' },
@@ -30,10 +31,11 @@ const SPORT_STYLE: Record<string, { bg: string; color: string; label: string }> 
   nfl: { bg: 'rgba(56, 189, 248, 0.1)', color: '#38bdf8', label: 'NFL' },
   nflpre: { bg: 'rgba(125, 211, 252, 0.1)', color: '#7dd3fc', label: 'NFL Pre' },
   cfl: { bg: 'rgba(244, 63, 94, 0.1)', color: '#f43f5e', label: 'CFL' },
+  cfb: { bg: 'rgba(129, 140, 248, 0.1)', color: 'var(--accent-purple)', label: 'CFB' },
 }
 
-const SPORTS = ['nba', 'wnba', 'cbb', 'nfl', 'nflpre', 'cfl'] as const
-const SPORT_LABELS: Record<string, string> = { nba: 'NBA', wnba: 'WNBA', cbb: 'CBB', nfl: 'NFL', nflpre: 'NFL Preseason', cfl: 'CFL' }
+const SPORTS = ['nba', 'wnba', 'cbb', 'nfl', 'nflpre', 'cfl', 'cfb'] as const
+const SPORT_LABELS: Record<string, string> = { nba: 'NBA', wnba: 'WNBA', cbb: 'CBB', nfl: 'NFL', nflpre: 'NFL Preseason', cfl: 'CFL', cfb: 'College Football' }
 
 const BLANK = {
   sport: 'cbb',
@@ -210,6 +212,7 @@ export default function SportTabsSystem({ systems, userTier, isAdmin = false }: 
           : lower.includes('wnba') ? 'wnba'
           : lower.includes('nba') ? 'nba'
           : lower.includes('cfl') ? 'cfl'
+          : lower.includes('cfb') || lower.includes('college football') ? 'cfb'
           : 'cbb'
         return { name, rows, sport, is_free }
       })
