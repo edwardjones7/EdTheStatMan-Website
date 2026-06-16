@@ -237,5 +237,3 @@ The `scripts/import-wp-users.mjs` script handles migrating ~197 legacy WordPress
 - **`$P$...` hashes** (phpass, MD5-based) — Supabase's bcrypt engine can't verify these. Users are imported with `email_confirm: true` and a password reset email is sent so they can set a new password without re-registering.
 
 ---
-
-*Built and maintained by [EdTheStatMan](https://edthestatman.com)*
