@@ -85,7 +85,6 @@ export default async function Home() {
 
   return (
     <>
-      <LiveTicker />
       {isAdmin ? (
         // Admin gets the interactive editor with a single pencil FAB
         // (LiveTicker is rendered inside HomeEditor for admins)

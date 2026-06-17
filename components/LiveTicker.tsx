@@ -323,6 +323,8 @@ export default function LiveTicker({ content = DEFAULT_TICKER, editMode, onEdit 
 
     return (
       <div style={{
+        // Offset below the fixed nav so the header (and "+ Add Item" button) isn't clipped.
+        marginTop: 'calc(var(--nav-height) + 12px)',
         background: 'var(--bg-secondary)',
         borderBottom: '2px solid rgba(52,211,153,0.2)',
       }}>
