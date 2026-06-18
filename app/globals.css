@@ -39,6 +39,7 @@
 
   /* Spacing */
   --nav-height: 72px;
+  --ticker-height: 44px;
   --section-padding: 100px;
   --container-width: 1280px;
 
@@ -789,6 +790,12 @@ input, textarea, select {
 }
 
 /* ---------- Live Ticker ---------- */
+/* Reserves flow space for the fixed ticker on pages that render it globally
+   (every route except home), so page content starts below the ticker. */
+.ticker-spacer {
+  height: var(--ticker-height);
+}
+
 .ticker {
   position: fixed;
   top: var(--nav-height);

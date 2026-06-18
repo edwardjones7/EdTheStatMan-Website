@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { Inter, Outfit, JetBrains_Mono } from 'next/font/google'
+import { headers } from 'next/headers'
 import './globals.css'
 import Navigation from '@/components/Navigation'
 import Footer from '@/components/Footer'
@@ -7,6 +8,10 @@ import BackgroundEffects from '@/components/BackgroundEffects'
 import BackToTop from '@/components/BackToTop'
 import ClientScripts from '@/components/ClientScripts'
 import PageViewTracker from '@/components/PageViewTracker'
+import LiveTicker from '@/components/LiveTicker'
+import { createClient } from '@/lib/supabase/server'
+import { DEFAULT_TICKER } from '@/lib/site-content'
+import type { TickerContent } from '@/lib/site-content'
 import { Suspense } from 'react'
 
 const inter = Inter({ 
@@ -52,11 +57,27 @@ export const metadata: Metadata = {
   },
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  // The home page renders its own ticker (editable for admins via HomeEditor),
+  // so the global ticker is shown on every other route.
+  const pathname = headers().get('x-pathname') ?? ''
+  const showGlobalTicker = pathname !== '/'
+
+  let ticker: TickerContent = DEFAULT_TICKER
+  if (showGlobalTicker) {
+    const supabase = await createClient()
+    const { data } = await (supabase as any)
+      .from('site_content')
+      .select('value')
+      .eq('key', 'ticker')
+      .single()
+    ticker = { ...DEFAULT_TICKER, ...((data?.value as object) ?? {}) }
+  }
+
   return (
     <html lang="en" className={`${inter.variable} ${outfit.variable} ${jetbrainsMono.variable}`}>
       <head>
@@ -92,6 +113,13 @@ export default function RootLayout({
         <Suspense>
           <Navigation />
         </Suspense>
+        {showGlobalTicker && (
+          <>
+            <LiveTicker content={ticker} />
+            {/* Reserve flow space for the fixed ticker so page content clears it. */}
+            <div className="ticker-spacer" aria-hidden />
+          </>
+        )}
         {children}
         <Footer />
         <BackToTop />
