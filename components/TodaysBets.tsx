@@ -144,11 +144,30 @@ export default function TodaysBets({ rows, isAdmin, userTier, isMember, editMode
     return 2
   }
 
+  // The `date` column is free text (e.g. "Mar 18") with no year, so we parse it
+  // against the row's created_at year and fall back to created_at when it can't
+  // be parsed. Returns a comparable timestamp (ms).
+  function dateValue(row: TodaysBet) {
+    const created = Date.parse(row.created_at)
+    if (row.date) {
+      // Try parsing as-is first (handles ISO dates like "2026-06-17").
+      const direct = Date.parse(row.date)
+      if (!Number.isNaN(direct)) return direct
+      // Fall back to appending a year for bare formats like "Mar 18".
+      const year = Number.isNaN(created) ? new Date().getFullYear() : new Date(created).getFullYear()
+      const withYear = Date.parse(`${row.date} ${year}`)
+      if (!Number.isNaN(withYear)) return withYear
+    }
+    return Number.isNaN(created) ? 0 : created
+  }
+
   const baseRows = isAdmin && editMode ? rows : rows.filter(r => !r.show_on_results)
   const visibleRows = (isAdmin && editMode)
     ? baseRows
     : baseRows.filter(r => tierFilter === 'free' ? r.is_free : !r.is_free)
   const sortedRows = [...visibleRows].sort((a, b) => {
+    const dateDiff = dateValue(b) - dateValue(a)  // newest first
+    if (dateDiff !== 0) return dateDiff
     const grp = groupOrder(a.note) - groupOrder(b.note)
     if (grp !== 0) return grp
     return Number(b.is_free) - Number(a.is_free)
