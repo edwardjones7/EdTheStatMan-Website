@@ -66,6 +66,21 @@ function pctDisplay(pct: number | null | undefined): string {
   return `${Math.round(pct * 100)}%`
 }
 
+// Sort priority: most recent date first (dateless rows last); ties (same date
+// or both dateless) break by highest win % first (pctless rows last).
+function compareSystems(a: BettingSystem, b: BettingSystem): number {
+  const aDate = a.date || ''
+  const bDate = b.date || ''
+  if (aDate !== bDate) {
+    if (!aDate) return 1
+    if (!bDate) return -1
+    return bDate.localeCompare(aDate)
+  }
+  const aPct = a.pct ?? -1
+  const bPct = b.pct ?? -1
+  return bPct - aPct
+}
+
 function parseNum(val: unknown): number | null {
   if (val === undefined || val === null || val === '') return null
   const n = Number(val)
@@ -114,12 +129,11 @@ export default function SportTabsSystem({ systems, userTier, isAdmin = false }: 
   const allVisible = systems.filter(s => activeTab === 'all' || s.sport === activeTab)
   const baseRows = editMode
     ? [...allVisible].sort((a, b) =>
-        (Number(b.is_active) - Number(a.is_active)) ||
-        (Number(b.is_free) - Number(a.is_free))
+        (Number(b.is_active) - Number(a.is_active)) || compareSystems(a, b)
       )
     : allVisible
         .filter(s => s.is_active)
-        .sort((a, b) => Number(b.is_free) - Number(a.is_free))
+        .sort(compareSystems)
 
 
   function openAdd() {

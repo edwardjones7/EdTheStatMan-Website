@@ -51,18 +51,23 @@ export default async function BettingSystems() {
   }
 
   const systemsQuery = isAdmin
-    ? (admin as any).from('betting_systems').select('*').order('date', { ascending: true, nullsFirst: false })
-    : (admin as any).from('betting_systems').select('*').eq('is_active', true).order('date', { ascending: true, nullsFirst: false })
+    ? (admin as any).from('betting_systems').select('*').order('date', { ascending: false, nullsFirst: false })
+    : (admin as any).from('betting_systems').select('*').eq('is_active', true).order('date', { ascending: false, nullsFirst: false })
 
   const { data: rawSystems } = await systemsQuery
 
+  // Most recent date first (dateless last); ties break by highest win % first.
   const systems = (rawSystems ?? []).sort((a: any, b: any) => {
-    const aDate = a.date || null
-    const bDate = b.date || null
-    if (!aDate && !bDate) return 0
-    if (!aDate) return 1
-    if (!bDate) return -1
-    return aDate.localeCompare(bDate)
+    const aDate = a.date || ''
+    const bDate = b.date || ''
+    if (aDate !== bDate) {
+      if (!aDate) return 1
+      if (!bDate) return -1
+      return bDate.localeCompare(aDate)
+    }
+    const aPct = a.pct ?? -1
+    const bPct = b.pct ?? -1
+    return bPct - aPct
   })
 
   const isPaid = userTier === 'basic' || userTier === 'premium'
