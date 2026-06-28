@@ -609,7 +609,7 @@ input, textarea, select {
 }
 
 .hero__title {
-  font-size: clamp(2.75rem, 6vw, 4.5rem);
+  font-size: clamp(2.25rem, 5vw, 3.5rem);
   font-weight: 800;
   line-height: 1.05;
   margin-bottom: 24px;
@@ -851,7 +851,7 @@ input, textarea, select {
 .ticker__track {
   display: flex;
   gap: 48px;
-  animation: ticker-scroll 54s linear infinite;
+  animation: ticker-scroll 90s linear infinite;
   width: max-content;
 }
 
@@ -3335,7 +3335,7 @@ textarea.form-input {
   }
 
   .hero__title {
-    font-size: clamp(2rem, 8vw, 3.1rem);
+    font-size: clamp(1.7rem, 7vw, 2.6rem);
   }
 
   .hero__stats {

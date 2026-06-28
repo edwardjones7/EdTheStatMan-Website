@@ -4,7 +4,6 @@ import Link from 'next/link'
 import { useEffect, useRef } from 'react'
 import type { HeroContent } from '@/lib/site-content'
 import EditableText from './EditableText'
-import TypewriterRotator from './TypewriterRotator'
 
 interface Props {
   content: HeroContent
@@ -61,15 +60,13 @@ export default function Hero({ content, isLoggedIn = false, editMode, onEdit, re
               <>
                 <EditableText tag="span" value={content.title} onChange={v => onEdit({ title: v })} resetKey={resetKey} />
                 <br />
-                {/* Rotating phrases are edited in Admin → Page Content → Hero.
-                    Show a static gradient preview of the first phrase here. */}
-                <span className="accent">{content.titleRotations?.[0] ?? content.titleAccent}</span>
+                <EditableText tag="span" className="accent" value={content.titleAccent} onChange={v => onEdit({ titleAccent: v })} resetKey={resetKey} />
               </>
             ) : (
               <>
                 {content.title}
                 <br />
-                <TypewriterRotator phrases={content.titleRotations?.length ? content.titleRotations : [content.titleAccent]} />
+                <span className="accent">{content.titleAccent}</span>
               </>
             )}
           </h1>
