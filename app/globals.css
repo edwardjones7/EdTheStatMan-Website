@@ -530,7 +530,7 @@ input, textarea, select {
   align-items: center;
   position: relative;
   padding-top: calc(var(--nav-height) + 90px);
-  padding-bottom: 90px;
+  padding-bottom: 150px;
   overflow: hidden;
 }
 
@@ -3331,7 +3331,7 @@ textarea.form-input {
     /* 40px here + 30px added to .ticker-spacer on mobile = the original 70px,
        so the homepage top spacing is unchanged. */
     padding-top: calc(var(--nav-height) + 40px);
-    padding-bottom: 60px;
+    padding-bottom: 90px;
   }
 
   .hero__title {
