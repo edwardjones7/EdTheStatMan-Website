@@ -6,6 +6,7 @@ import type { ResultsContent } from '@/lib/site-content'
 import ResultsPage from '@/components/ResultsPage'
 import ResultsEditor from '@/components/ResultsEditor'
 import RecentPicksResults from '@/components/RecentPicksResults'
+import ModelPerformance from '@/components/ModelPerformance'
 import CTASection from '@/components/CTASection'
 import type { TodaysBet } from '@/components/TodaysBets'
 
@@ -64,8 +65,9 @@ export default async function Results() {
 
   return (
     <>
-      <ResultsPage content={content} calcStats={calcStats} picks={recentPicks} />
+      <ResultsPage content={content} picks={recentPicks} />
       <RecentPicksResults rows={recentPicks} />
+      <ModelPerformance calcStats={calcStats} picks={recentPicks} />
       <CTASection />
     </>
   )

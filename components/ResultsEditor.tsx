@@ -5,6 +5,7 @@ import type { ResultsContent } from '@/lib/site-content'
 import type { TodaysBet } from './TodaysBets'
 import ResultsPage from './ResultsPage'
 import RecentPicksResults from './RecentPicksResults'
+import ModelPerformance from './ModelPerformance'
 import CTASection from './CTASection'
 
 interface Props {
@@ -66,10 +67,10 @@ export default function ResultsEditor({ content, recentPicks }: Props) {
         editMode={editMode}
         onEdit={patch}
         resetKey={resetKey}
-        calcStats={{ wins, losses, pushes, winPct }}
         picks={recentPicks}
       />
       <RecentPicksResults rows={recentPicks} isAdmin={true} editMode={editMode} />
+      <ModelPerformance calcStats={{ wins, losses, pushes, winPct }} picks={recentPicks} />
       <CTASection />
 
       {/* Pencil FAB */}

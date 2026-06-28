@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect, Fragment } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import type { BettingTrend } from './AdminTrendsTab'
 
@@ -84,7 +84,24 @@ function parseStr(val: unknown): string {
 
 export default function TrendsFilter({ trends, userTier, isAdmin = false }: Props) {
   const router = useRouter()
-  const [activeTab, setActiveTab] = useState<Sport>('all')
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+
+  // The selected sport lives in the URL (?sport=nfl) so it survives a
+  // router.refresh() after add/edit/delete — and any remount — instead of
+  // snapping back to "All Sports".
+  const sportParam = searchParams.get('sport') as Sport | null
+  const activeTab: Sport = sportParam && TABS.some(t => t.value === sportParam) ? sportParam : 'all'
+
+  function selectTab(value: Sport) {
+    const params = new URLSearchParams(searchParams.toString())
+    if (value === 'all') params.delete('sport')
+    else params.set('sport', value)
+    const qs = params.toString()
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false })
+    cancelForm()
+  }
+
   const [editMode, setEditMode] = useState(false)
 
   // Row form
@@ -123,7 +140,8 @@ export default function TrendsFilter({ trends, userTier, isAdmin = false }: Prop
 
 
   function openAdd() {
-    setForm({ ...BLANK })
+    // Default a new row to the sport you're currently viewing.
+    setForm({ ...BLANK, sport: activeTab !== 'all' ? activeTab : BLANK.sport })
     setEditId(null)
     setFormMode('add')
     setFormError(null)
@@ -308,7 +326,7 @@ export default function TrendsFilter({ trends, userTier, isAdmin = false }: Prop
           <button
             key={tab.value}
             className={`sport-tab${activeTab === tab.value ? ' active' : ''}`}
-            onClick={() => { setActiveTab(tab.value); cancelForm() }}
+            onClick={() => selectTab(tab.value)}
           >
             {tab.label}
           </button>
