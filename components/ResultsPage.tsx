@@ -2,6 +2,7 @@
 
 import EditableText from './EditableText'
 import type { ResultsContent, ResultsStatCard, ResultsChartBar, ResultsYearRow } from '@/lib/site-content'
+import type { TodaysBet } from './TodaysBets'
 
 interface CalcStats {
   wins: number
@@ -10,15 +11,81 @@ interface CalcStats {
   winPct: number
 }
 
+interface SportStat {
+  sport: string
+  wins: number
+  losses: number
+  pushes: number
+  winPct: number
+  form: string[]
+}
+
 interface Props {
   content: ResultsContent
   editMode?: boolean
   onEdit?: (updates: Partial<ResultsContent>) => void
   resetKey?: number
   calcStats?: CalcStats
+  picks?: TodaysBet[]
 }
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+// Break-even win rate against standard -110 vig. Above this, the model beats the juice.
+const BREAK_EVEN = 52.38
+
+// Per-sport badge colors, mirroring the sport accents used on the systems page.
+const SPORT_THEME: Record<string, { color: string; bg: string }> = {
+  NFL:    { color: '#38bdf8', bg: 'rgba(56,189,248,0.12)' },
+  NFLPRE: { color: '#7dd3fc', bg: 'rgba(125,211,252,0.12)' },
+  CFL:    { color: '#f43f5e', bg: 'rgba(244,63,94,0.12)' },
+  CFB:    { color: '#818cf8', bg: 'rgba(129,140,248,0.12)' },
+  NBA:    { color: '#fbbf24', bg: 'rgba(251,191,36,0.12)' },
+  WNBA:   { color: '#fb923c', bg: 'rgba(251,146,60,0.12)' },
+  CBB:    { color: '#34d399', bg: 'rgba(52,211,153,0.12)' },
+}
+const sportTheme = (sport: string) => SPORT_THEME[sport] ?? { color: 'var(--accent-cyan)', bg: 'rgba(52,211,153,0.12)' }
+
+const FORM_LEN = 7
+
+// Group settled picks (win/loss/push) by sport and tally a record for each.
+// `picks` arrives newest-first, so `form` collects the most recent results per
+// sport. Pending picks and sport-less rows are skipped; sports ordered by volume.
+function statsBySport(picks: TodaysBet[]): SportStat[] {
+  const map = new Map<string, { wins: number; losses: number; pushes: number; form: string[] }>()
+  for (const p of picks) {
+    if (p.result !== 'win' && p.result !== 'loss' && p.result !== 'push') continue
+    const sport = (p.sport ?? '').trim().toUpperCase()
+    if (!sport) continue
+    const entry = map.get(sport) ?? { wins: 0, losses: 0, pushes: 0, form: [] }
+    if (p.result === 'win') entry.wins++
+    else if (p.result === 'loss') entry.losses++
+    else entry.pushes++
+    if (entry.form.length < FORM_LEN) entry.form.push(p.result)
+    map.set(sport, entry)
+  }
+  return [...map.entries()]
+    .map(([sport, s]) => ({
+      sport,
+      ...s,
+      winPct: (s.wins + s.losses) > 0 ? (s.wins / (s.wins + s.losses)) * 100 : 0,
+    }))
+    .sort((a, b) => (b.wins + b.losses + b.pushes) - (a.wins + a.losses + a.pushes))
+}
+
+// Current overall streak of wins or losses (pushes don't break it). picks newest-first.
+function currentStreak(picks: TodaysBet[]): { type: 'win' | 'loss' | null; count: number } {
+  let type: 'win' | 'loss' | null = null
+  let count = 0
+  for (const p of picks) {
+    if (p.result === 'push') continue
+    if (p.result !== 'win' && p.result !== 'loss') continue
+    if (type === null) { type = p.result; count = 1 }
+    else if (p.result === type) count++
+    else break
+  }
+  return { type, count }
+}
 
 // ── Stat card counter value — uses dangerouslySetInnerHTML so the counter
 // animation in ClientScripts can safely set textContent without React tracking
@@ -255,8 +322,9 @@ function TableRowEditor({
   )
 }
 
-export default function ResultsPage({ content, editMode, onEdit, resetKey = 0, calcStats }: Props) {
+export default function ResultsPage({ content, editMode, onEdit, resetKey = 0, calcStats, picks = [] }: Props) {
   const e = editMode && onEdit
+  const sportStats = statsBySport(picks)
 
   function et(field: keyof ResultsContent) {
     return e
@@ -264,70 +332,120 @@ export default function ResultsPage({ content, editMode, onEdit, resetKey = 0, c
       : content[field] as string
   }
 
+  const total = calcStats ? calcStats.wins + calcStats.losses + calcStats.pushes : 0
+  const seg = (n: number) => (total > 0 ? (n / total) * 100 : 0)
+  const streak = currentStreak(picks)
+
   return (
     <main>
       {calcStats && (
-      <section className="section" style={{ paddingBottom: '0' }}>
+      <section className="section" style={{ paddingBottom: sportStats.length > 0 ? '0' : undefined }}>
         <div className="container">
           <div className="reveal" style={{ textAlign: 'center', marginBottom: '40px' }}>
-            <span className="section-label">Live Stats</span>
-            <h2 className="section-title" style={{ fontSize: '1.8rem', marginBottom: '0' }}>Performance Summary</h2>
+            <span className="section-label">Live Track Record</span>
+            <h2 className="section-title" style={{ fontSize: '1.8rem', marginBottom: '0' }}>Model Performance</h2>
           </div>
-          <div className="results-stats-grid stagger-children">
 
-            {/* Wins */}
-            <div className="results-stat-card reveal-scale" style={{ borderTop: '3px solid #34d399' }}>
-              <div style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#34d399', marginBottom: '12px' }}>W</div>
+          <div className="perf reveal-scale">
+            <div className="perf-hero">
               <div
-                className="results-stat-card__value"
-                data-count={calcStats.wins}
-                data-decimals="0"
-                style={{ color: '#34d399' }}
-                dangerouslySetInnerHTML={{ __html: String(calcStats.wins) }}
-              />
-              <div className="results-stat-card__label">Wins</div>
-            </div>
-
-            {/* Losses */}
-            <div className="results-stat-card reveal-scale" style={{ borderTop: '3px solid #f87171' }}>
-              <div style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#f87171', marginBottom: '12px' }}>L</div>
-              <div
-                className="results-stat-card__value"
-                data-count={calcStats.losses}
-                data-decimals="0"
-                style={{ color: '#f87171' }}
-                dangerouslySetInnerHTML={{ __html: String(calcStats.losses) }}
-              />
-              <div className="results-stat-card__label">Losses</div>
-            </div>
-
-            {/* Win % */}
-            <div className="results-stat-card reveal-scale" style={{ borderTop: '3px solid var(--accent-cyan)' }}>
-              <div style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--accent-cyan)', marginBottom: '12px' }}>%</div>
-              <div
-                className="results-stat-card__value"
+                className="perf-hero__pct-value"
                 data-count={calcStats.winPct.toFixed(1)}
                 data-suffix="%"
                 data-decimals="1"
-                style={{ color: 'var(--accent-cyan)' }}
                 dangerouslySetInnerHTML={{ __html: `${calcStats.winPct.toFixed(1)}%` }}
               />
-              <div className="results-stat-card__label">Win Rate</div>
-            </div>
+              <div className="perf-hero__pct-label">Win Rate</div>
 
-            {/* Pushes */}
-            <div className="results-stat-card reveal-scale" style={{ borderTop: '3px solid #facc15' }}>
-              <div style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#facc15', marginBottom: '12px' }}>P</div>
+              <div className="perf-hero__record">{calcStats.wins}&#8202;-&#8202;{calcStats.losses}&#8202;-&#8202;{calcStats.pushes}</div>
+              <div className="perf-hero__sub">
+                <span>{total} graded {total === 1 ? 'pick' : 'picks'}</span>
+                {streak.type && streak.count > 1 && (
+                  <span
+                    className={`perf-streak perf-streak--${streak.type}`}
+                    title={`Current ${streak.type} streak`}
+                  >
+                    {streak.count}{streak.type === 'win' ? 'W' : 'L'} streak
+                  </span>
+                )}
+              </div>
+
               <div
-                className="results-stat-card__value"
-                data-count={calcStats.pushes}
-                data-decimals="0"
-                style={{ color: '#facc15' }}
-                dangerouslySetInnerHTML={{ __html: String(calcStats.pushes) }}
-              />
-              <div className="results-stat-card__label">Pushes</div>
-            </div>
+                className="perf-ratio"
+                role="img"
+                aria-label={`${calcStats.wins} wins, ${calcStats.losses} losses, ${calcStats.pushes} pushes`}
+              >
+                <div className="perf-ratio__seg perf-ratio__seg--w" data-width={seg(calcStats.wins).toFixed(2)} />
+                <div className="perf-ratio__seg perf-ratio__seg--l" data-width={seg(calcStats.losses).toFixed(2)} />
+                <div className="perf-ratio__seg perf-ratio__seg--p" data-width={seg(calcStats.pushes).toFixed(2)} />
+              </div>
 
+              <div className="perf-legend">
+                <span className="perf-legend__item"><span className="perf-legend__dot" style={{ background: '#34d399' }} />Wins <span className="perf-legend__num">{calcStats.wins}</span></span>
+                <span className="perf-legend__item"><span className="perf-legend__dot" style={{ background: '#f87171' }} />Losses <span className="perf-legend__num">{calcStats.losses}</span></span>
+                <span className="perf-legend__item"><span className="perf-legend__dot" style={{ background: '#fbbf24' }} />Pushes <span className="perf-legend__num">{calcStats.pushes}</span></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      )}
+
+      {sportStats.length > 0 && (
+      <section className="section" style={{ paddingTop: '48px' }}>
+        <div className="container">
+          <div className="reveal" style={{ textAlign: 'center', marginBottom: '32px' }}>
+            <span className="section-label">By Sport</span>
+            <h2 className="section-title" style={{ fontSize: '1.8rem', marginBottom: '0' }}>Record by Sport</h2>
+            <p className="section-subtitle" style={{ margin: '12px auto 0' }}>
+              Win rate per sport. The vertical line marks break-even vs standard <span style={{ fontFamily: 'var(--font-mono)' }}>-110</span> juice ({BREAK_EVEN}%).
+            </p>
+          </div>
+
+          <div className="perf-sport-grid stagger-children">
+            {sportStats.map(s => {
+              const theme = sportTheme(s.sport)
+              const beatsVig = s.winPct >= BREAK_EVEN
+              const accent = beatsVig ? 'var(--accent-green)' : 'var(--accent-red)'
+              const sportTotal = s.wins + s.losses + s.pushes
+              return (
+                <div key={s.sport} className="perf-sport-card reveal-scale">
+                  <div className="perf-sport-card__head">
+                    <span className="perf-sport-card__badge" style={{ color: theme.color, background: theme.bg }}>{s.sport}</span>
+                    <span
+                      className="perf-sport-card__pct"
+                      style={{ color: accent }}
+                      data-count={s.winPct.toFixed(1)}
+                      data-suffix="%"
+                      data-decimals="1"
+                      dangerouslySetInnerHTML={{ __html: `${s.winPct.toFixed(1)}%` }}
+                    />
+                  </div>
+                  <div className="perf-sport-card__record">
+                    {s.wins}-{s.losses}-{s.pushes}
+                    <span style={{ color: 'var(--text-muted)' }}> · {sportTotal} {sportTotal === 1 ? 'pick' : 'picks'}</span>
+                  </div>
+                  <div
+                    className="perf-winbar"
+                    role="img"
+                    aria-label={`${s.sport} win rate ${s.winPct.toFixed(1)} percent, ${beatsVig ? 'above' : 'below'} break-even`}
+                  >
+                    <div className="perf-winbar__fill" data-width={s.winPct.toFixed(1)} style={{ background: accent }} />
+                    <div className="perf-winbar__mark" title={`Break-even vs -110 (${BREAK_EVEN}%)`} />
+                  </div>
+                  <div className="perf-form" aria-label={`Recent form, oldest to newest: ${[...s.form].reverse().join(', ')}`}>
+                    <span className="perf-form__label">Form</span>
+                    <div className="perf-form__cells">
+                      {[...s.form].reverse().map((r, i) => (
+                        <span key={i} className={`perf-form__cell perf-form__cell--${r}`} title={r === 'win' ? 'Win' : r === 'loss' ? 'Loss' : 'Push'}>
+                          {r === 'win' ? 'W' : r === 'loss' ? 'L' : 'P'}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
           </div>
         </div>
       </section>

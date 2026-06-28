@@ -2255,6 +2255,264 @@ input, textarea, select {
   margin-top: 8px;
 }
 
+/* ---------- Performance Overview (redesigned) ---------- */
+.perf {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Hero card — centered overall record + win rate */
+.perf-hero {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(120% 130% at 50% 0%, rgba(52, 211, 153, 0.11), transparent 60%),
+    var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  padding: 46px 36px 40px;
+  max-width: 600px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+.perf-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+  background: var(--gradient-green);
+}
+.perf-hero__pct-value {
+  font-family: var(--font-mono);
+  font-size: clamp(3.4rem, 11vw, 5rem);
+  font-weight: 800;
+  line-height: 0.95;
+  font-variant-numeric: tabular-nums;
+  background: var(--gradient-green);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.perf-hero__pct-label {
+  margin-top: 10px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.perf-hero__record {
+  margin-top: 26px;
+  font-family: var(--font-mono);
+  font-size: clamp(1.8rem, 5vw, 2.4rem);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  color: var(--text-heading);
+  font-variant-numeric: tabular-nums;
+}
+.perf-hero__sub {
+  margin-top: 12px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.perf-streak {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+}
+.perf-streak--win {
+  color: var(--accent-green);
+  background: rgba(52, 211, 153, 0.12);
+  border: 1px solid rgba(52, 211, 153, 0.3);
+}
+.perf-streak--loss {
+  color: var(--accent-red);
+  background: rgba(248, 113, 113, 0.12);
+  border: 1px solid rgba(248, 113, 113, 0.3);
+}
+
+/* Segmented W / L / P ratio bar */
+.perf-ratio {
+  width: 100%;
+  max-width: 440px;
+  margin-top: 30px;
+  display: flex;
+  height: 12px;
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.05);
+  gap: 2px;
+}
+.perf-ratio__seg {
+  height: 100%;
+  width: 0;
+  transition: width 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.perf-ratio__seg--w { background: var(--accent-green); }
+.perf-ratio__seg--l { background: var(--accent-red); }
+.perf-ratio__seg--p { background: var(--accent-gold); }
+
+/* Legend chips */
+.perf-legend {
+  margin-top: 18px;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px 26px;
+}
+.perf-legend__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+.perf-legend__dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.perf-legend__num {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-heading);
+}
+
+/* Per-sport cards */
+.perf-sport-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 16px;
+}
+.perf-sport-card {
+  flex: 1 1 270px;
+  max-width: 340px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 20px 22px;
+  transition: border-color var(--transition-medium), transform var(--transition-medium);
+}
+.perf-sport-card:hover {
+  border-color: var(--border-glow);
+  transform: translateY(-3px);
+}
+.perf-sport-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.perf-sport-card__badge {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  padding: 4px 11px;
+  border-radius: var(--radius-full);
+}
+.perf-sport-card__pct {
+  font-family: var(--font-mono);
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.perf-sport-card__record {
+  font-family: var(--font-mono);
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+  margin-bottom: 14px;
+}
+.perf-winbar {
+  position: relative;
+  height: 8px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+.perf-winbar__fill {
+  height: 100%;
+  width: 0;
+  border-radius: var(--radius-full);
+  transition: width 1s cubic-bezier(0.16, 1, 0.3, 1);
+}
+/* Break-even line vs standard -110 vig (52.38%) */
+.perf-winbar__mark {
+  position: absolute;
+  top: -2px;
+  bottom: -2px;
+  left: 52.38%;
+  width: 2px;
+  background: rgba(255, 255, 255, 0.32);
+  border-radius: 2px;
+}
+
+/* Recent form guide */
+.perf-form {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 16px;
+}
+.perf-form__label {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.perf-form__cells {
+  display: flex;
+  gap: 4px;
+}
+.perf-form__cell {
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: var(--bg-primary);
+}
+.perf-form__cell--win  { background: var(--accent-green); }
+.perf-form__cell--loss { background: var(--accent-red); }
+.perf-form__cell--push { background: var(--accent-gold); }
+
+@media (max-width: 640px) {
+  .perf-hero {
+    grid-template-columns: 1fr;
+    grid-template-areas: 'record' 'pct' 'ratio' 'legend';
+    gap: 22px;
+    padding: 26px 22px;
+  }
+  .perf-hero__pct { text-align: left; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .perf-ratio__seg,
+  .perf-winbar__fill,
+  .perf-sport-card { transition: none; }
+}
+
 /* ---------- Results Section ---------- */
 .results-chart {
   background: var(--bg-card);

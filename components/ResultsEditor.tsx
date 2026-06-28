@@ -67,6 +67,7 @@ export default function ResultsEditor({ content, recentPicks }: Props) {
         onEdit={patch}
         resetKey={resetKey}
         calcStats={{ wins, losses, pushes, winPct }}
+        picks={recentPicks}
       />
       <RecentPicksResults rows={recentPicks} isAdmin={true} editMode={editMode} />
       <CTASection />

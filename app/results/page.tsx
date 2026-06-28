@@ -64,7 +64,7 @@ export default async function Results() {
 
   return (
     <>
-      <ResultsPage content={content} calcStats={calcStats} />
+      <ResultsPage content={content} calcStats={calcStats} picks={recentPicks} />
       <RecentPicksResults rows={recentPicks} />
       <CTASection />
     </>
