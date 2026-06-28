@@ -796,6 +796,17 @@ input, textarea, select {
   height: var(--ticker-height);
 }
 
+/* On mobile the interior pages' top section padding (--section-padding: 60px)
+   shrinks enough that the fixed ticker would overlap the first line of text.
+   Reserve extra flow space here so content always clears the ticker. The home
+   hero compensates by reducing its own top padding by the same amount, so the
+   homepage stays visually unchanged. */
+@media (max-width: 768px) {
+  .ticker-spacer {
+    height: calc(var(--ticker-height) + 30px);
+  }
+}
+
 .ticker {
   position: fixed;
   top: var(--nav-height);
@@ -3288,7 +3299,9 @@ textarea.form-input {
 
   .hero {
     min-height: auto;
-    padding-top: calc(var(--nav-height) + 70px);
+    /* 40px here + 30px added to .ticker-spacer on mobile = the original 70px,
+       so the homepage top spacing is unchanged. */
+    padding-top: calc(var(--nav-height) + 40px);
     padding-bottom: 60px;
   }
 
