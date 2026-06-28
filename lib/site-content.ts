@@ -25,6 +25,7 @@ export interface HeroContent {
   badge: string
   title: string
   titleAccent: string
+  titleRotations: string[]
   description: string
   stat1Count: string
   stat1Prefix: string
@@ -124,6 +125,7 @@ export const DEFAULT_HERO: HeroContent = {
   badge: 'Systems Active — Basketball Season',
   title: 'Winning Trends.',
   titleAccent: 'Proven Systems.',
+  titleRotations: ['Proven Systems.', 'Sharper Edges.', 'Smarter Bets.', 'Winning Picks.', 'Real Results.'],
   description:
     'Where handicappers get sharp and bettors win. Data-driven betting systems and trends backed by deep statistical analysis.',
   stat1Count: '10.19',

@@ -609,7 +609,7 @@ input, textarea, select {
 }
 
 .hero__title {
-  font-size: clamp(2.5rem, 6vw, 4.5rem);
+  font-size: clamp(2.75rem, 6vw, 4.5rem);
   font-weight: 800;
   line-height: 1.05;
   margin-bottom: 24px;
@@ -623,8 +623,37 @@ input, textarea, select {
   background-clip: text;
 }
 
+/* Fade rotator — keeps the line at full height while phrases swap so the
+   description below never jumps. */
+.hero__rotator {
+  display: inline-block;
+  min-height: 1.05em;
+  white-space: nowrap;
+}
+
+.hero__rotator-word {
+  display: inline-block;
+  /* Reserve room for descenders (g, y, p) so gradient text isn't clipped by the
+     tight h1 line-height; negative margin cancels it so spacing is unchanged. */
+  line-height: 1.1;
+  padding-bottom: 0.15em;
+  margin-bottom: -0.15em;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.45s var(--ease-out-expo), transform 0.45s var(--ease-out-expo);
+}
+
+.hero__rotator-word.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero__rotator-word { transition: none; opacity: 1; transform: none; }
+}
+
 .hero__description {
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   color: var(--text-secondary);
   margin: 0 auto 40px;
   max-width: 560px;
@@ -3306,7 +3335,7 @@ textarea.form-input {
   }
 
   .hero__title {
-    font-size: clamp(2rem, 8vw, 3rem);
+    font-size: clamp(2rem, 8vw, 3.1rem);
   }
 
   .hero__stats {

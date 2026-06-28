@@ -91,6 +91,12 @@ export default function AdminContentTab({ content: initialContent }: Props) {
           <Field label="Title line 1" value={content.hero.title} onChange={v => patch('hero', { title: v })} />
           <Field label="Title accent (gradient)" value={content.hero.titleAccent} onChange={v => patch('hero', { titleAccent: v })} />
         </TwoCol>
+        <Field
+          label="Rotating accent phrases (one per line — first line shows on load)"
+          type="textarea"
+          value={content.hero.titleRotations.join('\n')}
+          onChange={v => patch('hero', { titleRotations: v.split('\n').map(s => s.trim()).filter(Boolean) })}
+        />
         <Field label="Description" type="textarea" value={content.hero.description} onChange={v => patch('hero', { description: v })} />
         <SectionDivider label="Stat 1" />
         <TwoCol>
