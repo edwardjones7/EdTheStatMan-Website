@@ -96,7 +96,7 @@ export default function GlobalTicker({ content, isAdmin }: Props) {
         title="Edit ticker"
         style={{
           position: 'fixed',
-          top: 'calc(var(--nav-height) + 6px)',
+          top: 'calc(var(--nav-height) + var(--ticker-height) + 6px)',
           right: '14px',
           zIndex: 1000,
           background: 'rgba(52,211,153,0.12)',
