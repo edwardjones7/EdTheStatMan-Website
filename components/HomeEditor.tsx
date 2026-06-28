@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import type { AllSiteContent } from '@/lib/site-content'
-import LiveTicker from './LiveTicker'
 import Hero from './Hero'
 import Features from './Features'
 import CTASection from './CTASection'
@@ -73,7 +72,7 @@ export default function HomeEditor({ content }: Props) {
 
   return (
     <>
-      <LiveTicker      content={draft.ticker}            editMode={editMode} onEdit={u => patch('ticker', u)} />
+      {/* The ticker is rendered globally by the root layout (editable there). */}
       <Hero            content={draft.hero}             isLoggedIn={true} {...ep('hero')} />
       <Features        content={draft.features}          {...ep('features')} />
       <CTASection      content={draft.cta_section}       {...ep('cta_section')} />

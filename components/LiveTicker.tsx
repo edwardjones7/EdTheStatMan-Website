@@ -8,6 +8,12 @@ interface Props {
   content?: TickerContent
   editMode?: boolean
   onEdit?: (updates: Partial<TickerContent>) => void
+  // Optional save/cancel controls rendered in the editor header (used by GlobalTicker).
+  onSave?: () => void
+  onCancel?: () => void
+  saving?: boolean
+  dirty?: boolean
+  error?: string | null
 }
 
 const BADGE_CLASS: Record<string, string> = {
@@ -308,7 +314,7 @@ function TickerItemCard({
   )
 }
 
-export default function LiveTicker({ content = DEFAULT_TICKER, editMode, onEdit }: Props) {
+export default function LiveTicker({ content = DEFAULT_TICKER, editMode, onEdit, onSave, onCancel, saving, dirty, error }: Props) {
   if (editMode && onEdit) {
     function patchItem(i: number, updates: Partial<TickerItem>) {
       const items = content.items.map((it, j) => j === i ? { ...it, ...updates } : it)
@@ -358,23 +364,75 @@ export default function LiveTicker({ content = DEFAULT_TICKER, editMode, onEdit 
               {content.items.length} item{content.items.length !== 1 ? 's' : ''}
             </span>
           </div>
-          <button
-            onClick={addItem}
-            style={{
-              background: 'rgba(52,211,153,0.1)',
-              color: 'var(--accent-green)',
-              border: '1px solid rgba(52,211,153,0.3)',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              fontFamily: 'inherit',
-              fontSize: '0.75rem',
-              fontWeight: 700,
-              padding: '5px 12px',
-              letterSpacing: '0.02em',
-            }}
-          >
-            + Add Item
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+            {error && (
+              <span style={{
+                background: 'rgba(239,68,68,0.92)',
+                color: '#fff',
+                fontSize: '0.7rem',
+                padding: '4px 8px',
+                borderRadius: '6px',
+              }}>
+                {error}
+              </span>
+            )}
+            <button
+              onClick={addItem}
+              style={{
+                background: 'rgba(52,211,153,0.1)',
+                color: 'var(--accent-green)',
+                border: '1px solid rgba(52,211,153,0.3)',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontFamily: 'inherit',
+                fontSize: '0.75rem',
+                fontWeight: 700,
+                padding: '5px 12px',
+                letterSpacing: '0.02em',
+              }}
+            >
+              + Add Item
+            </button>
+            {onCancel && (
+              <button
+                onClick={onCancel}
+                disabled={saving}
+                style={{
+                  background: 'var(--bg-secondary)',
+                  color: 'var(--text-muted)',
+                  border: '1px solid var(--border)',
+                  borderRadius: '6px',
+                  cursor: saving ? 'default' : 'pointer',
+                  fontFamily: 'inherit',
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  padding: '5px 12px',
+                }}
+              >
+                Cancel
+              </button>
+            )}
+            {onSave && (
+              <button
+                onClick={onSave}
+                disabled={saving || !dirty}
+                style={{
+                  background: dirty ? 'var(--accent-green)' : 'rgba(52,211,153,0.25)',
+                  color: dirty ? '#000' : 'var(--text-muted)',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: saving || !dirty ? 'default' : 'pointer',
+                  fontFamily: 'inherit',
+                  fontSize: '0.75rem',
+                  fontWeight: 700,
+                  padding: '5px 14px',
+                  letterSpacing: '0.02em',
+                }}
+              >
+                {saving ? 'Saving…' : 'Save'}
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Items */}

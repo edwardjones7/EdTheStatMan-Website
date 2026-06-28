@@ -1,6 +1,5 @@
 import type { Metadata } from 'next'
 import { Inter, Outfit, JetBrains_Mono } from 'next/font/google'
-import { headers } from 'next/headers'
 import './globals.css'
 import Navigation from '@/components/Navigation'
 import Footer from '@/components/Footer'
@@ -8,7 +7,7 @@ import BackgroundEffects from '@/components/BackgroundEffects'
 import BackToTop from '@/components/BackToTop'
 import ClientScripts from '@/components/ClientScripts'
 import PageViewTracker from '@/components/PageViewTracker'
-import LiveTicker from '@/components/LiveTicker'
+import GlobalTicker from '@/components/GlobalTicker'
 import { createClient } from '@/lib/supabase/server'
 import { DEFAULT_TICKER } from '@/lib/site-content'
 import type { TickerContent } from '@/lib/site-content'
@@ -62,20 +61,27 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode
 }) {
-  // The home page renders its own ticker (editable for admins via HomeEditor),
-  // so the global ticker is shown on every other route.
-  const pathname = headers().get('x-pathname') ?? ''
-  const showGlobalTicker = pathname !== '/'
+  // A single global ticker is rendered on every route (including home) so it
+  // stays uniform and survives client-side navigation. Admins can edit it in
+  // place from any page via GlobalTicker.
+  const supabase = await createClient()
 
-  let ticker: TickerContent = DEFAULT_TICKER
-  if (showGlobalTicker) {
-    const supabase = await createClient()
-    const { data } = await (supabase as any)
-      .from('site_content')
-      .select('value')
-      .eq('key', 'ticker')
+  const { data: tickerRow } = await (supabase as any)
+    .from('site_content')
+    .select('value')
+    .eq('key', 'ticker')
+    .single()
+  const ticker: TickerContent = { ...DEFAULT_TICKER, ...((tickerRow?.value as object) ?? {}) }
+
+  let isAdmin = false
+  const { data: { user } } = await supabase.auth.getUser()
+  if (user) {
+    const { data: profile } = await (supabase as any)
+      .from('profiles')
+      .select('is_admin')
+      .eq('id', user.id)
       .single()
-    ticker = { ...DEFAULT_TICKER, ...((data?.value as object) ?? {}) }
+    isAdmin = !!(profile as any)?.is_admin
   }
 
   return (
@@ -113,13 +119,9 @@ export default async function RootLayout({
         <Suspense>
           <Navigation />
         </Suspense>
-        {showGlobalTicker && (
-          <>
-            <LiveTicker content={ticker} />
-            {/* Reserve flow space for the fixed ticker so page content clears it. */}
-            <div className="ticker-spacer" aria-hidden />
-          </>
-        )}
+        <GlobalTicker content={ticker} isAdmin={isAdmin} />
+        {/* Reserve flow space for the fixed ticker so page content clears it. */}
+        <div className="ticker-spacer" aria-hidden />
         {children}
         <Footer />
         <BackToTop />

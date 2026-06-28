@@ -2,7 +2,6 @@ import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { SITE_CONTENT_DEFAULTS } from '@/lib/site-content'
 import type { AllSiteContent } from '@/lib/site-content'
-import LiveTicker from '@/components/LiveTicker'
 import Hero from '@/components/Hero'
 import Features from '@/components/Features'
 import CTASection from '@/components/CTASection'
@@ -91,8 +90,8 @@ export default async function Home() {
         <HomeEditor content={content} />
       ) : (
         // Everyone else gets static server-rendered sections
+        // (the ticker is rendered globally by the root layout)
         <>
-          <LiveTicker      content={content.ticker} />
           <Hero            content={content.hero} isLoggedIn={userTier !== null} />
           <Features        content={content.features} />
           <CTASection      content={content.cta_section} />

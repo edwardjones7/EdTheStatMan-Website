@@ -39,7 +39,7 @@
 
   /* Spacing */
   --nav-height: 72px;
-  --ticker-height: 44px;
+  --ticker-height: 40px;
   --section-padding: 100px;
   --container-width: 1280px;
 
@@ -803,7 +803,7 @@ input, textarea, select {
   right: 0;
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border-color);
-  padding: 10px 0;
+  padding: 8px 0;
   overflow: hidden;
   z-index: 999;
 }
@@ -811,7 +811,7 @@ input, textarea, select {
 .ticker__track {
   display: flex;
   gap: 48px;
-  animation: ticker-scroll 40s linear infinite;
+  animation: ticker-scroll 54s linear infinite;
   width: max-content;
 }
 
@@ -820,7 +820,7 @@ input, textarea, select {
   align-items: center;
   gap: 12px;
   white-space: nowrap;
-  font-size: 0.9rem;
+  font-size: 0.82rem;
   font-weight: 500;
 }
 
@@ -828,7 +828,7 @@ input, textarea, select {
   font-weight: 700;
   color: var(--accent-cyan);
   text-transform: uppercase;
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   letter-spacing: 1px;
 }
 
@@ -840,9 +840,9 @@ input, textarea, select {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 2px 10px;
+  padding: 2px 9px;
   border-radius: var(--radius-full);
-  font-size: 0.8rem;
+  font-size: 0.72rem;
   font-weight: 700;
 }
 
