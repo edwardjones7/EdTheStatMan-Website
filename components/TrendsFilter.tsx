@@ -66,6 +66,22 @@ function pctDisplay(pct: number | null | undefined): string {
   return `${Math.round(pct * 100)}%`
 }
 
+// Sort priority: free trends first, then team name A→Z (teamless rows last);
+// remaining ties break by highest win % first (pctless rows last).
+function compareTrends(a: BettingTrend, b: BettingTrend): number {
+  if (a.is_free !== b.is_free) return Number(b.is_free) - Number(a.is_free)
+  const aTeam = (a.team || '').trim().toLowerCase()
+  const bTeam = (b.team || '').trim().toLowerCase()
+  if (aTeam !== bTeam) {
+    if (!aTeam) return 1
+    if (!bTeam) return -1
+    return aTeam.localeCompare(bTeam)
+  }
+  const aPct = a.pct ?? -1
+  const bPct = b.pct ?? -1
+  return bPct - aPct
+}
+
 function parseNum(val: unknown): number | null {
   if (val === undefined || val === null || val === '') return null
   const n = Number(val)
@@ -131,12 +147,11 @@ export default function TrendsFilter({ trends, userTier, isAdmin = false }: Prop
   const allVisible = trends.filter(r => activeTab === 'all' || r.sport === activeTab)
   const baseRows = editMode
     ? [...allVisible].sort((a, b) =>
-        (Number(b.is_active) - Number(a.is_active)) ||
-        (Number(b.is_free) - Number(a.is_free))
+        (Number(b.is_active) - Number(a.is_active)) || compareTrends(a, b)
       )
     : allVisible
         .filter(r => r.is_active)
-        .sort((a, b) => Number(b.is_free) - Number(a.is_free))
+        .sort(compareTrends)
 
 
   function openAdd() {
