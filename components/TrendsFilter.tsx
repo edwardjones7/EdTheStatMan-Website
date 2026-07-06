@@ -603,6 +603,12 @@ export default function TrendsFilter({ trends, userTier, isAdmin = false }: Prop
                           <span className="sys-row-card__sport-badge">{style.label}</span>
                         </div>
 
+                        {/* Team */}
+                        <div className="sys-row-card__field sys-row-card__field--team">
+                          <span className="sys-row-card__field-label">Team</span>
+                          <span className="sys-row-card__field-value" style={{ whiteSpace: 'normal' }}>{row.team || '—'}</span>
+                        </div>
+
                         {/* Description */}
                         <div className="sys-row-card__desc-col">
                           <div className="sys-row-card__desc">
@@ -658,12 +664,6 @@ export default function TrendsFilter({ trends, userTier, isAdmin = false }: Prop
                         <div className="sys-row-card__field">
                           <span className="sys-row-card__field-label">Season</span>
                           <span className="sys-row-card__field-value">{row.season || '—'}</span>
-                        </div>
-
-                        {/* Team */}
-                        <div className="sys-row-card__field sys-row-card__field--team">
-                          <span className="sys-row-card__field-label">Team</span>
-                          <span className="sys-row-card__field-value" style={{ whiteSpace: 'normal' }}>{row.team || '—'}</span>
                         </div>
                       </div>
                     </div>
