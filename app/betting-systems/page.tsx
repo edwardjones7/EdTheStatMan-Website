@@ -56,8 +56,10 @@ export default async function BettingSystems() {
 
   const { data: rawSystems } = await systemsQuery
 
-  // Most recent date first (dateless last); ties break by highest win % first.
+  // Free systems first, then most recent date (dateless last); remaining ties
+  // break by highest win % first.
   const systems = (rawSystems ?? []).sort((a: any, b: any) => {
+    if (!!a.is_free !== !!b.is_free) return Number(!!b.is_free) - Number(!!a.is_free)
     const aDate = a.date || ''
     const bDate = b.date || ''
     if (aDate !== bDate) {

@@ -66,9 +66,10 @@ function pctDisplay(pct: number | null | undefined): string {
   return `${Math.round(pct * 100)}%`
 }
 
-// Sort priority: most recent date first (dateless rows last); ties (same date
-// or both dateless) break by highest win % first (pctless rows last).
+// Sort priority: free systems first, then most recent date first (dateless
+// rows last); remaining ties break by highest win % first (pctless rows last).
 function compareSystems(a: BettingSystem, b: BettingSystem): number {
+  if (a.is_free !== b.is_free) return Number(b.is_free) - Number(a.is_free)
   const aDate = a.date || ''
   const bDate = b.date || ''
   if (aDate !== bDate) {
