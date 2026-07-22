@@ -58,6 +58,21 @@ export default async function BettingTrends() {
   const { data: trends } = await trendsQuery
 
   const isPaid = userTier === 'basic' || userTier === 'premium'
+  const canSeeAll = isPaid || isAdmin
+
+  // Everything is members-only except rows explicitly flagged is_free. Locked
+  // rows are dropped server-side — the paywall is a count, never a CSS blur, so
+  // the members-only payload never reaches a non-member's browser. Counts are
+  // keyed by sport so the client can show the right number per tab.
+  const allTrends = (trends ?? []) as any[]
+  const visibleTrends = canSeeAll ? allTrends : allTrends.filter(t => t.is_free)
+  const lockedCounts: Record<string, number> = {}
+  if (!canSeeAll) {
+    for (const t of allTrends) {
+      if (t.is_free) continue
+      lockedCounts[t.sport] = (lockedCounts[t.sport] ?? 0) + 1
+    }
+  }
 
   return (
     <main>
@@ -68,7 +83,7 @@ export default async function BettingTrends() {
             <h2 className="section-title">Betting Trends</h2>
             <p className="section-subtitle">Filter by sport to discover situational edges and patterns.</p>
           </div>
-          <TrendsFilter trends={(trends ?? []) as any[]} userTier={userTier} isAdmin={isAdmin} />
+          <TrendsFilter trends={visibleTrends} lockedCounts={lockedCounts} userTier={userTier} isAdmin={isAdmin} />
         </div>
       </section>
 

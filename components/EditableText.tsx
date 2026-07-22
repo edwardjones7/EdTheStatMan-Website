@@ -42,7 +42,7 @@ export default function EditableText({
       }}
       style={{
         outline: 'none',
-        borderBottom: '1px dashed rgba(52,211,153,0.45)',
+        borderBottom: '1px dashed rgba(45,212,191,0.45)',
         borderRadius: '2px',
         cursor: 'text',
         minWidth: '20px',

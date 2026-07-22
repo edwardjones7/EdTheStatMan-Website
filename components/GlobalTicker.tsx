@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import LiveTicker from './LiveTicker'
 import type { TickerContent } from '@/lib/site-content'
+import { IconPencil } from './Icons'
 
 interface Props {
   content: TickerContent
@@ -99,9 +100,9 @@ export default function GlobalTicker({ content, isAdmin }: Props) {
           top: 'calc(var(--nav-height) + var(--ticker-height) + 6px)',
           right: '14px',
           zIndex: 1000,
-          background: 'rgba(52,211,153,0.12)',
-          color: 'var(--accent-green)',
-          border: '1px solid rgba(52,211,153,0.35)',
+          background: 'rgba(45,212,191,0.12)',
+          color: 'var(--accent-teal)',
+          border: '1px solid rgba(45,212,191,0.35)',
           borderRadius: '6px',
           cursor: 'pointer',
           fontFamily: 'inherit',
@@ -112,7 +113,7 @@ export default function GlobalTicker({ content, isAdmin }: Props) {
           lineHeight: 1.4,
         }}
       >
-        ✏ Ticker
+        <IconPencil size={13} /> Ticker
       </button>
     </>
   )

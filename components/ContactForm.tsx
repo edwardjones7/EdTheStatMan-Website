@@ -93,9 +93,9 @@ export default function ContactForm() {
           >
             <div style={{
               width: '56px', height: '56px', borderRadius: '50%',
-              background: 'rgba(52,211,153,0.12)', border: '1px solid rgba(52,211,153,0.3)',
+              background: 'rgba(45,212,191,0.12)', border: '1px solid rgba(45,212,191,0.3)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              margin: '0 auto 20px', fontSize: '1.5rem', color: 'var(--accent-cyan)',
+              margin: '0 auto 20px', fontSize: '1.5rem', color: 'var(--accent-teal)',
             }}>
               ✓
             </div>

@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { logout } from '@/app/actions/auth'
 import { updateProfile, updatePassword } from '@/app/account/actions'
+import { IconUser, IconLock, IconBolt } from './Icons'
 import type { SubscriptionTier } from '@/lib/supabase/types'
 
 interface AccountClientProps {
@@ -131,7 +132,7 @@ export default function AccountClient({ profile, provider }: AccountClientProps)
             <div className="account-plan__actions">
               {(profile.subscription_tier === 'free' || isExpired) ? (
                 <Link href="/betting-systems#pricing" className="btn btn--primary btn--sm">
-                  &#9889; {isExpired ? 'Renew Access' : 'Upgrade Plan'}
+                  <IconBolt size={14} /> {isExpired ? 'Renew Access' : 'Upgrade Plan'}
                 </Link>
               ) : null}
             </div>
@@ -144,7 +145,7 @@ export default function AccountClient({ profile, provider }: AccountClientProps)
           {/* Profile */}
           <div className="account-card">
             <div className="account-card__header">
-              <div className="account-card__icon">&#128100;</div>
+              <div className="account-card__icon"><IconUser size={18} /></div>
               <h2 className="account-card__title">Profile</h2>
             </div>
             <form onSubmit={handleProfileSubmit}>
@@ -187,7 +188,7 @@ export default function AccountClient({ profile, provider }: AccountClientProps)
           {provider === 'email' && (
             <div className="account-card">
               <div className="account-card__header">
-                <div className="account-card__icon">&#128274;</div>
+                <div className="account-card__icon"><IconLock size={18} /></div>
                 <h2 className="account-card__title">Security</h2>
               </div>
               <form onSubmit={handlePasswordSubmit}>

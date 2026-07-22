@@ -76,9 +76,9 @@ export default function ModelPerformance({ calcStats, picks = [] }: Props) {
             </div>
 
             <div className="perf-legend">
-              <span className="perf-legend__item"><span className="perf-legend__dot" style={{ background: '#34d399' }} />Wins <span className="perf-legend__num">{calcStats.wins}</span></span>
-              <span className="perf-legend__item"><span className="perf-legend__dot" style={{ background: '#f87171' }} />Losses <span className="perf-legend__num">{calcStats.losses}</span></span>
-              <span className="perf-legend__item"><span className="perf-legend__dot" style={{ background: '#fbbf24' }} />Pushes <span className="perf-legend__num">{calcStats.pushes}</span></span>
+              <span className="perf-legend__item"><span className="perf-legend__dot" style={{ background: '#2dd4bf' }} />Wins <span className="perf-legend__num">{calcStats.wins}</span></span>
+              <span className="perf-legend__item"><span className="perf-legend__dot" style={{ background: '#f8717a' }} />Losses <span className="perf-legend__num">{calcStats.losses}</span></span>
+              <span className="perf-legend__item"><span className="perf-legend__dot" style={{ background: '#e9c46a' }} />Pushes <span className="perf-legend__num">{calcStats.pushes}</span></span>
             </div>
           </div>
         </div>

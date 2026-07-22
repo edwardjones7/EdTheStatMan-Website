@@ -50,7 +50,7 @@ function init() {
     })
   }, { threshold: 0.3 })
 
-  document.querySelectorAll('.system-card__bar-fill, .sys-card__bar-fill, .perf-winbar__fill, .perf-ratio__seg').forEach(bar => {
+  document.querySelectorAll('.system-card__bar-fill, .perf-winbar__fill, .perf-ratio__seg').forEach(bar => {
     barObserver.observe(bar)
   })
 

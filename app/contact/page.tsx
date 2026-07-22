@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import CTASection from '@/components/CTASection'
 import ContactForm from '@/components/ContactForm'
+import { IconMail } from '@/components/Icons'
 
 export const metadata: Metadata = {
   title: 'Contact Us',
@@ -41,7 +42,7 @@ export default function Contact() {
             {/* Left Column: Contact Info */}
             <div className="contact-info reveal-left">
               <div className="contact-info__item">
-                <div className="contact-info__icon">&#9993;</div>
+                <div className="contact-info__icon"><IconMail size={20} /></div>
                 <div>
                   <div className="contact-info__label">Email</div>
                   <a href="mailto:ed@edthestatman.com" className="contact-info__value">ed@edthestatman.com</a>

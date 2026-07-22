@@ -71,15 +71,15 @@ export default async function Pricing() {
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '10px',
-                background: 'rgba(52,211,153,0.1)',
-                border: '1px solid rgba(52,211,153,0.3)',
+                background: 'rgba(45,212,191,0.1)',
+                border: '1px solid rgba(45,212,191,0.3)',
                 borderRadius: '10px',
                 padding: '12px 24px',
-                color: 'var(--accent-green)',
+                color: 'var(--accent-teal)',
                 fontWeight: 600,
               }}>
                 ✓ You&apos;re subscribed to the {userTier === 'premium' ? 'Premium' : 'Basic'} plan.{' '}
-                <Link href="/account" style={{ color: 'var(--accent-cyan)', textDecoration: 'underline' }}>
+                <Link href="/account" style={{ color: 'var(--accent-teal)', textDecoration: 'underline' }}>
                   Manage billing →
                 </Link>
               </div>
@@ -173,8 +173,8 @@ export default async function Pricing() {
           <div className="reveal" style={{ maxWidth: '640px', margin: '64px auto 0', textAlign: 'center' }}>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.8 }}>
               Monthly plan billed every month. Annual plan billed once per year. Cancel anytime from your{' '}
-              <Link href="/account" style={{ color: 'var(--accent-cyan)' }}>account page</Link>.
-              Questions? <Link href="/contact" style={{ color: 'var(--accent-cyan)' }}>Contact us</Link>.
+              <Link href="/account" style={{ color: 'var(--accent-teal)' }}>account page</Link>.
+              Questions? <Link href="/contact" style={{ color: 'var(--accent-teal)' }}>Contact us</Link>.
             </p>
           </div>
 

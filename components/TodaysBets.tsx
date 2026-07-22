@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import type { ModelPicksContent } from '@/lib/site-content'
 import EditableText from './EditableText'
+import { IconLock, IconBolt, IconChat, IconChartBar, IconTrendUp } from './Icons'
 
 export interface TodaysBet {
   id: string
@@ -36,8 +37,8 @@ interface Props {
 }
 
 const RESULT_STYLE: Record<string, { bg: string; color: string; label: string }> = {
-  win:     { bg: 'rgba(52,211,153,0.15)',  color: '#34d399', label: 'Win' },
-  loss:    { bg: 'rgba(239,68,68,0.15)',   color: '#f87171', label: 'Loss' },
+  win:     { bg: 'rgba(45,212,191,0.15)',  color: '#2dd4bf', label: 'Win' },
+  loss:    { bg: 'rgba(239,68,68,0.15)',   color: '#f8717a', label: 'Loss' },
   push:    { bg: 'rgba(234,179,8,0.15)',   color: '#facc15', label: 'Push' },
   pending: { bg: 'rgba(161,161,170,0.08)', color: 'var(--text-muted)', label: 'Pending' },
 }
@@ -257,7 +258,7 @@ export default function TodaysBets({ rows, isAdmin, userTier, isMember, editMode
                       textTransform: 'uppercase',
                       cursor: 'pointer',
                       border: 'none',
-                      background: active ? 'var(--accent-green)' : 'transparent',
+                      background: active ? 'var(--accent-teal)' : 'transparent',
                       color: active ? '#000' : 'var(--text-muted)',
                       transition: 'all 0.15s',
                     }}
@@ -280,7 +281,7 @@ export default function TodaysBets({ rows, isAdmin, userTier, isMember, editMode
             textAlign: 'center',
             marginTop: '28px',
           }}>
-            <div style={{ fontSize: '1.6rem', marginBottom: '10px' }}>🔒</div>
+            <div style={{ marginBottom: '10px', color: 'var(--accent-gold)' }}><IconLock size={26} /></div>
             <h3 style={{
               fontSize: '1.1rem',
               fontWeight: 700,
@@ -353,12 +354,12 @@ export default function TodaysBets({ rows, isAdmin, userTier, isMember, editMode
                               <span>{row.date ?? '—'}</span>
                               {!isLoggedOut && row.is_active && (
                                 <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-                                  <span style={tagStyle('var(--accent-green)', 'rgba(52,211,153,0.12)')}>Active</span>
+                                  <span style={tagStyle('var(--accent-teal)', 'rgba(45,212,191,0.12)')}>Active</span>
                                 </div>
                               )}
                             </div>
                           </td>
-                          <td style={{ ...tdStyle, color: 'var(--accent-cyan)', fontWeight: 600 }}>{row.sport ?? '—'}</td>
+                          <td style={{ ...tdStyle, color: 'var(--accent-teal)', fontWeight: 600 }}>{row.sport ?? '—'}</td>
                           <td style={{ ...tdStyle, fontWeight: 600, maxWidth: '200px' }}>{row.bet ?? '—'}</td>
                           <td style={{ ...tdStyle, fontFamily: 'var(--font-mono)' }}>{row.line ?? '—'}</td>
                           <td style={{ ...tdStyle, fontFamily: 'var(--font-mono)' }}>{row.vig ?? '—'}</td>
@@ -389,7 +390,7 @@ export default function TodaysBets({ rows, isAdmin, userTier, isMember, editMode
                               </button>
                               <button
                                 className="admin-action-btn"
-                                style={{ marginLeft: '6px', color: '#f87171' }}
+                                style={{ marginLeft: '6px', color: '#f8717a' }}
                                 onClick={() => deleteRow(row.id)}
                               >
                                 ✕
@@ -428,16 +429,16 @@ export default function TodaysBets({ rows, isAdmin, userTier, isMember, editMode
         {/* Action buttons */}
         <div style={{ marginTop: '32px', display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'center' }}>
           <a href="https://x.com/EdTheStatMan" className="btn btn--primary btn--sm" target="_blank" rel="noopener">
-            ⚡ Follow on X
+            <IconBolt size={14} /> Follow on X
           </a>
           <a href="https://discord.gg/gqPrVBg4Aw" className="btn btn--secondary btn--sm" target="_blank" rel="noopener">
-            💬 Join Discord
+            <IconChat size={14} /> Join Discord
           </a>
           <Link href="/betting-systems" className="btn btn--outline btn--sm">
-            📊 View All Systems
+            <IconChartBar size={14} /> View All Systems
           </Link>
           <Link href="/betting-trends" className="btn btn--outline btn--sm">
-            📈 View All Trends
+            <IconTrendUp size={14} /> View All Trends
           </Link>
         </div>
       </div>
@@ -465,7 +466,7 @@ function BetForm({ form, setField, onSave, onCancel, saving, error }: BetFormPro
       padding: '20px',
       margin: '8px 0 12px',
     }}>
-      {error && <p style={{ color: '#f87171', fontSize: '0.85rem', marginBottom: '12px' }}>{error}</p>}
+      {error && <p style={{ color: '#f8717a', fontSize: '0.85rem', marginBottom: '12px' }}>{error}</p>}
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '12px' }}>
         {[
@@ -513,19 +514,19 @@ function BetForm({ form, setField, onSave, onCancel, saving, error }: BetFormPro
         <ToggleBtn
           label="Active"
           active={form.is_active}
-          onColor="var(--accent-green)"
+          onColor="var(--accent-teal)"
           onClick={() => setField('is_active', !form.is_active)}
         />
         <ToggleBtn
           label="Free"
           active={form.is_free}
-          onColor="var(--accent-green)"
+          onColor="var(--accent-teal)"
           onClick={() => setField('is_free', !form.is_free)}
         />
         <ToggleBtn
           label="Show on Results"
           active={form.show_on_results}
-          onColor="var(--accent-cyan)"
+          onColor="var(--accent-teal)"
           onClick={() => setField('show_on_results', !form.show_on_results)}
         />
       </div>

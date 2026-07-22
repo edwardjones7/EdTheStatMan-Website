@@ -5,6 +5,7 @@ import type { AllSiteContent } from '@/lib/site-content'
 import Hero from '@/components/Hero'
 import Features from '@/components/Features'
 import CTASection from '@/components/CTASection'
+import SportsBand from '@/components/SportsBand'
 import HomeEditor from '@/components/HomeEditor'
 
 export const metadata: Metadata = {
@@ -94,6 +95,7 @@ export default async function Home() {
         <>
           <Hero            content={content.hero} isLoggedIn={userTier !== null} />
           <Features        content={content.features} />
+          <SportsBand />
           <CTASection      content={content.cta_section} />
         </>
       )}

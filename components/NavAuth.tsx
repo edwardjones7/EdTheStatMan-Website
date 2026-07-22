@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { logout } from '@/app/actions/auth'
+import { IconUser, IconSettings, IconBolt } from './Icons'
 import type { SubscriptionTier } from '@/lib/supabase/types'
 
 interface NavAuthProps {
@@ -90,16 +91,16 @@ export default function NavAuth({ user }: NavAuthProps) {
           </div>
           <div className="nav__user-menu-items">
             <Link href="/account" className="nav__user-menu-item" onClick={close}>
-              &#128100; My Account
+              <IconUser size={14} /> My Account
             </Link>
             {user.subscription_tier === 'free' && (
               <Link href="/betting-systems#pricing" className="nav__user-menu-item nav__user-menu-item--upgrade" onClick={close}>
-                &#9889; Upgrade Plan
+                <IconBolt size={14} /> Upgrade Plan
               </Link>
             )}
             {user.is_admin && (
               <Link href="/admin" className="nav__user-menu-item" onClick={close}>
-                &#9881; Admin Dashboard
+                <IconSettings size={14} /> Admin Dashboard
               </Link>
             )}
             <form action={logout}>

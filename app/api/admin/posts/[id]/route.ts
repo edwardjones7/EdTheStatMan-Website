@@ -21,7 +21,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   if (!isAdmin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
   const body = await req.json()
-  const { title, slug, content, excerpt, tag, access_level, published } = body
+  const { title, slug, content, excerpt, tag, access_level, published, cover_image } = body
 
   // Fetch current published state to manage published_at
   const { data: existing } = await (supabase as any)
@@ -46,6 +46,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
       access_level,
       published,
       published_at: published ? publishedAt : null,
+      cover_image: cover_image || null,
     })
     .eq('id', params.id)
     .select('id, slug')

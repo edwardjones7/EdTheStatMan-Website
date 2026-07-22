@@ -59,6 +59,7 @@ export interface Database {
           access_level: AccessLevel
           published: boolean
           published_at: string | null
+          cover_image: string | null
           author_id: string
           created_at: string
           updated_at: string
@@ -73,6 +74,7 @@ export interface Database {
           access_level?: AccessLevel
           published?: boolean
           published_at?: string | null
+          cover_image?: string | null
           author_id: string
           created_at?: string
           updated_at?: string
@@ -86,6 +88,7 @@ export interface Database {
           access_level?: AccessLevel
           published?: boolean
           published_at?: string | null
+          cover_image?: string | null
           updated_at?: string
         }
       }

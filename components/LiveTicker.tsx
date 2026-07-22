@@ -1,8 +1,37 @@
 'use client'
 
 import { useState } from 'react'
+import type { ComponentType } from 'react'
 import type { TickerContent, TickerItem } from '@/lib/site-content'
 import { DEFAULT_TICKER } from '@/lib/site-content'
+import {
+  IconFootball, IconBasketball, IconBaseball, IconHockey, IconSoccer,
+  IconTrophy, IconCoins, IconTrendUp, IconFlame, IconCheckCircle, IconStar, IconTarget,
+} from './Icons'
+
+// Stored ticker items (site_content JSONB) carry emoji strings — map them to
+// brand icons at render time so old saved content never shows raw emoji.
+const TICKER_ICONS: Record<string, ComponentType<{ size?: number }>> = {
+  '🏈': IconFootball,
+  '🏀': IconBasketball,
+  '⚾': IconBaseball,
+  '🏒': IconHockey,
+  '⚽': IconSoccer,
+  '🏆': IconTrophy,
+  '💰': IconCoins,
+  '📈': IconTrendUp,
+  '🔥': IconFlame,
+  '✅': IconCheckCircle,
+  '⭐': IconStar,
+  '🎯': IconTarget,
+}
+
+function TickerIcon({ icon, size = 17 }: { icon?: string; size?: number }) {
+  if (!icon) return null
+  const Mapped = TICKER_ICONS[icon.trim()]
+  if (!Mapped) return null
+  return <span className="ticker__icon"><Mapped size={size} /></span>
+}
 
 interface Props {
   content?: TickerContent
@@ -23,14 +52,14 @@ const BADGE_CLASS: Record<string, string> = {
 }
 
 const BADGE_COLORS: Record<string, string> = {
-  up:      'rgba(52,211,153,0.15)',
-  down:    'rgba(248,113,113,0.15)',
+  up:      'rgba(45,212,191,0.15)',
+  down:    'rgba(248,113,122,0.15)',
   neutral: 'rgba(148,163,184,0.15)',
 }
 
 const BADGE_TEXT_COLORS: Record<string, string> = {
-  up:      '#34d399',
-  down:    '#f87171',
+  up:      '#2dd4bf',
+  down:    '#f8717a',
   neutral: '#94a3b8',
 }
 
@@ -39,8 +68,7 @@ const QUICK_ICONS = ['🏈', '🏀', '⚾', '🏒', '⚽', '🏆', '💰', '📈
 const QUICK_BADGES: { label: string; type: TickerItem['badgeType'] }[] = [
   { label: '▲ Hot',    type: 'up'      },
   { label: '▲ Win',    type: 'up'      },
-  { label: '✅ Winner', type: 'up'      },
-  { label: '🔥 Fire',  type: 'up'      },
+  { label: 'Winner',   type: 'up'      },
   { label: '▼ Cold',   type: 'down'    },
   { label: '▼ Loss',   type: 'down'    },
   { label: '— Active', type: 'neutral' },
@@ -62,8 +90,8 @@ function ItemPreview({ item }: { item: TickerItem }) {
       overflow: 'hidden',
       maxWidth: '100%',
     }}>
-      {item.icon && <span>{item.icon}</span>}
-      <span style={{ fontWeight: 700, color: 'var(--accent-cyan)', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+      <TickerIcon icon={item.icon} />
+      <span style={{ fontWeight: 700, color: 'var(--accent-teal)', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
         {item.tag || 'Tag'}
       </span>
       <span style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>
@@ -145,7 +173,7 @@ function TickerItemCard({
             lineHeight: 1,
             transition: 'color 0.15s',
           }}
-          onMouseEnter={e => (e.currentTarget.style.color = '#f87171')}
+          onMouseEnter={e => (e.currentTarget.style.color = '#f8717a')}
           onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-muted)')}
         >
           ✕
@@ -176,8 +204,8 @@ function TickerItemCard({
                     onClick={() => onPatch({ icon: item.icon === ic ? '' : ic })}
                     title={ic}
                     style={{
-                      background: item.icon === ic ? 'rgba(52,211,153,0.18)' : 'transparent',
-                      border: item.icon === ic ? '1px solid rgba(52,211,153,0.4)' : '1px solid transparent',
+                      background: item.icon === ic ? 'rgba(45,212,191,0.18)' : 'transparent',
+                      border: item.icon === ic ? '1px solid rgba(45,212,191,0.4)' : '1px solid transparent',
                       borderRadius: '4px',
                       cursor: 'pointer',
                       fontSize: '0.9rem',
@@ -190,7 +218,7 @@ function TickerItemCard({
                       justifyContent: 'center',
                     }}
                   >
-                    {ic}
+                    <TickerIcon icon={ic} size={12} />
                   </button>
                 ))}
               </div>
@@ -232,11 +260,11 @@ function TickerItemCard({
               setShowBadge(v => !v)
             }}
             style={{
-              background: showBadge ? 'rgba(52,211,153,0.08)' : 'transparent',
-              border: `1px solid ${showBadge ? 'rgba(52,211,153,0.3)' : 'var(--border)'}`,
+              background: showBadge ? 'rgba(45,212,191,0.08)' : 'transparent',
+              border: `1px solid ${showBadge ? 'rgba(45,212,191,0.3)' : 'var(--border)'}`,
               borderRadius: '5px',
               cursor: 'pointer',
-              color: showBadge ? 'var(--accent-green)' : 'var(--text-muted)',
+              color: showBadge ? 'var(--accent-teal)' : 'var(--text-muted)',
               fontSize: '0.73rem',
               fontWeight: 600,
               padding: '4px 10px',
@@ -332,7 +360,7 @@ export default function LiveTicker({ content = DEFAULT_TICKER, editMode, onEdit,
         // Offset below the fixed nav so the header (and "+ Add Item" button) isn't clipped.
         marginTop: 'calc(var(--nav-height) + 12px)',
         background: 'var(--bg-secondary)',
-        borderBottom: '2px solid rgba(52,211,153,0.2)',
+        borderBottom: '2px solid rgba(45,212,191,0.2)',
       }}>
         {/* Header */}
         <div style={{
@@ -347,11 +375,11 @@ export default function LiveTicker({ content = DEFAULT_TICKER, editMode, onEdit,
               width: '6px',
               height: '6px',
               borderRadius: '50%',
-              background: 'var(--accent-cyan)',
+              background: 'var(--accent-teal)',
               display: 'inline-block',
-              boxShadow: '0 0 6px var(--accent-cyan)',
+              boxShadow: '0 0 6px var(--accent-teal)',
             }} />
-            <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--accent-cyan)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+            <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--accent-teal)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
               Ticker
             </span>
             <span style={{
@@ -379,9 +407,9 @@ export default function LiveTicker({ content = DEFAULT_TICKER, editMode, onEdit,
             <button
               onClick={addItem}
               style={{
-                background: 'rgba(52,211,153,0.1)',
-                color: 'var(--accent-green)',
-                border: '1px solid rgba(52,211,153,0.3)',
+                background: 'rgba(45,212,191,0.1)',
+                color: 'var(--accent-teal)',
+                border: '1px solid rgba(45,212,191,0.3)',
                 borderRadius: '6px',
                 cursor: 'pointer',
                 fontFamily: 'inherit',
@@ -417,7 +445,7 @@ export default function LiveTicker({ content = DEFAULT_TICKER, editMode, onEdit,
                 onClick={onSave}
                 disabled={saving || !dirty}
                 style={{
-                  background: dirty ? 'var(--accent-green)' : 'rgba(52,211,153,0.25)',
+                  background: dirty ? 'var(--accent-teal)' : 'rgba(45,212,191,0.25)',
                   color: dirty ? '#000' : 'var(--text-muted)',
                   border: 'none',
                   borderRadius: '6px',
@@ -470,7 +498,7 @@ export default function LiveTicker({ content = DEFAULT_TICKER, editMode, onEdit,
       <div className="ticker__track">
         {doubled.map((item, i) => (
           <div key={i} className="ticker__item">
-            {item.icon && <span style={{ marginRight: '5px' }}>{item.icon}</span>}
+            <TickerIcon icon={item.icon} />
             <span className="ticker__sport">{item.tag}</span>
             <span className="ticker__record">{item.text}</span>
             {item.badge && (

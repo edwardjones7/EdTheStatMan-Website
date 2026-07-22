@@ -2,7 +2,10 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import type { AccessLevel } from '@/lib/supabase/types'
+import { IconLock } from './Icons'
+import { coverForPost } from '@/lib/blog-images'
 
 const POSTS_PER_PAGE = 12
 
@@ -16,16 +19,6 @@ const FILTER_TABS = [
   { label: 'Strategy', value: 'Strategy' },
 ]
 
-const TAG_STYLE: Record<string, { cls: string; icon: string }> = {
-  'NFL':                { cls: 'blog-card__image--nfl',       icon: '🏈' },
-  'NBA':                { cls: 'blog-card__image--nba',       icon: '🏀' },
-  'College Football':   { cls: 'blog-card__image--nfl-alt',   icon: '🏈' },
-  'College Basketball': { cls: 'blog-card__image--cbb',       icon: '🏀' },
-  'Education':          { cls: 'blog-card__image--education', icon: '📚' },
-  'Strategy':           { cls: 'blog-card__image--strategy',  icon: '💰' },
-  'General':            { cls: 'blog-card__image--strategy',  icon: '📰' },
-}
-
 export interface BlogPost {
   id: string
   title: string
@@ -34,6 +27,7 @@ export interface BlogPost {
   tag: string
   access_level: AccessLevel
   published_at: string | null
+  cover_image?: string | null
 }
 
 interface Props {
@@ -89,7 +83,6 @@ export default function BlogFilter({ posts, userTier }: Props) {
       ) : (
         <div className="blog-grid stagger-children" style={{ marginTop: '40px' }}>
           {visible.map(post => {
-            const style = TAG_STYLE[post.tag] ?? TAG_STYLE['General']
             const locked = post.access_level === 'members' && !isPaid
             return (
               <Link
@@ -97,9 +90,15 @@ export default function BlogFilter({ posts, userTier }: Props) {
                 href={`/blog/${post.slug}`}
                 className={`blog-card reveal-scale${locked ? ' blog-card--locked' : ''}`}
               >
-                <div className={`blog-card__image ${style.cls}`}>
-                  {style.icon}
-                  {locked && <span className="blog-card__lock-badge">🔒 Members</span>}
+                <div className={`blog-card__image${locked ? ' blog-card__image--locked' : ''}`}>
+                  <Image
+                    src={coverForPost(post.cover_image, post.tag)}
+                    alt=""
+                    fill
+                    sizes="(max-width: 768px) 100vw, 33vw"
+                    style={{ objectFit: 'cover' }}
+                  />
+                  {locked && <span className="blog-card__lock-badge"><IconLock size={12} /> Members</span>}
                 </div>
                 <div className="blog-card__body">
                   <span className="blog-card__tag">{post.tag}</span>

@@ -30,7 +30,7 @@ export default async function Blog() {
   const [{ data: posts }, { data: { user } }] = await Promise.all([
     admin
       .from('posts')
-      .select('id, title, slug, excerpt, tag, access_level, published_at')
+      .select('id, title, slug, excerpt, tag, access_level, published_at, cover_image')
       .eq('published', true)
       .order('published_at', { ascending: false }),
     supabase.auth.getUser(),

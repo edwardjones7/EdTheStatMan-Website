@@ -7,6 +7,7 @@ import ResultsPage from './ResultsPage'
 import RecentPicksResults from './RecentPicksResults'
 import ModelPerformance from './ModelPerformance'
 import CTASection from './CTASection'
+import { IconPencil } from './Icons'
 
 interface Props {
   content: ResultsContent
@@ -91,7 +92,7 @@ export default function ResultsEditor({ content, recentPicks }: Props) {
                 onClick={save}
                 disabled={saving}
                 title="Save all changes"
-                style={{ ...fab, background: 'var(--accent-green)', color: '#000' }}
+                style={{ ...fab, background: 'var(--accent-teal)', color: '#000' }}
               >
                 {saving ? '…' : '✓'}
               </button>
@@ -104,9 +105,9 @@ export default function ResultsEditor({ content, recentPicks }: Props) {
                 width: dirty ? '40px' : '54px',
                 height: dirty ? '40px' : '54px',
                 fontSize: dirty ? '1rem' : '1.3rem',
-                background: dirty ? 'var(--bg-secondary)' : 'rgba(52,211,153,0.15)',
-                color: dirty ? 'var(--text-muted)' : 'var(--accent-green)',
-                border: dirty ? '2px solid var(--border)' : '2px solid rgba(52,211,153,0.35)',
+                background: dirty ? 'var(--bg-secondary)' : 'rgba(45,212,191,0.15)',
+                color: dirty ? 'var(--text-muted)' : 'var(--accent-teal)',
+                border: dirty ? '2px solid var(--border)' : '2px solid rgba(45,212,191,0.35)',
               }}
             >
               ✕
@@ -116,9 +117,9 @@ export default function ResultsEditor({ content, recentPicks }: Props) {
           <button
             onClick={() => setEditMode(true)}
             title="Edit page content"
-            style={{ ...fab, background: 'var(--accent-green)', color: '#000' }}
+            style={{ ...fab, background: 'var(--accent-teal)', color: '#000' }}
           >
-            ✏
+            <IconPencil size={14} />
           </button>
         )}
 
@@ -139,9 +140,9 @@ export default function ResultsEditor({ content, recentPicks }: Props) {
 
         {editMode && !dirty && (
           <span style={{
-            background: 'rgba(52,211,153,0.12)',
-            border: '1px solid rgba(52,211,153,0.25)',
-            color: 'var(--accent-green)',
+            background: 'rgba(45,212,191,0.12)',
+            border: '1px solid rgba(45,212,191,0.25)',
+            color: 'var(--accent-teal)',
             fontSize: '0.68rem',
             fontWeight: 600,
             padding: '3px 8px',

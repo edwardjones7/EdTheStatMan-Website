@@ -4,6 +4,7 @@ import { useState } from 'react'
 import type { TodaysBet } from './TodaysBets'
 import type { ModelPicksContent } from '@/lib/site-content'
 import ModelPicksPage from './ModelPicksPage'
+import { IconPencil } from './Icons'
 
 interface Props {
   rows: TodaysBet[]
@@ -83,7 +84,7 @@ export default function ModelPicksEditor({ rows, userTier, headerContent }: Prop
                 onClick={save}
                 disabled={saving}
                 title="Save all changes"
-                style={{ ...fab, background: 'var(--accent-green)', color: '#000' }}
+                style={{ ...fab, background: 'var(--accent-teal)', color: '#000' }}
               >
                 {saving ? '…' : '✓'}
               </button>
@@ -96,9 +97,9 @@ export default function ModelPicksEditor({ rows, userTier, headerContent }: Prop
                 width: dirty ? '40px' : '54px',
                 height: dirty ? '40px' : '54px',
                 fontSize: dirty ? '1rem' : '1.3rem',
-                background: dirty ? 'var(--bg-secondary)' : 'rgba(52,211,153,0.15)',
-                color: dirty ? 'var(--text-muted)' : 'var(--accent-green)',
-                border: dirty ? '2px solid var(--border)' : '2px solid rgba(52,211,153,0.35)',
+                background: dirty ? 'var(--bg-secondary)' : 'rgba(45,212,191,0.15)',
+                color: dirty ? 'var(--text-muted)' : 'var(--accent-teal)',
+                border: dirty ? '2px solid var(--border)' : '2px solid rgba(45,212,191,0.35)',
               }}
             >
               ✕
@@ -108,9 +109,9 @@ export default function ModelPicksEditor({ rows, userTier, headerContent }: Prop
           <button
             onClick={() => setEditMode(true)}
             title="Edit picks"
-            style={{ ...fab, background: 'var(--accent-green)', color: '#000' }}
+            style={{ ...fab, background: 'var(--accent-teal)', color: '#000' }}
           >
-            ✏
+            <IconPencil size={14} />
           </button>
         )}
 
@@ -131,9 +132,9 @@ export default function ModelPicksEditor({ rows, userTier, headerContent }: Prop
 
         {editMode && !dirty && (
           <span style={{
-            background: 'rgba(52,211,153,0.12)',
-            border: '1px solid rgba(52,211,153,0.25)',
-            color: 'var(--accent-green)',
+            background: 'rgba(45,212,191,0.12)',
+            border: '1px solid rgba(45,212,191,0.25)',
+            color: 'var(--accent-teal)',
             fontSize: '0.68rem',
             fontWeight: 600,
             padding: '3px 8px',

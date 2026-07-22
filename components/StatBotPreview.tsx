@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import type { StatBotContent } from '@/lib/site-content'
 import EditableText from './EditableText'
+import { IconBot } from './Icons'
 
 interface Props {
   content: StatBotContent
@@ -51,7 +52,7 @@ export default function StatBotPreview({ content, editMode, onEdit, resetKey = 0
             <ul style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '32px' }}>
               {content.bullets.map((bullet, i) => (
                 <li key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--text-secondary)' }}>
-                  <span style={{ color: 'var(--accent-green)' }}>&#10003;</span>
+                  <span style={{ color: 'var(--accent-teal)' }}>&#10003;</span>
                   {ed
                     ? <EditableText tag="span" value={bullet} onChange={v => patchBullet(i, v)} resetKey={resetKey} />
                     : bullet}
@@ -63,7 +64,7 @@ export default function StatBotPreview({ content, editMode, onEdit, resetKey = 0
 
           <div className="statbot-chat">
             <div className="statbot-chat__header">
-              <div className="statbot-chat__avatar">&#129302;</div>
+              <div className="statbot-chat__avatar"><IconBot size={20} /></div>
               <div>
                 <div className="statbot-chat__name">EdTheStatBot</div>
                 <div className="statbot-chat__status">&#9679; Online</div>

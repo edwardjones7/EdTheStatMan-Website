@@ -1,6 +1,9 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
+import { IconLock } from '@/components/Icons'
+import { coverForPost } from '@/lib/blog-images'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 
@@ -16,7 +19,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   const admin = createAdminClient()
   const { data: post } = await (admin as any)
     .from('posts')
-    .select('title, excerpt, published_at')
+    .select('title, excerpt, published_at, cover_image')
     .eq('slug', params.slug)
     .eq('published', true)
     .single()
@@ -34,14 +37,14 @@ export async function generateMetadata({ params }: { params: { slug: string } })
       description: post.excerpt ?? undefined,
       url,
       siteName: 'EdTheStatMan',
-      images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
+      images: post.cover_image ? [{ url: post.cover_image }] : [{ url: '/opengraph-image', width: 1200, height: 630 }],
       publishedTime: post.published_at ?? undefined,
     },
     twitter: {
       card: 'summary_large_image',
       title: post.title,
       description: post.excerpt ?? undefined,
-      images: ['/opengraph-image'],
+      images: post.cover_image ? [post.cover_image] : ['/opengraph-image'],
     },
   }
 }
@@ -50,7 +53,7 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
   const admin = createAdminClient()
   const { data: post } = await (admin as any)
     .from('posts')
-    .select('id, title, slug, content, excerpt, tag, access_level, published_at')
+    .select('id, title, slug, content, excerpt, tag, access_level, published_at, cover_image')
     .eq('slug', params.slug)
     .eq('published', true)
     .single()
@@ -116,6 +119,17 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
             {post.excerpt && <p className="blog-post__excerpt-lead">{post.excerpt}</p>}
           </header>
 
+          <div className="blog-post__cover">
+            <Image
+              src={coverForPost(post.cover_image, post.tag)}
+              alt={post.title}
+              fill
+              sizes="(max-width: 900px) 100vw, 860px"
+              priority
+              style={{ objectFit: 'cover' }}
+            />
+          </div>
+
           {canRead ? (
             <div
               className="blog-post__content"
@@ -129,7 +143,7 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
               </div>
 
               <div className="blog-post__gate">
-                <div className="blog-post__gate-icon">🔒</div>
+                <div className="blog-post__gate-icon"><IconLock size={28} /></div>
                 {!user ? (
                   <>
                     <h2 className="blog-post__gate-title">Members Only Content</h2>

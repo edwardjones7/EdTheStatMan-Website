@@ -3,6 +3,7 @@
 import type { CTAContent } from '@/lib/site-content'
 import { DEFAULT_CTA } from '@/lib/site-content'
 import EditableText from './EditableText'
+import { IconBolt, IconChat } from './Icons'
 
 interface Props {
   content?: CTAContent
@@ -38,10 +39,10 @@ export default function CTASection({ content = DEFAULT_CTA, editMode, onEdit, re
           </p>
           <div className="cta-box__actions">
             <a href="https://x.com/EdTheStatMan" className="btn btn--primary btn--lg" target="_blank" rel="noopener">
-              <span className="btn__icon">&#9889;</span> Follow on X
+              <span className="btn__icon"><IconBolt size={15} /></span> Follow on X
             </a>
             <a href="https://discord.gg/gqPrVBg4Aw" className="btn btn--secondary btn--lg" target="_blank" rel="noopener">
-              <span className="btn__icon">&#128172;</span> Join Discord
+              <span className="btn__icon"><IconChat size={15} /></span> Join Discord
             </a>
           </div>
         </div>

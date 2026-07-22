@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { IconMail } from '@/components/Icons'
 
 export const metadata: Metadata = {
   title: 'Verify Your Email – EdTheStatMan.com',
@@ -15,7 +16,7 @@ export default function VerifyEmailPage({
   return (
     <main className="auth-page">
       <div className="auth-card verify-card">
-        <div className="verify-icon">&#9993;</div>
+        <div className="verify-icon"><IconMail size={28} /></div>
 
         <h1 className="auth-card__title" style={{ marginBottom: '12px' }}>Check your email</h1>
 

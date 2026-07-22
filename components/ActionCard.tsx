@@ -4,6 +4,7 @@ import Link from 'next/link'
 import type { ActionCardContent } from '@/lib/site-content'
 import { DEFAULT_ACTION_CARD } from '@/lib/site-content'
 import EditableText from './EditableText'
+import { IconTrophy, IconBolt, IconChat, IconChartBar, IconTrendUp } from './Icons'
 
 interface Props {
   content?: ActionCardContent
@@ -50,7 +51,7 @@ export default function ActionCard({ content = DEFAULT_ACTION_CARD, editMode, on
                 : content.dateHeader}
             </span>
             <span className={`action-card__status ${STATUS_CLASS[content.statusType] ?? ''}`}>
-              <span>&#128308;</span>{' '}
+              <span className="pulse-dot"></span>{' '}
               {ed
                 ? (
                   <>
@@ -80,7 +81,7 @@ export default function ActionCard({ content = DEFAULT_ACTION_CARD, editMode, on
 
             <div className="action-card__highlight">
               <p>
-                &#127942;{' '}
+                <IconTrophy size={15} />{' '}
                 {ed
                   ? <EditableText tag="span" value={content.highlight} onChange={v => onEdit({ highlight: v })} resetKey={resetKey} />
                   : content.highlight}
@@ -97,16 +98,16 @@ export default function ActionCard({ content = DEFAULT_ACTION_CARD, editMode, on
 
             <div style={{ marginTop: '24px', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
               <a href="https://x.com/EdTheStatMan" className="btn btn--primary btn--sm" target="_blank" rel="noopener">
-                &#9889; Follow on X
+                <IconBolt size={14} /> Follow on X
               </a>
               <a href="https://discord.gg/gqPrVBg4Aw" className="btn btn--secondary btn--sm" target="_blank" rel="noopener">
-                &#128172; Join Discord
+                <IconChat size={14} /> Join Discord
               </a>
               <Link href="/betting-systems" className="btn btn--outline btn--sm">
-                &#128202; View All Systems
+                <IconChartBar size={14} /> View All Systems
               </Link>
               <Link href="/betting-trends" className="btn btn--outline btn--sm">
-                &#128200; View All Trends
+                <IconTrendUp size={14} /> View All Trends
               </Link>
             </div>
           </div>
@@ -118,7 +119,7 @@ export default function ActionCard({ content = DEFAULT_ACTION_CARD, editMode, on
 
 const selectStyle: React.CSSProperties = {
   background: 'transparent',
-  border: '1px dashed rgba(52,211,153,0.45)',
+  border: '1px dashed rgba(45,212,191,0.45)',
   borderRadius: '4px',
   padding: '2px 6px',
   color: 'inherit',

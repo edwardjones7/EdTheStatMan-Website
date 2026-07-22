@@ -1,9 +1,11 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import NavAuth from './NavAuth'
+import { IconUser, IconSettings, IconBolt } from './Icons'
 import type { SubscriptionTier } from '@/lib/supabase/types'
 
 interface NavClientProps {
@@ -53,7 +55,7 @@ export default function NavClient({ user }: NavClientProps) {
       <nav className={`nav ${scrolled ? 'scrolled' : ''}`} role="navigation" aria-label="Main navigation">
         <div className="nav__inner">
           <Link href="/" className="nav__logo">
-            <div className="nav__logo-icon"><svg viewBox="0 0 32 32" width="100%" height="100%"><defs><linearGradient id="logo-g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#34d399"/><stop offset="100%" stopColor="#06b6d4"/></linearGradient></defs><rect width="32" height="32" rx="4" fill="#0f172a"/><path d="M7 5 L25 5 L23 9 L11 9 L11 14 L22 14 L20.5 18 L11 18 L11 23 L25 23 L23 27 L7 27 Z" fill="url(#logo-g)"/></svg></div>
+            <div className="nav__logo-icon"><Image src="/logo.png" alt="EdTheStatMan logo" width={36} height={36} /></div>
             <span>EdTheStatMan</span>
           </Link>
 
@@ -110,15 +112,15 @@ export default function NavClient({ user }: NavClientProps) {
             <div className="mobile-menu__user-info">
               <div className="mobile-menu__user-email">{user.email}</div>
               <div className="mobile-menu__user-links">
-                <Link href="/account" className="mobile-menu__user-link">&#128100; My Account</Link>
+                <Link href="/account" className="mobile-menu__user-link"><IconUser size={14} /> My Account</Link>
                 {user.is_admin && (
-                  <Link href="/admin" className="mobile-menu__user-link">&#9881; Admin Dashboard</Link>
+                  <Link href="/admin" className="mobile-menu__user-link"><IconSettings size={14} /> Admin Dashboard</Link>
                 )}
               </div>
             </div>
           )}
           <a href="https://x.com/EdTheStatMan" className="mobile-menu__cta" target="_blank" rel="noopener">
-            &#9889; Follow on X
+            <IconBolt size={14} /> Follow on X
           </a>
         </div>
       </div>

@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { IconPencil } from './Icons'
 
 interface Props {
   section: string
@@ -25,10 +26,10 @@ export default function AdminEditOverlay({ section, label }: Props) {
           alignItems: 'center',
           gap: '5px',
           padding: '4px 10px',
-          background: 'rgba(52,211,153,0.12)',
-          border: '1px solid rgba(52,211,153,0.35)',
+          background: 'rgba(45,212,191,0.12)',
+          border: '1px solid rgba(45,212,191,0.35)',
           borderRadius: '6px',
-          color: 'var(--accent-green)',
+          color: 'var(--accent-teal)',
           fontSize: '0.72rem',
           fontWeight: 600,
           textDecoration: 'none',
@@ -36,7 +37,7 @@ export default function AdminEditOverlay({ section, label }: Props) {
           letterSpacing: '0.02em',
         }}
       >
-        ✏ Edit {label}
+        <IconPencil size={13} /> Edit {label}
       </Link>
     </div>
   )

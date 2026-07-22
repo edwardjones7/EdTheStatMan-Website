@@ -3,6 +3,8 @@
 import Link from 'next/link'
 import type { SystemsOverviewContent, SystemsOverviewCard } from '@/lib/site-content'
 import EditableText from './EditableText'
+import { IconFootball, IconBasketball, IconFlame } from './Icons'
+import RecordStrip from './RecordStrip'
 
 interface Props {
   content: SystemsOverviewContent
@@ -11,11 +13,11 @@ interface Props {
   resetKey?: number
 }
 
-const SPORT_ICONS: Record<string, string> = {
-  nfl: '&#127944;',
-  cfb: '&#127945;',
-  nba: '&#127936;',
-  cbb: '&#127936;',
+const SPORT_ICONS: Record<string, typeof IconFootball> = {
+  nfl: IconFootball,
+  cfb: IconFootball,
+  nba: IconBasketball,
+  cbb: IconBasketball,
 }
 
 export default function SystemsOverview({ content, editMode, onEdit, resetKey = 0 }: Props) {
@@ -57,13 +59,12 @@ export default function SystemsOverview({ content, editMode, onEdit, resetKey = 
             return (
               <div key={i} className={`sys-card sys-card--${card.sport}`}>
                 <div className="sys-card__top">
-                  <div
-                    className="sys-card__icon"
-                    dangerouslySetInnerHTML={{ __html: SPORT_ICONS[card.sport] ?? '&#127936;' }}
-                  />
+                  <div className="sys-card__icon">
+                    {(() => { const Icon = SPORT_ICONS[card.sport] ?? IconBasketball; return <Icon size={22} /> })()}
+                  </div>
                   <div className={`sys-card__status sys-card__status--${card.statusType}`}>
                     {card.statusType === 'active' && <span className="pulse-dot"></span>}
-                    {card.statusType === 'hot' && <span>&#128293; </span>}
+                    {card.statusType === 'hot' && <IconFlame size={13} />}
                     {ed
                       ? <EditableText tag="span" value={card.statusLabel} onChange={v => patchCard(i, { statusLabel: v })} resetKey={resetKey} />
                       : card.statusLabel}
@@ -78,13 +79,7 @@ export default function SystemsOverview({ content, editMode, onEdit, resetKey = 
                 <p className="sys-card__label">Betting Systems</p>
 
                 <div className="sys-card__stats">
-                  <div className="sys-card__ring" data-pct={pct}>
-                    <svg viewBox="0 0 80 80">
-                      <circle cx="40" cy="40" r="34" className="sys-card__ring-bg"/>
-                      <circle cx="40" cy="40" r="34" className="sys-card__ring-fill" style={{ '--pct': String(pct) } as React.CSSProperties}/>
-                    </svg>
-                    <span className="sys-card__ring-text">{pct}%</span>
-                  </div>
+                  <div className="sys-card__pct">{pct}%</div>
                   <div className="sys-card__numbers">
                     {ed ? (
                       <RecordInput
@@ -105,9 +100,7 @@ export default function SystemsOverview({ content, editMode, onEdit, resetKey = 
                   </div>
                 </div>
 
-                <div className="sys-card__bar">
-                  <div className="sys-card__bar-fill" data-width={pct}></div>
-                </div>
+                <RecordStrip w={card.wins} l={card.losses} />
               </div>
             )
           })}
@@ -149,7 +142,7 @@ function RecordInput({ wins, losses, onChange, resetKey }: {
         style={{
           background: 'transparent',
           border: 'none',
-          borderBottom: '1px dashed rgba(52,211,153,0.55)',
+          borderBottom: '1px dashed rgba(45,212,191,0.55)',
           outline: 'none',
           color: 'var(--text-primary)',
           fontSize: '1.1rem',

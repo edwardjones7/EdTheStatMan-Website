@@ -168,7 +168,7 @@ export default function AdminAnalyticsTab() {
                     label={p.path}
                     value={p.count}
                     total={totalRangeViews}
-                    color="var(--accent-cyan)"
+                    color="var(--accent-teal)"
                   />
                 ))}
               </div>
@@ -222,7 +222,7 @@ export default function AdminAnalyticsTab() {
                       label={r.source}
                       value={r.count}
                       total={totalRangeViews}
-                      color="var(--accent-green)"
+                      color="var(--accent-teal)"
                     />
                   ))}
                 </div>
@@ -242,7 +242,7 @@ export default function AdminAnalyticsTab() {
                       label={d.device.charAt(0).toUpperCase() + d.device.slice(1)}
                       value={d.count}
                       total={totalRangeViews}
-                      color={d.device === 'mobile' ? 'var(--accent-cyan)' : d.device === 'tablet' ? 'var(--accent-gold)' : 'var(--accent-purple)'}
+                      color={d.device === 'mobile' ? 'var(--accent-teal)' : d.device === 'tablet' ? 'var(--accent-gold)' : 'var(--accent-gold)'}
                     />
                   ))}
                 </div>

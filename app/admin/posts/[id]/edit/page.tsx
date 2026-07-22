@@ -22,7 +22,7 @@ export default async function EditPostPage({ params }: { params: { id: string } 
 
   const { data: post } = await (supabase as any)
     .from('posts')
-    .select('id, title, slug, content, excerpt, tag, access_level, published')
+    .select('id, title, slug, content, excerpt, tag, access_level, published, cover_image')
     .eq('id', params.id)
     .single()
 

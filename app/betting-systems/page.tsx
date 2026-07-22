@@ -73,6 +73,20 @@ export default async function BettingSystems() {
   })
 
   const isPaid = userTier === 'basic' || userTier === 'premium'
+  const canSeeAll = isPaid || isAdmin
+
+  // Everything is members-only except rows explicitly flagged is_free. Locked
+  // rows are dropped server-side — the paywall is a count, never a CSS blur, so
+  // the members-only payload never reaches a non-member's browser. Counts are
+  // keyed by sport so the client can show the right number per tab.
+  const visibleSystems = canSeeAll ? systems : systems.filter((s: any) => s.is_free)
+  const lockedCounts: Record<string, number> = {}
+  if (!canSeeAll) {
+    for (const s of systems) {
+      if ((s as any).is_free) continue
+      lockedCounts[(s as any).sport] = (lockedCounts[(s as any).sport] ?? 0) + 1
+    }
+  }
 
   return (
     <main>
@@ -83,7 +97,7 @@ export default async function BettingSystems() {
             <h2 className="section-title">Betting Systems</h2>
             <p className="section-subtitle">Filter by sport to view system records, win percentages, and more.</p>
           </div>
-          <SportTabsSystem systems={(systems ?? []) as any[]} userTier={userTier} isAdmin={isAdmin} />
+          <SportTabsSystem systems={(visibleSystems ?? []) as any[]} lockedCounts={lockedCounts} userTier={userTier} isAdmin={isAdmin} />
         </div>
       </section>
 

@@ -345,7 +345,7 @@ export default function AdminDashboard({ users, posts, initialTab }: Props) {
                   {analytics.topPages.length > 0 ? (
                     <div className="admin-breakdown-list">
                       {analytics.topPages.slice(0, 7).map(p => (
-                        <BreakdownRow key={p.path} label={p.path} value={p.count} total={totalRangeViews} color="var(--accent-cyan)" mono />
+                        <BreakdownRow key={p.path} label={p.path} value={p.count} total={totalRangeViews} color="var(--accent-teal)" mono />
                       ))}
                     </div>
                   ) : (
@@ -358,7 +358,7 @@ export default function AdminDashboard({ users, posts, initialTab }: Props) {
                   {analytics.referrers.length > 0 ? (
                     <div className="admin-breakdown-list">
                       {analytics.referrers.map(r => (
-                        <BreakdownRow key={r.source} label={r.source} value={r.count} total={totalRangeViews} color="var(--accent-green)" mono />
+                        <BreakdownRow key={r.source} label={r.source} value={r.count} total={totalRangeViews} color="var(--accent-teal)" mono />
                       ))}
                     </div>
                   ) : (
@@ -375,8 +375,8 @@ export default function AdminDashboard({ users, posts, initialTab }: Props) {
               <h3 className="admin-breakdown-card__title">Users</h3>
               <div className="admin-breakdown-list">
                 <BreakdownRow label="Free"    value={stats.freeUsers}    total={stats.totalUsers} color="var(--text-muted)" />
-                <BreakdownRow label="Basic"   value={stats.basicUsers}   total={stats.totalUsers} color="var(--accent-green)" />
-                <BreakdownRow label="Premium" value={stats.premiumUsers} total={stats.totalUsers} color="var(--accent-purple)" />
+                <BreakdownRow label="Basic"   value={stats.basicUsers}   total={stats.totalUsers} color="var(--accent-teal)" />
+                <BreakdownRow label="Premium" value={stats.premiumUsers} total={stats.totalUsers} color="var(--accent-gold)" />
                 <BreakdownRow label="Admins"  value={stats.adminCount}   total={stats.totalUsers} color="var(--accent-gold)" />
               </div>
               <div className="admin-breakdown-footer"><span>{stats.newThisMonth} new this month</span></div>
@@ -385,10 +385,10 @@ export default function AdminDashboard({ users, posts, initialTab }: Props) {
             <div className="admin-breakdown-card">
               <h3 className="admin-breakdown-card__title">Content</h3>
               <div className="admin-breakdown-list">
-                <BreakdownRow label="Published"    value={stats.publishedPosts} total={stats.totalPosts} color="var(--accent-green)" />
+                <BreakdownRow label="Published"    value={stats.publishedPosts} total={stats.totalPosts} color="var(--accent-teal)" />
                 <BreakdownRow label="Drafts"       value={stats.draftPosts}     total={stats.totalPosts} color="var(--text-muted)" />
-                <BreakdownRow label="Free Access"  value={stats.freePosts}      total={stats.totalPosts} color="var(--accent-cyan)" />
-                <BreakdownRow label="Members Only" value={stats.membersPosts}   total={stats.totalPosts} color="var(--accent-purple)" />
+                <BreakdownRow label="Free Access"  value={stats.freePosts}      total={stats.totalPosts} color="var(--accent-teal)" />
+                <BreakdownRow label="Members Only" value={stats.membersPosts}   total={stats.totalPosts} color="var(--accent-gold)" />
               </div>
               <div className="admin-breakdown-footer"><span>{stats.totalPosts} total posts</span></div>
             </div>
@@ -404,7 +404,7 @@ export default function AdminDashboard({ users, posts, initialTab }: Props) {
                         label={d.device.charAt(0).toUpperCase() + d.device.slice(1)}
                         value={d.count}
                         total={totalRangeViews}
-                        color={d.device === 'mobile' ? 'var(--accent-cyan)' : d.device === 'tablet' ? 'var(--accent-gold)' : 'var(--accent-purple)'}
+                        color={d.device === 'mobile' ? 'var(--accent-teal)' : d.device === 'tablet' ? 'var(--accent-gold)' : 'var(--accent-gold)'}
                       />
                     ))}
                   </div>

@@ -15,7 +15,7 @@ export async function POST(req: Request) {
   if (!profile?.is_admin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
   const body = await req.json()
-  const { title, slug, content, excerpt, tag, access_level, published } = body
+  const { title, slug, content, excerpt, tag, access_level, published, cover_image } = body
 
   if (!title || !slug || !content || !tag) {
     return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
@@ -32,6 +32,7 @@ export async function POST(req: Request) {
       access_level: access_level ?? 'free',
       published: published ?? false,
       published_at: published ? new Date().toISOString() : null,
+      cover_image: cover_image || null,
       author_id: user.id,
     })
     .select('id, slug')

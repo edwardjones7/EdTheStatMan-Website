@@ -27,7 +27,7 @@ export async function POST(request: Request) {
     text: `Name: ${name}\nEmail: ${email}\nSubject: ${subjectLabels[subject] ?? subject}\n\n${message}`,
     html: `
       <div style="font-family:sans-serif;max-width:600px;margin:0 auto">
-        <h2 style="color:#34d399;margin-bottom:4px">New Contact Form Submission</h2>
+        <h2 style="color:#2dd4bf;margin-bottom:4px">New Contact Form Submission</h2>
         <hr style="border:none;border-top:1px solid #333;margin:16px 0"/>
         <p><strong>Name:</strong> ${name}</p>
         <p><strong>Email:</strong> <a href="mailto:${email}">${email}</a></p>

@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import type { FeaturesContent, FeatureCard } from '@/lib/site-content'
 import EditableText from './EditableText'
+import { IconChartBar, IconTrendUp, IconBot, IconTrophy, IconNews, IconBell } from './Icons'
 
 interface Props {
   content: FeaturesContent
@@ -11,7 +12,7 @@ interface Props {
   resetKey?: number
 }
 
-const CARD_ICONS = ['&#128202;', '&#128200;', '&#129302;', '&#127942;', '&#128240;', '&#128276;']
+const CARD_ICONS = [IconChartBar, IconTrendUp, IconBot, IconTrophy, IconNews, IconBell]
 
 export default function Features({ content, editMode, onEdit, resetKey = 0 }: Props) {
   const ed = editMode && onEdit
@@ -56,10 +57,9 @@ export default function Features({ content, editMode, onEdit, resetKey = 0 }: Pr
         <div className="features-grid stagger-children">
           {content.cards.map((card, i) => (
             <div key={i} className="feature-card">
-              <div
-                className={`card__icon card__icon--${card.iconColor}`}
-                dangerouslySetInnerHTML={{ __html: CARD_ICONS[i] ?? '&#128202;' }}
-              />
+              <div className={`card__icon card__icon--${card.iconColor}`}>
+                {(() => { const Icon = CARD_ICONS[i] ?? IconChartBar; return <Icon size={22} /> })()}
+              </div>
               <div className="feature-card__number">{card.number}</div>
               <h3 className="feature-card__title">
                 {ed

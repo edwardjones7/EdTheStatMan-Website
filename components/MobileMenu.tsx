@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { IconBolt } from './Icons'
 
 interface MobileMenuProps {
   isOpen: boolean
@@ -37,7 +38,7 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
         Contact
       </Link>
       <a href="https://x.com/EdTheStatMan" className="mobile-menu__cta" target="_blank" rel="noopener" onClick={onClose}>
-        &#9889; Follow on X
+        <IconBolt size={14} /> Follow on X
       </a>
     </div>
   )

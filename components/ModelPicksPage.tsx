@@ -4,6 +4,8 @@ import type { ModelPicksContent } from '@/lib/site-content'
 import type { TodaysBet } from './TodaysBets'
 import TodaysBets from './TodaysBets'
 import Link from 'next/link'
+import type { ComponentType } from 'react'
+import { IconChartBar, IconTrendUp, IconNews, IconBolt, IconChat } from './Icons'
 
 interface Props {
   rows: TodaysBet[]
@@ -45,21 +47,21 @@ export default function ModelPicksPage({
             marginBottom: '48px',
           }}>
             <InfoCard
-              icon="📊"
+              icon={IconChartBar}
               title="Backed by Systems"
               text="Every pick is driven by data-backed betting systems with tracked records across NFL, NBA, College Football, and College Basketball."
               href="/betting-systems"
               linkText="View Betting Systems"
             />
             <InfoCard
-              icon="📈"
+              icon={IconTrendUp}
               title="Trend-Informed"
               text="Picks factor in ATS records, over/under patterns, and situational edges uncovered through detailed trend analysis."
               href="/betting-trends"
               linkText="View Betting Trends"
             />
             <InfoCard
-              icon="📋"
+              icon={IconNews}
               title="Full Transparency"
               text="Every play is tracked and posted to results. Check our historical performance with year-by-year records and bankroll ROI."
               href="/results"
@@ -92,10 +94,10 @@ export default function ModelPicksPage({
             </p>
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
               <a href="https://x.com/EdTheStatMan" className="btn btn--primary btn--sm" target="_blank" rel="noopener">
-                ⚡ Follow on X
+                <IconBolt size={14} /> Follow on X
               </a>
               <a href="https://discord.gg/gqPrVBg4Aw" className="btn btn--secondary btn--sm" target="_blank" rel="noopener">
-                💬 Join Discord
+                <IconChat size={14} /> Join Discord
               </a>
               {userTier === null && (
                 <Link href="/signup" className="btn btn--outline btn--sm">
@@ -111,8 +113,8 @@ export default function ModelPicksPage({
   )
 }
 
-function InfoCard({ icon, title, text, href, linkText }: {
-  icon: string; title: string; text: string; href: string; linkText: string
+function InfoCard({ icon: Icon, title, text, href, linkText }: {
+  icon: ComponentType<{ size?: number }>; title: string; text: string; href: string; linkText: string
 }) {
   return (
     <div style={{
@@ -121,7 +123,7 @@ function InfoCard({ icon, title, text, href, linkText }: {
       borderRadius: '12px',
       padding: '28px 24px',
     }}>
-      <div style={{ fontSize: '1.5rem', marginBottom: '12px' }}>{icon}</div>
+      <div style={{ marginBottom: '12px', color: 'var(--accent-teal)' }}><Icon size={24} /></div>
       <h3 style={{
         fontSize: '1.05rem',
         fontWeight: 700,
@@ -139,7 +141,7 @@ function InfoCard({ icon, title, text, href, linkText }: {
         {text}
       </p>
       <Link href={href} style={{
-        color: 'var(--accent-cyan)',
+        color: 'var(--accent-teal)',
         fontSize: '0.85rem',
         fontWeight: 600,
         textDecoration: 'none',

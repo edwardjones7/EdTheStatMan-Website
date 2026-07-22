@@ -71,7 +71,7 @@ export default function AdminContentTab({ content: initialContent }: Props) {
       </div>
 
       {err && (
-        <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '8px', padding: '10px 14px', color: '#f87171', fontSize: '0.85rem', marginBottom: '16px' }}>
+        <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '8px', padding: '10px 14px', color: '#f8717a', fontSize: '0.85rem', marginBottom: '16px' }}>
           {err}
         </div>
       )}
@@ -294,7 +294,7 @@ function ContentAccordion({
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '14px 18px',
-          background: open ? 'rgba(52,211,153,0.06)' : 'var(--bg-secondary)',
+          background: open ? 'rgba(45,212,191,0.06)' : 'var(--bg-secondary)',
           border: 'none',
           cursor: 'pointer',
           color: 'var(--text-primary)',
@@ -319,7 +319,7 @@ function ContentAccordion({
               {saving ? 'Saving…' : 'Save Changes'}
             </button>
             {saved && (
-              <span style={{ color: 'var(--accent-green)', fontSize: '0.85rem', fontWeight: 600 }}>
+              <span style={{ color: 'var(--accent-teal)', fontSize: '0.85rem', fontWeight: 600 }}>
                 ✓ Saved
               </span>
             )}
@@ -433,7 +433,7 @@ function TwoCol({ children }: { children: React.ReactNode }) {
 function SectionDivider({ label }: { label: string }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: '4px 0' }}>
-      <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--accent-cyan)', textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>
+      <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--accent-teal)', textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>
         {label}
       </span>
       <div style={{ flex: 1, height: '1px', background: 'var(--border)' }} />

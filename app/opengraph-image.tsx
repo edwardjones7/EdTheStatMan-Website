@@ -10,7 +10,7 @@ export default function OgImage() {
     (
       <div
         style={{
-          background: '#0f1117',
+          background: 'linear-gradient(180deg, #071219 0%, #0c1e28 100%)',
           width: '100%',
           height: '100%',
           display: 'flex',
@@ -27,14 +27,14 @@ export default function OgImage() {
             style={{
               width: '72px',
               height: '72px',
-              borderRadius: '50%',
-              background: '#34d399',
+              borderRadius: '10px',
+              background: 'linear-gradient(135deg, #a8e063 0%, #2dd4bf 55%, #38bdf8 100%)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: '32px',
-              fontWeight: 700,
-              color: '#0f1117',
+              fontSize: '40px',
+              fontWeight: 800,
+              color: '#071219',
             }}
           >
             E
@@ -61,7 +61,7 @@ export default function OgImage() {
           style={{
             fontSize: '58px',
             fontWeight: 800,
-            color: '#34d399',
+            color: '#2dd4bf',
             textAlign: 'center',
             lineHeight: 1.15,
             marginBottom: '32px',

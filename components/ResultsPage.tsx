@@ -39,12 +39,12 @@ const SPORT_THEME: Record<string, { color: string; bg: string }> = {
   NFL:    { color: '#38bdf8', bg: 'rgba(56,189,248,0.12)' },
   NFLPRE: { color: '#7dd3fc', bg: 'rgba(125,211,252,0.12)' },
   CFL:    { color: '#f43f5e', bg: 'rgba(244,63,94,0.12)' },
-  CFB:    { color: '#818cf8', bg: 'rgba(129,140,248,0.12)' },
-  NBA:    { color: '#fbbf24', bg: 'rgba(251,191,36,0.12)' },
-  WNBA:   { color: '#fb923c', bg: 'rgba(251,146,60,0.12)' },
-  CBB:    { color: '#34d399', bg: 'rgba(52,211,153,0.12)' },
+  CFB:    { color: '#e9c46a', bg: 'rgba(233,196,106,0.12)' },
+  NBA:    { color: '#e9c46a', bg: 'rgba(233,196,106,0.12)' },
+  WNBA:   { color: '#d98a6f', bg: 'rgba(251,146,60,0.12)' },
+  CBB:    { color: '#2dd4bf', bg: 'rgba(45,212,191,0.12)' },
 }
-const sportTheme = (sport: string) => SPORT_THEME[sport] ?? { color: 'var(--accent-cyan)', bg: 'rgba(52,211,153,0.12)' }
+const sportTheme = (sport: string) => SPORT_THEME[sport] ?? { color: 'var(--accent-teal)', bg: 'rgba(45,212,191,0.12)' }
 
 const FORM_LEN = 7
 
@@ -157,7 +157,7 @@ function ChartBarEditor({
         background: 'rgba(255,255,255,0.02)',
         fontSize: '0.7rem',
         fontWeight: 700,
-        color: 'var(--accent-cyan)',
+        color: 'var(--accent-teal)',
         textTransform: 'uppercase' as const,
         letterSpacing: '0.08em',
       }}>
@@ -171,9 +171,9 @@ function ChartBarEditor({
             <button
               onClick={() => patch(i, { color: bar.color === 'green' ? 'red' : 'green' })}
               style={{
-                background: bar.color === 'green' ? 'rgba(52,211,153,0.15)' : 'rgba(248,113,113,0.15)',
-                border: `1px solid ${bar.color === 'green' ? '#34d399' : '#f87171'}`,
-                color: bar.color === 'green' ? '#34d399' : '#f87171',
+                background: bar.color === 'green' ? 'rgba(45,212,191,0.15)' : 'rgba(248,113,122,0.15)',
+                border: `1px solid ${bar.color === 'green' ? '#2dd4bf' : '#f8717a'}`,
+                color: bar.color === 'green' ? '#2dd4bf' : '#f8717a',
                 borderRadius: '4px',
                 cursor: 'pointer',
                 fontSize: '0.7rem',
@@ -261,9 +261,9 @@ function TableRowEditor({
                 <button
                   onClick={() => patch(i, { bankrollType: row.bankrollType === 'win' ? 'loss' : 'win' })}
                   style={{
-                    background: row.bankrollType === 'win' ? 'rgba(52,211,153,0.15)' : 'rgba(248,113,113,0.15)',
-                    border: `1px solid ${row.bankrollType === 'win' ? '#34d399' : '#f87171'}`,
-                    color: row.bankrollType === 'win' ? '#34d399' : '#f87171',
+                    background: row.bankrollType === 'win' ? 'rgba(45,212,191,0.15)' : 'rgba(248,113,122,0.15)',
+                    border: `1px solid ${row.bankrollType === 'win' ? '#2dd4bf' : '#f8717a'}`,
+                    color: row.bankrollType === 'win' ? '#2dd4bf' : '#f8717a',
                     borderRadius: '4px',
                     cursor: 'pointer',
                     fontSize: '0.7rem',
@@ -279,7 +279,7 @@ function TableRowEditor({
                 <button
                   onClick={() => removeRow(i)}
                   style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: '0.85rem', padding: '2px 4px' }}
-                  onMouseEnter={e => (e.currentTarget.style.color = '#f87171')}
+                  onMouseEnter={e => (e.currentTarget.style.color = '#f8717a')}
                   onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-muted)')}
                 >✕</button>
               </td>
@@ -291,9 +291,9 @@ function TableRowEditor({
         onClick={addRow}
         style={{
           marginTop: '8px',
-          background: 'rgba(52,211,153,0.08)',
-          color: 'var(--accent-green)',
-          border: '1px solid rgba(52,211,153,0.25)',
+          background: 'rgba(45,212,191,0.08)',
+          color: 'var(--accent-teal)',
+          border: '1px solid rgba(45,212,191,0.25)',
           borderRadius: '6px',
           cursor: 'pointer',
           fontFamily: 'inherit',
@@ -335,7 +335,7 @@ export default function ResultsPage({ content, editMode, onEdit, resetKey = 0, c
             {sportStats.map(s => {
               const theme = sportTheme(s.sport)
               const beatsVig = s.winPct >= BREAK_EVEN
-              const accent = beatsVig ? 'var(--accent-green)' : 'var(--accent-red)'
+              const accent = beatsVig ? 'var(--accent-teal)' : 'var(--accent-red)'
               const sportTotal = s.wins + s.losses + s.pushes
               return (
                 <div key={s.sport} className="perf-sport-card reveal-scale">

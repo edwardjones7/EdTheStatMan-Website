@@ -95,7 +95,7 @@ export interface SystemsOverviewContent {
 export interface TickerItem {
   tag: string         // e.g. "NFL"
   text: string        // e.g. "Betting Systems: 10-34"
-  icon?: string       // optional emoji before tag, e.g. "🏈"
+  icon?: string       // emoji key mapped to an SVG icon at render time (see LiveTicker TICKER_ICONS)
   badge?: string      // optional badge text, e.g. "▲ Hot"
   badgeType?: 'up' | 'down' | 'neutral'
 }
@@ -127,7 +127,7 @@ export const DEFAULT_HERO: HeroContent = {
   titleAccent: 'Proven Systems.',
   titleRotations: ['Proven Systems.', 'Sharper Edges.', 'Smarter Bets.', 'Winning Picks.', 'Real Results.'],
   description:
-    'Where handicappers get sharp and bettors win. Data-driven betting systems and trends backed by deep statistical analysis.',
+    'For bettors, handicappers and content creators who want proven systems, trends and model-driven picks — without spending hours researching games yourself.',
   stat1Count: '10.19',
   stat1Prefix: '+',
   stat1Suffix: '%',
@@ -261,7 +261,7 @@ export const DEFAULT_TICKER: TickerContent = {
     { tag: 'NBA',                icon: '🏀', text: 'Betting Systems: 101-108' },
     { tag: 'College Basketball', icon: '🏀', text: 'Betting Systems: 2-0',      badge: '▲ Hot',    badgeType: 'up' },
     { tag: 'Bankroll',           icon: '💰', text: '+10.19% in 2026',           badge: '▲',        badgeType: 'up' },
-    { tag: 'Super Bowl LX',      icon: '🏆', text: 'Systems: 19-4 ATS',         badge: '✅ Winner', badgeType: 'up' },
+    { tag: 'Super Bowl LX',      icon: '🏆', text: 'Systems: 19-4 ATS',         badge: 'Winner', badgeType: 'up' },
   ],
 }
 

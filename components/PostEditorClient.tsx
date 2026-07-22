@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useEditor, EditorContent, useEditorState } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
@@ -27,7 +27,25 @@ interface Props {
     tag: string
     access_level: AccessLevel
     published: boolean
+    cover_image: string | null
   }
+}
+
+// Downscale to <=1600px wide before upload — next/image runs unoptimized, so
+// the stored file is served as-is.
+async function downscaleImage(file: File): Promise<Blob> {
+  const bitmap = await createImageBitmap(file)
+  const maxWidth = 1600
+  if (bitmap.width <= maxWidth) return file
+  const scale = maxWidth / bitmap.width
+  const canvas = document.createElement('canvas')
+  canvas.width = maxWidth
+  canvas.height = Math.round(bitmap.height * scale)
+  const ctx = canvas.getContext('2d')!
+  ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height)
+  return new Promise(resolve =>
+    canvas.toBlob(blob => resolve(blob ?? file), 'image/webp', 0.82)
+  )
 }
 
 export default function PostEditorClient({ post }: Props) {
@@ -41,8 +59,39 @@ export default function PostEditorClient({ post }: Props) {
   const [tag, setTag] = useState(post?.tag ?? 'General')
   const [accessLevel, setAccessLevel] = useState<AccessLevel>(post?.access_level ?? 'free')
   const [published, setPublished] = useState(post?.published ?? false)
+  const [coverImage, setCoverImage] = useState<string | null>(post?.cover_image ?? null)
+  const [uploading, setUploading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  async function handleCoverUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    if (!/^image\/(jpeg|png|webp)$/.test(file.type)) {
+      setError('Cover must be a JPEG, PNG, or WebP image.')
+      return
+    }
+    setUploading(true)
+    setError(null)
+    try {
+      const blob = await downscaleImage(file)
+      const formData = new FormData()
+      formData.append('file', new File([blob], 'cover', { type: blob.type || file.type }))
+      const res = await fetch('/api/admin/upload', { method: 'POST', body: formData })
+      const data = await res.json()
+      if (!res.ok) {
+        setError(data.error ?? 'Upload failed.')
+        return
+      }
+      setCoverImage(data.url)
+    } catch {
+      setError('Upload failed.')
+    } finally {
+      setUploading(false)
+    }
+  }
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -103,6 +152,7 @@ export default function PostEditorClient({ post }: Props) {
       tag,
       access_level: accessLevel,
       published: shouldPublish,
+      cover_image: coverImage,
     }
 
     const res = await fetch(
@@ -334,6 +384,56 @@ export default function PostEditorClient({ post }: Props) {
                   </button>
                 ))}
               </div>
+            </div>
+
+            {/* Cover image */}
+            <div className="post-editor__card">
+              <div className="post-editor__card-title">Cover Image</div>
+              {coverImage ? (
+                <div className="post-editor__cover">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={coverImage} alt="Cover preview" className="post-editor__cover-img" />
+                  <div className="post-editor__cover-actions">
+                    <button
+                      type="button"
+                      className="btn btn--outline btn--sm"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploading}
+                    >
+                      {uploading ? 'Uploading…' : 'Replace'}
+                    </button>
+                    <button
+                      type="button"
+                      className="post-editor__delete-btn"
+                      style={{ marginTop: 0 }}
+                      onClick={() => setCoverImage(null)}
+                      disabled={uploading}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  className="btn btn--outline btn--sm"
+                  style={{ width: '100%', justifyContent: 'center' }}
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                >
+                  {uploading ? 'Uploading…' : 'Upload cover'}
+                </button>
+              )}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={handleCoverUpload}
+                style={{ display: 'none' }}
+              />
+              <p className="post-editor__optional" style={{ marginTop: '8px', fontSize: '0.72rem' }}>
+                Optional — posts without a cover use a default photo for their tag.
+              </p>
             </div>
 
             {/* Access level */}

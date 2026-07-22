@@ -28,8 +28,8 @@ function parseDateVal(dateStr: string | null): number {
 }
 
 const RESULT_STYLE: Record<string, { bg: string; color: string; label: string }> = {
-  win:     { bg: 'rgba(52,211,153,0.15)',  color: '#34d399', label: 'Win' },
-  loss:    { bg: 'rgba(239,68,68,0.15)',   color: '#f87171', label: 'Loss' },
+  win:     { bg: 'rgba(45,212,191,0.15)',  color: '#2dd4bf', label: 'Win' },
+  loss:    { bg: 'rgba(239,68,68,0.15)',   color: '#f8717a', label: 'Loss' },
   push:    { bg: 'rgba(234,179,8,0.15)',   color: '#facc15', label: 'Push' },
   pending: { bg: 'rgba(161,161,170,0.08)', color: '#a1a1aa', label: 'Pending' },
 }
@@ -188,7 +188,7 @@ export default function RecentPicksResults({ rows, isAdmin = false, editMode = f
                     <Fragment key={row.id}>
                       <tr style={{ borderBottom: '1px solid var(--border)' }}>
                         <td style={tdStyle}>{row.date ?? '—'}</td>
-                        <td style={{ ...tdStyle, color: 'var(--accent-cyan)', fontWeight: 600 }}>{row.sport ?? '—'}</td>
+                        <td style={{ ...tdStyle, color: 'var(--accent-teal)', fontWeight: 600 }}>{row.sport ?? '—'}</td>
                         <td style={{ ...tdStyle, fontWeight: 600, maxWidth: '200px' }}>{row.bet ?? '—'}</td>
                         <td style={{ ...tdStyle, fontFamily: 'var(--font-mono)' }}>{row.line ?? '—'}</td>
                         <td style={{ ...tdStyle, fontFamily: 'var(--font-mono)' }}>{row.vig ?? '—'}</td>
@@ -219,7 +219,7 @@ export default function RecentPicksResults({ rows, isAdmin = false, editMode = f
                             </button>
                             <button
                               className="admin-action-btn"
-                              style={{ marginLeft: '6px', color: '#f87171' }}
+                              style={{ marginLeft: '6px', color: '#f8717a' }}
                               onClick={() => deleteRow(row.id)}
                             >
                               ✕
@@ -276,7 +276,7 @@ function BetForm({ form, setField, onSave, onCancel, saving, error }: BetFormPro
       padding: '20px',
       margin: '8px 0 12px',
     }}>
-      {error && <p style={{ color: '#f87171', fontSize: '0.85rem', marginBottom: '12px' }}>{error}</p>}
+      {error && <p style={{ color: '#f8717a', fontSize: '0.85rem', marginBottom: '12px' }}>{error}</p>}
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '12px' }}>
         {[
@@ -320,8 +320,8 @@ function BetForm({ form, setField, onSave, onCancel, saving, error }: BetFormPro
       </div>
 
       <div style={{ display: 'flex', gap: '10px', marginTop: '16px', flexWrap: 'wrap' }}>
-        <ToggleBtn label="Active"          active={form.is_active}       onColor="var(--accent-green)"  onClick={() => setField('is_active', !form.is_active)} />
-        <ToggleBtn label="Show on Results" active={form.show_on_results} onColor="var(--accent-cyan)"   onClick={() => setField('show_on_results', !form.show_on_results)} />
+        <ToggleBtn label="Active"          active={form.is_active}       onColor="var(--accent-teal)"  onClick={() => setField('is_active', !form.is_active)} />
+        <ToggleBtn label="Show on Results" active={form.show_on_results} onColor="var(--accent-teal)"   onClick={() => setField('show_on_results', !form.show_on_results)} />
       </div>
 
       <div style={{ display: 'flex', gap: '10px', marginTop: '16px' }}>

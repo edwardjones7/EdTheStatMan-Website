@@ -4,11 +4,15 @@ import { useState, useRef, useEffect, Fragment } from 'react'
 import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import type { BettingTrend } from './AdminTrendsTab'
+import { IconLock, IconPencil } from './Icons'
+import RecordStrip from './RecordStrip'
 
 type Sport = 'all' | 'nfl' | 'nflpre' | 'cfl' | 'cfb' | 'nba' | 'wnba' | 'cbb'
 
 interface Props {
   trends: BettingTrend[]
+  /** Members-only row counts keyed by sport. Non-members get counts, not rows. */
+  lockedCounts?: Record<string, number>
   userTier: string | null
   isAdmin?: boolean
 }
@@ -26,12 +30,12 @@ const TABS: { label: string; value: Sport }[] = [
 
 const SPORT_STYLE: Record<string, { bg: string; color: string; label: string }> = {
   nba: { bg: 'rgba(245, 158, 11, 0.1)', color: 'var(--accent-gold)', label: 'NBA' },
-  wnba: { bg: 'rgba(251, 146, 60, 0.1)', color: '#fb923c', label: 'WNBA' },
-  cbb: { bg: 'rgba(52, 211, 153, 0.1)', color: 'var(--accent-cyan)', label: 'CBB' },
+  wnba: { bg: 'rgba(251, 146, 60, 0.1)', color: '#d98a6f', label: 'WNBA' },
+  cbb: { bg: 'rgba(45, 212, 191, 0.1)', color: 'var(--accent-teal)', label: 'CBB' },
   nfl: { bg: 'rgba(56, 189, 248, 0.1)', color: '#38bdf8', label: 'NFL' },
   nflpre: { bg: 'rgba(125, 211, 252, 0.1)', color: '#7dd3fc', label: 'NFL Pre' },
   cfl: { bg: 'rgba(244, 63, 94, 0.1)', color: '#f43f5e', label: 'CFL' },
-  cfb: { bg: 'rgba(129, 140, 248, 0.1)', color: 'var(--accent-purple)', label: 'CFB' },
+  cfb: { bg: 'rgba(233, 196, 106, 0.1)', color: 'var(--accent-gold)', label: 'CFB' },
 }
 
 const SPORTS = ['nba', 'wnba', 'cbb', 'nfl', 'nflpre', 'cfl', 'cfb'] as const
@@ -98,7 +102,7 @@ function parseStr(val: unknown): string {
   return String(val).trim()
 }
 
-export default function TrendsFilter({ trends, userTier, isAdmin = false }: Props) {
+export default function TrendsFilter({ trends, lockedCounts = {}, userTier, isAdmin = false }: Props) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -143,6 +147,11 @@ export default function TrendsFilter({ trends, userTier, isAdmin = false }: Prop
 
   const isPaid = userTier === 'basic' || userTier === 'premium'
   const isLoggedOut = userTier === null
+
+  // Locked rows only exist for non-members; `trends` already excludes them.
+  const totalLocked = Object.values(lockedCounts).reduce((a, b) => a + b, 0)
+  const lockedCount = activeTab === 'all' ? totalLocked : (lockedCounts[activeTab] ?? 0)
+  const activeTabLabel = TABS.find(t => t.value === activeTab)!.label
 
   const allVisible = trends.filter(r => activeTab === 'all' || r.sport === activeTab)
   const baseRows = editMode
@@ -301,7 +310,7 @@ export default function TrendsFilter({ trends, userTier, isAdmin = false }: Prop
     }
   }
 
-  if (trends.length === 0 && !editMode) {
+  if (trends.length === 0 && totalLocked === 0 && !editMode) {
     return (
       <>
         <div style={{ textAlign: 'center', padding: '48px 0', color: 'var(--text-muted)' }}>
@@ -312,9 +321,9 @@ export default function TrendsFilter({ trends, userTier, isAdmin = false }: Prop
             <button
               onClick={() => setEditMode(true)}
               title="Edit trends"
-              style={{ ...fabStyle, background: 'var(--accent-green)', color: '#000', border: 'none' }}
+              style={{ ...fabStyle, background: 'var(--accent-teal)', color: '#000', border: 'none' }}
             >
-              ✏
+              <IconPencil size={14} />
             </button>
           </div>
         )}
@@ -322,16 +331,28 @@ export default function TrendsFilter({ trends, userTier, isAdmin = false }: Prop
     )
   }
 
-  // Stats bar computed values
-  const activeCount = allVisible.filter(r => r.is_active).length
+  // Stats bar computed values — counts follow the selected sport tab. Members
+  // see their rows directly; non-members only ever have the locked count.
+  const activeTrends = allVisible.filter(r => r.is_active)
+  const freeCount = activeTrends.filter(r => r.is_free).length
+  const memberCount = activeTrends.length - freeCount + lockedCount
+  const totalCount = freeCount + memberCount
 
   return (
     <>
       {/* Summary stats bar */}
       <div className="sys-stats-bar reveal" style={{ marginTop: '32px' }}>
         <div className="sys-stats-chip">
-          <span className="sys-stats-chip__label">Active Trends</span>
-          <span className="sys-stats-chip__value">{activeCount}</span>
+          <span className="sys-stats-chip__label">Free Trends</span>
+          <span className="sys-stats-chip__value">{freeCount}</span>
+        </div>
+        <div className="sys-stats-chip">
+          <span className="sys-stats-chip__label">Member Trends</span>
+          <span className="sys-stats-chip__value">{memberCount}</span>
+        </div>
+        <div className="sys-stats-chip">
+          <span className="sys-stats-chip__label">Total Trends</span>
+          <span className="sys-stats-chip__value">{totalCount}</span>
         </div>
       </div>
 
@@ -361,7 +382,7 @@ export default function TrendsFilter({ trends, userTier, isAdmin = false }: Prop
           <button
             className="btn btn--outline btn--sm"
             onClick={() => fileRef.current?.click()}
-            style={{ borderColor: 'rgba(52,211,153,0.4)', color: 'var(--accent-cyan)' }}
+            style={{ borderColor: 'rgba(45,212,191,0.4)', color: 'var(--accent-teal)' }}
           >
             &#8679; Import XLSX
           </button>
@@ -443,7 +464,7 @@ export default function TrendsFilter({ trends, userTier, isAdmin = false }: Prop
                     fontSize: '0.75rem',
                     fontWeight: 600,
                     background: sheet.is_free ? 'rgba(56,189,248,0.15)' : 'rgba(124,58,237,0.15)',
-                    color: sheet.is_free ? '#38bdf8' : 'var(--accent-purple)',
+                    color: sheet.is_free ? '#38bdf8' : 'var(--accent-gold)',
                   }}
                 >
                   {sheet.is_free ? 'Free' : 'Members'}
@@ -534,34 +555,25 @@ export default function TrendsFilter({ trends, userTier, isAdmin = false }: Prop
         </div>
       )}
 
+      {/* Free rows sit above the paywall; locked rows never reach the client. */}
+      {lockedCount > 0 && baseRows.length > 0 && (
+        <div className="sys-free-heading">Free Trends</div>
+      )}
+
       {/* Card grid */}
       <div className="content-gate-wrap" style={{ marginTop: '24px' }}>
         <div>
           {baseRows.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '48px 0', color: 'var(--text-muted)' }}>
-              No trends in this sport.
-            </div>
+            lockedCount === 0 && (
+              <div style={{ textAlign: 'center', padding: '48px 0', color: 'var(--text-muted)' }}>
+                No trends in this sport.
+              </div>
+            )
           ) : (
             <div className="sys-card-grid">
               {baseRows.map(row => {
-                const locked = !isPaid && !row.is_free && !isAdmin
                 const style = SPORT_STYLE[row.sport] ?? { bg: 'rgba(255,255,255,0.05)', color: 'var(--text-muted)', label: row.sport.toUpperCase() }
                 const winning = row.w > row.l
-                const pctWidth = row.pct !== null ? Math.round(row.pct * 100) : 0
-
-                if (locked) {
-                  return (
-                    <Fragment key={row.id}>
-                      <div className="sys-row-card sys-row-card--locked">
-                        <div className="sys-row-card__body" style={{ justifyContent: 'center', padding: '16px 24px', gap: '16px' }}>
-                          <span style={{ fontSize: '1.1rem' }}>🔒</span>
-                          <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>Members Only</span>
-                          <Link href="/betting-systems#pricing" className="btn btn--primary btn--sm">Upgrade to Unlock</Link>
-                        </div>
-                      </div>
-                    </Fragment>
-                  )
-                }
 
                 return (
                   <Fragment key={row.id}>
@@ -615,15 +627,19 @@ export default function TrendsFilter({ trends, userTier, isAdmin = false }: Prop
                             {row.description || <em style={{ color: 'var(--text-muted)' }}>No description</em>}
                           </div>
                           <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                            <span className={`sys-row-card__access-badge sys-row-card__access-badge--${row.is_free ? 'free' : 'members'}`}>
-                              {row.is_free ? 'Free' : 'Members'}
-                            </span>
+                            {/* Non-members only ever see free rows, so the badge
+                                would be noise on every card. */}
+                            {(isPaid || isAdmin) && (
+                              <span className={`sys-row-card__access-badge sys-row-card__access-badge--${row.is_free ? 'free' : 'members'}`}>
+                                {row.is_free ? 'Free' : 'Members'}
+                              </span>
+                            )}
                             {isAdmin && (
                               <span style={{
                                 display: 'inline-flex', alignItems: 'center',
                                 padding: '2px 8px', borderRadius: 'var(--radius-full)', fontSize: '0.68rem', fontWeight: 600,
-                                background: row.is_active ? 'rgba(52,211,153,0.12)' : 'rgba(239,68,68,0.12)',
-                                color: row.is_active ? 'var(--accent-green)' : '#ef4444',
+                                background: row.is_active ? 'rgba(45,212,191,0.12)' : 'rgba(239,68,68,0.12)',
+                                color: row.is_active ? 'var(--accent-teal)' : '#ef4444',
                               }}>
                                 {row.is_active ? 'Active' : 'Inactive'}
                               </span>
@@ -634,30 +650,18 @@ export default function TrendsFilter({ trends, userTier, isAdmin = false }: Prop
                         {/* Record */}
                         <div className="sys-row-card__field">
                           <span className="sys-row-card__field-label">Record</span>
-                          {locked ? (
-                            <span className="sys-row-card__lock">&#128274; <Link href="/betting-trends#pricing">Upgrade</Link></span>
-                          ) : (
-                            <span className={`sys-row-card__record sys-row-card__record--${winning ? 'win' : row.w < row.l ? 'loss' : 'neutral'}`}>
-                              {row.w}-{row.l}-{row.t}
-                            </span>
-                          )}
+                          <span className={`sys-row-card__record sys-row-card__record--${winning ? 'win' : row.w < row.l ? 'loss' : 'neutral'}`}>
+                            {row.w}-{row.l}-{row.t}
+                          </span>
                         </div>
 
                         {/* Win % */}
                         <div className="sys-row-card__pct-col">
                           <span className="sys-row-card__field-label">Win %</span>
-                          {locked ? (
-                            <span className="sys-row-card__pct sys-row-card__pct--neutral">—</span>
-                          ) : (
-                            <>
-                              <span className={`sys-row-card__pct sys-row-card__pct--${winning ? 'win' : 'neutral'}`}>
-                                {pctDisplay(row.pct)}
-                              </span>
-                              <div className="sys-row-card__bar">
-                                <div className="sys-row-card__bar-fill" style={{ width: `${pctWidth}%` }} />
-                              </div>
-                            </>
-                          )}
+                          <span className={`sys-row-card__pct sys-row-card__pct--${winning ? 'win' : 'neutral'}`}>
+                            {pctDisplay(row.pct)}
+                          </span>
+                          <RecordStrip w={row.w} l={row.l} t={row.t} />
                         </div>
 
                         {/* Season */}
@@ -749,11 +753,21 @@ export default function TrendsFilter({ trends, userTier, isAdmin = false }: Prop
 
       </div>
 
-      {!isPaid && !isAdmin && trends.some(t => !t.is_free) && (
-        <p className="gate-nudge reveal">
-          &#128274; Some trends are for members only.{' '}
-          <Link href="/betting-systems#pricing" className="gate-nudge__link">View plans &rarr;</Link>
-        </p>
+      {lockedCount > 0 && (
+        <div className="sys-gate-card reveal">
+          <div className="sys-gate-card__icon"><IconLock size={30} /></div>
+          <div className="content-gate-card__title">
+            {lockedCount} more trend{lockedCount !== 1 ? 's' : ''}
+            {activeTab !== 'all' && ` in ${activeTabLabel}`}
+          </div>
+          <p className="content-gate-card__desc">
+            Full records, win percentages, and season data — members only.
+          </p>
+          <div className="content-gate-card__actions">
+            <Link href="/betting-trends#pricing" className="btn btn--primary">Get the rest &rarr;</Link>
+            {isLoggedOut && <Link href="/login" className="btn btn--outline">Sign in</Link>}
+          </div>
+        </div>
       )}
 
       {/* Admin FAB */}
@@ -772,7 +786,7 @@ export default function TrendsFilter({ trends, userTier, isAdmin = false }: Prop
             <button
               onClick={() => { setEditMode(false); setFormMode('hidden'); setXlsxSheets(null) }}
               title="Exit edit mode"
-              style={{ ...fabStyle, background: 'rgba(52,211,153,0.15)', color: 'var(--accent-green)', border: '2px solid rgba(52,211,153,0.35)' }}
+              style={{ ...fabStyle, background: 'rgba(45,212,191,0.15)', color: 'var(--accent-teal)', border: '2px solid rgba(45,212,191,0.35)' }}
             >
               ✕
             </button>
@@ -780,16 +794,16 @@ export default function TrendsFilter({ trends, userTier, isAdmin = false }: Prop
             <button
               onClick={() => setEditMode(true)}
               title="Edit trends"
-              style={{ ...fabStyle, background: 'var(--accent-green)', color: '#000', border: 'none' }}
+              style={{ ...fabStyle, background: 'var(--accent-teal)', color: '#000', border: 'none' }}
             >
-              ✏
+              <IconPencil size={14} />
             </button>
           )}
           {editMode && (
             <span style={{
-              background: 'rgba(52,211,153,0.12)',
-              border: '1px solid rgba(52,211,153,0.25)',
-              color: 'var(--accent-green)',
+              background: 'rgba(45,212,191,0.12)',
+              border: '1px solid rgba(45,212,191,0.25)',
+              color: 'var(--accent-teal)',
               fontSize: '0.68rem',
               fontWeight: 600,
               padding: '3px 8px',
