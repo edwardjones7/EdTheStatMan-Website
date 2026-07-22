@@ -7,11 +7,11 @@ import CTASection from '@/components/CTASection'
 export const metadata: Metadata = {
   title: 'Pricing',
   description: 'Unlock full access to betting systems, trends, and expert analysis. Basic $19.99 (30 days) or Premium $119.99 (365 days).',
-  alternates: { canonical: 'https://edthestatman.com/pricing' },
+  alternates: { canonical: 'https://edthestatman.com/win' },
   openGraph: {
     title: 'Pricing – EdTheStatMan.com',
     description: 'Unlock full access to betting systems, trends, and expert analysis. Basic $19.99 (30 days) or Premium $119.99 (365 days).',
-    url: 'https://edthestatman.com/pricing',
+    url: 'https://edthestatman.com/win',
     images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
   },
   twitter: {

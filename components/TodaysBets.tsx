@@ -306,7 +306,7 @@ export default function TodaysBets({ rows, isAdmin, userTier, isMember, editMode
                   Sign Up Free
                 </Link>
               )}
-              <Link href="/pricing" className="btn btn--primary btn--sm">
+              <Link href="/win" className="btn btn--primary btn--sm">
                 View Membership
               </Link>
             </div>

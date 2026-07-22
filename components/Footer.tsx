@@ -41,7 +41,7 @@ export default function Footer() {
             <h4 className="footer__heading">Resources</h4>
             <div className="footer__links">
               <Link href="/results" className="footer__link">Results</Link>
-              <Link href="/pricing" className="footer__link">Pricing</Link>
+              <Link href="/win" className="footer__link">Pricing</Link>
               <Link href="/contact" className="footer__link">Contact</Link>
             </div>
           </div>
