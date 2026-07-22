@@ -659,9 +659,15 @@ input, textarea, select {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  /* room for descenders so the gradient text isn't clipped */
-  padding-bottom: 0.08em;
   display: inline-block;
+  /* Descender room. background-clip:text paints only inside this box, and as an
+     inline-block the box height comes from line-height (1.02) — tighter than
+     Outfit's ~1.25em content area, so the box bottom lands ~0.135em below the
+     baseline while the "y" in "Systems" reaches ~0.21em. The old 0.08em cleared
+     it by a hair, which rounding lost at some widths. Overshoot instead, and
+     pull the same amount back off the margin so spacing below is unchanged. */
+  padding-bottom: 0.22em;
+  margin-bottom: -0.22em;
 }
 
 .hero__description {

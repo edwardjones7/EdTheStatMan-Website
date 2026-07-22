@@ -66,7 +66,7 @@ export default function CTASection({ content = DEFAULT_CTA, editMode, onEdit, re
                 <a href="https://x.com/EdTheStatMan" className="btn btn--primary btn--lg" target="_blank" rel="noopener">
                   <span className="btn__icon"><IconBolt size={15} /></span> Follow on X
                 </a>
-                <a href="https://discord.gg/gqPrVBg4Aw" className="btn btn--secondary btn--lg" target="_blank" rel="noopener">
+                <a href="https://discord.gg/rXBZkSPcJb" className="btn btn--secondary btn--lg" target="_blank" rel="noopener">
                   <span className="btn__icon"><IconChat size={15} /></span> Join Discord
                 </a>
               </>

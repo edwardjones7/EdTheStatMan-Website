@@ -100,7 +100,7 @@ export default function ActionCard({ content = DEFAULT_ACTION_CARD, editMode, on
               <a href="https://x.com/EdTheStatMan" className="btn btn--primary btn--sm" target="_blank" rel="noopener">
                 <IconBolt size={14} /> Follow on X
               </a>
-              <a href="https://discord.gg/gqPrVBg4Aw" className="btn btn--secondary btn--sm" target="_blank" rel="noopener">
+              <a href="https://discord.gg/rXBZkSPcJb" className="btn btn--secondary btn--sm" target="_blank" rel="noopener">
                 <IconChat size={14} /> Join Discord
               </a>
               <Link href="/betting-systems" className="btn btn--outline btn--sm">

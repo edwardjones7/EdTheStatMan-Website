@@ -69,7 +69,7 @@ export default function Contact() {
                 </div>
                 <div>
                   <div className="contact-info__label">Discord</div>
-                  <a href="https://discord.gg/gqPrVBg4Aw" className="contact-info__value" target="_blank" rel="noopener">Join Our Server</a>
+                  <a href="https://discord.gg/rXBZkSPcJb" className="contact-info__value" target="_blank" rel="noopener">Join Our Server</a>
                 </div>
               </div>
 
