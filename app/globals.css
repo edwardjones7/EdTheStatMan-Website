@@ -1876,6 +1876,50 @@ input, textarea, select {
   .sys-stats-chip { min-width: 88px; }
 }
 
+/* Phone layout: badge header, full-width description, 2-col stat grid.
+   Works for both Systems and Trends despite their different column order —
+   `order` pulls the badge and description first, stat cells follow in DOM order. */
+@media (max-width: 640px) {
+  .sys-row-card__body {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 16px;
+    padding: 14px 16px;
+    min-height: 0;
+  }
+
+  .sys-row-card__sport-col {
+    order: 1;
+    flex: 1 1 100%;
+    flex-direction: row;
+    justify-content: flex-start;
+    width: auto;
+    padding: 0 0 12px;
+    border: none;
+  }
+
+  .sys-row-card__desc-col {
+    order: 2;
+    flex: 1 1 100%;
+    max-width: none;
+    padding: 12px 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .sys-row-card__body .sys-row-card__field,
+  .sys-row-card__body .sys-row-card__pct-col {
+    order: 3;
+    flex: 1 1 calc(50% - 8px);
+    width: auto;
+    max-width: none;
+    padding: 12px 0 2px;
+    border-left: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .sys-row-card__body .sys-row-card__field:last-child { padding-right: 0; }
+}
+
 /* ---------- Pagination ---------- */
 .sys-pagination {
   display: flex;
@@ -1920,6 +1964,7 @@ input, textarea, select {
 .sport-tabs {
   display: inline-flex;
   gap: 0;
+  max-width: 100%;
   margin-bottom: 32px;
   flex-wrap: wrap;
   border: 1px solid var(--border-color);
