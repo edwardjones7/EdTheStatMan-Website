@@ -16,6 +16,7 @@ export interface Database {
           stripe_customer_id: string | null
           stripe_subscription_id: string | null
           access_expires_at: string | null
+          last_stripe_session_id: string | null
           is_admin: boolean
           created_at: string
           updated_at: string
@@ -30,6 +31,7 @@ export interface Database {
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           access_expires_at?: string | null
+          last_stripe_session_id?: string | null
           is_admin?: boolean
           created_at?: string
           updated_at?: string
@@ -44,6 +46,7 @@ export interface Database {
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           access_expires_at?: string | null
+          last_stripe_session_id?: string | null
           is_admin?: boolean
           updated_at?: string
         }

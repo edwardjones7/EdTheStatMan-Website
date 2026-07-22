@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { logout } from '@/app/actions/auth'
 import { IconUser, IconSettings, IconBolt } from './Icons'
 import type { SubscriptionTier } from '@/lib/supabase/types'
+import type { Membership } from '@/lib/access'
 
 interface NavAuthProps {
   user: {
@@ -13,9 +14,10 @@ interface NavAuthProps {
     subscription_tier: SubscriptionTier
     is_admin: boolean
   } | null
+  membership?: Membership
 }
 
-export default function NavAuth({ user }: NavAuthProps) {
+export default function NavAuth({ user, membership = 'logged-out' }: NavAuthProps) {
   const [hovered, setHovered] = useState(false)
   const [pinned, setPinned] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -51,13 +53,17 @@ export default function NavAuth({ user }: NavAuthProps) {
     )
   }
 
-  const tierLabel = user.is_admin
-    ? 'Admin'
-    : user.subscription_tier === 'premium'
-    ? 'Premium'
-    : user.subscription_tier === 'basic'
-    ? 'Basic'
-    : 'Free'
+  const tierLabel =
+    membership === 'admin'   ? 'Admin' :
+    membership === 'expired' ? 'Expired' :
+    membership === 'active'  ? (user.subscription_tier === 'premium' ? 'Premium' : 'Basic') :
+    'Free'
+
+  const tierModifier =
+    membership === 'admin'   ? 'admin' :
+    membership === 'expired' ? 'expired' :
+    membership === 'active'  ? user.subscription_tier :
+    'free'
 
   const initial = (user.full_name ?? user.email).charAt(0).toUpperCase()
 
@@ -80,7 +86,7 @@ export default function NavAuth({ user }: NavAuthProps) {
         aria-expanded={isOpen}
       >
         <div className="nav__user-avatar">{initial}</div>
-        <span className={`nav__user-tier nav__user-tier--${user.is_admin ? 'admin' : user.subscription_tier}`}>{tierLabel}</span>
+        <span className={`nav__user-tier nav__user-tier--${tierModifier}`}>{tierLabel}</span>
       </button>
 
       {isOpen && (
@@ -93,9 +99,9 @@ export default function NavAuth({ user }: NavAuthProps) {
             <Link href="/account" className="nav__user-menu-item" onClick={close}>
               <IconUser size={14} /> My Account
             </Link>
-            {user.subscription_tier === 'free' && (
-              <Link href="/betting-systems#pricing" className="nav__user-menu-item nav__user-menu-item--upgrade" onClick={close}>
-                <IconBolt size={14} /> Upgrade Plan
+            {(membership === 'free' || membership === 'expired') && (
+              <Link href="/win" className="nav__user-menu-item nav__user-menu-item--upgrade" onClick={close}>
+                <IconBolt size={14} /> {membership === 'expired' ? 'Renew Access' : 'Upgrade Plan'}
               </Link>
             )}
             {user.is_admin && (

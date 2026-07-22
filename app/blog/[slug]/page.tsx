@@ -4,8 +4,10 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { IconLock } from '@/components/Icons'
 import { coverForPost } from '@/lib/blog-images'
+import { OFFER_ENTRY_PRICE } from '@/lib/offer'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
+import { resolveAccess, ACCESS_SELECT } from '@/lib/access'
 
 function stripHtml(html: string) {
   return html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
@@ -15,11 +17,23 @@ function fmtDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
 }
 
+const TAG_MODIFIER: Record<string, string> = {
+  'NFL': 'nfl',
+  'NBA': 'nba',
+  'College Football': 'cfb',
+  'College Basketball': 'cbb',
+}
+
+function tagClass(tag: string) {
+  const mod = TAG_MODIFIER[tag]
+  return mod ? `blog-post__tag blog-post__tag--${mod}` : 'blog-post__tag'
+}
+
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
   const admin = createAdminClient()
   const { data: post } = await (admin as any)
     .from('posts')
-    .select('title, excerpt, published_at, cover_image')
+    .select('title, excerpt, published_at, cover_image, tag')
     .eq('slug', params.slug)
     .eq('published', true)
     .single()
@@ -27,6 +41,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   if (!post) return { title: 'Post Not Found' }
 
   const url = `https://edthestatman.com/blog/${params.slug}`
+  const cover = coverForPost(post.cover_image, post.tag, post.title, params.slug)
   return {
     title: post.title,
     description: post.excerpt ?? undefined,
@@ -37,14 +52,14 @@ export async function generateMetadata({ params }: { params: { slug: string } })
       description: post.excerpt ?? undefined,
       url,
       siteName: 'EdTheStatMan',
-      images: post.cover_image ? [{ url: post.cover_image }] : [{ url: '/opengraph-image', width: 1200, height: 630 }],
+      images: [{ url: cover }],
       publishedTime: post.published_at ?? undefined,
     },
     twitter: {
       card: 'summary_large_image',
       title: post.title,
       description: post.excerpt ?? undefined,
-      images: post.cover_image ? [post.cover_image] : ['/opengraph-image'],
+      images: [cover],
     },
   }
 }
@@ -63,27 +78,22 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  let userTier: string | null = null
+  let access = resolveAccess(null, false)
   if (user) {
     const { data: profile } = await (supabase as any)
       .from('profiles')
-      .select('subscription_tier, subscription_status, is_admin')
+      .select(ACCESS_SELECT)
       .eq('id', user.id)
       .single()
-    if ((profile as any)?.is_admin) {
-      userTier = 'premium'
-    } else {
-      userTier = (profile as any)?.subscription_tier ?? 'free'
-      if (userTier !== 'free' && (profile as any)?.subscription_status !== 'active') {
-        userTier = 'free'
-      }
-    }
+    access = resolveAccess(profile as any, true)
   }
+  const { tier: userTier, isAdmin, isPaid, membership, expiresAt } = access
 
-  const isPaid = userTier === 'basic' || userTier === 'premium'
   const canRead = isPaid || post.access_level !== 'members'
 
-  const teaser = stripHtml(post.content).slice(0, 320) + '…'
+  const plainText = stripHtml(post.content)
+  const teaser = plainText.slice(0, 320) + '…'
+  const readMinutes = Math.max(1, Math.round(plainText.split(/\s+/).length / 225))
 
   return (
     <main>
@@ -107,21 +117,23 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
           <header className="blog-post__header">
             <Link href="/blog" className="blog-post__back">← Back to Blog</Link>
             <div className="blog-post__meta-row">
-              <span className="blog-card__tag">{post.tag}</span>
+              <span className={tagClass(post.tag)}>{post.tag}</span>
               {post.access_level === 'members' && (
                 <span className="blog-post__members-badge">Members Only</span>
               )}
               {post.published_at && (
                 <span className="blog-post__date">{fmtDate(post.published_at)}</span>
               )}
+              <span className="blog-post__readtime">{readMinutes} min read</span>
             </div>
             <h1 className="blog-post__title">{post.title}</h1>
+            <div className="blog-post__title-rule" />
             {post.excerpt && <p className="blog-post__excerpt-lead">{post.excerpt}</p>}
           </header>
 
           <div className="blog-post__cover">
             <Image
-              src={coverForPost(post.cover_image, post.tag)}
+              src={coverForPost(post.cover_image, post.tag, post.title, post.slug)}
               alt={post.title}
               fill
               sizes="(max-width: 900px) 100vw, 860px"
@@ -146,23 +158,41 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
                 <div className="blog-post__gate-icon"><IconLock size={28} /></div>
                 {!user ? (
                   <>
+                    <span className="blog-post__gate-eyebrow">Members Only</span>
                     <h2 className="blog-post__gate-title">Members Only Content</h2>
                     <p className="blog-post__gate-desc">
-                      This post is for Basic and Premium members. Sign in or subscribe to continue reading.
+                      Full access unlocks every post, the complete systems library, and all
+                      betting trends — a one-time payment from {OFFER_ENTRY_PRICE}, no subscription.
                     </p>
                     <div className="blog-post__gate-actions">
-                      <Link href="/login" className="btn btn--primary">Sign In</Link>
-                      <Link href="/signup" className="btn btn--outline">Create Account</Link>
+                      <Link href="/win" className="btn btn--primary">
+                        Unlock Full Access — {OFFER_ENTRY_PRICE} →
+                      </Link>
+                      <Link href={`/signup?next=${encodeURIComponent(`/blog/${post.slug}`)}`} className="btn btn--outline">
+                        Create Free Account
+                      </Link>
+                      <Link href={`/login?next=${encodeURIComponent(`/blog/${post.slug}`)}`} className="btn btn--secondary">
+                        Sign In
+                      </Link>
                     </div>
                   </>
                 ) : (
                   <>
-                    <h2 className="blog-post__gate-title">Members Only Content</h2>
+                    <span className="blog-post__gate-eyebrow">
+                      {membership === 'expired' ? 'Access Expired' : 'Members Only'}
+                    </span>
+                    <h2 className="blog-post__gate-title">
+                      {membership === 'expired' ? 'Your access has expired' : 'Members Only Content'}
+                    </h2>
                     <p className="blog-post__gate-desc">
-                      Upgrade to Basic or Premium to unlock all blog posts, betting systems, and trends.
+                      {membership === 'expired'
+                        ? 'Renew to pick up where you left off — every post, system, and trend.'
+                        : `Unlock every post, the full systems library, and all betting trends from ${OFFER_ENTRY_PRICE}.`}
                     </p>
                     <div className="blog-post__gate-actions">
-                      <Link href="/betting-systems" className="btn btn--primary">View Plans →</Link>
+                      <Link href="/win" className="btn btn--primary">
+                        {membership === 'expired' ? 'Renew Access →' : 'View Plans →'}
+                      </Link>
                     </div>
                   </>
                 )}

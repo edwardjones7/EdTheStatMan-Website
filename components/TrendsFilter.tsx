@@ -4,6 +4,8 @@ import { useState, useRef, useEffect, Fragment } from 'react'
 import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import type { BettingTrend } from './AdminTrendsTab'
+import LockedTeaserCard from './LockedTeaserCard'
+import type { LockedTeaser } from '@/lib/teaser'
 import { IconLock, IconPencil } from './Icons'
 import RecordStrip from './RecordStrip'
 
@@ -13,6 +15,7 @@ interface Props {
   trends: BettingTrend[]
   /** Members-only row counts keyed by sport. Non-members get counts, not rows. */
   lockedCounts?: Record<string, number>
+  lockedTeasers?: LockedTeaser[]
   userTier: string | null
   isAdmin?: boolean
 }
@@ -102,7 +105,7 @@ function parseStr(val: unknown): string {
   return String(val).trim()
 }
 
-export default function TrendsFilter({ trends, lockedCounts = {}, userTier, isAdmin = false }: Props) {
+export default function TrendsFilter({ trends, lockedCounts = {}, lockedTeasers = [], userTier, isAdmin = false }: Props) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -150,6 +153,7 @@ export default function TrendsFilter({ trends, lockedCounts = {}, userTier, isAd
 
   // Locked rows only exist for non-members; `trends` already excludes them.
   const totalLocked = Object.values(lockedCounts).reduce((a, b) => a + b, 0)
+  const lockedForTab = isAdmin ? [] : lockedTeasers.filter(t => activeTab === 'all' || t.sport === activeTab)
   const lockedCount = activeTab === 'all' ? totalLocked : (lockedCounts[activeTab] ?? 0)
   const activeTabLabel = TABS.find(t => t.value === activeTab)!.label
 
@@ -555,7 +559,9 @@ export default function TrendsFilter({ trends, lockedCounts = {}, userTier, isAd
         </div>
       )}
 
-      {/* Free rows sit above the paywall; locked rows never reach the client. */}
+      {/* Free rows sit above the paywall. Locked rows reach the client only as
+          redacted teasers (sport + record + win%); descriptions, lines, teams,
+          dates and units never leave the server. See lib/teaser.ts. */}
       {lockedCount > 0 && baseRows.length > 0 && (
         <div className="sys-free-heading">Free Trends</div>
       )}
@@ -753,6 +759,24 @@ export default function TrendsFilter({ trends, lockedCounts = {}, userTier, isAd
 
       </div>
 
+      {!isAdmin && lockedForTab.length > 0 && (
+        <>
+          <div className="sys-locked-heading">
+            <IconLock size={13} /> Members Only — records shown, systems hidden
+          </div>
+          <div className="sys-card-grid">
+            {lockedForTab.map(t => (
+              <LockedTeaserCard
+                key={t.id}
+                teaser={t}
+                sportLabel={SPORT_STYLE[t.sport]?.label ?? t.sport.toUpperCase()}
+                sportClass={t.sport}
+              />
+            ))}
+          </div>
+        </>
+      )}
+
       {lockedCount > 0 && (
         <div className="sys-gate-card reveal">
           <div className="sys-gate-card__icon"><IconLock size={30} /></div>
@@ -764,7 +788,7 @@ export default function TrendsFilter({ trends, lockedCounts = {}, userTier, isAd
             Full records, win percentages, and season data — members only.
           </p>
           <div className="content-gate-card__actions">
-            <Link href="/betting-trends#pricing" className="btn btn--primary">Get the rest &rarr;</Link>
+            <Link href="/win" className="btn btn--primary">Get the rest &rarr;</Link>
             {isLoggedOut && <Link href="/login" className="btn btn--outline">Sign in</Link>}
           </div>
         </div>

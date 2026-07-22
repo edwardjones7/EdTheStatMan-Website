@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, Fragment } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import type { ModelPicksContent } from '@/lib/site-content'
+import type { LockedBetTeaser } from '@/lib/teaser'
 import EditableText from './EditableText'
 import { IconLock, IconBolt, IconChat, IconChartBar, IconTrendUp } from './Icons'
 
@@ -30,6 +31,10 @@ interface Props {
   isAdmin: boolean
   userTier: string | null  // null = logged out
   isMember: boolean
+  /** Picks withheld from a non-member. */
+  lockedCount?: number
+  /** Redacted stand-ins for those picks — date/sport/result only. */
+  lockedBets?: LockedBetTeaser[]
   editMode?: boolean
   headerContent?: ModelPicksContent
   onHeaderEdit?: (updates: Partial<ModelPicksContent>) => void
@@ -48,14 +53,13 @@ const EMPTY_FORM = {
   is_active: true, is_free: true, show_on_results: false,
 }
 
-export default function TodaysBets({ rows, isAdmin, userTier, isMember, editMode = false, headerContent, onHeaderEdit, resetKey = 0 }: Props) {
+export default function TodaysBets({ rows, isAdmin, userTier, isMember, lockedCount = 0, lockedBets = [], editMode = false, headerContent, onHeaderEdit, resetKey = 0 }: Props) {
   const router = useRouter()
   const [formMode, setFormMode]   = useState<'hidden' | 'add' | 'edit'>('hidden')
   const [editId, setEditId]       = useState<string | null>(null)
   const [form, setForm]           = useState(EMPTY_FORM)
   const [saving, setSaving]       = useState(false)
   const [error, setError]         = useState<string | null>(null)
-  const [tierFilter, setTierFilter] = useState<'free' | 'members'>('free')
   const inlineFormRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -162,10 +166,10 @@ export default function TodaysBets({ rows, isAdmin, userTier, isMember, editMode
     return Number.isNaN(created) ? 0 : created
   }
 
+  // One list — no free/members split. Non-members simply never receive the
+  // locked rows; what arrives here is already theirs to see.
   const baseRows = isAdmin && editMode ? rows : rows.filter(r => !r.show_on_results)
-  const visibleRows = (isAdmin && editMode)
-    ? baseRows
-    : baseRows.filter(r => tierFilter === 'free' ? r.is_free : !r.is_free)
+  const visibleRows = baseRows
   const sortedRows = [...visibleRows].sort((a, b) => {
     const dateDiff = dateValue(b) - dateValue(a)  // newest first
     if (dateDiff !== 0) return dateDiff
@@ -175,12 +179,6 @@ export default function TodaysBets({ rows, isAdmin, userTier, isMember, editMode
   })
   const rs = (result: string | null) => RESULT_STYLE[result ?? 'pending'] ?? RESULT_STYLE.pending
 
-  // Placeholder rows shown behind the gate when logged out and no real rows exist
-  const PLACEHOLDER_ROWS = [
-    { id: 'ph1', date: 'Today', sport: 'NFL',  bet: '████████ -3.5',  line: '-110', result: 'pending', note: '—' },
-    { id: 'ph2', date: 'Today', sport: 'NBA',  bet: '████████ +5.5',  line: '+105', result: 'win',     note: '—' },
-    { id: 'ph3', date: 'Today', sport: 'CFB',  bet: '████████ O 48.5', line: '-115', result: 'pending', note: '—' },
-  ]
   const displayRows = sortedRows
 
   return (
@@ -223,99 +221,8 @@ export default function TodaysBets({ rows, isAdmin, userTier, isMember, editMode
           />
         )}
 
-        {/* Free / Members toggle (hidden in admin edit mode) */}
-        {!(isAdmin && editMode) && (
-          <div style={{
-            display: 'flex',
-            justifyContent: 'center',
-            marginTop: '28px',
-          }}>
-            <div role="tablist" aria-label="Pick access filter" style={{
-              display: 'inline-flex',
-              background: 'var(--bg-card)',
-              border: '1px solid var(--border)',
-              borderRadius: '999px',
-              padding: '4px',
-              gap: '4px',
-            }}>
-              {([
-                { key: 'free',    label: 'Free' },
-                { key: 'members', label: 'Members' },
-              ] as const).map(opt => {
-                const active = tierFilter === opt.key
-                return (
-                  <button
-                    key={opt.key}
-                    role="tab"
-                    aria-selected={active}
-                    onClick={() => setTierFilter(opt.key)}
-                    style={{
-                      padding: '7px 18px',
-                      borderRadius: '999px',
-                      fontSize: '0.82rem',
-                      fontWeight: 700,
-                      letterSpacing: '0.04em',
-                      textTransform: 'uppercase',
-                      cursor: 'pointer',
-                      border: 'none',
-                      background: active ? 'var(--accent-teal)' : 'transparent',
-                      color: active ? '#000' : 'var(--text-muted)',
-                      transition: 'all 0.15s',
-                    }}
-                  >
-                    {opt.label}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* Members-only paywall — shown to non-members on the Members tab */}
-        {!isMember && tierFilter === 'members' && !isAdmin && (
-          <div style={{
-            background: 'var(--bg-card)',
-            border: '1px solid var(--border)',
-            borderRadius: '12px',
-            padding: '2.5rem',
-            textAlign: 'center',
-            marginTop: '28px',
-          }}>
-            <div style={{ marginBottom: '10px', color: 'var(--accent-gold)' }}><IconLock size={26} /></div>
-            <h3 style={{
-              fontSize: '1.1rem',
-              fontWeight: 700,
-              color: 'var(--text-heading)',
-              marginBottom: '8px',
-            }}>
-              Members-only picks
-            </h3>
-            <p style={{
-              color: 'var(--text-secondary)',
-              fontSize: '0.92rem',
-              lineHeight: 1.6,
-              maxWidth: '440px',
-              margin: '0 auto 20px',
-            }}>
-              {userTier === null
-                ? 'Sign up and grab a membership to unlock every pick — full access to model picks, systems, and trends.'
-                : 'Upgrade to a membership to unlock every pick — full access to model picks, systems, and trends.'}
-            </p>
-            <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
-              {userTier === null && (
-                <Link href="/signup" className="btn btn--outline btn--sm">
-                  Sign Up Free
-                </Link>
-              )}
-              <Link href="/win" className="btn btn--primary btn--sm">
-                View Membership
-              </Link>
-            </div>
-          </div>
-        )}
-
-        {/* No rows yet */}
-        {visibleRows.length === 0 && !isAdmin && !(!isMember && tierFilter === 'members') && (
+        {/* No rows yet — suppressed when a paywall follows, which speaks for itself */}
+        {visibleRows.length === 0 && !isAdmin && lockedCount === 0 && (
           <div style={{
             background: 'var(--bg-card)',
             border: '1px solid var(--border)',
@@ -325,14 +232,12 @@ export default function TodaysBets({ rows, isAdmin, userTier, isMember, editMode
             color: 'var(--text-muted)',
             marginTop: '28px',
           }}>
-            {tierFilter === 'members'
-              ? 'No members-only picks posted yet — check back soon.'
-              : 'No picks posted yet — check back soon.'}
+            No picks posted yet — check back soon.
           </div>
         )}
 
-        {/* Table — always rendered when there are rows */}
-        {visibleRows.length > 0 && !(!isMember && tierFilter === 'members') && (
+        {/* Table — also rendered when the only rows are locked stand-ins */}
+        {(visibleRows.length > 0 || lockedBets.length > 0) && (
           <div className="content-gate-wrap" style={{ marginTop: '28px' }}>
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '700px' }}>
@@ -352,9 +257,18 @@ export default function TodaysBets({ rows, isAdmin, userTier, isMember, editMode
                           <td style={tdStyle}>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                               <span>{row.date ?? '—'}</span>
-                              {!isLoggedOut && row.is_active && (
+                              {!isLoggedOut && (row.is_active || isMember) && (
                                 <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-                                  <span style={tagStyle('var(--accent-teal)', 'rgba(45,212,191,0.12)')}>Active</span>
+                                  {row.is_active && (
+                                    <span style={tagStyle('var(--accent-teal)', 'rgba(45,212,191,0.12)')}>Active</span>
+                                  )}
+                                  {/* Gate state is only meaningful to someone who
+                                      can see both kinds — otherwise every row is free. */}
+                                  {isMember && (
+                                    row.is_free
+                                      ? <span style={tagStyle('#38bdf8', 'rgba(56,189,248,0.12)')}>Free</span>
+                                      : <span style={tagStyle('var(--accent-gold)', 'rgba(var(--gold-rgb),0.12)')}>Members</span>
+                                  )}
                                 </div>
                               )}
                             </div>
@@ -419,6 +333,43 @@ export default function TodaysBets({ rows, isAdmin, userTier, isMember, editMode
                       </Fragment>
                     )
                   })}
+
+                  {/* Locked picks — the row still runs across, but the pick and
+                      everything that would identify it is a blank bar. These
+                      carry no bet text: the server never sent any. */}
+                  {lockedBets.map(t => (
+                    <tr key={t.id} className="bet-row--locked" style={{ borderBottom: '1px solid var(--border)' }}>
+                      <td style={tdStyle}>{t.date ?? '—'}</td>
+                      <td style={{ ...tdStyle, color: 'var(--accent-teal)', fontWeight: 600 }}>{t.sport ?? '—'}</td>
+                      <td style={{ ...tdStyle, maxWidth: '200px' }}>
+                        <span className="bet-cell-redacted" aria-hidden="true" />
+                        <span className="sr-only">Members-only pick</span>
+                      </td>
+                      <td style={tdStyle}><span className="bet-cell-redacted bet-cell-redacted--sm" aria-hidden="true" /></td>
+                      <td style={tdStyle}><span className="bet-cell-redacted bet-cell-redacted--sm" aria-hidden="true" /></td>
+                      <td style={tdStyle}><span className="bet-cell-redacted bet-cell-redacted--sm" aria-hidden="true" /></td>
+                      <td style={tdStyle}>
+                        <span style={{
+                          display: 'inline-block',
+                          padding: '2px 10px',
+                          borderRadius: '20px',
+                          fontSize: '0.75rem',
+                          fontWeight: 700,
+                          letterSpacing: '0.04em',
+                          textTransform: 'uppercase',
+                          background: rs(t.result).bg,
+                          color: rs(t.result).color,
+                        }}>
+                          {rs(t.result).label}
+                        </span>
+                      </td>
+                      <td style={tdStyle}>
+                        <Link href="/win" className="bet-unlock-link">
+                          <IconLock size={12} /> Unlock
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>

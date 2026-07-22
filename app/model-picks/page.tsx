@@ -6,16 +6,19 @@ import type { ModelPicksContent } from '@/lib/site-content'
 import type { TodaysBet } from '@/components/TodaysBets'
 import ModelPicksPage from '@/components/ModelPicksPage'
 import ModelPicksEditor from '@/components/ModelPicksEditor'
+import { resolveAccess, ACCESS_SELECT } from '@/lib/access'
+import { toBetTeaser, BET_TEASER_LIMIT } from '@/lib/teaser'
+import type { LockedBetTeaser } from '@/lib/teaser'
 
 export const metadata: Metadata = {
-  title: 'Model Picks – EdTheStatMan.com',
+  title: 'EdTheStatBot Picks – EdTheStatMan.com',
   description: 'Daily betting picks from EdTheStatMan. Active plays updated daily with full transparency.',
   alternates: { canonical: 'https://edthestatman.com/model-picks' },
   openGraph: {
-    title: 'Model Picks – EdTheStatMan.com',
+    title: 'EdTheStatBot Picks – EdTheStatMan.com',
     description: 'Daily betting picks from EdTheStatMan. Active plays updated daily with full transparency.',
     url: 'https://edthestatman.com/model-picks',
-    images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
+    images: [{ url: '/og-cover.jpg', width: 1200, height: 630 }],
   },
 }
 
@@ -36,33 +39,49 @@ export default async function ModelPicks() {
     ...(contentResult.data?.value as object ?? {}),
   }
 
-  let isAdmin = false
-  let userTier: string | null = null
   const { data: { user } } = await supabase.auth.getUser()
+  let access = resolveAccess(null, false)
   if (user) {
     const { data: profile } = await (supabase as any)
       .from('profiles')
-      .select('is_admin, subscription_tier, access_expires_at')
+      .select(ACCESS_SELECT)
       .eq('id', user.id)
       .single()
-    if ((profile as any)?.is_admin) {
-      isAdmin = true
-      userTier = 'premium'
-    } else {
-      userTier = (profile as any)?.subscription_tier ?? 'free'
-      if (userTier !== 'free') {
-        const exp = (profile as any)?.access_expires_at ? new Date((profile as any).access_expires_at) : null
-        if (!exp || exp < new Date()) userTier = 'free'
-      }
-    }
+    access = resolveAccess(profile as any, true)
   }
+  const { tier: userTier, isAdmin, isPaid } = access
 
-  const isMember = isAdmin || userTier === 'basic' || userTier === 'premium'
+  const isMember = isAdmin || isPaid
+
+  // One list, one gate. `is_free` is purely an admin per-pick switch: free picks
+  // render inline for everyone, the rest are dropped server-side and advertised
+  // only as a count. The count mirrors TodaysBets' own `!show_on_results`
+  // filter so it matches what a member would actually see in the table.
   const todaysBets = isMember ? allBets : allBets.filter(b => b.is_free)
+  const lockedBetRows = isMember
+    ? []
+    : allBets.filter(b => !b.is_free && !b.show_on_results)
+  const lockedCount = lockedBetRows.length
+
+  // Locked picks still occupy a row so the table reads as a real slate — but
+  // toBetTeaser() copies fields explicitly, so the pick itself, its line, vig,
+  // opponent and note never leave the server. The query orders by created_at
+  // desc, so slicing here keeps the most recent picks.
+  const lockedBets: LockedBetTeaser[] = lockedBetRows
+    .slice(0, BET_TEASER_LIMIT)
+    .map(toBetTeaser)
 
   return isAdmin ? (
     <ModelPicksEditor rows={todaysBets} userTier={userTier} headerContent={headerContent} />
   ) : (
-    <ModelPicksPage rows={todaysBets} isAdmin={false} userTier={userTier} isMember={isMember} headerContent={headerContent} />
+    <ModelPicksPage
+      rows={todaysBets}
+      isAdmin={false}
+      userTier={userTier}
+      isMember={isMember}
+      lockedCount={lockedCount}
+      lockedBets={lockedBets}
+      headerContent={headerContent}
+    />
   )
 }

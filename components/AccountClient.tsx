@@ -93,7 +93,7 @@ export default function AccountClient({ profile, provider }: AccountClientProps)
 
         {subscribeSuccess && (
           <div className="account-success-banner">
-            &#10003; Payment successful! Welcome to {profile.subscription_tier === 'premium' ? 'Annual' : 'Monthly'} access.
+            &#10003; Payment successful! Welcome to {profile.subscription_tier === 'premium' ? 'Premium' : 'Basic'} access.
           </div>
         )}
 
@@ -131,7 +131,7 @@ export default function AccountClient({ profile, provider }: AccountClientProps)
           {!profile.is_admin && (
             <div className="account-plan__actions">
               {(profile.subscription_tier === 'free' || isExpired) ? (
-                <Link href="/betting-systems#pricing" className="btn btn--primary btn--sm">
+                <Link href="/win" className="btn btn--primary btn--sm">
                   <IconBolt size={14} /> {isExpired ? 'Renew Access' : 'Upgrade Plan'}
                 </Link>
               ) : null}

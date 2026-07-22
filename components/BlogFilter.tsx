@@ -92,7 +92,7 @@ export default function BlogFilter({ posts, userTier }: Props) {
               >
                 <div className={`blog-card__image${locked ? ' blog-card__image--locked' : ''}`}>
                   <Image
-                    src={coverForPost(post.cover_image, post.tag)}
+                    src={coverForPost(post.cover_image, post.tag, post.title, post.slug)}
                     alt=""
                     fill
                     sizes="(max-width: 768px) 100vw, 33vw"

@@ -30,7 +30,12 @@ const rules = [
   { key: 'symbol',    label: 'One symbol (!@#$…)',      test: (p: string) => /[^A-Za-z0-9]/.test(p) },
 ]
 
-export default function SignupForm() {
+interface Props {
+  /** Validated relative path to land on after sign-up. */
+  next?: string
+}
+
+export default function SignupForm({ next = '/' }: Props) {
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
   const [password, setPassword] = useState('')
@@ -58,6 +63,7 @@ export default function SignupForm() {
 
     setLoading(true)
     const formData = new FormData(e.currentTarget)
+    formData.set('next', next)
     await signup(formData)
     setLoading(false)
   }
@@ -68,7 +74,7 @@ export default function SignupForm() {
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
       },
     })
   }

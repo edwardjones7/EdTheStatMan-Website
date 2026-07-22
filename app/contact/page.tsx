@@ -11,13 +11,13 @@ export const metadata: Metadata = {
     title: 'Contact Us – EdTheStatMan.com',
     description: 'Get in touch via email, X, or Discord. We typically respond within 24–48 hours.',
     url: 'https://edthestatman.com/contact',
-    images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
+    images: [{ url: '/og-cover.jpg', width: 1200, height: 630 }],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Contact Us – EdTheStatMan.com',
     description: 'Get in touch via email, X, or Discord. We typically respond within 24–48 hours.',
-    images: ['/opengraph-image'],
+    images: ['/og-cover.jpg'],
   },
 }
 

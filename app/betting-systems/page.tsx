@@ -1,9 +1,12 @@
 import type { Metadata } from 'next'
 import CTASection from '@/components/CTASection'
 import SportTabsSystem from '@/components/SportTabsSystem'
-import CheckoutButton from '@/components/CheckoutButton'
+import PricingCards from '@/components/PricingCards'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { resolveAccess, ACCESS_SELECT } from '@/lib/access'
+import { toTeaser, TEASER_LIMIT_PER_SPORT } from '@/lib/teaser'
+import type { LockedTeaser } from '@/lib/teaser'
 
 export const dynamic = 'force-dynamic'
 
@@ -15,13 +18,13 @@ export const metadata: Metadata = {
     title: 'Betting Systems – EdTheStatMan.com',
     description: 'Active betting systems for NFL, College Football, NBA, and College Basketball. Data-driven picks with proven track records.',
     url: 'https://edthestatman.com/betting-systems',
-    images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
+    images: [{ url: '/og-cover.jpg', width: 1200, height: 630 }],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Betting Systems – EdTheStatMan.com',
     description: 'Active betting systems for NFL, College Football, NBA, and College Basketball. Data-driven picks with proven track records.',
-    images: ['/opengraph-image'],
+    images: ['/og-cover.jpg'],
   },
 }
 
@@ -30,25 +33,16 @@ export default async function BettingSystems() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  let userTier: string | null = null
-  let isAdmin = false
+  let access = resolveAccess(null, false)
   if (user) {
     const { data: profile } = await (supabase as any)
       .from('profiles')
-      .select('subscription_tier, is_admin, access_expires_at')
+      .select(ACCESS_SELECT)
       .eq('id', user.id)
       .single()
-    if ((profile as any)?.is_admin) {
-      isAdmin = true
-      userTier = 'premium'
-    } else {
-      userTier = (profile as any)?.subscription_tier ?? 'free'
-      if (userTier !== 'free') {
-        const expiresAt = (profile as any)?.access_expires_at ? new Date((profile as any).access_expires_at) : null
-        if (!expiresAt || expiresAt < new Date()) userTier = 'free'
-      }
-    }
+    access = resolveAccess(profile as any, true)
   }
+  const { tier: userTier, isAdmin, isPaid, membership } = access
 
   const systemsQuery = isAdmin
     ? (admin as any).from('betting_systems').select('*').order('date', { ascending: false, nullsFirst: false })
@@ -72,7 +66,6 @@ export default async function BettingSystems() {
     return bPct - aPct
   })
 
-  const isPaid = userTier === 'basic' || userTier === 'premium'
   const canSeeAll = isPaid || isAdmin
 
   // Everything is members-only except rows explicitly flagged is_free. Locked
@@ -88,6 +81,19 @@ export default async function BettingSystems() {
     }
   }
 
+  // Locked rows are advertised with their record only. toTeaser() copies fields
+  // explicitly so descriptions/lines/teams/units can never ride along.
+  const lockedTeasers: LockedTeaser[] = []
+  if (!canSeeAll) {
+    const perSport: Record<string, number> = {}
+    for (const s of systems as any[]) {
+      if (s.is_free || s.is_active === false) continue
+      if ((perSport[s.sport] ?? 0) >= TEASER_LIMIT_PER_SPORT) continue
+      perSport[s.sport] = (perSport[s.sport] ?? 0) + 1
+      lockedTeasers.push(toTeaser(s))
+    }
+  }
+
   return (
     <main>
       <section className="section" style={{ paddingBottom: '40px' }}>
@@ -97,7 +103,7 @@ export default async function BettingSystems() {
             <h2 className="section-title">Betting Systems</h2>
             <p className="section-subtitle">Filter by sport to view system records, win percentages, and more.</p>
           </div>
-          <SportTabsSystem systems={(visibleSystems ?? []) as any[]} lockedCounts={lockedCounts} userTier={userTier} isAdmin={isAdmin} />
+          <SportTabsSystem systems={(visibleSystems ?? []) as any[]} lockedCounts={lockedCounts} lockedTeasers={lockedTeasers} userTier={userTier} isAdmin={isAdmin} />
         </div>
       </section>
 
@@ -113,46 +119,14 @@ export default async function BettingSystems() {
               </p>
             </div>
 
-            <div className="pricing-grid stagger-children" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', maxWidth: '800px', margin: '60px auto 0' }}>
-              <div className="pricing-card reveal-scale">
-                <div className="pricing-card__name">Monthly</div>
-                <div className="pricing-card__price">$19.99<span>/mo</span></div>
-                <div className="pricing-card__desc">Full access, billed monthly</div>
-                <ul className="pricing-card__features">
-                  <li className="pricing-card__feature"><span className="check">&#10003;</span> Full betting systems</li>
-                  <li className="pricing-card__feature"><span className="check">&#10003;</span> All trends unlocked</li>
-                  <li className="pricing-card__feature"><span className="check">&#10003;</span> X &amp; Discord alerts</li>
-                  <li className="pricing-card__feature"><span className="check">&#10003;</span> Cancel anytime</li>
-                </ul>
-                <CheckoutButton
-                  priceId={process.env.NEXT_PUBLIC_STRIPE_BASIC_PRICE_ID!}
-                  label="Get Started"
-                  variant="outline"
-                />
-              </div>
-
-              <div className="pricing-card pricing-card--featured reveal-scale">
-                <div className="pricing-card__name">Annual</div>
-                <div className="pricing-card__price">$119.99<span>/yr</span></div>
-                <div className="pricing-card__desc">Full access, billed yearly — save $119.89</div>
-                <ul className="pricing-card__features">
-                  <li className="pricing-card__feature"><span className="check">&#10003;</span> Full betting systems</li>
-                  <li className="pricing-card__feature"><span className="check">&#10003;</span> All trends unlocked</li>
-                  <li className="pricing-card__feature"><span className="check">&#10003;</span> X &amp; Discord alerts</li>
-                  <li className="pricing-card__feature"><span className="check">&#10003;</span> Cancel anytime</li>
-                </ul>
-                <CheckoutButton
-                  priceId={process.env.NEXT_PUBLIC_STRIPE_PREMIUM_PRICE_ID!}
-                  label="Get Annual →"
-                  variant="primary"
-                />
-              </div>
+            <div style={{ marginTop: '60px' }}>
+              <PricingCards membership={membership} currentTier={userTier} />
             </div>
           </div>
         </section>
       )}
 
-      <CTASection />
+      <CTASection membership={membership} />
     </main>
   )
 }

@@ -45,11 +45,11 @@ export const metadata: Metadata = {
     type: 'website',
     siteName: 'EdTheStatMan',
     locale: 'en_US',
-    images: [{ url: '/opengraph-image', width: 1200, height: 630, alt: 'EdTheStatMan – Winning Sports Betting Picks, Systems & Trends' }],
+    images: [{ url: '/og-cover.jpg', width: 1200, height: 630, alt: 'EdTheStatMan – Winning Sports Betting Picks, Systems & Trends' }],
   },
   twitter: {
     card: 'summary_large_image',
-    images: ['/opengraph-image'],
+    images: ['/og-cover.jpg'],
   },
   alternates: {
     canonical: 'https://edthestatman.com',

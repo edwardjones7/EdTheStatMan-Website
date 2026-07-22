@@ -1,5 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import NavClient from './NavClient'
+import { resolveAccess, ACCESS_SELECT } from '@/lib/access'
+import type { Membership } from '@/lib/access'
 
 export default async function Navigation() {
   const supabase = await createClient()
@@ -9,14 +11,17 @@ export default async function Navigation() {
   const user = session?.user ?? null
 
   let profile = null
+  let membership: Membership = 'logged-out'
   if (user) {
     const { data, error } = await (supabase as any)
       .from('profiles')
-      .select('full_name, subscription_tier, is_admin')
+      .select(`full_name, ${ACCESS_SELECT}`)
       .eq('id', user.id)
       .single()
 
     if (error) console.error('[Navigation] profile fetch error:', error)
+
+    membership = resolveAccess(data as any, true).membership
 
     profile = {
       email: user.email!,
@@ -26,5 +31,5 @@ export default async function Navigation() {
     }
   }
 
-  return <NavClient user={profile} />
+  return <NavClient user={profile} membership={membership} />
 }

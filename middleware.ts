@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { safeNext } from '@/lib/safe-redirect'
 
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
@@ -41,9 +42,11 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Redirect logged-in users away from auth pages
+  // Redirect logged-in users away from auth pages, honouring any pending
+  // destination so an in-flight purchase isn't dropped on the homepage.
   if (user && (pathname === '/login' || pathname === '/signup')) {
-    return NextResponse.redirect(new URL('/', request.url))
+    const dest = safeNext(request.nextUrl.searchParams.get('next'), '/')
+    return NextResponse.redirect(new URL(dest, request.url))
   }
 
   return supabaseResponse

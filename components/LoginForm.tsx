@@ -6,9 +6,11 @@ import { createClient } from '@/lib/supabase/client'
 
 interface Props {
   failedAttempts?: number
+  /** Validated relative path to land on after sign-in. */
+  next?: string
 }
 
-export default function LoginForm({ failedAttempts = 0 }: Props) {
+export default function LoginForm({ failedAttempts = 0, next = '/' }: Props) {
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
   const [attempts, setAttempts] = useState(failedAttempts)
@@ -18,9 +20,10 @@ export default function LoginForm({ failedAttempts = 0 }: Props) {
     setLoading(true)
     const formData = new FormData(e.currentTarget)
     formData.set('attempts', String(attempts))
+    formData.set('next', next)
     const result = await login(formData)
     if (result?.success) {
-      window.location.href = '/'
+      window.location.href = next
       return
     }
     setAttempts(a => a + 1)
@@ -33,7 +36,7 @@ export default function LoginForm({ failedAttempts = 0 }: Props) {
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
       },
     })
   }

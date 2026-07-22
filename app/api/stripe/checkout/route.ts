@@ -41,7 +41,7 @@ export async function POST(req: Request) {
     line_items: [{ price: priceId, quantity: 1 }],
     mode: 'payment',
     success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/account?success=1`,
-    cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/betting-systems`,
+    cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/win?canceled=1`,
     metadata: { userId: user.id, priceId },
     allow_promotion_codes: true,
   })

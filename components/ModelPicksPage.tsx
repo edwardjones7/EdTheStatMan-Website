@@ -2,6 +2,7 @@
 
 import type { ModelPicksContent } from '@/lib/site-content'
 import type { TodaysBet } from './TodaysBets'
+import type { LockedBetTeaser } from '@/lib/teaser'
 import TodaysBets from './TodaysBets'
 import Link from 'next/link'
 import type { ComponentType } from 'react'
@@ -12,6 +13,10 @@ interface Props {
   isAdmin: boolean
   userTier: string | null
   isMember: boolean
+  /** Picks withheld from a non-member. */
+  lockedCount?: number
+  /** Redacted stand-ins for those picks — date/sport/result only. */
+  lockedBets?: LockedBetTeaser[]
   editMode?: boolean
   headerContent: ModelPicksContent
   onHeaderEdit?: (updates: Partial<ModelPicksContent>) => void
@@ -19,7 +24,7 @@ interface Props {
 }
 
 export default function ModelPicksPage({
-  rows, isAdmin, userTier, isMember, editMode = false, headerContent, onHeaderEdit, resetKey = 0,
+  rows, isAdmin, userTier, isMember, lockedCount = 0, lockedBets = [], editMode = false, headerContent, onHeaderEdit, resetKey = 0,
 }: Props) {
   return (
     <>
@@ -29,6 +34,8 @@ export default function ModelPicksPage({
         isAdmin={isAdmin}
         userTier={userTier}
         isMember={isMember}
+        lockedCount={lockedCount}
+        lockedBets={lockedBets}
         editMode={editMode}
         headerContent={headerContent}
         onHeaderEdit={onHeaderEdit}

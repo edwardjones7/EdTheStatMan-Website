@@ -31,7 +31,7 @@ export default function Footer() {
           <div>
             <h4 className="footer__heading">Navigation</h4>
             <div className="footer__links">
-              <Link href="/model-picks" className="footer__link">Model&apos;s Picks</Link>
+              <Link href="/model-picks" className="footer__link">EdTheStatBot Picks</Link>
               <Link href="/betting-systems" className="footer__link">Betting Systems</Link>
               <Link href="/betting-trends" className="footer__link">Betting Trends</Link>
               <Link href="/blog" className="footer__link">Blog</Link>
@@ -41,7 +41,7 @@ export default function Footer() {
           <div>
             <h4 className="footer__heading">Resources</h4>
             <div className="footer__links">
-              <Link href="/results" className="footer__link">Results</Link>
+              <Link href="/results" className="footer__link">EdTheStatBot Results</Link>
               <Link href="/win" className="footer__link">Pricing</Link>
               <Link href="/contact" className="footer__link">Contact</Link>
             </div>
@@ -60,6 +60,9 @@ export default function Footer() {
 
         <div className="footer__bottom">
           <span className="footer__copyright">&copy; 2026 EdTheStatMan.com. All rights reserved.</span>
+          <a href="https://www.elenos.ai" className="footer__powered" target="_blank" rel="noopener">
+            Powered by Elenos
+          </a>
           <div className="footer__legal">
             <a href="#">Privacy Policy</a>
             <a href="#">Terms of Service</a>

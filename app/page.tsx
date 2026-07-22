@@ -7,6 +7,7 @@ import Features from '@/components/Features'
 import CTASection from '@/components/CTASection'
 import SportsBand from '@/components/SportsBand'
 import HomeEditor from '@/components/HomeEditor'
+import { resolveAccess, ACCESS_SELECT } from '@/lib/access'
 
 export const metadata: Metadata = {
   title: 'EdTheStatMan.com – Winning Sports Betting Picks, Systems & Trends',
@@ -16,13 +17,13 @@ export const metadata: Metadata = {
     title: 'EdTheStatMan.com – Winning Sports Betting Picks, Systems & Trends',
     description: 'Winning sports betting picks, systems and trends. Where handicappers get sharp and bettors win. Data-driven NFL, NBA, college football & basketball.',
     url: 'https://edthestatman.com',
-    images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
+    images: [{ url: '/og-cover.jpg', width: 1200, height: 630 }],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'EdTheStatMan.com – Winning Sports Betting Picks, Systems & Trends',
     description: 'Winning sports betting picks, systems and trends. Where handicappers get sharp and bettors win.',
-    images: ['/opengraph-image'],
+    images: ['/og-cover.jpg'],
   },
 }
 
@@ -62,26 +63,17 @@ export default async function Home() {
     model_picks:      { ...SITE_CONTENT_DEFAULTS.model_picks,      ...(raw.model_picks      as object ?? {}) },
   }
 
-  let isAdmin = false
-  let userTier: string | null = null  // null = logged out
   const { data: { user } } = await supabase.auth.getUser()
+  let access = resolveAccess(null, false)
   if (user) {
     const { data: profile } = await (supabase as any)
       .from('profiles')
-      .select('is_admin, subscription_tier, access_expires_at')
+      .select(ACCESS_SELECT)
       .eq('id', user.id)
       .single()
-    if ((profile as any)?.is_admin) {
-      isAdmin = true
-      userTier = 'premium'
-    } else {
-      userTier = (profile as any)?.subscription_tier ?? 'free'
-      if (userTier !== 'free') {
-        const exp = (profile as any)?.access_expires_at ? new Date((profile as any).access_expires_at) : null
-        if (!exp || exp < new Date()) userTier = 'free'
-      }
-    }
+    access = resolveAccess(profile as any, true)
   }
+  const { tier: userTier, isAdmin, isPaid, membership } = access
 
   return (
     <>
@@ -96,7 +88,7 @@ export default async function Home() {
           <Hero            content={content.hero} isLoggedIn={userTier !== null} />
           <Features        content={content.features} />
           <SportsBand />
-          <CTASection      content={content.cta_section} />
+          <CTASection      content={content.cta_section} membership={membership} />
         </>
       )}
     </>

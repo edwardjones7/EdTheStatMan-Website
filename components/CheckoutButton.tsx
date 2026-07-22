@@ -8,9 +8,11 @@ interface Props {
   label: string
   variant: 'primary' | 'outline'
   className?: string
+  /** Carried through signup so buy-intent survives account creation. */
+  tierKey?: 'basic' | 'premium'
 }
 
-export default function CheckoutButton({ priceId, label, variant, className }: Props) {
+export default function CheckoutButton({ priceId, label, variant, className, tierKey }: Props) {
   const [loading, setLoading] = useState(false)
   const router = useRouter()
 
@@ -24,7 +26,10 @@ export default function CheckoutButton({ priceId, label, variant, className }: P
       })
       const data = await res.json()
       if (res.status === 401) {
-        router.push('/login?next=/betting-systems')
+        // Send them to signup (a logged-out buyer usually has no account) and
+        // carry the chosen plan so checkout resumes automatically afterwards.
+        const dest = tierKey ? `/win?checkout=${tierKey}` : '/win'
+        router.push(`/signup?next=${encodeURIComponent(dest)}`)
         return
       }
       if (data.url) {

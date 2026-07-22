@@ -4,6 +4,7 @@ import BlogFilter from '@/components/BlogFilter'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 import type { BlogPost } from '@/components/BlogFilter'
+import { resolveAccess, ACCESS_SELECT } from '@/lib/access'
 
 export const metadata: Metadata = {
   title: 'Blog & Insights',
@@ -13,13 +14,13 @@ export const metadata: Metadata = {
     title: 'Blog & Insights – EdTheStatMan.com',
     description: 'Expert analysis, betting system breakdowns, and educational content for sports bettors. NFL, NBA, college football & basketball insights.',
     url: 'https://edthestatman.com/blog',
-    images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
+    images: [{ url: '/og-cover.jpg', width: 1200, height: 630 }],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Blog & Insights – EdTheStatMan.com',
     description: 'Expert analysis, betting system breakdowns, and educational content for sports bettors.',
-    images: ['/opengraph-image'],
+    images: ['/og-cover.jpg'],
   },
 }
 
@@ -36,22 +37,16 @@ export default async function Blog() {
     supabase.auth.getUser(),
   ])
 
-  let userTier: string | null = null
+  let access = resolveAccess(null, false)
   if (user) {
     const { data: profile } = await (supabase as any)
       .from('profiles')
-      .select('subscription_tier, subscription_status, is_admin')
+      .select(ACCESS_SELECT)
       .eq('id', user.id)
       .single()
-    if ((profile as any)?.is_admin) {
-      userTier = 'premium'
-    } else {
-      userTier = (profile as any)?.subscription_tier ?? 'free'
-      if (userTier !== 'free' && (profile as any)?.subscription_status !== 'active') {
-        userTier = 'free'
-      }
-    }
+    access = resolveAccess(profile as any, true)
   }
+  const { tier: userTier, isAdmin, isPaid, membership, expiresAt } = access
 
   return (
     <main>
@@ -66,7 +61,7 @@ export default async function Blog() {
         </div>
       </section>
 
-      <CTASection />
+      <CTASection membership={membership} />
     </main>
   )
 }

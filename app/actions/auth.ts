@@ -3,9 +3,11 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
+import { safeNext } from '@/lib/safe-redirect'
 
 export async function login(formData: FormData) {
   const supabase = await createClient()
+  const next = safeNext(formData.get('next') as string, '/')
 
   const { error } = await supabase.auth.signInWithPassword({
     email: formData.get('email') as string,
@@ -13,7 +15,7 @@ export async function login(formData: FormData) {
   })
 
   if (error) {
-    redirect('/login?error=auth')
+    redirect(`/login?error=auth&next=${encodeURIComponent(next)}`)
   }
 
   revalidatePath('/', 'layout')
@@ -22,6 +24,7 @@ export async function login(formData: FormData) {
 
 export async function signup(formData: FormData) {
   const supabase = await createClient()
+  const next = safeNext(formData.get('next') as string, '/')
 
   const password = formData.get('password') as string
   if (
@@ -30,23 +33,23 @@ export async function signup(formData: FormData) {
     !/[a-z]/.test(password) ||
     !/[^A-Za-z0-9]/.test(password)
   ) {
-    redirect('/signup?error=auth')
+    redirect(`/signup?error=auth&next=${encodeURIComponent(next)}`)
   }
 
   const { error } = await supabase.auth.signUp({
     email: formData.get('email') as string,
     password,
     options: {
-      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'}/auth/callback`,
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'}/auth/callback?next=${encodeURIComponent(next)}`,
     },
   })
 
   if (error) {
-    redirect(`/signup?error=${encodeURIComponent(error.message)}`)
+    redirect(`/signup?error=${encodeURIComponent(error.message)}&next=${encodeURIComponent(next)}`)
   }
 
   const email = formData.get('email') as string
-  redirect(`/signup/verify?email=${encodeURIComponent(email)}`)
+  redirect(`/signup/verify?email=${encodeURIComponent(email)}&next=${encodeURIComponent(next)}`)
 }
 
 export async function loginWithGoogle() {

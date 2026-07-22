@@ -165,7 +165,7 @@ export const DEFAULT_FEATURES: FeaturesContent = {
   cards: [
     {
       number: '01',
-      title: 'Model Picks',
+      title: 'EdTheStatBot Picks',
       text: 'Data-backed model picks for the NFL, College Football, NBA Playoffs, and the NCAA Tournament.',
       href: '/model-picks',
       linkText: 'View Picks',
@@ -308,7 +308,7 @@ export interface ResultsContent {
 
 export const DEFAULT_RESULTS: ResultsContent = {
   headerLabel: 'Historical Performance',
-  headerTitle: 'Results',
+  headerTitle: 'EdTheStatBot Results',
   headerSubtitle: 'Full transparency on our betting systems. Track our year-by-year performance, bankroll ROI, and sport-by-sport records.',
   statCards: [
     { count: '10.19', prefix: '+', suffix: '%',      decimals: '2', label: 'Total Bankroll' },

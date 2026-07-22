@@ -1,8 +1,11 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import CheckoutButton from '@/components/CheckoutButton'
+import PricingCards from '@/components/PricingCards'
+import CheckoutAutoStart from '@/components/CheckoutAutoStart'
+import { OFFER_DISCLAIMER, planByKey } from '@/lib/offer'
 import CTASection from '@/components/CTASection'
+import { resolveAccess, ACCESS_SELECT } from '@/lib/access'
 
 export const metadata: Metadata = {
   title: 'Pricing',
@@ -12,41 +15,41 @@ export const metadata: Metadata = {
     title: 'Pricing – EdTheStatMan.com',
     description: 'Unlock full access to betting systems, trends, and expert analysis. Basic $19.99 (30 days) or Premium $119.99 (365 days).',
     url: 'https://edthestatman.com/win',
-    images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
+    images: [{ url: '/og-cover.jpg', width: 1200, height: 630 }],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Pricing – EdTheStatMan.com',
     description: 'Unlock full access to betting systems, trends, and expert analysis.',
-    images: ['/opengraph-image'],
+    images: ['/og-cover.jpg'],
   },
 }
 
-export default async function Pricing() {
+export default async function Pricing({
+  searchParams,
+}: {
+  searchParams: { checkout?: string; canceled?: string }
+}) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  let userTier: string | null = null
+  let access = resolveAccess(null, false)
   if (user) {
     const { data: profile } = await (supabase as any)
       .from('profiles')
-      .select('subscription_tier, subscription_status, is_admin')
+      .select(ACCESS_SELECT)
       .eq('id', user.id)
       .single()
-    if ((profile as any)?.is_admin) {
-      userTier = 'premium'
-    } else {
-      userTier = (profile as any)?.subscription_tier ?? 'free'
-      if (userTier !== 'free' && (profile as any)?.subscription_status !== 'active') {
-        userTier = 'free'
-      }
-    }
+    access = resolveAccess(profile as any, true)
   }
+  const { tier: userTier, isAdmin, isPaid, membership, expiresAt } = access
 
-  const isPaid = userTier === 'basic' || userTier === 'premium'
+
+  const resumePlan = user && !isPaid ? planByKey(searchParams.checkout ?? '') : undefined
 
   return (
     <main>
+      {resumePlan && <CheckoutAutoStart priceId={resumePlan.priceId} planName={resumePlan.name} />}
       {/* Header */}
       <header className="page-header">
         <div className="container">
@@ -55,15 +58,47 @@ export default async function Pricing() {
             <h1 className="page-header__title">Simple, Transparent <span className="text-gradient">Pricing</span></h1>
             <p className="page-header__subtitle">
               Unlock full access to betting systems, trends, expert analysis, and instant alerts.
-              Cancel anytime — no contracts, no surprises.
+              One-time payment — no subscription, nothing to cancel.
             </p>
           </div>
         </div>
       </header>
 
       {/* Pricing cards */}
-      <section className="section">
+      <section className="section" id="pricing">
         <div className="container">
+
+          {searchParams.canceled === '1' && (
+            <div className="reveal" style={{ textAlign: 'center', marginBottom: '32px' }}>
+              <div style={{
+                display: 'inline-block',
+                background: 'rgba(var(--gold-rgb),0.1)',
+                border: '1px solid rgba(var(--gold-rgb),0.3)',
+                borderRadius: 'var(--radius-md)',
+                padding: '12px 24px',
+                color: 'var(--accent-gold)',
+                fontSize: '0.9rem',
+              }}>
+                Checkout cancelled — no charge was made. Your card wasn&apos;t billed.
+              </div>
+            </div>
+          )}
+
+          {membership === 'expired' && (
+            <div className="reveal" style={{ textAlign: 'center', marginBottom: '32px' }}>
+              <div style={{
+                display: 'inline-block',
+                background: 'rgba(var(--gold-rgb),0.1)',
+                border: '1px solid rgba(var(--gold-rgb),0.3)',
+                borderRadius: 'var(--radius-md)',
+                padding: '12px 24px',
+                color: 'var(--accent-gold)',
+                fontWeight: 600,
+              }}>
+                Your access has expired. Pick a pass below to pick up where you left off.
+              </div>
+            </div>
+          )}
 
           {isPaid && (
             <div className="reveal" style={{ textAlign: 'center', marginBottom: '40px' }}>
@@ -78,102 +113,20 @@ export default async function Pricing() {
                 color: 'var(--accent-teal)',
                 fontWeight: 600,
               }}>
-                ✓ You&apos;re subscribed to the {userTier === 'premium' ? 'Premium' : 'Basic'} plan.{' '}
+                ✓ {userTier === 'premium' ? 'Premium' : 'Basic'} access active
+                {expiresAt ? ` until ${expiresAt.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}` : ''}.{' '}
                 <Link href="/account" style={{ color: 'var(--accent-teal)', textDecoration: 'underline' }}>
-                  Manage billing →
+                  View account →
                 </Link>
               </div>
             </div>
           )}
 
-          <div className="pricing-grid stagger-children" style={{ maxWidth: '820px', margin: '0 auto' }}>
+          <PricingCards membership={membership} currentTier={userTier} showFree />
 
-            {/* Free */}
-            <div className="pricing-card reveal-scale">
-              <div className="pricing-card__name">Free</div>
-              <div className="pricing-card__price">$0<span>/mo</span></div>
-              <div className="pricing-card__desc">A taste of what's available</div>
-              <ul className="pricing-card__features">
-                <li className="pricing-card__feature"><span className="check">&#10003;</span> Curated free betting systems</li>
-                <li className="pricing-card__feature"><span className="check">&#10003;</span> Free-tagged trends</li>
-                <li className="pricing-card__feature"><span className="check">&#10003;</span> Free blog posts</li>
-                <li className="pricing-card__feature pricing-card__feature--muted"><span className="cross">&#10007;</span> Full systems library</li>
-                <li className="pricing-card__feature pricing-card__feature--muted"><span className="cross">&#10007;</span> All betting trends</li>
-              </ul>
-              {!user ? (
-                <Link href="/signup" className="btn btn--outline" style={{ width: '100%', justifyContent: 'center' }}>
-                  Create Free Account
-                </Link>
-              ) : userTier === 'free' ? (
-                <button className="btn btn--outline" style={{ width: '100%', justifyContent: 'center' }} disabled>
-                  Current Plan
-                </button>
-              ) : null}
-            </div>
-
-            {/* Monthly */}
-            <div className="pricing-card reveal-scale">
-              <div className="pricing-card__name">Monthly</div>
-              <div className="pricing-card__price">$19.99<span>/mo</span></div>
-              <div className="pricing-card__desc">Full access, billed monthly</div>
-              <ul className="pricing-card__features">
-                <li className="pricing-card__feature"><span className="check">&#10003;</span> Full betting systems library</li>
-                <li className="pricing-card__feature"><span className="check">&#10003;</span> All betting trends unlocked</li>
-                <li className="pricing-card__feature"><span className="check">&#10003;</span> All blog posts</li>
-                <li className="pricing-card__feature"><span className="check">&#10003;</span> X &amp; Discord alerts</li>
-                <li className="pricing-card__feature"><span className="check">&#10003;</span> Cancel anytime</li>
-              </ul>
-              {userTier === 'basic' ? (
-                <button className="btn btn--outline" style={{ width: '100%', justifyContent: 'center' }} disabled>
-                  Current Plan
-                </button>
-              ) : !isPaid ? (
-                <CheckoutButton
-                  priceId={process.env.NEXT_PUBLIC_STRIPE_BASIC_PRICE_ID!}
-                  label="Get Started"
-                  variant="outline"
-                />
-              ) : null}
-            </div>
-
-            {/* Annual */}
-            <div className="pricing-card pricing-card--featured reveal-scale">
-              <div className="pricing-card__name">Annual</div>
-              <div className="pricing-card__price">$119.99<span>/yr</span></div>
-              <div className="pricing-card__desc">Full access, billed yearly — save $119.89</div>
-              <ul className="pricing-card__features">
-                <li className="pricing-card__feature"><span className="check">&#10003;</span> Full betting systems library</li>
-                <li className="pricing-card__feature"><span className="check">&#10003;</span> All betting trends unlocked</li>
-                <li className="pricing-card__feature"><span className="check">&#10003;</span> All blog posts</li>
-                <li className="pricing-card__feature"><span className="check">&#10003;</span> X &amp; Discord alerts</li>
-                <li className="pricing-card__feature"><span className="check">&#10003;</span> Cancel anytime</li>
-              </ul>
-              {userTier === 'premium' ? (
-                <button className="btn btn--primary" style={{ width: '100%', justifyContent: 'center' }} disabled>
-                  Current Plan
-                </button>
-              ) : !isPaid ? (
-                <CheckoutButton
-                  priceId={process.env.NEXT_PUBLIC_STRIPE_PREMIUM_PRICE_ID!}
-                  label="Get Annual →"
-                  variant="primary"
-                />
-              ) : userTier === 'basic' ? (
-                <CheckoutButton
-                  priceId={process.env.NEXT_PUBLIC_STRIPE_PREMIUM_PRICE_ID!}
-                  label="Switch to Annual →"
-                  variant="primary"
-                />
-              ) : null}
-            </div>
-
-          </div>
-
-          {/* FAQ strip */}
-          <div className="reveal" style={{ maxWidth: '640px', margin: '64px auto 0', textAlign: 'center' }}>
+          <div className="reveal" style={{ maxWidth: '640px', margin: '56px auto 0', textAlign: 'center' }}>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.8 }}>
-              Monthly plan billed every month. Annual plan billed once per year. Cancel anytime from your{' '}
-              <Link href="/account" style={{ color: 'var(--accent-teal)' }}>account page</Link>.
+              {OFFER_DISCLAIMER}{' '}
               Questions? <Link href="/contact" style={{ color: 'var(--accent-teal)' }}>Contact us</Link>.
             </p>
           </div>

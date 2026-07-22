@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import SignupForm from '@/components/SignupForm'
+import { safeNext } from '@/lib/safe-redirect'
 
 export const metadata: Metadata = {
   title: 'Sign Up – EdTheStatMan.com',
@@ -10,8 +11,9 @@ export const metadata: Metadata = {
 export default function SignupPage({
   searchParams,
 }: {
-  searchParams: { error?: string }
+  searchParams: { error?: string; next?: string }
 }) {
+  const next = safeNext(searchParams.next, '/')
   return (
     <main className="auth-page">
       <div className="auth-card">
@@ -27,11 +29,11 @@ export default function SignupPage({
           </div>
         )}
 
-        <SignupForm />
+        <SignupForm next={next} />
 
         <p className="auth-card__footer">
           Already have an account?{' '}
-          <a href="/login" className="auth-link">Sign in</a>
+          <a href={`/login?next=${encodeURIComponent(next)}`} className="auth-link">Sign in</a>
         </p>
       </div>
     </main>
