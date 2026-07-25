@@ -43,12 +43,12 @@ export default function Hero({ content, isLoggedIn = false, editMode, onEdit, re
     <section className="hero">
       <div className="hero__media">
         <Image
-          src="/images/hero-arena.jpg"
+          src="/images/hero-stadium.jpg"
           alt=""
           fill
           priority
           sizes="100vw"
-          style={{ objectFit: 'cover', objectPosition: 'center 40%' }}
+          style={{ objectFit: 'cover', objectPosition: 'center center' }}
         />
         <div className="hero__scrim" />
       </div>

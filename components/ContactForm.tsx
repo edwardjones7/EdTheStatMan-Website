@@ -19,6 +19,7 @@ export default function ContactForm() {
       email:   (form.elements.namedItem('email')   as HTMLInputElement).value,
       subject: (form.elements.namedItem('subject') as HTMLSelectElement).value,
       message: (form.elements.namedItem('message') as HTMLTextAreaElement).value,
+      website: (form.elements.namedItem('website') as HTMLInputElement).value,
     }
 
     const res = await fetch('/api/contact', {
@@ -40,6 +41,11 @@ export default function ContactForm() {
   return (
     <>
       <form className="contact-form" onSubmit={handleSubmit}>
+        {/* Honeypot — humans never see or fill this field */}
+        <div style={{ position: 'absolute', left: '-9999px', width: '1px', height: '1px', overflow: 'hidden' }} aria-hidden="true">
+          <label htmlFor="contact-website">Website</label>
+          <input type="text" id="contact-website" name="website" tabIndex={-1} autoComplete="off" defaultValue="" />
+        </div>
         <div className="form-group">
           <label htmlFor="contact-name">Name</label>
           <input type="text" id="contact-name" name="name" className="form-input" placeholder="Your name" required />

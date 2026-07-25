@@ -4,7 +4,12 @@ import { Resend } from 'resend'
 const resend = new Resend(process.env.RESEND_API_KEY)
 
 export async function POST(request: Request) {
-  const { name, email, subject, message } = await request.json()
+  const { name, email, subject, message, website } = await request.json()
+
+  // Honeypot: real users never fill this hidden field. Pretend success so bots don't adapt.
+  if (website) {
+    return NextResponse.json({ success: true })
+  }
 
   if (!name || !email || !subject || !message) {
     return NextResponse.json({ error: 'All fields are required.' }, { status: 400 })
