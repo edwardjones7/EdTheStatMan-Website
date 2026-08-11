@@ -42,7 +42,7 @@ export default async function BettingSystems() {
       .single()
     access = resolveAccess(profile as any, true)
   }
-  const { tier: userTier, isAdmin, isPaid, membership } = access
+  const { tier: userTier, isAdmin, isPaid, hasElite, membership } = access
 
   const systemsQuery = isAdmin
     ? (admin as any).from('betting_systems').select('*').order('date', { ascending: false, nullsFirst: false })
@@ -68,14 +68,23 @@ export default async function BettingSystems() {
 
   const canSeeAll = isPaid || isAdmin
 
+  // Elite rows are a tier above members: basic/premium see them only as
+  // redacted teasers, same as non-members see member rows.
+  const nonEliteRows = systems.filter((s: any) => !s.is_elite)
+  const eliteRows = systems.filter((s: any) => s.is_elite)
+
   // Everything is members-only except rows explicitly flagged is_free. Locked
   // rows are dropped server-side — the paywall is a count, never a CSS blur, so
   // the members-only payload never reaches a non-member's browser. Counts are
-  // keyed by sport so the client can show the right number per tab.
-  const visibleSystems = canSeeAll ? systems : systems.filter((s: any) => s.is_free)
+  // keyed by sport so the client can show the right number per tab. Elite rows
+  // lead the list for elite members — it's what they paid for.
+  const visibleSystems = [
+    ...(hasElite ? eliteRows : []),
+    ...(canSeeAll ? nonEliteRows : nonEliteRows.filter((s: any) => s.is_free)),
+  ]
   const lockedCounts: Record<string, number> = {}
   if (!canSeeAll) {
-    for (const s of systems) {
+    for (const s of nonEliteRows) {
       if ((s as any).is_free) continue
       lockedCounts[(s as any).sport] = (lockedCounts[(s as any).sport] ?? 0) + 1
     }
@@ -86,11 +95,26 @@ export default async function BettingSystems() {
   const lockedTeasers: LockedTeaser[] = []
   if (!canSeeAll) {
     const perSport: Record<string, number> = {}
-    for (const s of systems as any[]) {
+    for (const s of nonEliteRows as any[]) {
       if (s.is_free || s.is_active === false) continue
       if ((perSport[s.sport] ?? 0) >= TEASER_LIMIT_PER_SPORT) continue
       perSport[s.sport] = (perSport[s.sport] ?? 0) + 1
       lockedTeasers.push(toTeaser(s))
+    }
+  }
+
+  // Elite teasers go to everyone below elite — including paid members, for whom
+  // this is the upsell surface.
+  const eliteLockedCounts: Record<string, number> = {}
+  const eliteTeasers: LockedTeaser[] = []
+  if (!hasElite) {
+    const perSport: Record<string, number> = {}
+    for (const s of eliteRows as any[]) {
+      if (s.is_active === false) continue
+      eliteLockedCounts[s.sport] = (eliteLockedCounts[s.sport] ?? 0) + 1
+      if ((perSport[s.sport] ?? 0) >= TEASER_LIMIT_PER_SPORT) continue
+      perSport[s.sport] = (perSport[s.sport] ?? 0) + 1
+      eliteTeasers.push(toTeaser(s))
     }
   }
 
@@ -103,7 +127,7 @@ export default async function BettingSystems() {
             <h2 className="section-title">Betting Systems</h2>
             <p className="section-subtitle">Filter by sport to view system records, win percentages, and more.</p>
           </div>
-          <SportTabsSystem systems={(visibleSystems ?? []) as any[]} lockedCounts={lockedCounts} lockedTeasers={lockedTeasers} userTier={userTier} isAdmin={isAdmin} />
+          <SportTabsSystem systems={(visibleSystems ?? []) as any[]} lockedCounts={lockedCounts} lockedTeasers={lockedTeasers} eliteLockedCounts={eliteLockedCounts} eliteTeasers={eliteTeasers} userTier={userTier} isAdmin={isAdmin} />
         </div>
       </section>
 

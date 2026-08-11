@@ -29,6 +29,7 @@ export async function POST(req: Request) {
     note:            body.note            || null,
     is_active:       body.is_active       ?? true,
     is_free:         body.is_free         ?? true,
+    is_elite:        body.is_elite        ?? false,
     show_on_results: body.show_on_results ?? false,
   }).select().single()
 

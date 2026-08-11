@@ -6,15 +6,16 @@ const BASE = 'https://edthestatman.com'
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const admin = createAdminClient()
 
-  const { data: posts } = await (admin as any)
-    .from('posts')
-    .select('slug, updated_at')
-    .eq('published', true)
+  const [{ data: posts }, { data: games }] = await Promise.all([
+    (admin as any).from('posts').select('slug, updated_at').eq('published', true),
+    (admin as any).from('nfl_games').select('slug, updated_at').eq('is_published', true),
+  ])
 
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: BASE, lastModified: new Date(), changeFrequency: 'daily', priority: 1.0 },
     { url: `${BASE}/betting-systems`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
     { url: `${BASE}/betting-trends`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
+    { url: `${BASE}/nfl`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
     { url: `${BASE}/results`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
     { url: `${BASE}/blog`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
     { url: `${BASE}/win`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.7 },
@@ -28,5 +29,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }))
 
-  return [...staticRoutes, ...blogRoutes]
+  const gameRoutes: MetadataRoute.Sitemap = (games ?? []).map((game: any) => ({
+    url: `${BASE}/nfl/games/${game.slug}`,
+    lastModified: game.updated_at ? new Date(game.updated_at) : new Date(),
+    changeFrequency: 'daily' as const,
+    priority: 0.7,
+  }))
+
+  return [...staticRoutes, ...blogRoutes, ...gameRoutes]
 }

@@ -43,7 +43,7 @@ export default async function BettingTrends() {
       .single()
     access = resolveAccess(profile as any, true)
   }
-  const { tier: userTier, isAdmin, isPaid, membership } = access
+  const { tier: userTier, isAdmin, isPaid, hasElite, membership } = access
 
   const trendsQuery = isAdmin
     ? (admin as any).from('betting_trends').select('*').order('team', { ascending: true }).order('created_at', { ascending: false })
@@ -58,10 +58,19 @@ export default async function BettingTrends() {
   // the members-only payload never reaches a non-member's browser. Counts are
   // keyed by sport so the client can show the right number per tab.
   const allTrends = (trends ?? []) as any[]
-  const visibleTrends = canSeeAll ? allTrends : allTrends.filter(t => t.is_free)
+
+  // Elite rows are a tier above members: basic/premium see them only as
+  // redacted teasers, same as non-members see member rows.
+  const nonEliteRows = allTrends.filter(t => !t.is_elite)
+  const eliteRows = allTrends.filter(t => t.is_elite)
+
+  const visibleTrends = [
+    ...(hasElite ? eliteRows : []),
+    ...(canSeeAll ? nonEliteRows : nonEliteRows.filter(t => t.is_free)),
+  ]
   const lockedCounts: Record<string, number> = {}
   if (!canSeeAll) {
-    for (const t of allTrends) {
+    for (const t of nonEliteRows) {
       if (t.is_free) continue
       lockedCounts[t.sport] = (lockedCounts[t.sport] ?? 0) + 1
     }
@@ -72,11 +81,26 @@ export default async function BettingTrends() {
   const lockedTeasers: LockedTeaser[] = []
   if (!canSeeAll) {
     const perSport: Record<string, number> = {}
-    for (const t of allTrends as any[]) {
+    for (const t of nonEliteRows as any[]) {
       if (t.is_free || t.is_active === false) continue
       if ((perSport[t.sport] ?? 0) >= TEASER_LIMIT_PER_SPORT) continue
       perSport[t.sport] = (perSport[t.sport] ?? 0) + 1
       lockedTeasers.push(toTeaser(t))
+    }
+  }
+
+  // Elite teasers go to everyone below elite — including paid members, for whom
+  // this is the upsell surface.
+  const eliteLockedCounts: Record<string, number> = {}
+  const eliteTeasers: LockedTeaser[] = []
+  if (!hasElite) {
+    const perSport: Record<string, number> = {}
+    for (const t of eliteRows as any[]) {
+      if (t.is_active === false) continue
+      eliteLockedCounts[t.sport] = (eliteLockedCounts[t.sport] ?? 0) + 1
+      if ((perSport[t.sport] ?? 0) >= TEASER_LIMIT_PER_SPORT) continue
+      perSport[t.sport] = (perSport[t.sport] ?? 0) + 1
+      eliteTeasers.push(toTeaser(t))
     }
   }
 
@@ -89,7 +113,7 @@ export default async function BettingTrends() {
             <h2 className="section-title">Betting Trends</h2>
             <p className="section-subtitle">Filter by sport to discover situational edges and patterns.</p>
           </div>
-          <TrendsFilter trends={visibleTrends} lockedCounts={lockedCounts} lockedTeasers={lockedTeasers} userTier={userTier} isAdmin={isAdmin} />
+          <TrendsFilter trends={visibleTrends} lockedCounts={lockedCounts} lockedTeasers={lockedTeasers} eliteLockedCounts={eliteLockedCounts} eliteTeasers={eliteTeasers} userTier={userTier} isAdmin={isAdmin} />
         </div>
       </section>
 

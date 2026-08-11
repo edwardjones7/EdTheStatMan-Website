@@ -30,6 +30,7 @@ export async function PUT(req: Request, context: { params: Promise<{ id: string 
     note:            body.note            || null,
     is_active:       body.is_active       ?? true,
     is_free:         body.is_free         ?? true,
+    is_elite:        body.is_elite        ?? false,
     show_on_results: body.show_on_results ?? false,
     updated_at:      new Date().toISOString(),
   }).eq('id', id).select().single()

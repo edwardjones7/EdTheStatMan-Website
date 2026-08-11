@@ -110,6 +110,14 @@ export interface ModelPicksContent {
   sectionSubtitle: string
 }
 
+export interface NflHubContent {
+  headerLabel: string
+  headerTitle: string
+  headerSubtitle: string
+  eliteCtaTitle: string
+  eliteCtaText: string
+}
+
 export interface AllSiteContent {
   hero: HeroContent
   action_card: ActionCardContent
@@ -119,6 +127,7 @@ export interface AllSiteContent {
   systems_overview: SystemsOverviewContent
   ticker: TickerContent
   model_picks: ModelPicksContent
+  nfl_hub: NflHubContent
 }
 
 export const DEFAULT_HERO: HeroContent = {
@@ -212,6 +221,17 @@ export const DEFAULT_FEATURES: FeaturesContent = {
       iconColor: 'purple',
       isExternal: true,
     },
+    // Appended after launch of the Elite NFL Season Pass. Keep new cards at the
+    // END of this array — the home page merges DB overrides onto defaults by
+    // index, so inserting mid-array would mis-apply saved edits.
+    {
+      number: '07',
+      title: 'Elite NFL Hub',
+      text: 'Week-by-week NFL breakdowns with the systems and trends behind every matchup, plus curated Edge Picks — exclusive to the Elite Season Pass.',
+      href: '/nfl',
+      linkText: 'Enter the Hub',
+      iconColor: 'gold',
+    },
   ],
 }
 
@@ -252,6 +272,16 @@ export const DEFAULT_MODEL_PICKS: ModelPicksContent = {
   sectionLabel: 'Daily Picks',
   sectionTitle: "What I'm Betting Today",
   sectionSubtitle: 'My active plays — updated daily.',
+}
+
+export const DEFAULT_NFL_HUB: NflHubContent = {
+  headerLabel: 'Elite NFL Hub',
+  headerTitle: 'NFL Weekly Breakdowns',
+  headerSubtitle:
+    'Every matchup, every week — with the systems and trends that hit each game, plus curated Edge Picks. The full breakdowns are Elite-only.',
+  eliteCtaTitle: 'This is the Elite edge.',
+  eliteCtaText:
+    'The NFL Season Pass unlocks every weekly game breakdown, the systems and trends mapped to each matchup, and our highest-conviction Edge Picks — all season long, through the Super Bowl.',
 }
 
 export const DEFAULT_TICKER: TickerContent = {
@@ -351,4 +381,5 @@ export const SITE_CONTENT_DEFAULTS: AllSiteContent = {
   systems_overview: DEFAULT_SYSTEMS_OVERVIEW,
   ticker: DEFAULT_TICKER,
   model_picks: DEFAULT_MODEL_PICKS,
+  nfl_hub: DEFAULT_NFL_HUB,
 }

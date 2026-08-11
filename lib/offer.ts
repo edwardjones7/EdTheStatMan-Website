@@ -8,7 +8,23 @@
 // NOTE: NEXT_PUBLIC_* env vars are only inlined by Next when written as literal
 // static member expressions. Never index process.env dynamically.
 
-export type OfferTierKey = 'basic' | 'premium'
+export type OfferTierKey = 'basic' | 'premium' | 'elite'
+
+/**
+ * What a purchase grants. 'days' stacks on top of any remaining access;
+ * 'until' grants access through a fixed date (the Elite NFL Season Pass runs
+ * through the Super Bowl regardless of purchase date).
+ */
+export type AccessGrant = { kind: 'days'; days: number } | { kind: 'until'; endsAt: string }
+
+// Elite endsAt must be updated each season (Monday after the Super Bowl).
+// The webhook falls back to a 30-day grant if this date is already past, so a
+// stale constant can never sell access that is expired on arrival.
+export const TIER_GRANT: Record<OfferTierKey, AccessGrant> = {
+  basic: { kind: 'days', days: 30 },
+  premium: { kind: 'days', days: 365 },
+  elite: { kind: 'until', endsAt: '2027-02-15T12:00:00Z' },
+}
 
 export interface OfferPlan {
   key: OfferTierKey
@@ -58,6 +74,23 @@ export const OFFER_PLANS: OfferPlan[] = [
     ],
     ctaLabel: 'Get 365 Days',
     priceId: process.env.NEXT_PUBLIC_STRIPE_PREMIUM_PRICE_ID ?? '',
+  },
+  {
+    key: 'elite',
+    name: 'Elite — NFL Season Pass',
+    price: '$249',
+    duration: 'Access through the Super Bowl',
+    badge: 'NFL Season',
+    note: 'One-time — no auto-renew',
+    features: [
+      'Everything in Premium',
+      'Weekly NFL game breakdowns, every matchup',
+      'Systems & trends mapped to each game',
+      'Edge Picks — highest-conviction plays',
+      'Elite-only systems and trends',
+    ],
+    ctaLabel: 'Go Elite',
+    priceId: process.env.NEXT_PUBLIC_STRIPE_ELITE_PRICE_ID ?? '',
   },
 ]
 

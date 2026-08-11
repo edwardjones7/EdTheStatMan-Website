@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import type { AccessLevel } from '@/lib/supabase/types'
+import { isPaidTier } from '@/lib/access'
 import { IconLock } from './Icons'
 import { coverForPost } from '@/lib/blog-images'
 
@@ -43,7 +44,7 @@ export default function BlogFilter({ posts, userTier }: Props) {
   const [activeTab, setActiveTab] = useState('all')
   const [page, setPage] = useState(1)
 
-  const isPaid = userTier === 'basic' || userTier === 'premium'
+  const isPaid = isPaidTier(userTier)
 
   const filtered = posts.filter(p => activeTab === 'all' || p.tag === activeTab)
   const totalPages = Math.ceil(filtered.length / POSTS_PER_PAGE)

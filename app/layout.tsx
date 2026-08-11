@@ -8,6 +8,8 @@ import BackToTop from '@/components/BackToTop'
 import ClientScripts from '@/components/ClientScripts'
 import PageViewTracker from '@/components/PageViewTracker'
 import GlobalTicker from '@/components/GlobalTicker'
+import { Analytics } from '@vercel/analytics/react'
+import { SpeedInsights } from '@vercel/speed-insights/next'
 import { createClient } from '@/lib/supabase/server'
 import { DEFAULT_TICKER } from '@/lib/site-content'
 import type { TickerContent } from '@/lib/site-content'
@@ -127,6 +129,8 @@ export default async function RootLayout({
         <BackToTop />
         <ClientScripts />
         <Suspense><PageViewTracker /></Suspense>
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   )

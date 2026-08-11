@@ -53,10 +53,14 @@ export default function NavAuth({ user, membership = 'logged-out' }: NavAuthProp
     )
   }
 
+  const activeLabel =
+    user.subscription_tier === 'elite' ? 'Elite' :
+    user.subscription_tier === 'premium' ? 'Premium' :
+    'Basic'
   const tierLabel =
     membership === 'admin'   ? 'Admin' :
     membership === 'expired' ? 'Expired' :
-    membership === 'active'  ? (user.subscription_tier === 'premium' ? 'Premium' : 'Basic') :
+    membership === 'active'  ? activeLabel :
     'Free'
 
   const tierModifier =

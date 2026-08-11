@@ -22,6 +22,7 @@ export interface TodaysBet {
   note: string | null
   is_active: boolean
   is_free: boolean
+  is_elite: boolean
   show_on_results: boolean
   created_at: string
 }
@@ -35,6 +36,8 @@ interface Props {
   lockedCount?: number
   /** Redacted stand-ins for those picks — date/sport/result only. */
   lockedBets?: LockedBetTeaser[]
+  /** Edge picks withheld from everyone below elite — members included. */
+  eliteLockedBets?: LockedBetTeaser[]
   editMode?: boolean
   headerContent?: ModelPicksContent
   onHeaderEdit?: (updates: Partial<ModelPicksContent>) => void
@@ -50,10 +53,10 @@ const RESULT_STYLE: Record<string, { bg: string; color: string; label: string }>
 
 const EMPTY_FORM = {
   date: '', sport: '', risk: '', bet: '', line: '', vig: '', opponent: '', win: '', result: 'pending', note: '',
-  is_active: true, is_free: true, show_on_results: false,
+  is_active: true, is_free: true, is_elite: false, show_on_results: false,
 }
 
-export default function TodaysBets({ rows, isAdmin, userTier, isMember, lockedCount = 0, lockedBets = [], editMode = false, headerContent, onHeaderEdit, resetKey = 0 }: Props) {
+export default function TodaysBets({ rows, isAdmin, userTier, isMember, lockedCount = 0, lockedBets = [], eliteLockedBets = [], editMode = false, headerContent, onHeaderEdit, resetKey = 0 }: Props) {
   const router = useRouter()
   const [formMode, setFormMode]   = useState<'hidden' | 'add' | 'edit'>('hidden')
   const [editId, setEditId]       = useState<string | null>(null)
@@ -93,6 +96,7 @@ export default function TodaysBets({ rows, isAdmin, userTier, isMember, lockedCo
       note:            row.note   ?? '',
       is_active:       row.is_active,
       is_free:         row.is_free,
+      is_elite:        row.is_elite ?? false,
       show_on_results: row.show_on_results,
     })
     setEditId(row.id)
@@ -175,6 +179,9 @@ export default function TodaysBets({ rows, isAdmin, userTier, isMember, lockedCo
     if (dateDiff !== 0) return dateDiff
     const grp = groupOrder(a.note) - groupOrder(b.note)
     if (grp !== 0) return grp
+    // Edge picks lead their slate — it's what elite members paid for.
+    const elite = Number(!!b.is_elite) - Number(!!a.is_elite)
+    if (elite !== 0) return elite
     return Number(b.is_free) - Number(a.is_free)
   })
   const rs = (result: string | null) => RESULT_STYLE[result ?? 'pending'] ?? RESULT_STYLE.pending
@@ -222,7 +229,7 @@ export default function TodaysBets({ rows, isAdmin, userTier, isMember, lockedCo
         )}
 
         {/* No rows yet — suppressed when a paywall follows, which speaks for itself */}
-        {visibleRows.length === 0 && !isAdmin && lockedCount === 0 && (
+        {visibleRows.length === 0 && !isAdmin && lockedCount === 0 && eliteLockedBets.length === 0 && (
           <div style={{
             background: 'var(--bg-card)',
             border: '1px solid var(--border)',
@@ -237,7 +244,7 @@ export default function TodaysBets({ rows, isAdmin, userTier, isMember, lockedCo
         )}
 
         {/* Table — also rendered when the only rows are locked stand-ins */}
-        {(visibleRows.length > 0 || lockedBets.length > 0) && (
+        {(visibleRows.length > 0 || lockedBets.length > 0 || eliteLockedBets.length > 0) && (
           <div className="content-gate-wrap" style={{ marginTop: '28px' }}>
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '700px' }}>
@@ -265,7 +272,9 @@ export default function TodaysBets({ rows, isAdmin, userTier, isMember, lockedCo
                                   {/* Gate state is only meaningful to someone who
                                       can see both kinds — otherwise every row is free. */}
                                   {isMember && (
-                                    row.is_free
+                                    row.is_elite
+                                      ? <span style={tagStyle('var(--accent-gold)', 'rgba(var(--gold-rgb),0.18)')}>Edge</span>
+                                      : row.is_free
                                       ? <span style={tagStyle('#38bdf8', 'rgba(56,189,248,0.12)')}>Free</span>
                                       : <span style={tagStyle('var(--accent-gold)', 'rgba(var(--gold-rgb),0.12)')}>Members</span>
                                   )}
@@ -333,6 +342,47 @@ export default function TodaysBets({ rows, isAdmin, userTier, isMember, lockedCo
                       </Fragment>
                     )
                   })}
+
+                  {/* Edge picks locked for everyone below elite — same redaction
+                      rules as member-locked rows, gold Elite treatment. */}
+                  {eliteLockedBets.map(t => (
+                    <tr key={t.id} className="bet-row--locked bet-row--elite-locked" style={{ borderBottom: '1px solid var(--border)' }}>
+                      <td style={tdStyle}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                          <span>{t.date ?? '—'}</span>
+                          <span style={tagStyle('var(--accent-gold)', 'rgba(var(--gold-rgb),0.18)')}>Edge</span>
+                        </div>
+                      </td>
+                      <td style={{ ...tdStyle, color: 'var(--accent-teal)', fontWeight: 600 }}>{t.sport ?? '—'}</td>
+                      <td style={{ ...tdStyle, maxWidth: '200px' }}>
+                        <span className="bet-cell-redacted" aria-hidden="true" />
+                        <span className="sr-only">Elite-only Edge pick</span>
+                      </td>
+                      <td style={tdStyle}><span className="bet-cell-redacted bet-cell-redacted--sm" aria-hidden="true" /></td>
+                      <td style={tdStyle}><span className="bet-cell-redacted bet-cell-redacted--sm" aria-hidden="true" /></td>
+                      <td style={tdStyle}><span className="bet-cell-redacted bet-cell-redacted--sm" aria-hidden="true" /></td>
+                      <td style={tdStyle}>
+                        <span style={{
+                          display: 'inline-block',
+                          padding: '2px 10px',
+                          borderRadius: '20px',
+                          fontSize: '0.75rem',
+                          fontWeight: 700,
+                          letterSpacing: '0.04em',
+                          textTransform: 'uppercase',
+                          background: rs(t.result).bg,
+                          color: rs(t.result).color,
+                        }}>
+                          {rs(t.result).label}
+                        </span>
+                      </td>
+                      <td style={tdStyle}>
+                        <Link href="/win" className="bet-unlock-link bet-unlock-link--elite">
+                          <IconLock size={12} /> Go Elite
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
 
                   {/* Locked picks — the row still runs across, but the pick and
                       everything that would identify it is a blank bar. These
@@ -473,6 +523,12 @@ function BetForm({ form, setField, onSave, onCancel, saving, error }: BetFormPro
           active={form.is_free}
           onColor="var(--accent-teal)"
           onClick={() => setField('is_free', !form.is_free)}
+        />
+        <ToggleBtn
+          label="Elite (Edge pick)"
+          active={form.is_elite}
+          onColor="var(--accent-gold)"
+          onClick={() => setField('is_elite', !form.is_elite)}
         />
         <ToggleBtn
           label="Show on Results"

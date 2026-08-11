@@ -9,11 +9,11 @@ import { resolveAccess, ACCESS_SELECT } from '@/lib/access'
 
 export const metadata: Metadata = {
   title: 'Pricing',
-  description: 'Unlock full access to betting systems, trends, and expert analysis. Basic $19.99 (30 days) or Premium $119.99 (365 days).',
+  description: 'Unlock full access to betting systems, trends, and expert analysis. Basic $19.99 (30 days), Premium $119.99 (365 days), or the $249 Elite NFL Season Pass.',
   alternates: { canonical: 'https://edthestatman.com/win' },
   openGraph: {
     title: 'Pricing – EdTheStatMan.com',
-    description: 'Unlock full access to betting systems, trends, and expert analysis. Basic $19.99 (30 days) or Premium $119.99 (365 days).',
+    description: 'Unlock full access to betting systems, trends, and expert analysis. Basic $19.99 (30 days), Premium $119.99 (365 days), or the $249 Elite NFL Season Pass.',
     url: 'https://edthestatman.com/win',
     images: [{ url: '/og-cover.jpg', width: 1200, height: 630 }],
   },
@@ -57,7 +57,8 @@ export default async function Pricing({
             <span className="section-label">Membership</span>
             <h1 className="page-header__title">Simple, Transparent <span className="text-gradient">Pricing</span></h1>
             <p className="page-header__subtitle">
-              Unlock full access to betting systems, trends, expert analysis, and instant alerts.
+              Unlock full access to betting systems, trends, expert analysis, and instant alerts —
+              or go Elite for the NFL Season Pass with weekly game breakdowns and Edge Picks.
               One-time payment — no subscription, nothing to cancel.
             </p>
           </div>
@@ -113,7 +114,7 @@ export default async function Pricing({
                 color: 'var(--accent-teal)',
                 fontWeight: 600,
               }}>
-                ✓ {userTier === 'premium' ? 'Premium' : 'Basic'} access active
+                ✓ {userTier === 'elite' ? 'Elite' : userTier === 'premium' ? 'Premium' : 'Basic'} access active
                 {expiresAt ? ` until ${expiresAt.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}` : ''}.{' '}
                 <Link href="/account" style={{ color: 'var(--accent-teal)', textDecoration: 'underline' }}>
                   View account →

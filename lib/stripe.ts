@@ -11,8 +11,9 @@ export function getStripe(): Stripe {
   return _stripe
 }
 
-export function priceTier(priceId: string): 'basic' | 'premium' | null {
+export function priceTier(priceId: string): 'basic' | 'premium' | 'elite' | null {
   if (priceId === process.env.NEXT_PUBLIC_STRIPE_BASIC_PRICE_ID) return 'basic'
   if (priceId === process.env.NEXT_PUBLIC_STRIPE_PREMIUM_PRICE_ID) return 'premium'
+  if (priceId === process.env.NEXT_PUBLIC_STRIPE_ELITE_PRICE_ID) return 'elite'
   return null
 }

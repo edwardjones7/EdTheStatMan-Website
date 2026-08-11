@@ -6,7 +6,23 @@
 //
 // Pure module — no server imports — so client components can use it too.
 
-export type SubscriptionTier = 'free' | 'basic' | 'premium'
+export type SubscriptionTier = 'free' | 'basic' | 'premium' | 'elite'
+
+/**
+ * Ordering for upgrade/anti-downgrade decisions. Higher rank never gets
+ * replaced by a lower-rank purchase while the higher access is still valid.
+ */
+export const TIER_RANK: Record<SubscriptionTier, number> = {
+  free: 0,
+  basic: 1,
+  premium: 2,
+  elite: 3,
+}
+
+/** True for any paid tier string. Use instead of hand-written tier lists. */
+export function isPaidTier(tier: string | null | undefined): boolean {
+  return tier === 'basic' || tier === 'premium' || tier === 'elite'
+}
 
 /** Coarser than tier: distinguishes a never-paid user from a lapsed one. */
 export type Membership = 'logged-out' | 'free' | 'expired' | 'active' | 'admin'
@@ -29,6 +45,8 @@ export interface Access {
   tier: SubscriptionTier | null
   isAdmin: boolean
   isPaid: boolean
+  /** Elite-only content (NFL hub write-ups, Edge picks, elite systems/trends). */
+  hasElite: boolean
   membership: Membership
   expiresAt: Date | null
 }
@@ -38,25 +56,32 @@ export function resolveAccess(
   isLoggedIn: boolean
 ): Access {
   if (!isLoggedIn) {
-    return { tier: null, isAdmin: false, isPaid: false, membership: 'logged-out', expiresAt: null }
+    return { tier: null, isAdmin: false, isPaid: false, hasElite: false, membership: 'logged-out', expiresAt: null }
   }
 
   if (profile?.is_admin) {
-    return { tier: 'premium', isAdmin: true, isPaid: true, membership: 'admin', expiresAt: null }
+    return { tier: 'elite', isAdmin: true, isPaid: true, hasElite: true, membership: 'admin', expiresAt: null }
   }
 
   const storedTier = (profile?.subscription_tier ?? 'free') as SubscriptionTier
   const expiresAt = profile?.access_expires_at ? new Date(profile.access_expires_at) : null
 
   if (storedTier === 'free') {
-    return { tier: 'free', isAdmin: false, isPaid: false, membership: 'free', expiresAt: null }
+    return { tier: 'free', isAdmin: false, isPaid: false, hasElite: false, membership: 'free', expiresAt: null }
   }
 
   // A paid tier with a missing or past expiry has lapsed.
   const stillValid = !!expiresAt && expiresAt.getTime() > Date.now()
   if (!stillValid) {
-    return { tier: 'free', isAdmin: false, isPaid: false, membership: 'expired', expiresAt }
+    return { tier: 'free', isAdmin: false, isPaid: false, hasElite: false, membership: 'expired', expiresAt }
   }
 
-  return { tier: storedTier, isAdmin: false, isPaid: true, membership: 'active', expiresAt }
+  return {
+    tier: storedTier,
+    isAdmin: false,
+    isPaid: true,
+    hasElite: storedTier === 'elite',
+    membership: 'active',
+    expiresAt,
+  }
 }

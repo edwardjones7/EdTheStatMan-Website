@@ -61,6 +61,7 @@ export default async function Home() {
     systems_overview: { ...SITE_CONTENT_DEFAULTS.systems_overview, ...(raw.systems_overview as object ?? {}) },
     ticker:           { ...SITE_CONTENT_DEFAULTS.ticker,           ...(raw.ticker           as object ?? {}) },
     model_picks:      { ...SITE_CONTENT_DEFAULTS.model_picks,      ...(raw.model_picks      as object ?? {}) },
+    nfl_hub:          { ...SITE_CONTENT_DEFAULTS.nfl_hub,          ...(raw.nfl_hub          as object ?? {}) },
   }
 
   const { data: { user } } = await supabase.auth.getUser()

@@ -2,11 +2,11 @@ import Link from 'next/link'
 import CheckoutButton from './CheckoutButton'
 import { OFFER_PLANS, OFFER_FREE_FEATURES } from '@/lib/offer'
 import type { OfferTierKey } from '@/lib/offer'
-import type { Membership, SubscriptionTier } from '@/lib/access'
+import { TIER_RANK, type Membership, type SubscriptionTier } from '@/lib/access'
 
-/** Only 'basic' → 'premium' is an upsell worth showing an active member. */
+/** A plan is an upsell for an active member only if it outranks their tier. */
 function isUpgrade(current: SubscriptionTier | null, plan: OfferTierKey): boolean {
-  return current === 'basic' && plan === 'premium'
+  return TIER_RANK[plan] > TIER_RANK[current ?? 'free']
 }
 
 interface Props {
@@ -29,7 +29,7 @@ export default function PricingCards({
   return (
     <div
       className="pricing-grid stagger-children"
-      style={{ maxWidth: showFree ? '1040px' : '680px', margin: '0 auto' }}
+      style={{ maxWidth: showFree ? '1380px' : '1040px', margin: '0 auto' }}
     >
       {showFree && (
         <div className="pricing-card reveal-scale">
@@ -70,11 +70,12 @@ export default function PricingCards({
       {OFFER_PLANS.map(plan => {
         const isCurrent = isPaid && currentTier === plan.key
         const featured = plan.key === highlight
+        const elite = plan.key === 'elite'
 
         return (
           <div
             key={plan.key}
-            className={`pricing-card reveal-scale${featured ? ' pricing-card--featured' : ''}`}
+            className={`pricing-card reveal-scale${featured ? ' pricing-card--featured' : ''}${elite ? ' pricing-card--elite' : ''}`}
           >
             <div className="pricing-card__name">
               {plan.name}

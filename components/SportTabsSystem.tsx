@@ -6,6 +6,7 @@ import Link from 'next/link'
 import type { BettingSystem } from './AdminSystemsTab'
 import LockedTeaserCard from './LockedTeaserCard'
 import type { LockedTeaser } from '@/lib/teaser'
+import { isPaidTier } from '@/lib/access'
 import { IconLock, IconPencil } from './Icons'
 import RecordStrip from './RecordStrip'
 
@@ -16,6 +17,9 @@ interface Props {
   /** Members-only row counts keyed by sport. Non-members get counts, not rows. */
   lockedCounts?: Record<string, number>
   lockedTeasers?: LockedTeaser[]
+  /** Elite-only rows, redacted for everyone below elite (members included). */
+  eliteLockedCounts?: Record<string, number>
+  eliteTeasers?: LockedTeaser[]
   userTier: string | null
   isAdmin?: boolean
 }
@@ -58,6 +62,7 @@ const BLANK = {
   date: '',
   team: '',
   is_free: false,
+  is_elite: false,
   is_active: true,
 }
 
@@ -105,7 +110,7 @@ function parseStr(val: unknown): string {
   return String(val).trim()
 }
 
-export default function SportTabsSystem({ systems, lockedCounts = {}, lockedTeasers = [], userTier, isAdmin = false }: Props) {
+export default function SportTabsSystem({ systems, lockedCounts = {}, lockedTeasers = [], eliteLockedCounts = {}, eliteTeasers = [], userTier, isAdmin = false }: Props) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -148,13 +153,19 @@ export default function SportTabsSystem({ systems, lockedCounts = {}, lockedTeas
     }
   }, [editId, formMode])
 
-  const isPaid = userTier === 'basic' || userTier === 'premium'
+  const isPaid = isPaidTier(userTier)
   const isLoggedOut = userTier === null
 
   // Locked rows only exist for non-members; `systems` already excludes them.
   const totalLocked = Object.values(lockedCounts).reduce((a, b) => a + b, 0)
   const lockedForTab = isAdmin ? [] : lockedTeasers.filter(t => activeTab === 'all' || t.sport === activeTab)
   const lockedCount = activeTab === 'all' ? totalLocked : (lockedCounts[activeTab] ?? 0)
+
+  // Elite-locked rows exist for everyone below elite, members included.
+  const totalEliteLocked = Object.values(eliteLockedCounts).reduce((a, b) => a + b, 0)
+  const eliteLockedForTab = isAdmin ? [] : eliteTeasers.filter(t => activeTab === 'all' || t.sport === activeTab)
+  const eliteLockedCount = activeTab === 'all' ? totalEliteLocked : (eliteLockedCounts[activeTab] ?? 0)
+
   const activeTabLabel = TABS.find(t => t.value === activeTab)!.label
 
   const allVisible = systems.filter(s => activeTab === 'all' || s.sport === activeTab)
@@ -191,6 +202,7 @@ export default function SportTabsSystem({ systems, lockedCounts = {}, lockedTeas
       date: s.date ?? '',
       team: s.team ?? '',
       is_free: s.is_free,
+      is_elite: s.is_elite ?? false,
       is_active: s.is_active,
     })
     setEditId(s.id)
@@ -315,7 +327,7 @@ export default function SportTabsSystem({ systems, lockedCounts = {}, lockedTeas
     }
   }
 
-  if (systems.length === 0 && totalLocked === 0 && !editMode) {
+  if (systems.length === 0 && totalLocked === 0 && totalEliteLocked === 0 && !editMode) {
     return (
       <>
         <div style={{ textAlign: 'center', padding: '48px 0', color: 'var(--text-muted)' }}>
@@ -340,8 +352,10 @@ export default function SportTabsSystem({ systems, lockedCounts = {}, lockedTeas
   // see their rows directly; non-members only ever have the locked count.
   const activeSystems = allVisible.filter(s => s.is_active)
   const freeCount = activeSystems.filter(s => s.is_free).length
-  const memberCount = activeSystems.length - freeCount + lockedCount
-  const totalCount = freeCount + memberCount
+  const eliteVisibleCount = activeSystems.filter(s => s.is_elite).length
+  const eliteCount = eliteVisibleCount + eliteLockedCount
+  const memberCount = activeSystems.length - freeCount - eliteVisibleCount + lockedCount
+  const totalCount = freeCount + memberCount + eliteCount
 
   return (
     <>
@@ -355,6 +369,12 @@ export default function SportTabsSystem({ systems, lockedCounts = {}, lockedTeas
           <span className="sys-stats-chip__label">Member Systems</span>
           <span className="sys-stats-chip__value">{memberCount}</span>
         </div>
+        {eliteCount > 0 && (
+          <div className="sys-stats-chip sys-stats-chip--elite">
+            <span className="sys-stats-chip__label">Elite Systems</span>
+            <span className="sys-stats-chip__value">{eliteCount}</span>
+          </div>
+        )}
         <div className="sys-stats-chip">
           <span className="sys-stats-chip__label">Total Systems</span>
           <span className="sys-stats-chip__value">{totalCount}</span>
@@ -550,6 +570,10 @@ export default function SportTabsSystem({ systems, lockedCounts = {}, lockedTeas
                 <span>Free tier access</span>
               </label>
               <label className="admin-form-check">
+                <input type="checkbox" checked={form.is_elite} onChange={e => setField('is_elite', e.target.checked)} />
+                <span>Elite only</span>
+              </label>
+              <label className="admin-form-check">
                 <input type="checkbox" checked={form.is_active} onChange={e => setField('is_active', e.target.checked)} />
                 <span>Active (visible on public page)</span>
               </label>
@@ -635,8 +659,8 @@ export default function SportTabsSystem({ systems, lockedCounts = {}, lockedTeas
                             {/* Non-members only ever see free rows, so the badge
                                 would be noise on every card. */}
                             {(isPaid || isAdmin) && (
-                              <span className={`sys-row-card__access-badge sys-row-card__access-badge--${row.is_free ? 'free' : 'members'}`}>
-                                {row.is_free ? 'Free' : 'Members'}
+                              <span className={`sys-row-card__access-badge sys-row-card__access-badge--${row.is_elite ? 'elite' : row.is_free ? 'free' : 'members'}`}>
+                                {row.is_elite ? 'Elite' : row.is_free ? 'Free' : 'Members'}
                               </span>
                             )}
                             {isAdmin && (
@@ -747,6 +771,10 @@ export default function SportTabsSystem({ systems, lockedCounts = {}, lockedTeas
                               <span>Free tier access</span>
                             </label>
                             <label className="admin-form-check">
+                              <input type="checkbox" checked={form.is_elite} onChange={e => setField('is_elite', e.target.checked)} />
+                              <span>Elite only</span>
+                            </label>
+                            <label className="admin-form-check">
                               <input type="checkbox" checked={form.is_active} onChange={e => setField('is_active', e.target.checked)} />
                               <span>Active (visible on public page)</span>
                             </label>
@@ -769,6 +797,41 @@ export default function SportTabsSystem({ systems, lockedCounts = {}, lockedTeas
 
 
       </div>
+
+      {!isAdmin && eliteLockedForTab.length > 0 && (
+        <>
+          <div className="sys-locked-heading sys-locked-heading--elite">
+            <IconLock size={13} /> Elite Only — the sharpest edges, records shown
+          </div>
+          <div className="sys-card-grid">
+            {eliteLockedForTab.map(t => (
+              <LockedTeaserCard
+                key={t.id}
+                teaser={t}
+                sportLabel={SPORT_STYLE[t.sport]?.label ?? t.sport.toUpperCase()}
+                sportClass={t.sport}
+                variant="elite"
+              />
+            ))}
+          </div>
+        </>
+      )}
+
+      {eliteLockedCount > 0 && (
+        <div className="sys-gate-card sys-gate-card--elite reveal">
+          <div className="sys-gate-card__icon"><IconLock size={30} /></div>
+          <div className="content-gate-card__title">
+            {eliteLockedCount} Elite system{eliteLockedCount !== 1 ? 's' : ''}
+            {activeTab !== 'all' && ` in ${activeTabLabel}`}
+          </div>
+          <p className="content-gate-card__desc">
+            Our highest-conviction, curated edges — Elite members only.
+          </p>
+          <div className="content-gate-card__actions">
+            <Link href="/win" className="btn btn--primary">Go Elite &rarr;</Link>
+          </div>
+        </div>
+      )}
 
       {!isAdmin && lockedForTab.length > 0 && (
         <>

@@ -25,6 +25,7 @@ const TIER_CONFIG: Record<SubscriptionTier, { label: string; description: string
   free:    { label: 'Free',    description: 'Access to a curated set of free betting systems and trends.' },
   basic:   { label: 'Basic',   description: 'Full access to all betting systems, trends, and blog posts.' },
   premium: { label: 'Premium', description: 'Full access to all content plus EdTheStatBot (coming soon).' },
+  elite:   { label: 'Elite',   description: 'Everything in Premium plus weekly NFL game breakdowns, Edge Picks, and elite-only systems and trends.' },
 }
 
 function formatDate(dateStr: string) {
@@ -50,6 +51,8 @@ export default function AccountClient({ profile, provider }: AccountClientProps)
 
   const avatarClass = profile.is_admin
     ? 'account-hero__avatar account-hero__avatar--admin'
+    : profile.subscription_tier === 'elite'
+    ? 'account-hero__avatar account-hero__avatar--elite'
     : profile.subscription_tier === 'premium'
     ? 'account-hero__avatar account-hero__avatar--premium'
     : 'account-hero__avatar'
@@ -93,7 +96,7 @@ export default function AccountClient({ profile, provider }: AccountClientProps)
 
         {subscribeSuccess && (
           <div className="account-success-banner">
-            &#10003; Payment successful! Welcome to {profile.subscription_tier === 'premium' ? 'Premium' : 'Basic'} access.
+            &#10003; Payment successful! Welcome to {TIER_CONFIG[profile.subscription_tier]?.label ?? 'member'} access.
           </div>
         )}
 

@@ -35,14 +35,30 @@ interface AnalyticsData {
   totalViews:   number
   viewsInRange: number
   viewsToday:   number
-  points:       { label: string; count: number }[]
+  points:       { label: string; count: number; visitors: number }[]
   topPages:     { path: string; count: number }[]
   referrers:    { source: string; count: number }[]
   devices:      { device: string; count: number }[]
   countries:    { country: string; count: number }[]
+  utmSources:   { source: string; count: number }[]
+  uniqueVisitors: number
+  sessions:       number
+  bounceRate:     number
+  avgSessionSecs: number
+  revenueInRange: number
+  revenueTotal:   number
+  purchaseCount:  number
+  revenueByTier:  Record<string, number>
+  funnel: { winVisitors: number; checkoutClicks: number; purchases: number }
   newSignups:   number
   totalUsers:   number
   paidUsers:    number
+}
+
+interface LiveData {
+  activeNow:    number
+  viewsToday:   number
+  revenueToday: number
 }
 
 type Range = 'week' | 'month' | 'year'
@@ -78,10 +94,21 @@ function fmtDate(iso: string): string {
   return new Date(iso + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
+function fmtMoney(cents: number): string {
+  return `$${(cents / 100).toLocaleString('en-US', { maximumFractionDigits: 0 })}`
+}
+
+function fmtDuration(secs: number): string {
+  const s = Math.round(secs)
+  if (s < 60) return `${s}s`
+  return `${Math.floor(s / 60)}m ${s % 60}s`
+}
+
 const TIER_CLASS: Record<string, string> = {
   free: 'nav__user-tier--free',
   basic: 'nav__user-tier--basic',
   premium: 'nav__user-tier--premium',
+  elite: 'nav__user-tier--elite',
   admin: 'nav__user-tier--admin',
 }
 
@@ -127,6 +154,7 @@ export default function AdminDashboard({ users, posts, initialTab }: Props) {
   const [weekStart, setWeekStart] = useState(defaultWeekStart)
   const [analytics, setAnalytics]     = useState<AnalyticsData | null>(null)
   const [analyticsLoading, setALoading] = useState(true)
+  const [live, setLive] = useState<LiveData | null>(null)
   const [userSearch, setUserSearch]   = useState('')
   const [tierFilter, setTierFilter]   = useState<string>('all')
   const [postSearch, setPostSearch]   = useState('')
@@ -144,10 +172,24 @@ export default function AdminDashboard({ users, posts, initialTab }: Props) {
       .catch(() => setALoading(false))
   }, [range, weekStart])
 
+  // Live stats — poll every 30s so the dashboard stays current without reloads
+  useEffect(() => {
+    let cancelled = false
+    const load = () =>
+      fetch('/api/admin/analytics/live', { cache: 'no-store' })
+        .then(r => r.json())
+        .then(d => { if (!cancelled && typeof d.activeNow === 'number') setLive(d) })
+        .catch(() => {})
+    load()
+    const id = setInterval(load, 30_000)
+    return () => { cancelled = true; clearInterval(id) }
+  }, [])
+
   const stats = useMemo(() => {
     const freeUsers    = users.filter(u => u.subscription_tier === 'free').length
     const basicUsers   = users.filter(u => u.subscription_tier === 'basic').length
     const premiumUsers = users.filter(u => u.subscription_tier === 'premium').length
+    const eliteUsers   = users.filter(u => u.subscription_tier === 'elite').length
     const activeUsers  = users.filter(u => u.subscription_status === 'active').length
     const pastDue      = users.filter(u => u.subscription_status === 'past_due').length
     const newThisMonth = users.filter(u => isThisMonth(u.created_at)).length
@@ -157,7 +199,7 @@ export default function AdminDashboard({ users, posts, initialTab }: Props) {
     const freePosts      = posts.filter(p => p.access_level === 'free').length
     const membersPosts   = posts.filter(p => p.access_level === 'members').length
     return {
-      totalUsers: users.length, freeUsers, basicUsers, premiumUsers,
+      totalUsers: users.length, freeUsers, basicUsers, premiumUsers, eliteUsers,
       activeUsers, pastDue, newThisMonth, adminCount,
       totalPosts: posts.length, publishedPosts, draftPosts, freePosts, membersPosts,
     }
@@ -215,41 +257,64 @@ export default function AdminDashboard({ users, posts, initialTab }: Props) {
           </div>
         </div>
 
-        {/* ── Combined KPI strip (6 cards) ── */}
-        <div className="admin-kpi-strip" style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '12px' }}>
+        {/* ── Combined KPI strip (8 cards, 4×2) ── */}
+        <div className="admin-kpi-strip" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px' }}>
+          <KpiCard
+            label="Active Now"
+            value={live ? live.activeNow : '—'}
+            sub="visitors, last 5 min"
+            color="green"
+            badge={live ? `${live.viewsToday.toLocaleString()} views today` : undefined}
+            badgeColor="green"
+            liveDot
+          />
+          <KpiCard
+            label="Revenue"
+            value={analyticsLoading ? '—' : fmtMoney(analytics?.revenueInRange ?? 0)}
+            sub={analytics
+              ? `${RANGE_LABELS[range].toLowerCase()} · ${fmtMoney(analytics.revenueTotal)} all-time`
+              : 'loading…'}
+            color="gold"
+            badge={analytics?.purchaseCount ? `${analytics.purchaseCount} purchase${analytics.purchaseCount !== 1 ? 's' : ''}` : undefined}
+            badgeColor="green"
+          />
+          <KpiCard
+            label="Unique Visitors"
+            value={analyticsLoading ? '—' : (analytics?.uniqueVisitors ?? 0).toLocaleString()}
+            sub={analytics
+              ? `${analytics.sessions.toLocaleString()} sessions · ${Math.round(analytics.bounceRate * 100)}% bounce`
+              : 'loading…'}
+            color="cyan"
+          />
+          <KpiCard
+            label={RANGE_LABELS[range]}
+            value={analyticsLoading ? '—' : (analytics?.viewsInRange ?? 0).toLocaleString()}
+            sub={analytics ? `page views · ${analytics.totalViews.toLocaleString()} all-time` : 'page views'}
+            color="green"
+            badge={analytics?.viewsToday ? `${analytics.viewsToday} today` : undefined}
+            badgeColor="green"
+          />
           <KpiCard
             label="Total Users"
             value={stats.totalUsers}
-            sub={`${stats.freeUsers} free · ${stats.basicUsers + stats.premiumUsers} paid`}
+            sub={`${stats.freeUsers} free · ${stats.basicUsers + stats.premiumUsers + stats.eliteUsers} paid`}
             color="cyan"
             badge={stats.newThisMonth > 0 ? `+${stats.newThisMonth} this mo` : undefined}
             badgeColor="green"
           />
           <KpiCard
             label="Paid Members"
-            value={stats.basicUsers + stats.premiumUsers}
-            sub={`${stats.basicUsers} basic · ${stats.premiumUsers} premium`}
+            value={stats.basicUsers + stats.premiumUsers + stats.eliteUsers}
+            sub={`${stats.basicUsers} basic · ${stats.premiumUsers} premium · ${stats.eliteUsers} elite`}
             color="green"
           />
           <KpiCard
             label="Conversion"
             value={convPct ? `${convPct}%` : '—'}
-            sub={analytics ? `${analytics.paidUsers} of ${analytics.totalUsers} users` : 'loading…'}
+            sub={analytics
+              ? `${analytics.paidUsers} of ${analytics.totalUsers} users · ${fmtDuration(analytics.avgSessionSecs)} avg session`
+              : 'loading…'}
             color="purple"
-          />
-          <KpiCard
-            label="Total Views"
-            value={analyticsLoading ? '—' : (analytics?.totalViews ?? 0).toLocaleString()}
-            sub="all time"
-            color="cyan"
-          />
-          <KpiCard
-            label={RANGE_LABELS[range]}
-            value={analyticsLoading ? '—' : (analytics?.viewsInRange ?? 0).toLocaleString()}
-            sub="page views"
-            color="green"
-            badge={analytics?.viewsToday ? `${analytics.viewsToday} today` : undefined}
-            badgeColor="green"
           />
           <KpiCard
             label="New Signups"
@@ -321,7 +386,7 @@ export default function AdminDashboard({ users, posts, initialTab }: Props) {
                         >
                           {hoveredBar === i && (
                             <div className="analytics-bar-tooltip">
-                              {p.count} view{p.count !== 1 ? 's' : ''}
+                              {p.count} view{p.count !== 1 ? 's' : ''}{p.visitors > 0 && <> · {p.visitors} visitor{p.visitors !== 1 ? 's' : ''}</>}
                             </div>
                           )}
                           <div className="analytics-chart__bar" style={{ height: `${Math.max(heightPct, p.count > 0 ? 3 : 0)}%` }} />
@@ -365,6 +430,27 @@ export default function AdminDashboard({ users, posts, initialTab }: Props) {
                     <p className="admin-muted" style={{ padding: '1rem 0', fontSize: '0.82rem' }}>No referrer data yet.</p>
                   )}
                 </div>
+
+                <div className="admin-breakdown-card">
+                  <h3 className="admin-breakdown-card__title">Checkout Funnel — {RANGE_LABELS[range]}</h3>
+                  {analytics.funnel.winVisitors > 0 ? (
+                    <>
+                      <div className="admin-breakdown-list">
+                        <BreakdownRow label="Visited /win" value={analytics.funnel.winVisitors}    total={analytics.funnel.winVisitors} color="var(--accent-teal)" />
+                        <BreakdownRow label="Clicked Buy"  value={analytics.funnel.checkoutClicks} total={analytics.funnel.winVisitors} color="var(--accent-gold)" />
+                        <BreakdownRow label="Purchased"    value={analytics.funnel.purchases}      total={analytics.funnel.winVisitors} color="var(--accent-gold)" />
+                      </div>
+                      <div className="admin-breakdown-footer">
+                        <span>
+                          {((analytics.funnel.purchases / analytics.funnel.winVisitors) * 100).toFixed(1)}% visit → paid
+                          {analytics.revenueInRange > 0 && <> · {fmtMoney(analytics.revenueInRange)}</>}
+                        </span>
+                      </div>
+                    </>
+                  ) : (
+                    <p className="admin-muted" style={{ padding: '1rem 0', fontSize: '0.82rem' }}>No /win traffic in this range yet.</p>
+                  )}
+                </div>
               </>
             )}
           </div>
@@ -377,6 +463,7 @@ export default function AdminDashboard({ users, posts, initialTab }: Props) {
                 <BreakdownRow label="Free"    value={stats.freeUsers}    total={stats.totalUsers} color="var(--text-muted)" />
                 <BreakdownRow label="Basic"   value={stats.basicUsers}   total={stats.totalUsers} color="var(--accent-teal)" />
                 <BreakdownRow label="Premium" value={stats.premiumUsers} total={stats.totalUsers} color="var(--accent-gold)" />
+                <BreakdownRow label="Elite"   value={stats.eliteUsers}   total={stats.totalUsers} color="var(--accent-gold)" />
                 <BreakdownRow label="Admins"  value={stats.adminCount}   total={stats.totalUsers} color="var(--accent-gold)" />
               </div>
               <div className="admin-breakdown-footer"><span>{stats.newThisMonth} new this month</span></div>
@@ -420,6 +507,25 @@ export default function AdminDashboard({ users, posts, initialTab }: Props) {
                     </div>
                   </div>
                 )}
+
+                {analytics.utmSources.length > 0 && (
+                  <div className="admin-breakdown-card">
+                    <h3 className="admin-breakdown-card__title">Campaigns</h3>
+                    <div className="admin-breakdown-list">
+                      {analytics.utmSources.slice(0, 7).map(u => (
+                        <BreakdownRow
+                          key={u.source}
+                          label={u.source}
+                          value={u.count}
+                          total={analytics.utmSources.reduce((s, x) => s + x.count, 0)}
+                          color="var(--accent-teal)"
+                          mono
+                        />
+                      ))}
+                    </div>
+                    <div className="admin-breakdown-footer"><span>views from utm_source-tagged visits</span></div>
+                  </div>
+                )}
               </>
             )}
           </div>
@@ -447,7 +553,7 @@ export default function AdminDashboard({ users, posts, initialTab }: Props) {
                 onChange={e => setUserSearch(e.target.value)}
               />
               <div className="admin-filters">
-                {['all', 'free', 'basic', 'premium', 'admin'].map(f => (
+                {['all', 'free', 'basic', 'premium', 'elite', 'admin'].map(f => (
                   <button
                     key={f}
                     className={`admin-filter-btn ${tierFilter === f ? 'admin-filter-btn--active' : ''}`}
@@ -606,7 +712,7 @@ export default function AdminDashboard({ users, posts, initialTab }: Props) {
 // ── Shared sub-components ─────────────────────────────────────────────────────
 
 function KpiCard({
-  label, value, sub, color, badge, badgeColor,
+  label, value, sub, color, badge, badgeColor, liveDot,
 }: {
   label: string
   value: string | number
@@ -614,11 +720,15 @@ function KpiCard({
   color: 'cyan' | 'green' | 'purple' | 'gold'
   badge?: string
   badgeColor?: 'green' | 'muted'
+  liveDot?: boolean
 }) {
   return (
     <div className="admin-kpi-card">
       <div className="admin-kpi-card__top">
-        <span className="admin-kpi-card__label">{label}</span>
+        <span className="admin-kpi-card__label">
+          {liveDot && <span className="admin-live-dot" aria-hidden />}
+          {label}
+        </span>
         {badge && <span className={`admin-kpi-card__badge admin-kpi-card__badge--${badgeColor ?? 'green'}`}>{badge}</span>}
       </div>
       <div className="admin-kpi-card__value">{value}</div>

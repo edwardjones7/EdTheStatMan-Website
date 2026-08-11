@@ -2,6 +2,8 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { getFirstTouch } from '@/lib/attribution'
+import type { OfferTierKey } from '@/lib/offer'
 
 interface Props {
   priceId: string
@@ -9,7 +11,7 @@ interface Props {
   variant: 'primary' | 'outline'
   className?: string
   /** Carried through signup so buy-intent survives account creation. */
-  tierKey?: 'basic' | 'premium'
+  tierKey?: OfferTierKey
 }
 
 export default function CheckoutButton({ priceId, label, variant, className, tierKey }: Props) {
@@ -18,11 +20,21 @@ export default function CheckoutButton({ priceId, label, variant, className, tie
 
   async function handleClick() {
     setLoading(true)
+    // Funnel event, fire-and-forget — must never block checkout.
+    fetch('/api/track', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        path: window.location.pathname,
+        event: 'checkout_click',
+        meta: tierKey ? { tier: tierKey } : null,
+      }),
+    }).catch(() => {})
     try {
       const res = await fetch('/api/stripe/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ priceId }),
+        body: JSON.stringify({ priceId, attribution: getFirstTouch() }),
       })
       const data = await res.json()
       if (res.status === 401) {

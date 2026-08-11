@@ -24,6 +24,7 @@ const NAV_LINKS = [
   { href: '/results', label: 'EdTheStatBot Results' },
   { href: '/betting-systems', label: 'Betting Systems' },
   { href: '/betting-trends', label: 'Betting Trends' },
+  { href: '/nfl', label: 'NFL Hub' },
   { href: '/blog', label: 'Blog' },
   { href: '/contact', label: 'Contact' },
   { href: '/win', label: 'Membership', offer: true },
@@ -34,10 +35,15 @@ const NAV_LINKS = [
  * purpose: NavAuth already renders "Sign Up", and two side-by-side primary CTAs
  * pointing at the same funnel just crowded the bar.
  */
-function primaryCta(membership: Membership): { href: string; label: string } | null {
+function primaryCta(
+  membership: Membership,
+  tier: SubscriptionTier | null
+): { href: string; label: string } | null {
   switch (membership) {
     case 'free':    return { href: '/win', label: 'Unlock All' }
     case 'expired': return { href: '/win', label: 'Renew' }
+    // Active basic/premium members can still level up to the Season Pass.
+    case 'active':  return tier === 'elite' ? null : { href: '/win', label: 'Go Elite' }
     default:        return null
   }
 }
@@ -63,7 +69,7 @@ export default function NavClient({ user, membership = 'logged-out' }: NavClient
     document.body.style.overflow = ''
   }, [pathname])
 
-  const cta = primaryCta(membership)
+  const cta = primaryCta(membership, user?.subscription_tier ?? null)
   const compactX = membership !== 'active' && membership !== 'admin'
 
   const isActive = (href: string) =>

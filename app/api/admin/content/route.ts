@@ -42,5 +42,6 @@ export async function PATCH(req: Request) {
 
   revalidatePath('/')
   revalidatePath('/results')
+  revalidatePath('/nfl')
   return NextResponse.json({ success: true })
 }

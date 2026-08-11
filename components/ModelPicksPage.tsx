@@ -17,6 +17,8 @@ interface Props {
   lockedCount?: number
   /** Redacted stand-ins for those picks — date/sport/result only. */
   lockedBets?: LockedBetTeaser[]
+  /** Edge picks withheld from everyone below elite — members included. */
+  eliteLockedBets?: LockedBetTeaser[]
   editMode?: boolean
   headerContent: ModelPicksContent
   onHeaderEdit?: (updates: Partial<ModelPicksContent>) => void
@@ -24,7 +26,7 @@ interface Props {
 }
 
 export default function ModelPicksPage({
-  rows, isAdmin, userTier, isMember, lockedCount = 0, lockedBets = [], editMode = false, headerContent, onHeaderEdit, resetKey = 0,
+  rows, isAdmin, userTier, isMember, lockedCount = 0, lockedBets = [], eliteLockedBets = [], editMode = false, headerContent, onHeaderEdit, resetKey = 0,
 }: Props) {
   return (
     <>
@@ -36,6 +38,7 @@ export default function ModelPicksPage({
         isMember={isMember}
         lockedCount={lockedCount}
         lockedBets={lockedBets}
+        eliteLockedBets={eliteLockedBets}
         editMode={editMode}
         headerContent={headerContent}
         onHeaderEdit={onHeaderEdit}

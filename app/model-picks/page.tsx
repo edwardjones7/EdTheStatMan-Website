@@ -49,18 +49,26 @@ export default async function ModelPicks() {
       .single()
     access = resolveAccess(profile as any, true)
   }
-  const { tier: userTier, isAdmin, isPaid } = access
+  const { tier: userTier, isAdmin, isPaid, hasElite } = access
 
   const isMember = isAdmin || isPaid
+
+  // Edge picks (is_elite) sit a tier above members: they reach the client in
+  // full only for elite members, and everyone else gets redacted stand-ins.
+  const edgeBets = allBets.filter(b => b.is_elite)
+  const regularBets = allBets.filter(b => !b.is_elite)
 
   // One list, one gate. `is_free` is purely an admin per-pick switch: free picks
   // render inline for everyone, the rest are dropped server-side and advertised
   // only as a count. The count mirrors TodaysBets' own `!show_on_results`
   // filter so it matches what a member would actually see in the table.
-  const todaysBets = isMember ? allBets : allBets.filter(b => b.is_free)
+  const todaysBets = [
+    ...(hasElite ? edgeBets : []),
+    ...(isMember ? regularBets : regularBets.filter(b => b.is_free)),
+  ]
   const lockedBetRows = isMember
     ? []
-    : allBets.filter(b => !b.is_free && !b.show_on_results)
+    : regularBets.filter(b => !b.is_free && !b.show_on_results)
   const lockedCount = lockedBetRows.length
 
   // Locked picks still occupy a row so the table reads as a real slate — but
@@ -70,6 +78,14 @@ export default async function ModelPicks() {
   const lockedBets: LockedBetTeaser[] = lockedBetRows
     .slice(0, BET_TEASER_LIMIT)
     .map(toBetTeaser)
+
+  // Edge picks withheld from everyone below elite — members included.
+  const eliteLockedBets: LockedBetTeaser[] = hasElite
+    ? []
+    : edgeBets
+        .filter(b => !b.show_on_results)
+        .slice(0, BET_TEASER_LIMIT)
+        .map(toBetTeaser)
 
   return isAdmin ? (
     <ModelPicksEditor rows={todaysBets} userTier={userTier} headerContent={headerContent} />
@@ -81,6 +97,7 @@ export default async function ModelPicks() {
       isMember={isMember}
       lockedCount={lockedCount}
       lockedBets={lockedBets}
+      eliteLockedBets={eliteLockedBets}
       headerContent={headerContent}
     />
   )

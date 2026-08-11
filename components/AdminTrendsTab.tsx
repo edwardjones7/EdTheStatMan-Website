@@ -18,6 +18,7 @@ export interface BettingTrend {
   date: string
   team: string
   is_free: boolean
+  is_elite: boolean
   is_active: boolean
   sort_order: number
 }
