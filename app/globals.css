@@ -444,7 +444,12 @@ input, textarea, select {
   right: 0;
   bottom: 0;
   background: var(--bg-primary);
-  z-index: 1101;
+  /* Must stay BELOW .nav (1100). `.nav` is positioned with its own z-index, so
+     it forms a stacking context and .nav__hamburger's z-index can't escape it —
+     at 1101 this opaque panel covered the whole bar, close button included.
+     The padding-top on .mobile-menu__links reserves the nav's height so the bar
+     shows through above the links. */
+  z-index: 1099;
   flex-direction: column;
   overflow-y: auto;
 }

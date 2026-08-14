@@ -63,6 +63,17 @@ export default function NavClient({ user, membership = 'logged-out' }: NavClient
     document.body.style.overflow = mobileOpen ? 'hidden' : ''
   }, [mobileOpen])
 
+  // Escape closes the menu — the panel is opaque and full-screen, so there's no
+  // backdrop to tap past it.
+  useEffect(() => {
+    if (!mobileOpen) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMobileOpen(false)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [mobileOpen])
+
   // Close mobile menu on route change
   useEffect(() => {
     setMobileOpen(false)
@@ -122,7 +133,9 @@ export default function NavClient({ user, membership = 'logged-out' }: NavClient
 
           <button
             className={`nav__hamburger ${mobileOpen ? 'active' : ''}`}
-            aria-label="Toggle menu"
+            aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
+            aria-expanded={mobileOpen}
+            aria-controls="mobile-menu"
             onClick={() => setMobileOpen(o => !o)}
           >
             <span></span><span></span><span></span>
@@ -130,7 +143,7 @@ export default function NavClient({ user, membership = 'logged-out' }: NavClient
         </div>
       </nav>
 
-      <div className={`mobile-menu ${mobileOpen ? 'active' : ''}`}>
+      <div id="mobile-menu" className={`mobile-menu ${mobileOpen ? 'active' : ''}`}>
         <div className="mobile-menu__links">
           {NAV_LINKS.map(link => (
             <Link
