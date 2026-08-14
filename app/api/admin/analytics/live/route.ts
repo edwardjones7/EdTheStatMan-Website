@@ -13,18 +13,24 @@ export async function GET() {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const admin = createAdminClient() as any
-  const { data: profile } = await admin.from('profiles').select('is_admin').eq('id', user.id).single()
-  if (!profile?.is_admin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-
   const todayStart = nyMidnightUTC(toNYDate(new Date()))
 
-  const [activeRes, viewsRes, purchasesRes] = await Promise.all([
+  // is_admin check runs alongside the data queries rather than ahead of them —
+  // this endpoint is polled every 30s, so the saved round trip adds up.
+  const isAdminPromise = admin.from('profiles').select('is_admin').eq('id', user.id).single()
+  const dataPromise = Promise.all([
     admin.rpc('active_visitors'),
     admin.from('page_views').select('*', { count: 'exact', head: true })
       .gte('created_at', todayStart.toISOString()),
     admin.from('purchases').select('amount_cents')
       .gte('created_at', todayStart.toISOString()),
   ])
+  dataPromise.catch(() => {})
+
+  const { data: profile } = await isAdminPromise
+  if (!profile?.is_admin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+
+  const [activeRes, viewsRes, purchasesRes] = await dataPromise
 
   const revenueToday = ((purchasesRes.data ?? []) as { amount_cents: number }[])
     .reduce((sum, p) => sum + p.amount_cents, 0)

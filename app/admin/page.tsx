@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { getRangeAnalytics, getGlobalTotals } from '@/lib/admin-analytics'
 import AdminDashboard from '@/components/AdminDashboard'
 
 export const metadata: Metadata = {
@@ -45,7 +46,11 @@ export default async function AdminPage({
 
   const admin = createAdminClient()
 
-  const [users, posts] = await Promise.all([
+  // Analytics for the default range is fetched here, in parallel with users and
+  // posts, so the dashboard paints with data. Without it the client has to
+  // hydrate and then make its own authenticated round trip before anything
+  // beyond the skeleton appears.
+  const [users, posts, rangeAnalytics, totals] = await Promise.all([
     fetchAllPaged<any>((from, to) =>
       (admin as any)
         .from('profiles')
@@ -60,6 +65,8 @@ export default async function AdminPage({
         .order('created_at', { ascending: false })
         .range(from, to),
     ),
+    getRangeAnalytics(admin as any, 'month'),
+    getGlobalTotals(admin as any),
   ])
 
   return (
@@ -67,6 +74,7 @@ export default async function AdminPage({
       users={users}
       posts={posts}
       initialTab={searchParams.tab}
+      initialAnalytics={{ ...rangeAnalytics, ...totals }}
     />
   )
 }

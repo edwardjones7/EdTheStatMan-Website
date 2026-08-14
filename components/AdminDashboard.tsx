@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import type { SubscriptionTier, SubscriptionStatus, AccessLevel } from '@/lib/supabase/types'
 
@@ -67,7 +67,16 @@ interface Props {
   users: User[]
   posts: Post[]
   initialTab?: string
+  /** Prefetched on the server for the default ('month') range. */
+  initialAnalytics: AnalyticsData
 }
+
+/** All-time figures, identical for every range — fetched once, then reused. */
+type GlobalTotals = Pick<AnalyticsData, 'totalViews' | 'revenueTotal' | 'totalUsers' | 'paidUsers'>
+
+// Cached range payloads older than this are still shown instantly, then
+// refreshed in the background.
+const CACHE_TTL_MS = 60_000
 
 const RANGE_LABELS: Record<Range, string> = { week: 'This Week', month: 'This Month', year: 'This Year' }
 const CHART_TITLES: Record<Range, string> = {
@@ -146,14 +155,15 @@ function isThisMonth(dateStr: string) {
   return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
 }
 
-export default function AdminDashboard({ users, posts, initialTab }: Props) {
+export default function AdminDashboard({ users, posts, initialTab, initialAnalytics }: Props) {
   const [tab, setTab]     = useState<'users' | 'posts'>(
     (['users', 'posts'].includes(initialTab ?? '') ? initialTab : 'users') as 'users'
   )
   const [range, setRange]         = useState<Range>('month')
   const [weekStart, setWeekStart] = useState(defaultWeekStart)
-  const [analytics, setAnalytics]     = useState<AnalyticsData | null>(null)
-  const [analyticsLoading, setALoading] = useState(true)
+  const [analytics, setAnalytics]     = useState<AnalyticsData | null>(initialAnalytics)
+  const [analyticsLoading, setALoading] = useState(false)
+  const [refreshing, setRefreshing]   = useState(false)
   const [live, setLive] = useState<LiveData | null>(null)
   const [userSearch, setUserSearch]   = useState('')
   const [tierFilter, setTierFilter]   = useState<string>('all')
@@ -162,14 +172,56 @@ export default function AdminDashboard({ users, posts, initialTab }: Props) {
 
   useEffect(() => { setWeekStart(defaultWeekStart()) }, [range])
 
+  // Per-range cache, seeded with the server-rendered 'month' payload. Switching
+  // to a range that's already been loaded is instant; a stale entry is shown
+  // straight away and refreshed behind it.
+  const cacheRef = useRef<Map<string, { data: AnalyticsData; ts: number }>>(
+    new Map([['month', { data: initialAnalytics, ts: Date.now() }]])
+  )
+  const totalsRef = useRef<GlobalTotals>({
+    totalViews:   initialAnalytics.totalViews,
+    revenueTotal: initialAnalytics.revenueTotal,
+    totalUsers:   initialAnalytics.totalUsers,
+    paidUsers:    initialAnalytics.paidUsers,
+  })
+  // Guards against an earlier, slower response overwriting a later selection.
+  const activeKeyRef = useRef('month')
+
   useEffect(() => {
-    setALoading(true)
-    const params = new URLSearchParams({ range })
+    const key = range === 'week' ? `week:${weekStart}` : range
+    activeKeyRef.current = key
+
+    const cached = cacheRef.current.get(key)
+    if (cached) {
+      setAnalytics(cached.data)
+      setALoading(false)
+      if (Date.now() - cached.ts < CACHE_TTL_MS) return // fresh enough, no request
+    } else {
+      setALoading(true)
+    }
+    setRefreshing(true)
+
+    const params = new URLSearchParams({ range, totals: '0' }) // all-time figures already held
     if (range === 'week') params.set('weekStart', weekStart)
+
+    let cancelled = false
     fetch(`/api/admin/analytics?${params}`, { cache: 'no-store' })
       .then(r => r.json())
-      .then(d => { setAnalytics(d); setALoading(false) })
-      .catch(() => setALoading(false))
+      .then((d: AnalyticsData) => {
+        if (cancelled) return
+        const merged = { ...d, ...totalsRef.current }
+        cacheRef.current.set(key, { data: merged, ts: Date.now() })
+        if (activeKeyRef.current === key) {
+          setAnalytics(merged)
+          setALoading(false)
+          setRefreshing(false)
+        }
+      })
+      .catch(() => { if (!cancelled) { setALoading(false); setRefreshing(false) } })
+
+    return () => { cancelled = true }
+    // initialAnalytics only seeds the refs above, which ignore later values
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [range, weekStart])
 
   // Live stats — poll every 30s so the dashboard stays current without reloads
@@ -258,7 +310,15 @@ export default function AdminDashboard({ users, posts, initialTab }: Props) {
         </div>
 
         {/* ── Combined KPI strip (8 cards, 4×2) ── */}
-        <div className="admin-kpi-strip" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px' }}>
+        <div
+          className="admin-kpi-strip"
+          aria-busy={refreshing}
+          style={{
+            display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px',
+            opacity: refreshing ? 0.55 : 1, // dim whatever is still on screen while it's stale
+            transition: 'opacity 120ms ease',
+          }}
+        >
           <KpiCard
             label="Active Now"
             value={live ? live.activeNow : '—'}
@@ -325,7 +385,15 @@ export default function AdminDashboard({ users, posts, initialTab }: Props) {
         </div>
 
         {/* ── Chart + breakdowns side by side ── */}
-        <div className="admin-chart-grid" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '16px', alignItems: 'start' }}>
+        <div
+          className="admin-chart-grid"
+          aria-busy={refreshing}
+          style={{
+            display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '16px', alignItems: 'start',
+            opacity: refreshing ? 0.55 : 1, // dim whatever is still on screen while it's stale
+            transition: 'opacity 120ms ease',
+          }}
+        >
 
           {/* Left: Chart, then Top Pages + Traffic Sources below it */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -342,6 +410,11 @@ export default function AdminDashboard({ users, posts, initialTab }: Props) {
                   {range !== 'week' && !analyticsLoading && analytics && (
                     <span style={{ fontWeight: 400, color: 'var(--text-muted)', fontSize: '0.82rem', marginLeft: '0.6rem' }}>
                       {totalRangeViews.toLocaleString()} total
+                    </span>
+                  )}
+                  {refreshing && !analyticsLoading && (
+                    <span style={{ fontWeight: 400, color: 'var(--text-muted)', fontSize: '0.72rem', marginLeft: '0.6rem', opacity: 0.7 }}>
+                      updating…
                     </span>
                   )}
                 </span>
