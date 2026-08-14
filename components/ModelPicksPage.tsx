@@ -4,6 +4,7 @@ import type { ModelPicksContent } from '@/lib/site-content'
 import type { TodaysBet } from './TodaysBets'
 import type { LockedBetTeaser } from '@/lib/teaser'
 import TodaysBets from './TodaysBets'
+import PushOptIn from './PushOptIn'
 import Link from 'next/link'
 import type { ComponentType } from 'react'
 import { IconChartBar, IconTrendUp, IconNews, IconBolt, IconChat } from './Icons'
@@ -100,9 +101,11 @@ export default function ModelPicksPage({
               margin: '0 auto 28px',
               lineHeight: 1.7,
             }}>
-              Get instant notifications the moment picks drop. Follow us on X or join Discord for real-time alerts, system updates, and community discussion.
+              Get instant notifications the moment picks drop. Turn on browser alerts, or follow us on X and join Discord for real-time alerts, system updates, and community discussion.
             </p>
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
+              {/* Push is per-account, so it's only offered to signed-in members. */}
+              {userTier !== null && <PushOptIn />}
               <a href="https://x.com/EdTheStatMan" className="btn btn--primary btn--sm" target="_blank" rel="noopener">
                 <IconBolt size={14} /> Follow on X
               </a>

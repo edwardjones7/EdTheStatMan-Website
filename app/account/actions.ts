@@ -22,6 +22,23 @@ export async function updateProfile(formData: FormData): Promise<{ error?: strin
   return { success: true }
 }
 
+/** Email pick-alert opt-in. The unsubscribe link in each alert flips the same column. */
+export async function updateNotifyEmail(enabled: boolean): Promise<{ error?: string; success?: boolean }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+
+  const { error } = await (supabase as any)
+    .from('profiles')
+    .update({ notify_email: enabled, updated_at: new Date().toISOString() })
+    .eq('id', user.id)
+
+  if (error) return { error: error.message }
+
+  revalidatePath('/account')
+  return { success: true }
+}
+
 export async function updatePassword(formData: FormData): Promise<{ error?: string; success?: boolean }> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()

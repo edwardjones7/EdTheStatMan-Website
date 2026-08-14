@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { notifyNewPick } from '@/lib/notify'
 
 async function assertAdmin() {
   const supabase = await createClient()
@@ -34,5 +35,14 @@ export async function POST(req: Request) {
   }).select().single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json(data, { status: 201 })
+
+  // Announce the pick. Awaited rather than fire-and-forget: on Vercel the
+  // function can be frozen once the response is returned, which would drop
+  // in-flight sends. notifyNewPick never throws, so this can't fail the insert.
+  // Pass notify:false in the body to save a pick silently.
+  const notified = body.notify === false
+    ? { skipped: 'suppressed by request' }
+    : await notifyNewPick(data)
+
+  return NextResponse.json({ ...data, notified }, { status: 201 })
 }

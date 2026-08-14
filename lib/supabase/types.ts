@@ -24,6 +24,8 @@ export interface Database {
           first_referrer: string | null
           landing_page: string | null
           attributed_at: string | null
+          notify_email: boolean
+          notify_token: string
           created_at: string
           updated_at: string
         }
@@ -45,6 +47,8 @@ export interface Database {
           first_referrer?: string | null
           landing_page?: string | null
           attributed_at?: string | null
+          notify_email?: boolean
+          notify_token?: string
           created_at?: string
           updated_at?: string
         }
@@ -66,6 +70,8 @@ export interface Database {
           first_referrer?: string | null
           landing_page?: string | null
           attributed_at?: string | null
+          notify_email?: boolean
+          notify_token?: string
           updated_at?: string
         }
       }

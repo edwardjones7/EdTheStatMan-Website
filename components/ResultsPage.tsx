@@ -50,7 +50,9 @@ const FORM_LEN = 7
 
 // Group settled picks (win/loss/push) by sport and tally a record for each.
 // `picks` arrives newest-first, so `form` collects the most recent results per
-// sport. Pending picks and sport-less rows are skipped; sports ordered by volume.
+// sport. Pending picks and sport-less rows are skipped; sports ordered by win
+// rate (highest first) so the grid reads left-to-right best-to-worst, with
+// volume as the tiebreaker.
 function statsBySport(picks: TodaysBet[]): SportStat[] {
   const map = new Map<string, { wins: number; losses: number; pushes: number; form: string[] }>()
   for (const p of picks) {
@@ -70,7 +72,11 @@ function statsBySport(picks: TodaysBet[]): SportStat[] {
       ...s,
       winPct: (s.wins + s.losses) > 0 ? (s.wins / (s.wins + s.losses)) * 100 : 0,
     }))
-    .sort((a, b) => (b.wins + b.losses + b.pushes) - (a.wins + a.losses + a.pushes))
+    .sort((a, b) =>
+      b.winPct - a.winPct ||
+      (b.wins + b.losses + b.pushes) - (a.wins + a.losses + a.pushes) ||
+      a.sport.localeCompare(b.sport)
+    )
 }
 
 // ── Stat card counter value — uses dangerouslySetInnerHTML so the counter

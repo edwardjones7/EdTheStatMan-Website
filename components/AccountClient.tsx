@@ -4,8 +4,9 @@ import { useState, useTransition } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { logout } from '@/app/actions/auth'
-import { updateProfile, updatePassword } from '@/app/account/actions'
-import { IconUser, IconLock, IconBolt } from './Icons'
+import { updateProfile, updatePassword, updateNotifyEmail } from '@/app/account/actions'
+import PushOptIn from './PushOptIn'
+import { IconUser, IconLock, IconBolt, IconBell } from './Icons'
 import type { SubscriptionTier } from '@/lib/supabase/types'
 
 interface AccountClientProps {
@@ -17,6 +18,7 @@ interface AccountClientProps {
     is_admin: boolean
     created_at: string
     stripe_customer_id: string | null
+    notify_email: boolean
   }
   provider: string
 }
@@ -43,6 +45,8 @@ export default function AccountClient({ profile, provider }: AccountClientProps)
   const [profileMsg, setProfileMsg] = useState<Msg | null>(null)
   const [passwordMsg, setPasswordMsg] = useState<Msg | null>(null)
   const [displayName, setDisplayName] = useState(profile.full_name ?? '')
+  const [notifyEmail, setNotifyEmail] = useState(profile.notify_email)
+  const [notifyMsg, setNotifyMsg] = useState<Msg | null>(null)
 
   const tierConfig = TIER_CONFIG[profile.subscription_tier]
   const tierLabel = profile.is_admin ? 'Admin' : tierConfig.label
@@ -71,6 +75,21 @@ export default function AccountClient({ profile, provider }: AccountClientProps)
         ? { type: 'error', text: result.error }
         : { type: 'success', text: 'Profile updated.' }
       )
+    })
+  }
+
+  function handleNotifyToggle(next: boolean) {
+    // Optimistic: the checkbox tracks intent immediately and rolls back on error.
+    setNotifyEmail(next)
+    setNotifyMsg(null)
+    startTransition(async () => {
+      const result = await updateNotifyEmail(next)
+      if (result.error) {
+        setNotifyEmail(!next)
+        setNotifyMsg({ type: 'error', text: result.error })
+      } else {
+        setNotifyMsg({ type: 'success', text: next ? 'Email alerts on.' : 'Email alerts off.' })
+      }
     })
   }
 
@@ -232,6 +251,42 @@ export default function AccountClient({ profile, provider }: AccountClientProps)
               </form>
             </div>
           )}
+
+          {/* Pick alerts */}
+          <div className="account-card">
+            <div className="account-card__header">
+              <div className="account-card__icon"><IconBell size={18} /></div>
+              <h2 className="account-card__title">Pick Alerts</h2>
+            </div>
+            <div className="form-group">
+              <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={notifyEmail}
+                  onChange={(e) => handleNotifyToggle(e.target.checked)}
+                  disabled={isPending}
+                  style={{ marginTop: '3px' }}
+                />
+                <span>
+                  Email me when a new pick drops
+                  <span className="account-field-hint" style={{ display: 'block' }}>
+                    You&apos;ll only be emailed about picks your membership can open.
+                  </span>
+                </span>
+              </label>
+            </div>
+            <div className="form-group">
+              <span className="account-field-hint" style={{ display: 'block', marginBottom: '8px' }}>
+                Browser notifications on this device:
+              </span>
+              <PushOptIn />
+            </div>
+            {notifyMsg && (
+              <div className={notifyMsg.type === 'error' ? 'auth-error' : 'auth-success'}>
+                {notifyMsg.text}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Sign Out */}
