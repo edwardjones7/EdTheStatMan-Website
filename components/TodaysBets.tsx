@@ -51,6 +51,38 @@ const RESULT_STYLE: Record<string, { bg: string; color: string; label: string }>
   pending: { bg: 'rgba(161,161,170,0.08)', color: 'var(--text-muted)', label: 'Pending' },
 }
 
+/**
+ * Mirror of NotifyResult from lib/notify. Every channel there degrades to a
+ * silent no-op when its key is missing, so without this reported back a
+ * misconfigured deploy is indistinguishable from a working one.
+ */
+interface NotifyReport {
+  skipped?: string
+  audience?: string
+  discord?: { sent: number; mentioned: string | null } | { error: string }
+  email?: { sent: number; failed: number; errors?: string[] } | { error: string }
+  push?: { sent: number; pruned: number } | { error: string }
+}
+
+function channelSummary(name: string, result: NotifyReport[keyof NotifyReport]): string {
+  if (!result || typeof result !== 'object') return `${name}: —`
+  if ('error' in result) return `${name}: failed (${result.error})`
+  if ('mentioned' in result) {
+    return result.sent === 0
+      ? `${name}: not configured`
+      : `${name}: posted${result.mentioned ? ' + role ping' : ' (no role ping)'}`
+  }
+  if ('failed' in result) {
+    const tail = result.failed > 0 ? `, ${result.failed} failed` : ''
+    return `${name}: ${result.sent} sent${tail}`
+  }
+  if ('pruned' in result) {
+    const tail = result.pruned > 0 ? `, ${result.pruned} stale removed` : ''
+    return `${name}: ${result.sent} sent${tail}`
+  }
+  return `${name}: —`
+}
+
 const EMPTY_FORM = {
   date: '', sport: '', risk: '', bet: '', line: '', vig: '', opponent: '', win: '', result: 'pending', note: '',
   is_active: true, is_free: true, is_elite: false, show_on_results: false,
@@ -63,6 +95,7 @@ export default function TodaysBets({ rows, isAdmin, userTier, isMember, lockedCo
   const [form, setForm]           = useState(EMPTY_FORM)
   const [saving, setSaving]       = useState(false)
   const [error, setError]         = useState<string | null>(null)
+  const [notifyReport, setNotifyReport] = useState<NotifyReport | null>(null)
   const inlineFormRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -80,6 +113,7 @@ export default function TodaysBets({ rows, isAdmin, userTier, isMember, lockedCo
     setEditId(null)
     setFormMode('add')
     setError(null)
+    setNotifyReport(null)
   }
 
   function openEdit(row: TodaysBet) {
@@ -126,11 +160,11 @@ export default function TodaysBets({ rows, isAdmin, userTier, isMember, lockedCo
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
       })
-      if (!res.ok) {
-        const j = await res.json()
-        throw new Error(j.error ?? 'Save failed')
-      }
+      const j = await res.json()
+      if (!res.ok) throw new Error(j.error ?? 'Save failed')
       cancelForm()
+      // Only a create fans out notifications; an edit returns no report.
+      setNotifyReport(isEdit ? null : (j.notified ?? null))
       router.refresh()
     } catch (e: any) {
       setError(e.message)
@@ -213,6 +247,47 @@ export default function TodaysBets({ rows, isAdmin, userTier, isMember, lockedCo
             <button className="btn btn--primary btn--sm" onClick={openAdd}>
               + Add Row
             </button>
+          </div>
+        )}
+
+        {/* Notification outcome for the pick just created. */}
+        {isAdmin && editMode && notifyReport && (
+          <div
+            style={{
+              background: 'var(--bg-secondary)',
+              border: '1px solid var(--border)',
+              borderLeft: `3px solid ${notifyReport.skipped ? '#facc15' : '#2dd4bf'}`,
+              borderRadius: '8px',
+              padding: '12px 16px',
+              margin: '0 0 16px',
+              fontSize: '0.82rem',
+              lineHeight: 1.7,
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px' }}>
+              <strong style={{ color: 'var(--text-primary)' }}>
+                {notifyReport.skipped
+                  ? `Not announced — ${notifyReport.skipped}`
+                  : `Announced to: ${notifyReport.audience}`}
+              </strong>
+              <button
+                type="button"
+                onClick={() => setNotifyReport(null)}
+                style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', lineHeight: 1 }}
+                aria-label="Dismiss"
+              >
+                ×
+              </button>
+            </div>
+            {!notifyReport.skipped && (
+              <div style={{ color: 'var(--text-muted)', marginTop: '4px' }}>
+                {channelSummary('Discord', notifyReport.discord)}
+                {' · '}
+                {channelSummary('Email', notifyReport.email)}
+                {' · '}
+                {channelSummary('Push', notifyReport.push)}
+              </div>
+            )}
           </div>
         )}
 
