@@ -1,20 +1,22 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { safeNext } from '@/lib/safe-redirect'
-
-// Supabase Auth outages must not take the whole site down. Vercel kills a
-// middleware invocation at 25s, so an unbounded getUser() against a hung
-// /auth/v1/user turns every request carrying a session cookie into a 504.
-// Bound it well under that and fall back to "signed out" instead.
-const AUTH_TIMEOUT_MS = 2500
+import {
+  AUTH_COOKIE_PATTERN,
+  boundedAuthFetch,
+  isStaleRefreshToken,
+  withAuthTimeout,
+} from '@/lib/supabase/auth-timeout'
 
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
+  const auth = boundedAuthFetch()
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
+      global: { fetch: auth.fetch },
       cookies: {
         getAll() {
           return request.cookies.getAll()
@@ -30,22 +32,33 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  let timer: ReturnType<typeof setTimeout> | undefined
+  // Middleware is the only place a rotated refresh token can actually be
+  // persisted -- the Server Component client's setAll is a no-op (see
+  // lib/supabase/server.ts). It writes the fresh token back onto
+  // request.cookies as well, so the render downstream reads an unexpired token
+  // and never races middleware for a second refresh.
   let user = null
+  let authError: unknown = null
 
   try {
-    const result = await Promise.race([
-      supabase.auth.getUser(),
-      new Promise<null>((resolve) => {
-        timer = setTimeout(() => resolve(null), AUTH_TIMEOUT_MS)
-      }),
-    ])
+    const result = await withAuthTimeout(supabase.auth.getUser(), auth)
     user = result?.data.user ?? null
-  } catch {
-    // Auth unreachable — serve the request rather than hanging on it.
+    authError = result?.error ?? null
+  } catch (error) {
+    // Auth unreachable -- serve the request rather than hanging on it.
+    authError = error
+  }
+
+  // A retired refresh token will never succeed again and nothing else clears
+  // it, so the browser replays it on every request and every request 400s.
+  // Drop the cookie here and the session degrades to signed-out instead.
+  if (isStaleRefreshToken(authError)) {
+    for (const { name } of request.cookies.getAll()) {
+      if (AUTH_COOKIE_PATTERN.test(name)) {
+        supabaseResponse.cookies.set(name, '', { maxAge: 0, path: '/' })
+      }
+    }
     user = null
-  } finally {
-    clearTimeout(timer)
   }
 
   const { pathname } = request.nextUrl
@@ -53,14 +66,14 @@ export async function middleware(request: NextRequest) {
   // Protect admin routes
   if (pathname.startsWith('/admin')) {
     if (!user) {
-      return NextResponse.redirect(new URL('/login', request.url))
+      return redirectPreservingCookies(supabaseResponse, new URL('/login', request.url))
     }
   }
 
   // Protect account routes
   if (pathname.startsWith('/account')) {
     if (!user) {
-      return NextResponse.redirect(new URL('/login', request.url))
+      return redirectPreservingCookies(supabaseResponse, new URL('/login', request.url))
     }
   }
 
@@ -68,10 +81,20 @@ export async function middleware(request: NextRequest) {
   // destination so an in-flight purchase isn't dropped on the homepage.
   if (user && (pathname === '/login' || pathname === '/signup')) {
     const dest = safeNext(request.nextUrl.searchParams.get('next'), '/')
-    return NextResponse.redirect(new URL(dest, request.url))
+    return redirectPreservingCookies(supabaseResponse, new URL(dest, request.url))
   }
 
   return supabaseResponse
+}
+
+// A bare NextResponse.redirect drops everything supabaseResponse was carrying,
+// which is exactly the cookies that matter: a refreshed session, or the
+// cleared one we just decided to expire. Losing the latter on the redirect to
+// /login would leave the dead token in place and restart the 400 loop.
+function redirectPreservingCookies(response: NextResponse, url: URL) {
+  const redirect = NextResponse.redirect(url)
+  response.cookies.getAll().forEach((cookie) => redirect.cookies.set(cookie))
+  return redirect
 }
 
 export const config = {
