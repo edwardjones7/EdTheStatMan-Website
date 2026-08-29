@@ -2,6 +2,12 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { safeNext } from '@/lib/safe-redirect'
 
+// Supabase Auth outages must not take the whole site down. Vercel kills a
+// middleware invocation at 25s, so an unbounded getUser() against a hung
+// /auth/v1/user turns every request carrying a session cookie into a 504.
+// Bound it well under that and fall back to "signed out" instead.
+const AUTH_TIMEOUT_MS = 2500
+
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
 
@@ -24,7 +30,23 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  const { data: { user } } = await supabase.auth.getUser()
+  let timer: ReturnType<typeof setTimeout> | undefined
+  let user = null
+
+  try {
+    const result = await Promise.race([
+      supabase.auth.getUser(),
+      new Promise<null>((resolve) => {
+        timer = setTimeout(() => resolve(null), AUTH_TIMEOUT_MS)
+      }),
+    ])
+    user = result?.data.user ?? null
+  } catch {
+    // Auth unreachable — serve the request rather than hanging on it.
+    user = null
+  } finally {
+    clearTimeout(timer)
+  }
 
   const { pathname } = request.nextUrl
 
@@ -54,6 +76,8 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    // The Stripe webhook authenticates by signature and uses the admin client;
+    // it has no session to refresh and must not depend on Supabase Auth.
+    '/((?!api/stripe/webhook|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }
