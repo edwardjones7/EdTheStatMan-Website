@@ -96,6 +96,13 @@ html {
   scroll-behavior: smooth;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Mobile browsers "boost" text inside blocks they judge to be much wider than
+     the viewport (Chrome/Android text inflation, iOS Safari auto-sizing). The
+     ticker track is `width: max-content`, so single items were being rendered at
+     a random-looking larger size than their neighbours. Pin the scale to 100%. */
+  -webkit-text-size-adjust: 100%;
+  -moz-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
@@ -3178,9 +3185,69 @@ textarea.form-input {
 /* ---------- Membership / Pricing Cards ---------- */
 .pricing-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 24px;
+  /* Column count comes from PricingCards (--pricing-cols = cards rendered), so
+     the full four-rung ladder sits on one row instead of orphaning the fourth
+     card. --pricing-cols-md is the pre-halved tablet count. */
+  grid-template-columns: repeat(var(--pricing-cols, 4), minmax(0, 1fr));
+  gap: 20px;
   margin-top: 48px;
+}
+
+@media (max-width: 1120px) {
+  .pricing-grid {
+    grid-template-columns: repeat(var(--pricing-cols-md, 2), minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .pricing-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: 1121px) {
+  /* Four across inside a 1232px container leaves ~290px per card, so the 4-up
+     layout trades some padding and type scale for the single row. */
+  .pricing-grid--compact .pricing-card {
+    padding: 28px 24px;
+  }
+
+  .pricing-grid--compact .pricing-card__name {
+    font-size: 1rem;
+    flex-wrap: wrap;
+    align-content: flex-start;
+    gap: 8px;
+    /* Reserve two name lines plus a badge row so the prices sit on one baseline
+       across all four cards, whether or not a card carries a badge. */
+    min-height: 86px;
+  }
+
+  .pricing-grid--compact .pricing-card__price {
+    font-size: 2.35rem;
+  }
+
+  .pricing-grid--compact .pricing-card__desc {
+    font-size: 0.85rem;
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+  }
+
+  .pricing-grid--compact .pricing-card__features {
+    gap: 11px;
+    margin-bottom: 24px;
+  }
+
+  .pricing-grid--compact .pricing-card__feature {
+    align-items: flex-start;
+    font-size: 0.83rem;
+  }
+
+  .pricing-grid--compact .pricing-card__feature .check {
+    width: 18px;
+    height: 18px;
+    margin-top: 1px;
+    font-size: 0.65rem;
+  }
 }
 
 .pricing-card {
@@ -3728,10 +3795,6 @@ textarea.form-input {
   }
 
   .blog-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .pricing-grid {
     grid-template-columns: 1fr;
   }
 
@@ -6423,4 +6486,1504 @@ textarea.form-input {
   font-size: 0.75rem;
   color: var(--text-muted);
   white-space: nowrap;
+}
+
+
+/* ===================================================================
+   v3 LADDER — offer page
+   Retail / Portfolio / Research Desk / Private / Institutional.
+   Reuses the established semantics: teal = data & primary,
+   gold = the Vault (locked/premium), mono = numbers.
+   =================================================================== */
+
+/* The badge is data-driven now (plan.badge), so the hardcoded
+   content:'Most Popular' pseudo-element would double up. */
+.pricing-card--featured::before { display: none; }
+
+/* Monthly / Season toggle. Season is the default and the pushed SKU:
+   one sale and one dispute window instead of twelve of each. */
+.billing-toggle {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  margin: 0 auto 8px;
+  padding: 4px;
+  width: fit-content;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-full);
+}
+
+.billing-toggle__opt {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 10px 22px;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.billing-toggle__opt:hover { color: var(--text-primary); }
+
+.billing-toggle__opt.is-active {
+  background: var(--gradient-primary);
+  color: var(--bg-primary);
+}
+
+.billing-toggle__hint {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  opacity: 0.75;
+}
+
+.pricing-card__per {
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-left: 2px;
+}
+
+/* The Vault rungs inherit the gold treatment the whole site already uses
+   for locked content — see .pricing-card--elite and .sys-gate-card--elite. */
+.pricing-card--vault {
+  background: linear-gradient(180deg, rgba(var(--gold-rgb), 0.05), var(--bg-card) 45%);
+  border-color: rgba(var(--gold-rgb), 0.32);
+}
+
+.pricing-card--vault:hover {
+  border-color: rgba(var(--gold-rgb), 0.55);
+  box-shadow: 0 0 32px rgba(var(--gold-rgb), 0.08);
+}
+
+.pricing-card--vault .pricing-card__name { color: var(--accent-gold); }
+
+.pricing-card--vault .pricing-card__badge {
+  background: linear-gradient(135deg, var(--accent-gold), var(--accent-orange));
+}
+
+.pricing-card--vault .pricing-card__feature .check {
+  background: rgba(var(--gold-rgb), 0.12);
+  color: var(--accent-gold);
+}
+
+/* Institutional is the anchor: same gold, more weight. */
+.pricing-card--institutional {
+  background: linear-gradient(180deg, rgba(var(--gold-rgb), 0.09), var(--bg-card) 50%);
+  border-color: rgba(var(--gold-rgb), 0.5);
+  box-shadow: 0 0 36px rgba(var(--gold-rgb), 0.1);
+}
+
+.pricing-card--institutional:hover {
+  border-color: var(--accent-gold);
+  box-shadow: 0 0 44px rgba(var(--gold-rgb), 0.16);
+}
+
+/* Retail: a comparison strip beneath the paid cards, not a fifth column. */
+.retail-strip {
+  margin-top: 32px;
+  padding: 28px 32px;
+  background: var(--bg-secondary);
+  border: 1px dashed var(--border-color);
+  border-radius: var(--radius-xl);
+}
+
+.retail-strip__head {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.retail-strip__name {
+  font-family: var(--font-heading);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-heading);
+}
+
+.retail-strip__price {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--accent-sky);
+}
+
+.retail-strip__features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 10px 24px;
+  margin-bottom: 24px;
+}
+
+.retail-strip__feature {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+/* These two were emitted by PricingCards but never existed in CSS, so
+   excluded features rendered identically to included ones. */
+.retail-strip__feature--muted { color: var(--text-muted); }
+
+.retail-strip__feature .check,
+.retail-strip__feature .cross {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  flex-shrink: 0;
+}
+
+.retail-strip__feature .check {
+  background: rgba(var(--teal-rgb), 0.1);
+  color: var(--accent-teal);
+}
+
+.retail-strip__feature .cross {
+  background: rgba(148, 190, 200, 0.07);
+  color: var(--text-muted);
+}
+
+@media (max-width: 640px) {
+  .billing-toggle { width: 100%; }
+  .billing-toggle__opt { flex: 1; justify-content: center; padding: 10px 12px; }
+  .retail-strip { padding: 24px 20px; }
+}
+
+
+/* ---- v3 ladder: nav tier pills -------------------------------------------
+   The old --basic/--premium/--elite rules are kept for one deploy so a stale
+   render is never unstyled. */
+.nav__user-tier--retail {
+  background: rgba(var(--sky-rgb), 0.12);
+  color: var(--accent-sky);
+}
+
+.nav__user-tier--portfolio {
+  background: rgba(var(--lime-rgb), 0.14);
+  color: var(--accent-lime);
+}
+
+.nav__user-tier--desk {
+  background: rgba(var(--teal-rgb), 0.14);
+  color: var(--accent-teal);
+}
+
+.nav__user-tier--private,
+.nav__user-tier--institutional {
+  background: rgba(var(--gold-rgb), 0.14);
+  color: var(--accent-gold);
+}
+
+/* ---- The Vault landing --------------------------------------------------- */
+/* The library's size is the pitch, so the counts live inside the doors rather
+   than in a separate stat row above them, and the sections are pulled tight
+   against each other -- the old layout spread four short blocks over three
+   screens of empty page. */
+.vault-hero { padding-bottom: 8px; }
+
+.vault-hero__head {
+  text-align: center;
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+.vault-doors {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+  max-width: 880px;
+  margin: 48px auto 0;
+}
+
+.vault-door {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto auto auto;
+  column-gap: 16px;
+  row-gap: 6px;
+  padding: 26px 28px;
+  background: linear-gradient(180deg, rgba(var(--gold-rgb), 0.06), var(--bg-card) 62%);
+  border: 1px solid rgba(var(--gold-rgb), 0.26);
+  border-radius: var(--radius-xl);
+  text-decoration: none;
+  transition: border-color var(--transition-fast), transform var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
+
+.vault-door:hover {
+  border-color: rgba(var(--gold-rgb), 0.55);
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.35);
+  transform: translateY(-3px);
+}
+
+.vault-door__icon {
+  grid-row: 1;
+  grid-column: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: var(--radius-lg);
+  background: rgba(var(--gold-rgb), 0.1);
+  color: var(--accent-gold);
+}
+
+.vault-door__count {
+  grid-row: 1;
+  grid-column: 2;
+  align-self: center;
+  font-family: var(--font-mono);
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--accent-gold);
+}
+
+.vault-door__name {
+  grid-row: 2;
+  grid-column: 1 / -1;
+  font-family: var(--font-heading);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-heading);
+}
+
+.vault-door__desc {
+  grid-row: 3;
+  grid-column: 1 / -1;
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+.vault-door__foot {
+  grid-row: 4;
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-color);
+}
+
+.vault-door__free {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: var(--text-muted);
+}
+
+.vault-door__go {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: var(--accent-gold);
+  transition: gap var(--transition-fast);
+}
+
+.vault-door:hover .vault-door__go { gap: 10px; }
+
+/* Which leagues are actually stocked -- depth the two totals don't show. */
+.vault-coverage {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px 14px;
+  max-width: 880px;
+  margin: 28px auto 0;
+}
+
+.vault-coverage__label {
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 1.6px;
+  color: var(--text-muted);
+}
+
+.vault-coverage__list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.vault-coverage__pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-full);
+  background: var(--bg-card);
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+.vault-coverage__n {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--accent-teal);
+}
+
+/* ---- A live sample of the library --------------------------------------- */
+.vault-peek-section { padding-top: 72px; }
+
+.vault-peek {
+  list-style: none;
+  margin: 44px 0 0;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+}
+
+.vault-peek__row {
+  display: grid;
+  grid-template-columns: 76px 1fr 170px 56px;
+  align-items: center;
+  gap: 18px;
+  padding: 15px 20px;
+  background: var(--bg-card);
+  transition: background var(--transition-fast);
+}
+
+.vault-peek__row + .vault-peek__row { border-top: 1px solid var(--border-color); }
+.vault-peek__row:hover { background: var(--bg-card-hover); }
+
+.vault-peek__sport {
+  justify-self: start;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  font-family: var(--font-mono);
+  font-size: 0.63rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  white-space: nowrap;
+  background: rgba(148, 190, 200, 0.08);
+  color: var(--text-secondary);
+}
+
+/* The muted per-sport tints already defined at the top of this file. */
+.vault-peek__sport.sport-nfl { background: rgba(var(--sport-nfl), 0.12); color: rgb(var(--sport-nfl)); }
+.vault-peek__sport.sport-nflpre { background: rgba(var(--sport-nflpre), 0.12); color: rgb(var(--sport-nflpre)); }
+.vault-peek__sport.sport-nba { background: rgba(var(--sport-nba), 0.12); color: rgb(var(--sport-nba)); }
+.vault-peek__sport.sport-wnba { background: rgba(var(--sport-wnba), 0.12); color: rgb(var(--sport-wnba)); }
+.vault-peek__sport.sport-cfb { background: rgba(var(--sport-cfb), 0.12); color: rgb(var(--sport-cfb)); }
+.vault-peek__sport.sport-cfl { background: rgba(var(--sport-cfl), 0.12); color: rgb(var(--sport-cfl)); }
+.vault-peek__sport.sport-cbb { background: rgba(var(--sport-cbb), 0.12); color: rgb(var(--sport-cbb)); }
+
+.vault-peek__desc {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  min-width: 0;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+}
+
+.vault-peek__desc > :first-child { min-width: 0; }
+
+.vault-peek__line {
+  flex: 0 0 auto;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.vault-peek__row.is-locked .vault-peek__desc { color: var(--text-muted); }
+
+/* A locked row is advertised by its record, never by its rule -- the redaction
+   is real: the description never leaves the server for these. */
+.vault-peek__redacted {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.6px;
+  color: var(--text-muted);
+}
+
+.vault-peek__redacted svg { color: rgba(var(--gold-rgb), 0.7); }
+
+.vault-peek__record {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.vault-peek__wl {
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.vault-peek__pct {
+  justify-self: end;
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--accent-teal);
+}
+
+.vault-peek__locked {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+  padding: 16px 20px;
+  border: 1px dashed rgba(var(--gold-rgb), 0.35);
+  border-radius: var(--radius-xl);
+  background: rgba(var(--gold-rgb), 0.04);
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: border-color var(--transition-fast), background var(--transition-fast);
+}
+
+.vault-peek__locked:hover {
+  border-style: solid;
+  background: rgba(var(--gold-rgb), 0.08);
+}
+
+.vault-peek__locked strong { color: var(--accent-gold); }
+.vault-peek__locked > svg { flex: 0 0 auto; color: var(--accent-gold); }
+.vault-peek__locked > span { flex: 1; }
+
+/* ---- Access levels ------------------------------------------------------- */
+.vault-levels {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+  margin-top: 48px;
+}
+
+.vault-level {
+  display: flex;
+  flex-direction: column;
+  padding: 28px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+}
+
+.vault-level--held {
+  border-color: rgba(var(--teal-rgb), 0.4);
+  background: linear-gradient(180deg, rgba(var(--teal-rgb), 0.05), var(--bg-card) 55%);
+}
+
+.vault-level__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--accent-gold);
+}
+
+.vault-level__name {
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-heading);
+}
+
+.vault-level__badge {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  background: rgba(var(--teal-rgb), 0.14);
+  color: var(--accent-teal);
+}
+
+.vault-level__price {
+  margin-top: 10px;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.vault-level__body {
+  margin-top: 14px;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+.vault-level__features {
+  list-style: none;
+  margin-top: auto;
+  padding-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.vault-level__features li {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  font-size: 0.84rem;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.vault-level__features svg {
+  flex: 0 0 auto;
+  margin-top: 3px;
+  color: var(--accent-teal);
+}
+
+.vault-level:not(.vault-level--held) .vault-level__features svg { color: var(--text-muted); }
+
+@media (max-width: 760px) {
+  .vault-peek__row {
+    grid-template-columns: auto 1fr;
+    row-gap: 10px;
+  }
+  .vault-peek__desc { grid-column: 1 / -1; grid-row: 2; }
+  .vault-peek__record { grid-column: 1; grid-row: 3; }
+  .vault-peek__pct { grid-column: 2; grid-row: 3; }
+}
+
+
+/* ===================================================================
+   THE RESEARCH DESK
+   A terminal, not a marketing page: mono numerals, tight rows, the
+   line and its movement given equal weight to the matchup.
+   =================================================================== */
+
+.desk-sports {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 28px;
+}
+
+.desk-sport-pill,
+.desk-week-pill {
+  padding: 8px 16px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-full);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  text-decoration: none;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all var(--transition-fast);
+}
+
+.desk-sport-pill:hover,
+.desk-week-pill:hover {
+  color: var(--text-primary);
+  border-color: rgba(var(--teal-rgb), 0.35);
+}
+
+.desk-sport-pill.is-active,
+.desk-week-pill.is-active {
+  background: rgba(var(--teal-rgb), 0.12);
+  border-color: var(--accent-teal);
+  color: var(--accent-teal);
+}
+
+.desk-board { margin-top: 28px; }
+
+/* The week rail scrolls on narrow screens; the native scrollbar underneath it
+   read as a stray white bar, so it is hidden and the overflow is signalled by
+   fade masks on both edges instead. */
+.desk-weeks-wrap {
+  position: relative;
+  margin: 0 -4px;
+}
+
+.desk-weeks-wrap::before,
+.desk-weeks-wrap::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 40px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.desk-weeks-wrap::before {
+  left: 0;
+  background: linear-gradient(90deg, var(--bg-primary), transparent);
+}
+
+.desk-weeks-wrap::after {
+  right: 0;
+  background: linear-gradient(270deg, var(--bg-primary), transparent);
+}
+
+.desk-weeks {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 2px 4px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.desk-weeks::-webkit-scrollbar { display: none; }
+
+/* Week header numbers — the honest advertisement for the rung. */
+.desk-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 1px;
+  margin-top: 20px;
+  background: var(--border-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+}
+
+.desk-summary__cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 16px 20px;
+  background: var(--bg-card);
+}
+
+.desk-summary__value {
+  font-family: var(--font-mono);
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--text-heading);
+}
+
+.desk-summary__value.is-accent { color: var(--accent-teal); }
+
+.desk-summary__label {
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 1.4px;
+  color: var(--text-muted);
+}
+
+.desk-empty {
+  padding: 48px 0;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.desk-day { margin-top: 36px; }
+
+.desk-day__label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--text-muted);
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.desk-day__count {
+  font-size: 0.62rem;
+  letter-spacing: 0;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  background: rgba(var(--teal-rgb), 0.1);
+  color: var(--accent-teal);
+}
+
+.desk-day__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 14px;
+  margin-top: 16px;
+}
+
+/* ---- Game card ----------------------------------------------------------
+   Warmer than the row it replaced: a real surface per matchup, the two sides
+   stacked like a scoreboard, and the market broken into labelled chips so the
+   number and what it refers to are never ambiguous. */
+.desk-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  text-decoration: none;
+  color: inherit;
+  overflow: hidden;
+  transition: border-color var(--transition-fast), transform var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
+
+.desk-card:hover {
+  border-color: rgba(var(--teal-rgb), 0.34);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+
+.desk-card--final { opacity: 0.75; }
+.desk-card--final:hover { opacity: 1; }
+.desk-card--live { border-color: rgba(var(--red-rgb), 0.35); }
+
+.desk-card__top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 16px;
+  border-bottom: 1px solid var(--border-color);
+  background: rgba(148, 190, 200, 0.03);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+}
+
+.desk-card__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  color: var(--accent-red);
+}
+
+.desk-card--final .desk-card__status { color: var(--text-muted); }
+
+.desk-card__pulse {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-red);
+  animation: desk-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes desk-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.35; transform: scale(0.8); }
+}
+
+.desk-card__tv {
+  margin-left: auto;
+  font-size: 0.64rem;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+}
+
+.desk-card__teams {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px;
+}
+
+.desk-card__side {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.desk-card__side.is-beaten { opacity: 0.55; }
+
+.desk-card__tile {
+  flex: 0 0 auto;
+  min-width: 44px;
+  padding: 5px 8px;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
+  background: rgba(148, 190, 200, 0.07);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+}
+
+/* The side laying the points is the one the board is built around. */
+.desk-card__side.is-fav .desk-card__tile {
+  color: var(--accent-teal);
+  background: rgba(var(--teal-rgb), 0.1);
+  border-color: rgba(var(--teal-rgb), 0.3);
+}
+
+.desk-card__ident {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+
+.desk-card__name {
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-heading);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.desk-card__rec {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--text-muted);
+}
+
+.desk-card__score {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-heading);
+}
+
+.desk-card__side.is-beaten .desk-card__score { color: var(--text-muted); }
+
+.desk-card__market {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: var(--border-color);
+  border-top: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.desk-chip {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 10px 16px;
+  background: var(--bg-card);
+}
+
+.desk-chip__key {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: var(--text-muted);
+}
+
+.desk-chip__val {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  font-family: var(--font-mono);
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.desk-chip__val--none { color: var(--text-muted); font-weight: 500; }
+
+/* Movement is why both the opening and current numbers are stored. */
+.desk-chip__move { font-size: 0.64rem; font-weight: 700; }
+.desk-chip__move--up { color: var(--accent-teal); }
+.desk-chip__move--down { color: var(--accent-red); }
+
+.desk-card__foot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 16px;
+  margin-top: auto;
+}
+
+.desk-card__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.desk-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: var(--radius-full);
+  font-family: var(--font-mono);
+  font-size: 0.63rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.desk-tag--open {
+  background: rgba(var(--teal-rgb), 0.11);
+  color: var(--accent-teal);
+}
+
+.desk-tag--locked {
+  background: rgba(var(--gold-rgb), 0.11);
+  color: var(--accent-gold);
+}
+
+.desk-tag--empty {
+  color: var(--text-muted);
+  letter-spacing: 0.6px;
+  font-weight: 500;
+  text-transform: none;
+  padding-left: 0;
+}
+
+.desk-card__go {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  color: var(--text-muted);
+  transition: color var(--transition-fast), transform var(--transition-fast);
+}
+
+.desk-card:hover .desk-card__go {
+  color: var(--accent-teal);
+  transform: translateX(3px);
+}
+
+.desk-attrib {
+  margin-top: 28px;
+  font-size: 0.7rem;
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+
+/* The weekly desk note: the editorial layer that makes this a product. */
+.desk-note {
+  margin-top: 32px;
+  padding: 28px 32px;
+  background: linear-gradient(180deg, rgba(var(--teal-rgb), 0.05), var(--bg-card) 55%);
+  border: 1px solid rgba(var(--teal-rgb), 0.28);
+  border-left: 3px solid var(--accent-teal);
+  border-radius: var(--radius-xl);
+}
+
+.desk-note--locked {
+  background: linear-gradient(180deg, rgba(var(--gold-rgb), 0.05), var(--bg-card) 55%);
+  border-color: rgba(var(--gold-rgb), 0.3);
+  border-left-color: var(--accent-gold);
+}
+
+.desk-note__label {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--accent-teal);
+}
+
+.desk-note--locked .desk-note__label { color: var(--accent-gold); }
+
+.desk-note__title {
+  margin: 8px 0 12px;
+  font-family: var(--font-heading);
+  font-size: 1.25rem;
+  color: var(--text-heading);
+}
+
+.desk-note__body {
+  font-size: 0.92rem;
+  line-height: 1.7;
+  color: var(--text-secondary);
+}
+
+.desk-note__body p { margin-bottom: 12px; }
+
+.desk-note__gate { font-size: 0.9rem; color: var(--text-secondary); }
+.desk-note__gate a { color: var(--accent-gold); font-weight: 600; }
+
+@media (max-width: 700px) {
+  .desk-day__grid { grid-template-columns: 1fr; }
+  .desk-summary__cell { padding: 13px 16px; }
+  .desk-summary__value { font-size: 1.3rem; }
+  .desk-chip { padding: 9px 12px; }
+  .desk-card__top,
+  .desk-card__teams,
+  .desk-card__foot { padding-left: 13px; padding-right: 13px; }
+}
+
+
+/* ===================================================================
+   DESK ANALYST
+   A terminal window docked to the corner, not a bubbly support widget.
+   =================================================================== */
+
+.analyst-fab {
+  /* Bottom-LEFT on purpose: .back-to-top owns bottom/right 32px, and the admin
+     edit FAB stacks in the same corner on editable pages. */
+  position: fixed;
+  left: 24px;
+  bottom: 24px;
+  z-index: 90;
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 50%;
+  background: var(--gradient-primary);
+  color: var(--bg-primary);
+  box-shadow: 0 6px 24px rgba(var(--teal-rgb), 0.32);
+  cursor: pointer;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.analyst-fab:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(var(--teal-rgb), 0.44); }
+.analyst-fab.is-open { background: var(--bg-card); color: var(--accent-teal); border: 1px solid var(--border-color); }
+
+.analyst-panel {
+  position: fixed;
+  left: 24px;
+  bottom: 88px;
+  z-index: 91;
+  width: min(420px, calc(100vw - 32px));
+  max-height: min(640px, calc(100vh - 140px));
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-glass);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(var(--teal-rgb), 0.25);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+}
+
+.analyst-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-card);
+}
+
+.analyst-head__name {
+  font-family: var(--font-heading);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-heading);
+}
+
+.analyst-head__tier {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--accent-teal);
+}
+
+.analyst-close {
+  border: 0;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  cursor: pointer;
+  padding: 4px 6px;
+}
+
+.analyst-close:hover { color: var(--text-primary); }
+
+/* Header controls. "New chat" only renders once there is something to clear,
+   so this group is a single button most of the time. */
+.analyst-head__actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.analyst-new {
+  border: 1px solid var(--border-color);
+  background: transparent;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  transition: color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.analyst-new:hover {
+  color: var(--accent-teal);
+  border-color: rgba(var(--teal-rgb), 0.4);
+}
+
+.analyst-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.analyst-intro p {
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  margin-bottom: 14px;
+}
+
+.analyst-suggest { display: flex; flex-direction: column; gap: 8px; }
+
+.analyst-suggest__btn {
+  text-align: left;
+  padding: 10px 14px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.analyst-suggest__btn:hover {
+  border-color: rgba(var(--teal-rgb), 0.4);
+  color: var(--text-primary);
+}
+
+.analyst-msg { display: flex; flex-direction: column; gap: 6px; max-width: 92%; }
+.analyst-msg--user { align-self: flex-end; align-items: flex-end; }
+.analyst-msg--assistant { align-self: flex-start; }
+
+.analyst-msg__text {
+  padding: 10px 14px;
+  border-radius: var(--radius-lg);
+  font-size: 0.86rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.analyst-msg--user .analyst-msg__text {
+  background: rgba(var(--teal-rgb), 0.12);
+  color: var(--text-primary);
+}
+
+.analyst-msg--assistant .analyst-msg__text {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+}
+
+/* Tool activity is surfaced rather than hidden: seeing which tool ran is how
+   the reader knows the answer came from their own data. */
+.analyst-tool {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+}
+
+.analyst-tool__dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--accent-teal);
+}
+
+.analyst-typing { display: inline-flex; gap: 4px; padding: 12px 14px; }
+
+.analyst-typing i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  animation: analyst-bounce 1.2s infinite ease-in-out;
+}
+
+.analyst-typing i:nth-child(2) { animation-delay: 0.15s; }
+.analyst-typing i:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes analyst-bounce {
+  0%, 60%, 100% { opacity: 0.3; transform: translateY(0); }
+  30% { opacity: 1; transform: translateY(-3px); }
+}
+
+.analyst-error {
+  padding: 10px 14px;
+  border-radius: var(--radius-lg);
+  background: rgba(var(--red-rgb), 0.1);
+  border: 1px solid rgba(var(--red-rgb), 0.3);
+  color: var(--accent-red);
+  font-size: 0.82rem;
+}
+
+.analyst-upsell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-top: 1px solid var(--border-color);
+  background: rgba(var(--gold-rgb), 0.05);
+  color: var(--accent-gold);
+  font-size: 0.75rem;
+  text-decoration: none;
+}
+
+.analyst-upsell:hover { background: rgba(var(--gold-rgb), 0.1); }
+
+.analyst-form {
+  display: flex;
+  gap: 8px;
+  padding: 14px 18px 8px;
+  border-top: 1px solid var(--border-color);
+}
+
+.analyst-input {
+  flex: 1;
+  padding: 10px 14px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-full);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+}
+
+.analyst-input:focus { outline: none; border-color: rgba(var(--teal-rgb), 0.45); }
+
+.analyst-send {
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 50%;
+  background: var(--gradient-primary);
+  color: var(--bg-primary);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.analyst-send:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.analyst-disclaimer {
+  padding: 0 18px 14px;
+  font-size: 0.65rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+@media (max-width: 520px) {
+  .analyst-panel { right: 12px; left: 12px; width: auto; bottom: 80px; }
+  .analyst-fab { left: 16px; bottom: 16px; }
+}
+
+
+/* A member at the top of the ladder, or an admin: nothing to sell. */
+.pricing-topped-out {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 32px;
+  text-align: center;
+  background: linear-gradient(180deg, rgba(var(--gold-rgb), 0.06), var(--bg-card) 50%);
+  border: 1px solid rgba(var(--gold-rgb), 0.35);
+  border-radius: var(--radius-xl);
+}
+
+.pricing-topped-out__badge {
+  display: inline-block;
+  padding: 4px 14px;
+  border-radius: var(--radius-full);
+  background: linear-gradient(135deg, var(--accent-gold), var(--accent-orange));
+  color: var(--bg-primary);
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.pricing-topped-out p {
+  margin: 16px 0 20px;
+  font-size: 0.92rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+
+/* ---- Desk note editor (admin, in place on the board) --------------------- */
+.desk-note-open {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin: 12px 0;
+  padding: 10px 18px;
+  background: var(--bg-card);
+  border: 1px dashed rgba(var(--teal-rgb), 0.4);
+  border-radius: var(--radius-lg);
+  color: var(--accent-teal);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  cursor: pointer;
+}
+
+.desk-note-open:hover { border-style: solid; }
+
+.desk-note-open__draft {
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  background: rgba(var(--gold-rgb), 0.16);
+  color: var(--accent-gold);
+  font-size: 0.62rem;
+}
+
+.desk-note-editor {
+  margin: 16px 0;
+  padding: 20px 24px;
+  background: var(--bg-card);
+  border: 1px solid rgba(var(--teal-rgb), 0.3);
+  border-radius: var(--radius-xl);
+}
+
+.desk-note-editor__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.desk-note-editor__title {
+  width: 100%;
+  padding: 10px 14px;
+  margin-bottom: 10px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  color: var(--text-heading);
+  font-family: var(--font-heading);
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.desk-note-editor__title:focus { outline: none; border-color: rgba(var(--teal-rgb), 0.45); }
+
+.desk-note-editor__toolbar {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.desk-note-editor__toolbar button {
+  min-width: 34px;
+  padding: 6px 10px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+.desk-note-editor__toolbar button:hover {
+  color: var(--accent-teal);
+  border-color: rgba(var(--teal-rgb), 0.4);
+}
+
+.desk-note-editor__body {
+  min-height: 140px;
+  padding: 14px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  font-size: 0.92rem;
+  line-height: 1.7;
+  outline: none;
+}
+
+.desk-note-editor__body p { margin-bottom: 10px; }
+.desk-note-editor__body h3 { color: var(--text-heading); margin: 14px 0 8px; }
+.desk-note-editor__body ul { padding-left: 20px; list-style: disc; }
+.desk-note-editor__body blockquote {
+  border-left: 3px solid var(--accent-teal);
+  padding-left: 14px;
+  color: var(--text-muted);
+}
+
+.desk-note-editor__foot {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+
+.desk-note-editor__field,
+.desk-note-editor__check {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.desk-note-editor__field select {
+  padding: 6px 10px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 0.8rem;
+}
+
+.desk-note-editor__msg {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--accent-teal);
 }

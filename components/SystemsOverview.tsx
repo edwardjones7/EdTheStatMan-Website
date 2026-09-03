@@ -112,7 +112,7 @@ export default function SystemsOverview({ content, editMode, onEdit, resetKey = 
               ? <EditableText tag="span" value={content.footerNote} onChange={v => onEdit({ footerNote: v })} resetKey={resetKey} />
               : content.footerNote}
           </p>
-          <Link href="/betting-systems" className="btn btn--primary">
+          <Link href="/vault/systems" className="btn btn--primary">
             View All Betting Systems &#8594;
           </Link>
         </div>

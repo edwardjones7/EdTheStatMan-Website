@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { buildGameSlug } from '@/lib/nfl'
+import { fetchWeek, type ParsedGame } from '@/lib/espn'
 
 async function assertAdmin() {
   const supabase = await createClient()
@@ -12,61 +13,42 @@ async function assertAdmin() {
   return { ok: !!p?.is_admin as boolean, admin: admin as any }
 }
 
-const ESPN_SCOREBOARD = 'https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard'
+/** Columns every deployment has. */
+const BASE_COLS = [
+  'season', 'season_type', 'week', 'kickoff', 'status',
+  'home_team', 'home_abbrev', 'away_team', 'away_abbrev',
+  'home_score', 'away_score',
+] as const
 
-interface ParsedGame {
-  espn_event_id: string
-  season: number
-  season_type: number
-  week: number
-  kickoff: string | null
-  status: string
-  home_team: string
-  home_abbrev: string
-  away_team: string
-  away_abbrev: string
-  home_score: number | null
-  away_score: number | null
+/**
+ * Columns added by tier_ladder_06_desk_games.sql. Written only if that
+ * migration has been applied -- the route probes once and degrades to the base
+ * column set otherwise, so a sync never fails just because the SQL is pending.
+ */
+const DESK_COLS = [
+  'sport',
+  'spread_open', 'spread_current', 'spread_favorite',
+  'total_open', 'total_current',
+  'ml_home_open', 'ml_home_current', 'ml_away_open', 'ml_away_current',
+  'odds_provider', 'odds_updated_at',
+  'venue_name', 'venue_city', 'venue_state', 'venue_indoor',
+  'broadcast', 'home_record', 'away_record',
+] as const
+
+/** Opening lines are captured once and never moved -- that IS the movement. */
+const OPEN_COLS = ['spread_open', 'total_open', 'ml_home_open', 'ml_away_open'] as const
+
+async function hasDeskColumns(admin: any): Promise<boolean> {
+  const { error } = await admin.from('nfl_games').select('spread_open').limit(1)
+  return !error
 }
 
-// ESPN's API is unofficial and unversioned — parse defensively and skip any
-// event that doesn't match the expected shape rather than failing the run.
-function parseEvents(json: any, season: number, seasonType: number, week: number): { games: ParsedGame[]; failed: string[] } {
-  const games: ParsedGame[] = []
-  const failed: string[] = []
-  for (const event of json?.events ?? []) {
-    try {
-      const comp = event?.competitions?.[0]
-      const competitors = comp?.competitors ?? []
-      const home = competitors.find((c: any) => c.homeAway === 'home')
-      const away = competitors.find((c: any) => c.homeAway === 'away')
-      if (!event?.id || !home?.team?.abbreviation || !away?.team?.abbreviation) {
-        failed.push(String(event?.id ?? event?.name ?? 'unknown event'))
-        continue
-      }
-      const scoreOf = (c: any) => {
-        const n = Number(c?.score)
-        return c?.score !== undefined && c?.score !== '' && !Number.isNaN(n) ? n : null
-      }
-      games.push({
-        espn_event_id: String(event.id),
-        season,
-        season_type: seasonType,
-        week: Number(event?.week?.number ?? week),
-        kickoff: event?.date ? new Date(event.date).toISOString() : null,
-        status: String(event?.status?.type?.state ?? 'pre'),
-        home_team: String(home.team.displayName ?? home.team.abbreviation),
-        home_abbrev: String(home.team.abbreviation),
-        away_team: String(away.team.displayName ?? away.team.abbreviation),
-        away_abbrev: String(away.team.abbreviation),
-        home_score: scoreOf(home),
-        away_score: scoreOf(away),
-      })
-    } catch {
-      failed.push(String(event?.id ?? 'unknown event'))
-    }
+function pick(game: ParsedGame, cols: readonly string[], extra: Record<string, unknown> = {}) {
+  const out: Record<string, unknown> = {}
+  for (const c of cols) {
+    if (c in (game as any)) out[c] = (game as any)[c]
   }
-  return { games, failed }
+  return { ...out, ...extra }
 }
 
 export async function POST(req: Request) {
@@ -76,9 +58,15 @@ export async function POST(req: Request) {
   let body: any = {}
   try { body = await req.json() } catch { /* empty body = full-season sync */ }
 
+  const sport: string = String(body.sport || 'nfl')
   const season: number = Number(body.season) || new Date().getFullYear()
-  // Default sweep: regular season weeks 1–18 plus postseason weeks 1–5.
-  // Empty weeks (e.g. playoffs not yet scheduled) simply return no events.
+  // Stage new games unpublished so a sync can be run against production before
+  // the Desk is deployed, without the schedule appearing on the live site.
+  // Only ever applied on INSERT -- is_published is admin-owned on existing rows.
+  const publishNew: boolean = body.publish !== false
+
+  // Default sweep: regular season weeks 1-18 plus postseason weeks 1-5.
+  // Empty weeks (playoffs not yet scheduled) simply return no events.
   const targets: { seasonType: number; week: number }[] = []
   if (body.seasonType && body.week) {
     targets.push({ seasonType: Number(body.seasonType), week: Number(body.week) })
@@ -89,39 +77,62 @@ export async function POST(req: Request) {
 
   const parsed: ParsedGame[] = []
   const failed: string[] = []
+  const sources = new Set<string>()
 
   for (const t of targets) {
-    try {
-      const url = `${ESPN_SCOREBOARD}?dates=${season}&seasontype=${t.seasonType}&week=${t.week}`
-      const res = await fetch(url, { cache: 'no-store' })
-      if (!res.ok) { failed.push(`fetch ${t.seasonType}/${t.week}: HTTP ${res.status}`); continue }
-      const json = await res.json()
-      const out = parseEvents(json, season, t.seasonType, t.week)
-      parsed.push(...out.games)
-      failed.push(...out.failed)
-    } catch (e: any) {
-      failed.push(`fetch ${t.seasonType}/${t.week}: ${e?.message ?? 'error'}`)
-    }
+    const result = await fetchWeek(sport, season, t.seasonType, t.week)
+    if (result.error) failed.push(`${t.seasonType}/${t.week}: ${result.error}`)
+    if (result.source !== 'none') sources.add(result.source)
+    parsed.push(...result.games)
   }
 
   if (parsed.length === 0) {
-    return NextResponse.json({ inserted: 0, updated: 0, failed, error: 'No games parsed from ESPN.' }, { status: 502 })
+    return NextResponse.json(
+      { inserted: 0, updated: 0, failed, error: 'No games parsed from ESPN.' },
+      { status: 502 }
+    )
   }
+
+  const withDesk = await hasDeskColumns(admin)
+  const writeCols = withDesk ? [...BASE_COLS, ...DESK_COLS] : [...BASE_COLS]
 
   const { data: existingRows, error: readError } = await admin
     .from('nfl_games')
-    .select('espn_event_id')
+    .select(withDesk ? `espn_event_id, ${OPEN_COLS.join(', ')}` : 'espn_event_id')
     .in('espn_event_id', parsed.map(g => g.espn_event_id))
   if (readError) return NextResponse.json({ error: readError.message }, { status: 500 })
-  const existingIds = new Set((existingRows ?? []).map((r: any) => r.espn_event_id))
+
+  const existing = new Map<string, any>(
+    (existingRows ?? []).map((r: any) => [r.espn_event_id, r])
+  )
+
+  const now = new Date().toISOString()
 
   // Split insert vs update so admin-owned columns (slug, brief, writeup_html,
-  // is_published, links) are never touched by a sync. Slugs are frozen at
-  // insert for SEO stability even if ESPN later changes an abbreviation.
+  // is_published, curated links) are never touched by a sync. Slugs are frozen
+  // at insert for SEO stability even if ESPN later changes an abbreviation.
+  const seenIds = new Set<string>()
+  const seenSlugs = new Set<string>()
   const toInsert = parsed
-    .filter(g => !existingIds.has(g.espn_event_id))
-    .map(g => ({ ...g, slug: buildGameSlug(g.season, g.season_type, g.week, g.away_abbrev, g.home_abbrev) }))
-  const toUpdate = parsed.filter(g => existingIds.has(g.espn_event_id))
+    .filter(g => !existing.has(g.espn_event_id))
+    .map(g => pick(g, writeCols, {
+      espn_event_id: g.espn_event_id,
+      slug: buildGameSlug(g.season, g.season_type, g.week, g.away_abbrev, g.home_abbrev),
+      is_published: publishNew,
+      ...(withDesk ? { odds_updated_at: now } : {}),
+    }))
+    .filter((row: any) => {
+      // espn_event_id and slug are both UNIQUE and this is one batch insert --
+      // a single collision rejects every other row with it. Drop the duplicate
+      // and report it rather than losing the whole sync.
+      if (seenIds.has(row.espn_event_id) || seenSlugs.has(row.slug)) {
+        failed.push(`duplicate slug ${row.slug} (${row.espn_event_id})`)
+        return false
+      }
+      seenIds.add(row.espn_event_id)
+      seenSlugs.add(row.slug)
+      return true
+    })
 
   let inserted = 0
   if (toInsert.length > 0) {
@@ -131,26 +142,32 @@ export async function POST(req: Request) {
   }
 
   let updated = 0
-  for (const g of toUpdate) {
-    const { error } = await admin
-      .from('nfl_games')
-      .update({
-        season: g.season,
-        season_type: g.season_type,
-        week: g.week,
-        kickoff: g.kickoff,
-        status: g.status,
-        home_team: g.home_team,
-        home_abbrev: g.home_abbrev,
-        away_team: g.away_team,
-        away_abbrev: g.away_abbrev,
-        home_score: g.home_score,
-        away_score: g.away_score,
-      })
-      .eq('espn_event_id', g.espn_event_id)
+  for (const g of parsed) {
+    const prior = existing.get(g.espn_event_id)
+    if (!prior) continue
+
+    const patch = pick(g, writeCols, withDesk ? { odds_updated_at: now } : {})
+
+    if (withDesk) {
+      // An opening line is captured the first time we see it and then left
+      // alone forever -- overwriting it every sync would erase the movement,
+      // which is the entire point of storing both numbers.
+      for (const col of OPEN_COLS) {
+        if (prior[col] !== null && prior[col] !== undefined) delete patch[col]
+      }
+    }
+
+    const { error } = await admin.from('nfl_games').update(patch).eq('espn_event_id', g.espn_event_id)
     if (error) failed.push(`update ${g.espn_event_id}: ${error.message}`)
     else updated++
   }
 
-  return NextResponse.json({ inserted, updated, failed })
+  return NextResponse.json({
+    inserted,
+    updated,
+    failed,
+    published: publishNew,
+    source: [...sources].join(',') || 'none',
+    odds: withDesk ? 'on' : 'pending tier_ladder_06_desk_games.sql',
+  })
 }

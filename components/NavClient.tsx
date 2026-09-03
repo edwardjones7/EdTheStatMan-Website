@@ -19,14 +19,13 @@ interface NavClientProps {
   } | null
 }
 
+// Four products, not eight links. The bar was full; Contact moved to the
+// footer and the two EdTheStatBot entries collapsed into The Portfolio.
 const NAV_LINKS = [
-  { href: '/model-picks', label: 'EdTheStatBot Picks' },
-  { href: '/results', label: 'EdTheStatBot Results' },
-  { href: '/betting-systems', label: 'Betting Systems' },
-  { href: '/betting-trends', label: 'Betting Trends' },
-  { href: '/nfl', label: 'NFL Hub' },
+  { href: '/portfolio', label: 'The Portfolio' },
+  { href: '/desk', label: 'Research Desk' },
+  { href: '/vault', label: 'The Vault' },
   { href: '/blog', label: 'Blog' },
-  { href: '/contact', label: 'Contact' },
   { href: '/win', label: 'Membership', offer: true },
 ]
 
@@ -42,8 +41,8 @@ function primaryCta(
   switch (membership) {
     case 'free':    return { href: '/win', label: 'Unlock All' }
     case 'expired': return { href: '/win', label: 'Renew' }
-    // Active basic/premium members can still level up to the Season Pass.
-    case 'active':  return tier === 'elite' ? null : { href: '/win', label: 'Go Elite' }
+    // Every rung below the top can still climb.
+    case 'active':  return tier === 'institutional' ? null : { href: '/win', label: 'Upgrade' }
     default:        return null
   }
 }

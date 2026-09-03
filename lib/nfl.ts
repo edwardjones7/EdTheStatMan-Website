@@ -5,7 +5,31 @@
 // as PublicNflGame shapes built by toPublicGame(), which copies fields
 // explicitly (never spread) so the writeup can never ride along.
 
-export interface NflGame {
+/** Lines and context added by tier_ladder_06_desk_games.sql. All optional:
+ *  the Research Desk renders correctly before that migration is applied, it
+ *  simply shows no line. */
+export interface GameOdds {
+  spread_open?: number | null
+  spread_current?: number | null
+  spread_favorite?: string | null
+  total_open?: number | null
+  total_current?: number | null
+  ml_home_open?: number | null
+  ml_home_current?: number | null
+  ml_away_open?: number | null
+  ml_away_current?: number | null
+  odds_provider?: string | null
+  venue_name?: string | null
+  venue_city?: string | null
+  venue_state?: string | null
+  venue_indoor?: boolean | null
+  broadcast?: string | null
+  home_record?: string | null
+  away_record?: string | null
+  sport?: string | null
+}
+
+export interface NflGame extends GameOdds {
   id: string
   espn_event_id: string
   season: number
@@ -29,7 +53,7 @@ export interface NflGame {
 }
 
 /** Everything the public may see. The writeup itself is advertised, not sent. */
-export interface PublicNflGame {
+export interface PublicNflGame extends GameOdds {
   id: string
   season: number
   season_type: number
@@ -54,8 +78,33 @@ export function writeupWordCount(html: string): number {
   return text ? text.split(/\s+/).length : 0
 }
 
+/** Odds/context fields, copied one at a time like everything else here. */
+function oddsOf(row: NflGame): GameOdds {
+  return {
+    sport: row.sport ?? 'nfl',
+    spread_open: row.spread_open ?? null,
+    spread_current: row.spread_current ?? null,
+    spread_favorite: row.spread_favorite ?? null,
+    total_open: row.total_open ?? null,
+    total_current: row.total_current ?? null,
+    ml_home_open: row.ml_home_open ?? null,
+    ml_home_current: row.ml_home_current ?? null,
+    ml_away_open: row.ml_away_open ?? null,
+    ml_away_current: row.ml_away_current ?? null,
+    odds_provider: row.odds_provider ?? null,
+    venue_name: row.venue_name ?? null,
+    venue_city: row.venue_city ?? null,
+    venue_state: row.venue_state ?? null,
+    venue_indoor: row.venue_indoor ?? null,
+    broadcast: row.broadcast ?? null,
+    home_record: row.home_record ?? null,
+    away_record: row.away_record ?? null,
+  }
+}
+
 export function toPublicGame(row: NflGame): PublicNflGame {
   return {
+    ...oddsOf(row),
     id: row.id,
     season: row.season,
     season_type: row.season_type,
@@ -130,4 +179,39 @@ export function currentWeekOf(games: Pick<NflGame, 'season_type' | 'week' | 'kic
   const GAME_WINDOW_MS = 6 * 60 * 60 * 1000
   const current = weeks.find(w => w.lastKickoff + GAME_WINDOW_MS > now.getTime())
   return (current ?? weeks[weeks.length - 1]).ref
+}
+
+
+/** "SEA -3.5" from a home-relative spread, or null when there is no line. */
+export function spreadLabel(
+  spread: number | null | undefined,
+  homeAbbrev: string,
+  awayAbbrev: string
+): string | null {
+  if (spread === null || spread === undefined) return null
+  if (spread === 0) return 'PK'
+  return spread < 0
+    ? `${homeAbbrev} ${spread}`
+    : `${awayAbbrev} -${spread}`
+}
+
+/** American odds with an explicit sign, e.g. -180 / +150. */
+export function moneylineLabel(odds: number | null | undefined): string | null {
+  if (odds === null || odds === undefined) return null
+  return odds > 0 ? `+${odds}` : String(odds)
+}
+
+/**
+ * How far a line has moved, as a display string, or null when we lack both
+ * ends. Movement is the reason both numbers are stored.
+ */
+export function lineMove(
+  open: number | null | undefined,
+  current: number | null | undefined
+): { delta: number; label: string } | null {
+  if (open === null || open === undefined) return null
+  if (current === null || current === undefined) return null
+  const delta = Number((current - open).toFixed(1))
+  if (delta === 0) return null
+  return { delta, label: delta > 0 ? `+${delta}` : String(delta) }
 }

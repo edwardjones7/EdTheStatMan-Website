@@ -5,7 +5,7 @@ import PricingCards from '@/components/PricingCards'
 import CheckoutAutoStart from '@/components/CheckoutAutoStart'
 import { OFFER_DISCLAIMER, planByKey } from '@/lib/offer'
 import CTASection from '@/components/CTASection'
-import { resolveAccess, ACCESS_SELECT } from '@/lib/access'
+import { resolveAccess, ACCESS_SELECT, TIER_SHORT_LABEL } from '@/lib/access'
 
 export const metadata: Metadata = {
   title: 'Pricing',
@@ -49,7 +49,7 @@ export default async function Pricing({
 
   return (
     <main>
-      {resumePlan && <CheckoutAutoStart priceId={resumePlan.priceId} planName={resumePlan.name} />}
+      {resumePlan && <CheckoutAutoStart priceId={resumePlan.season.priceId} planName={resumePlan.name} />}
       {/* Header */}
       <header className="page-header">
         <div className="container">
@@ -57,9 +57,9 @@ export default async function Pricing({
             <span className="section-label">Membership</span>
             <h1 className="page-header__title">Simple, Transparent <span className="text-gradient">Pricing</span></h1>
             <p className="page-header__subtitle">
-              Unlock full access to betting systems, trends, expert analysis, and instant alerts —
-              or go Elite for the NFL Season Pass with weekly game breakdowns and Edge Picks.
-              One-time payment — no subscription, nothing to cancel.
+              The Vault holds the data. The Research Desk puts it on a schedule.
+              The Portfolio is the picks themselves. Start anywhere on the ladder —
+              every rung includes everything below it.
             </p>
           </div>
         </div>
@@ -114,7 +114,7 @@ export default async function Pricing({
                 color: 'var(--accent-teal)',
                 fontWeight: 600,
               }}>
-                ✓ {userTier === 'elite' ? 'Elite' : userTier === 'premium' ? 'Premium' : 'Basic'} access active
+                ✓ {TIER_SHORT_LABEL[userTier ?? 'retail']} access active
                 {expiresAt ? ` until ${expiresAt.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}` : ''}.{' '}
                 <Link href="/account" style={{ color: 'var(--accent-teal)', textDecoration: 'underline' }}>
                   View account →

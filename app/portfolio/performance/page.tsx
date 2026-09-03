@@ -11,18 +11,18 @@ import CTASection from '@/components/CTASection'
 import type { TodaysBet } from '@/components/TodaysBets'
 
 export const metadata: Metadata = {
-  title: 'EdTheStatBot Results',
+  title: 'Model Results',
   description: 'Historical performance of betting systems. Full transparency with year-by-year results, bankroll ROI, and sport-by-sport records.',
-  alternates: { canonical: 'https://edthestatman.com/results' },
+  alternates: { canonical: 'https://edthestatman.com/portfolio/performance' },
   openGraph: {
-    title: 'EdTheStatBot Results – EdTheStatMan.com',
+    title: 'Model Results – EdTheStatMan.com',
     description: 'Historical performance of betting systems. Full transparency with year-by-year results, bankroll ROI, and sport-by-sport records.',
-    url: 'https://edthestatman.com/results',
+    url: 'https://edthestatman.com/portfolio/performance',
     images: [{ url: '/og-cover.jpg', width: 1200, height: 630 }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'EdTheStatBot Results – EdTheStatMan.com',
+    title: 'Model Results – EdTheStatMan.com',
     description: 'Historical performance of betting systems. Full transparency with year-by-year results, bankroll ROI, and sport-by-sport records.',
     images: ['/og-cover.jpg'],
   },

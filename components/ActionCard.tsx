@@ -103,10 +103,10 @@ export default function ActionCard({ content = DEFAULT_ACTION_CARD, editMode, on
               <a href="https://discord.gg/rXBZkSPcJb" className="btn btn--secondary btn--sm" target="_blank" rel="noopener">
                 <IconChat size={14} /> Join Discord
               </a>
-              <Link href="/betting-systems" className="btn btn--outline btn--sm">
+              <Link href="/vault/systems" className="btn btn--outline btn--sm">
                 <IconChartBar size={14} /> View All Systems
               </Link>
-              <Link href="/betting-trends" className="btn btn--outline btn--sm">
+              <Link href="/vault/trends" className="btn btn--outline btn--sm">
                 <IconTrendUp size={14} /> View All Trends
               </Link>
             </div>

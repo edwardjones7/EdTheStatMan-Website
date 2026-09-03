@@ -4,6 +4,7 @@ import { useState, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useEditor, EditorContent, useEditorState } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
+import { TIERS, TIER_SHORT_LABEL, normalizeTier } from '@/lib/access'
 import type { AccessLevel } from '@/lib/supabase/types'
 
 const TAGS = ['NFL', 'NBA', 'College Football', 'College Basketball', 'Education', 'Strategy', 'General']
@@ -57,7 +58,7 @@ export default function PostEditorClient({ post }: Props) {
   const [slugTouched, setSlugTouched] = useState(isEdit)
   const [excerpt, setExcerpt] = useState(post?.excerpt ?? '')
   const [tag, setTag] = useState(post?.tag ?? 'General')
-  const [accessLevel, setAccessLevel] = useState<AccessLevel>(post?.access_level ?? 'free')
+  const [accessLevel, setAccessLevel] = useState<AccessLevel>(normalizeTier(post?.access_level))
   const [published, setPublished] = useState(post?.published ?? false)
   const [coverImage, setCoverImage] = useState<string | null>(post?.cover_image ?? null)
   const [uploading, setUploading] = useState(false)
@@ -439,29 +440,27 @@ export default function PostEditorClient({ post }: Props) {
             {/* Access level */}
             <div className="post-editor__card">
               <div className="post-editor__card-title">Access Level</div>
+              {/* Two radios could not express five rungs. The ladder is
+                  inclusive: choosing 'desk' means Desk and everything above
+                  can read the post. */}
               <div className="post-editor__access-group">
-                <label className="post-editor__radio-label">
-                  <input
-                    type="radio"
-                    name="access_level"
-                    value="free"
-                    checked={accessLevel === 'free'}
-                    onChange={() => setAccessLevel('free')}
-                  />
-                  <span>Free</span>
-                  <span className="post-editor__access-desc">Visible to all logged-in users</span>
-                </label>
-                <label className="post-editor__radio-label">
-                  <input
-                    type="radio"
-                    name="access_level"
-                    value="members"
-                    checked={accessLevel === 'members'}
-                    onChange={() => setAccessLevel('members')}
-                  />
-                  <span>Members only</span>
-                  <span className="post-editor__access-desc">Basic & Premium subscribers</span>
-                </label>
+                {TIERS.map(t => (
+                  <label className="post-editor__radio-label" key={t}>
+                    <input
+                      type="radio"
+                      name="access_level"
+                      value={t}
+                      checked={accessLevel === t}
+                      onChange={() => setAccessLevel(t)}
+                    />
+                    <span>{TIER_SHORT_LABEL[t]}</span>
+                    <span className="post-editor__access-desc">
+                      {t === 'retail'
+                        ? 'Visible to everyone'
+                        : `${TIER_SHORT_LABEL[t]} and above`}
+                    </span>
+                  </label>
+                ))}
               </div>
             </div>
           </aside>

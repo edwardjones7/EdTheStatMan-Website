@@ -78,20 +78,25 @@ function pctDisplay(pct: number | null | undefined): string {
   return `${Math.round(pct * 100)}%`
 }
 
-// Sort priority: free systems first, then most recent date first (dateless
-// rows last); remaining ties break by highest win % first (pctless rows last).
+/** Games behind a system's record — the sample size it's ranked on. */
+function systemTotal(s: { w?: number | null; l?: number | null; t?: number | null }): number {
+  return (s.w ?? 0) + (s.l ?? 0) + (s.t ?? 0)
+}
+
+// Sort priority: biggest sample size first (total W+L+T), then highest win %
+// (pctless rows last), then most recent date first (dateless rows last).
 function compareSystems(a: BettingSystem, b: BettingSystem): number {
-  if (a.is_free !== b.is_free) return Number(b.is_free) - Number(a.is_free)
-  const aDate = a.date || ''
-  const bDate = b.date || ''
-  if (aDate !== bDate) {
-    if (!aDate) return 1
-    if (!bDate) return -1
-    return bDate.localeCompare(aDate)
-  }
+  const totalDiff = systemTotal(b) - systemTotal(a)
+  if (totalDiff !== 0) return totalDiff
   const aPct = a.pct ?? -1
   const bPct = b.pct ?? -1
-  return bPct - aPct
+  if (aPct !== bPct) return bPct - aPct
+  const aDate = a.date || ''
+  const bDate = b.date || ''
+  if (aDate === bDate) return 0
+  if (!aDate) return 1
+  if (!bDate) return -1
+  return bDate.localeCompare(aDate)
 }
 
 function parseNum(val: unknown): number | null {
@@ -801,7 +806,7 @@ export default function SportTabsSystem({ systems, lockedCounts = {}, lockedTeas
       {!isAdmin && eliteLockedForTab.length > 0 && (
         <>
           <div className="sys-locked-heading sys-locked-heading--elite">
-            <IconLock size={13} /> Elite Only — the sharpest edges, records shown
+            <IconLock size={13} /> Institutional Intelligence — records shown, rows hidden
           </div>
           <div className="sys-card-grid">
             {eliteLockedForTab.map(t => (
@@ -828,7 +833,7 @@ export default function SportTabsSystem({ systems, lockedCounts = {}, lockedTeas
             Our highest-conviction, curated edges — Elite members only.
           </p>
           <div className="content-gate-card__actions">
-            <Link href="/win" className="btn btn--primary">Go Elite &rarr;</Link>
+            <Link href="/win" className="btn btn--primary">Go Institutional &rarr;</Link>
           </div>
         </div>
       )}
@@ -836,7 +841,7 @@ export default function SportTabsSystem({ systems, lockedCounts = {}, lockedTeas
       {!isAdmin && lockedForTab.length > 0 && (
         <>
           <div className="sys-locked-heading">
-            <IconLock size={13} /> Members Only — records shown, systems hidden
+            <IconLock size={13} /> Private Intelligence — records shown, systems hidden
           </div>
           <div className="sys-card-grid">
             {lockedForTab.map(t => (
@@ -862,7 +867,7 @@ export default function SportTabsSystem({ systems, lockedCounts = {}, lockedTeas
             Full records, win percentages, and season data — members only.
           </p>
           <div className="content-gate-card__actions">
-            <Link href="/win" className="btn btn--primary">Get the rest &rarr;</Link>
+            <Link href="/win" className="btn btn--primary">Open the Vault &rarr;</Link>
             {isLoggedOut && <Link href="/login" className="btn btn--outline">Sign in</Link>}
           </div>
         </div>

@@ -7,7 +7,7 @@ import { coverForPost } from '@/lib/blog-images'
 import { OFFER_ENTRY_PRICE } from '@/lib/offer'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
-import { resolveAccess, ACCESS_SELECT } from '@/lib/access'
+import { resolveAccess, ACCESS_SELECT, atLeastTier, normalizeTier } from '@/lib/access'
 
 function stripHtml(html: string) {
   return html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
@@ -89,7 +89,7 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
   }
   const { tier: userTier, isAdmin, isPaid, membership, expiresAt } = access
 
-  const canRead = isPaid || post.access_level !== 'members'
+  const canRead = isAdmin || atLeastTier(userTier, normalizeTier(post.access_level))
 
   const plainText = stripHtml(post.content)
   const teaser = plainText.slice(0, 320) + '…'

@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import type { SubscriptionTier, SubscriptionStatus, AccessLevel } from '@/lib/supabase/types'
+import { normalizeTier } from '@/lib/access'
 
 interface User {
   id: string
@@ -238,18 +239,20 @@ export default function AdminDashboard({ users, posts, initialTab, initialAnalyt
   }, [])
 
   const stats = useMemo(() => {
-    const freeUsers    = users.filter(u => u.subscription_tier === 'free').length
-    const basicUsers   = users.filter(u => u.subscription_tier === 'basic').length
-    const premiumUsers = users.filter(u => u.subscription_tier === 'premium').length
-    const eliteUsers   = users.filter(u => u.subscription_tier === 'elite').length
+    // Legacy values may still be in the column until tier_ladder_01 is applied.
+    const at = (t: string) => users.filter(u => normalizeTier(u.subscription_tier) === t).length
+    const freeUsers    = at('retail')
+    const basicUsers   = at('desk')
+    const premiumUsers = at('private')
+    const eliteUsers   = at('institutional')
     const activeUsers  = users.filter(u => u.subscription_status === 'active').length
     const pastDue      = users.filter(u => u.subscription_status === 'past_due').length
     const newThisMonth = users.filter(u => isThisMonth(u.created_at)).length
     const adminCount   = users.filter(u => u.is_admin).length
     const publishedPosts = posts.filter(p => p.published).length
     const draftPosts     = posts.filter(p => !p.published).length
-    const freePosts      = posts.filter(p => p.access_level === 'free').length
-    const membersPosts   = posts.filter(p => p.access_level === 'members').length
+    const freePosts      = posts.filter(p => normalizeTier(p.access_level) === 'retail').length
+    const membersPosts   = posts.filter(p => normalizeTier(p.access_level) !== 'retail').length
     return {
       totalUsers: users.length, freeUsers, basicUsers, premiumUsers, eliteUsers,
       activeUsers, pastDue, newThisMonth, adminCount,
@@ -261,7 +264,7 @@ export default function AdminDashboard({ users, posts, initialTab, initialAnalyt
     const q = userSearch.toLowerCase()
     return users.filter(u => {
       const matchSearch = !q || u.email.toLowerCase().includes(q) || (u.full_name ?? '').toLowerCase().includes(q)
-      const matchTier   = tierFilter === 'all' || u.subscription_tier === tierFilter || (tierFilter === 'admin' && u.is_admin)
+      const matchTier   = tierFilter === 'all' || normalizeTier(u.subscription_tier) === tierFilter || (tierFilter === 'admin' && u.is_admin)
       return matchSearch && matchTier
     })
   }, [users, userSearch, tierFilter])
@@ -274,8 +277,8 @@ export default function AdminDashboard({ users, posts, initialTab, initialAnalyt
         postFilter === 'all' ||
         (postFilter === 'published' && p.published) ||
         (postFilter === 'draft'     && !p.published) ||
-        (postFilter === 'free'      && p.access_level === 'free') ||
-        (postFilter === 'members'   && p.access_level === 'members')
+        (postFilter === 'free'      && normalizeTier(p.access_level) === 'retail') ||
+        (postFilter === 'members'   && normalizeTier(p.access_level) !== 'retail')
       return matchSearch && matchFilter
     })
   }, [posts, postSearch, postFilter])
@@ -746,7 +749,7 @@ export default function AdminDashboard({ users, posts, initialTab, initialAnalyt
                       </td>
                       <td><span className="admin-tag">{post.tag}</span></td>
                       <td>
-                        <span className={`admin-badge ${post.access_level === 'members' ? 'admin-badge--purple' : 'admin-badge--muted'}`}>
+                        <span className={`admin-badge ${normalizeTier(post.access_level) !== 'retail' ? 'admin-badge--purple' : 'admin-badge--muted'}`}>
                           {post.access_level}
                         </span>
                       </td>

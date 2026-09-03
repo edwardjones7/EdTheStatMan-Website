@@ -61,21 +61,21 @@ export default function ModelPicksPage({
               icon={IconChartBar}
               title="Backed by Systems"
               text="Every pick is driven by data-backed betting systems with tracked records across NFL, NBA, College Football, and College Basketball."
-              href="/betting-systems"
+              href="/vault/systems"
               linkText="View Betting Systems"
             />
             <InfoCard
               icon={IconTrendUp}
               title="Trend-Informed"
               text="Picks factor in ATS records, over/under patterns, and situational edges uncovered through detailed trend analysis."
-              href="/betting-trends"
+              href="/vault/trends"
               linkText="View Betting Trends"
             />
             <InfoCard
               icon={IconNews}
               title="Full Transparency"
               text="Every play is tracked and posted to results. Check our historical performance with year-by-year records and bankroll ROI."
-              href="/results"
+              href="/portfolio/performance"
               linkText="View Results"
             />
           </div>

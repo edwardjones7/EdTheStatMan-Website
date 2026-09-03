@@ -15,7 +15,7 @@ export default function NflAdminBar({ season, seasonType, week }: Props) {
   const [syncing, setSyncing] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
 
-  async function runSync(body: Record<string, number>) {
+  async function runSync(body: Record<string, number | boolean>) {
     setSyncing(true)
     setMessage(null)
     try {
@@ -27,7 +27,9 @@ export default function NflAdminBar({ season, seasonType, week }: Props) {
       const data = await res.json()
       if (!res.ok) throw new Error(data.error ?? 'Sync failed')
       const failNote = data.failed?.length ? ` · ${data.failed.length} failed` : ''
-      setMessage(`Synced: ${data.inserted} new, ${data.updated} updated${failNote}`)
+      const stagedNote = data.published === false ? ' · staged unpublished' : ''
+      const oddsNote = data.odds && data.odds !== 'on' ? ` · odds ${data.odds}` : ''
+      setMessage(`Synced: ${data.inserted} new, ${data.updated} updated${stagedNote}${oddsNote}${failNote}`)
       router.refresh()
     } catch (e: any) {
       setMessage(e.message ?? 'Sync failed')
@@ -60,6 +62,15 @@ export default function NflAdminBar({ season, seasonType, week }: Props) {
         disabled={syncing}
       >
         {syncing ? 'Syncing…' : `Sync full ${season} season`}
+      </button>
+      {/* Stages the season without it appearing on the live site: new rows land
+          is_published=false, which the public pages filter out but admins see. */}
+      <button
+        className="btn btn--outline btn--sm"
+        onClick={() => runSync({ season, publish: false })}
+        disabled={syncing}
+      >
+        Sync {season} (staged)
       </button>
       {seasonType !== undefined && week !== undefined && (
         <button

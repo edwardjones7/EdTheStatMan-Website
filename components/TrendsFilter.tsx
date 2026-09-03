@@ -790,7 +790,7 @@ export default function TrendsFilter({ trends, lockedCounts = {}, lockedTeasers 
       {!isAdmin && eliteLockedForTab.length > 0 && (
         <>
           <div className="sys-locked-heading sys-locked-heading--elite">
-            <IconLock size={13} /> Elite Only — the sharpest edges, records shown
+            <IconLock size={13} /> Institutional Intelligence — records shown, rows hidden
           </div>
           <div className="sys-card-grid">
             {eliteLockedForTab.map(t => (
@@ -817,7 +817,7 @@ export default function TrendsFilter({ trends, lockedCounts = {}, lockedTeasers 
             Our highest-conviction, curated edges — Elite members only.
           </p>
           <div className="content-gate-card__actions">
-            <Link href="/win" className="btn btn--primary">Go Elite &rarr;</Link>
+            <Link href="/win" className="btn btn--primary">Go Institutional &rarr;</Link>
           </div>
         </div>
       )}
@@ -851,7 +851,7 @@ export default function TrendsFilter({ trends, lockedCounts = {}, lockedTeasers 
             Full records, win percentages, and season data — members only.
           </p>
           <div className="content-gate-card__actions">
-            <Link href="/win" className="btn btn--primary">Get the rest &rarr;</Link>
+            <Link href="/win" className="btn btn--primary">Open the Vault &rarr;</Link>
             {isLoggedOut && <Link href="/login" className="btn btn--outline">Sign in</Link>}
           </div>
         </div>

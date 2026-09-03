@@ -1,6 +1,14 @@
-export type SubscriptionTier = 'free' | 'basic' | 'premium' | 'elite'
-export type SubscriptionStatus = 'active' | 'canceled' | 'past_due' | 'trialing' | 'incomplete'
-export type AccessLevel = 'free' | 'members'
+// Mirrors Tier in lib/access.ts. Change both together.
+export type SubscriptionTier =
+  | 'retail' | 'portfolio' | 'desk' | 'private' | 'institutional'
+
+// Stripe's own status strings, stored verbatim. NOT an enum any more: Stripe
+// emits 'unpaid', 'incomplete_expired' and 'paused', and a PG enum that rejects
+// one of those would make the webhook 500 into an infinite retry loop.
+export type SubscriptionStatus = string
+
+// posts.access_level now uses the same ladder as every other gated table.
+export type AccessLevel = SubscriptionTier
 
 export interface Database {
   public: {

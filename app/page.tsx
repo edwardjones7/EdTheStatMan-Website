@@ -6,6 +6,7 @@ import Hero from '@/components/Hero'
 import Features from '@/components/Features'
 import CTASection from '@/components/CTASection'
 import SportsBand from '@/components/SportsBand'
+import StatBotPreview from '@/components/StatBotPreview'
 import HomeEditor from '@/components/HomeEditor'
 import { resolveAccess, ACCESS_SELECT } from '@/lib/access'
 
@@ -89,6 +90,7 @@ export default async function Home() {
           <Hero            content={content.hero} isLoggedIn={userTier !== null} />
           <Features        content={content.features} />
           <SportsBand />
+          <StatBotPreview  content={content.statbot_preview} />
           <CTASection      content={content.cta_section} membership={membership} />
         </>
       )}

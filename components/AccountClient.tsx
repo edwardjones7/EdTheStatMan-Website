@@ -8,6 +8,7 @@ import { updateProfile, updatePassword, updateNotifyEmail } from '@/app/account/
 import PushOptIn from './PushOptIn'
 import { IconUser, IconLock, IconBolt, IconBell } from './Icons'
 import type { SubscriptionTier } from '@/lib/supabase/types'
+import { normalizeTier, TIER_SHORT_LABEL } from '@/lib/access'
 
 interface AccountClientProps {
   profile: {
@@ -23,11 +24,14 @@ interface AccountClientProps {
   provider: string
 }
 
-const TIER_CONFIG: Record<SubscriptionTier, { label: string; description: string }> = {
-  free:    { label: 'Free',    description: 'Access to a curated set of free betting systems and trends.' },
-  basic:   { label: 'Basic',   description: 'Full access to all betting systems, trends, and blog posts.' },
-  premium: { label: 'Premium', description: 'Full access to all content plus EdTheStatBot (coming soon).' },
-  elite:   { label: 'Elite',   description: 'Everything in Premium plus weekly NFL game breakdowns, Edge Picks, and elite-only systems and trends.' },
+// Labels come from TIER_SHORT_LABEL in lib/access.ts -- tier copy used to be
+// duplicated across four files and drifted. Only the descriptions live here.
+const TIER_DESCRIPTION: Record<SubscriptionTier, string> = {
+  retail: 'A curated set of free systems, trends and picks. Records visible on everything else.',
+  portfolio: 'Every pick, unlocked, with the full line and unit sizing.',
+  desk: 'The season schedule with curated trends attached to every matchup, plus everything in The Portfolio.',
+  private: 'The complete systems and trends libraries, filterable, plus everything in The Research Desk.',
+  institutional: 'Raw row export, query builder, API key and backtester on top of everything in Private Intelligence.',
 }
 
 function formatDate(dateStr: string) {
@@ -48,16 +52,20 @@ export default function AccountClient({ profile, provider }: AccountClientProps)
   const [notifyEmail, setNotifyEmail] = useState(profile.notify_email)
   const [notifyMsg, setNotifyMsg] = useState<Msg | null>(null)
 
-  const tierConfig = TIER_CONFIG[profile.subscription_tier]
+  const normalized = normalizeTier(profile.subscription_tier)
+  const tierConfig = {
+    label: TIER_SHORT_LABEL[normalized],
+    description: TIER_DESCRIPTION[normalized],
+  }
   const tierLabel = profile.is_admin ? 'Admin' : tierConfig.label
   const planKey = profile.is_admin ? 'admin' : profile.subscription_tier
   const initial = (profile.full_name ?? profile.email).charAt(0).toUpperCase()
 
   const avatarClass = profile.is_admin
     ? 'account-hero__avatar account-hero__avatar--admin'
-    : profile.subscription_tier === 'elite'
+    : normalized === 'institutional' || normalized === 'private'
     ? 'account-hero__avatar account-hero__avatar--elite'
-    : profile.subscription_tier === 'premium'
+    : normalized === 'desk'
     ? 'account-hero__avatar account-hero__avatar--premium'
     : 'account-hero__avatar'
 
@@ -115,7 +123,7 @@ export default function AccountClient({ profile, provider }: AccountClientProps)
 
         {subscribeSuccess && (
           <div className="account-success-banner">
-            &#10003; Payment successful! Welcome to {TIER_CONFIG[profile.subscription_tier]?.label ?? 'member'} access.
+            &#10003; Payment successful! Welcome to {tierConfig.label} access.
           </div>
         )}
 
@@ -143,7 +151,7 @@ export default function AccountClient({ profile, provider }: AccountClientProps)
                 ? 'Full administrative access to all content and settings.'
                 : tierConfig.description}
             </p>
-            {profile.subscription_tier !== 'free' && !profile.is_admin && expiresAt && (
+            {normalized !== 'retail' && !profile.is_admin && expiresAt && (
               <span className={`account-plan__status ${isExpired ? 'account-plan__status--warn' : 'account-plan__status--active'}`}>
                 {isExpired ? 'Expired' : `Access until ${formatDate(expiresAt.toISOString())}`}
               </span>
@@ -152,7 +160,7 @@ export default function AccountClient({ profile, provider }: AccountClientProps)
 
           {!profile.is_admin && (
             <div className="account-plan__actions">
-              {(profile.subscription_tier === 'free' || isExpired) ? (
+              {(normalized === 'retail' || isExpired) ? (
                 <Link href="/win" className="btn btn--primary btn--sm">
                   <IconBolt size={14} /> {isExpired ? 'Renew Access' : 'Upgrade Plan'}
                 </Link>

@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { logout } from '@/app/actions/auth'
 import { IconUser, IconSettings, IconBolt } from './Icons'
 import type { SubscriptionTier } from '@/lib/supabase/types'
+import { normalizeTier, TIER_SHORT_LABEL } from '@/lib/access'
 import type { Membership } from '@/lib/access'
 
 interface NavAuthProps {
@@ -53,10 +54,7 @@ export default function NavAuth({ user, membership = 'logged-out' }: NavAuthProp
     )
   }
 
-  const activeLabel =
-    user.subscription_tier === 'elite' ? 'Elite' :
-    user.subscription_tier === 'premium' ? 'Premium' :
-    'Basic'
+  const activeLabel = TIER_SHORT_LABEL[normalizeTier(user.subscription_tier)]
   const tierLabel =
     membership === 'admin'   ? 'Admin' :
     membership === 'expired' ? 'Expired' :
@@ -66,8 +64,8 @@ export default function NavAuth({ user, membership = 'logged-out' }: NavAuthProp
   const tierModifier =
     membership === 'admin'   ? 'admin' :
     membership === 'expired' ? 'expired' :
-    membership === 'active'  ? user.subscription_tier :
-    'free'
+    membership === 'active'  ? normalizeTier(user.subscription_tier) :
+    'retail'
 
   const initial = (user.full_name ?? user.email).charAt(0).toUpperCase()
 

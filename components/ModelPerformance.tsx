@@ -38,7 +38,7 @@ export default function ModelPerformance({ calcStats, picks = [] }: Props) {
       <div className="container">
         <div className="reveal" style={{ textAlign: 'center', marginBottom: '40px' }}>
           <span className="section-label">Live Track Record</span>
-          <h2 className="section-title" style={{ fontSize: '1.8rem', marginBottom: '0' }}>EdTheStatBot Performance</h2>
+          <h2 className="section-title" style={{ fontSize: '1.8rem', marginBottom: '0' }}>Model Performance</h2>
         </div>
 
         <div className="perf reveal-scale">

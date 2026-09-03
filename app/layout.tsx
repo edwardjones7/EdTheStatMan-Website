@@ -5,6 +5,7 @@ import Navigation from '@/components/Navigation'
 import Footer from '@/components/Footer'
 import BackgroundEffects from '@/components/BackgroundEffects'
 import BackToTop from '@/components/BackToTop'
+import StatBotMount from '@/components/StatBotMount'
 import ClientScripts from '@/components/ClientScripts'
 import PageViewTracker from '@/components/PageViewTracker'
 import GlobalTicker from '@/components/GlobalTicker'
@@ -127,6 +128,7 @@ export default async function RootLayout({
         {children}
         <Footer />
         <BackToTop />
+        <StatBotMount />
         <ClientScripts />
         <Suspense><PageViewTracker /></Suspense>
         <Analytics />

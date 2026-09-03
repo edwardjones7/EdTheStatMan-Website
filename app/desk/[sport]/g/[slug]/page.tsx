@@ -3,7 +3,8 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { resolveAccess, ACCESS_SELECT } from '@/lib/access'
+import { resolveAccess, ACCESS_SELECT, atLeastTier } from '@/lib/access'
+import { rowMinTier } from '@/lib/gate'
 import { toPublicGame, weekLabel, writeupWordCount } from '@/lib/nfl'
 import type { NflGame } from '@/lib/nfl'
 import { toTeaser } from '@/lib/teaser'
@@ -15,7 +16,7 @@ import { IconLock } from '@/components/Icons'
 
 export const dynamic = 'force-dynamic'
 
-export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
+export async function generateMetadata({ params }: { params: { sport: string; slug: string } }): Promise<Metadata> {
   const admin = createAdminClient()
   const { data: game } = await (admin as any)
     .from('nfl_games')
@@ -28,7 +29,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   const title = `${game.away_team} at ${game.home_team} — ${weekLabel(game.season_type, game.week)} Prediction, Odds & Betting Analysis`
   const description = game.brief
     || `${game.away_team} at ${game.home_team}: betting systems, trends, and Elite analysis for ${weekLabel(game.season_type, game.week)}.`
-  const url = `https://edthestatman.com/nfl/games/${params.slug}`
+  const url = `https://edthestatman.com/desk/${params.sport}/g/${params.slug}`
   return {
     title,
     description,
@@ -54,7 +55,7 @@ function kickoffDisplay(kickoff: string | null): string {
   })
 }
 
-export default async function NflGamePage({ params }: { params: { slug: string } }) {
+export default async function NflGamePage({ params }: { params: { sport: string; slug: string } }) {
   const admin = createAdminClient()
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -68,7 +69,11 @@ export default async function NflGamePage({ params }: { params: { slug: string }
       .single()
     access = resolveAccess(profile as any, true)
   }
-  const { isAdmin, isPaid, hasElite } = access
+  const { tier: userTier, isAdmin, hasElite } = access
+  // The Desk's defining rule: curated Vault rows are visible IN THE CONTEXT
+  // of a matchup to Desk members, even though the browsable library is
+  // Private. Institutional rows stay institutional everywhere.
+  const hasDesk = isAdmin || access.atLeast('desk')
 
   const { data: gameRow } = await (admin as any)
     .from('nfl_games')
@@ -106,9 +111,13 @@ export default async function NflGamePage({ params }: { params: { slug: string }
     const locked: LockedTeaser[] = []
     const lockedElite: LockedTeaser[] = []
     for (const row of rows) {
-      const canSee = row.is_elite ? hasElite : (isPaid || isAdmin || row.is_free)
+      const required = rowMinTier(row, 'private')
+      const canSee =
+        isAdmin ||
+        atLeastTier(userTier, required) ||
+        (hasDesk && required !== 'institutional')
       if (canSee) visible.push(row)
-      else if (row.is_elite) lockedElite.push(toTeaser(row))
+      else if (required === 'institutional') lockedElite.push(toTeaser(row))
       else locked.push(toTeaser(row))
     }
     return { visible, locked, lockedElite }
@@ -141,7 +150,7 @@ export default async function NflGamePage({ params }: { params: { slug: string }
 
   const showScore = game.status !== 'pre' && game.home_score !== null && game.away_score !== null
   const words = writeupWordCount(game.writeup_html)
-  const url = `https://edthestatman.com/nfl/games/${game.slug}`
+  const url = `https://edthestatman.com/desk/${params.sport}/g/${game.slug}`
 
   return (
     <main>
@@ -164,7 +173,7 @@ export default async function NflGamePage({ params }: { params: { slug: string }
 
       <section className="section" style={{ paddingBottom: '48px' }}>
         <div className="container" style={{ maxWidth: '900px' }}>
-          <Link href="/nfl" className="blog-post__back">← Back to NFL Hub</Link>
+          <Link href={`/desk/${params.sport}`} className="blog-post__back">← Back to the Desk</Link>
 
           <header className="nfl-game-header reveal">
             <div className="nfl-game-header__meta">
@@ -222,7 +231,7 @@ export default async function NflGamePage({ params }: { params: { slug: string }
               visible={systems.visible}
               locked={systems.locked}
               lockedElite={systems.lockedElite}
-              href="/betting-systems"
+              href="/vault/systems"
             />
           )}
           {(trends.visible.length + trends.locked.length + trends.lockedElite.length > 0) && (
@@ -231,7 +240,7 @@ export default async function NflGamePage({ params }: { params: { slug: string }
               visible={trends.visible}
               locked={trends.locked}
               lockedElite={trends.lockedElite}
-              href="/betting-trends"
+              href="/vault/trends"
             />
           )}
         </div>

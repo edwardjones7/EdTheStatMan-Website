@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import type { AccessLevel } from '@/lib/supabase/types'
-import { isPaidTier } from '@/lib/access'
+import { isPaidTier, atLeastTier, normalizeTier } from '@/lib/access'
 import { IconLock } from './Icons'
 import { coverForPost } from '@/lib/blog-images'
 
@@ -84,7 +84,7 @@ export default function BlogFilter({ posts, userTier }: Props) {
       ) : (
         <div className="blog-grid stagger-children" style={{ marginTop: '40px' }}>
           {visible.map(post => {
-            const locked = post.access_level === 'members' && !isPaid
+            const locked = !atLeastTier(userTier, normalizeTier(post.access_level))
             return (
               <Link
                 key={post.id}

@@ -174,9 +174,9 @@ export const DEFAULT_FEATURES: FeaturesContent = {
   cards: [
     {
       number: '01',
-      title: 'EdTheStatBot Picks',
+      title: 'Model Picks',
       text: 'Data-backed model picks for the NFL, College Football, NBA Playoffs, and the NCAA Tournament.',
-      href: '/model-picks',
+      href: '/portfolio',
       linkText: 'View Picks',
       iconColor: 'cyan',
     },
@@ -184,7 +184,7 @@ export const DEFAULT_FEATURES: FeaturesContent = {
       number: '02',
       title: 'Betting Systems',
       text: 'Proven, data-backed betting systems across NFL, College Football, NBA, and College Basketball. Updated daily with live records.',
-      href: '/betting-systems',
+      href: '/vault/systems',
       linkText: 'Explore Systems',
       iconColor: 'purple',
     },
@@ -192,7 +192,7 @@ export const DEFAULT_FEATURES: FeaturesContent = {
       number: '03',
       title: 'Betting Trends',
       text: 'Team-by-team trend analysis for every major sport. Discover ATS records, over/under patterns, and situational edges.',
-      href: '/betting-trends',
+      href: '/vault/trends',
       linkText: 'View Trends',
       iconColor: 'green',
     },
@@ -242,11 +242,11 @@ export const DEFAULT_CTA: CTAContent = {
 }
 
 export const DEFAULT_STATBOT: StatBotContent = {
-  label: 'Coming Soon',
+  label: 'Live Now',
   title: 'Meet',
   titleAccent: 'EdTheStatBot',
   description:
-    'Ask questions. Get answers. Our AI-powered statistical assistant lets you query our entire database for trends, records, and insights across every sport we cover.',
+    'Ask questions. Get answers, grounded in the same data your membership already opens. He reads your rung and never quotes a record he cannot pull.',
   bullets: [
     'Query team ATS records in any situation',
     'Find over/under trends by team and venue',
@@ -338,7 +338,7 @@ export interface ResultsContent {
 
 export const DEFAULT_RESULTS: ResultsContent = {
   headerLabel: 'Historical Performance',
-  headerTitle: 'EdTheStatBot Results',
+  headerTitle: 'Model Results',
   headerSubtitle: 'Full transparency on our betting systems. Track our year-by-year performance, bankroll ROI, and sport-by-sport records.',
   statCards: [
     { count: '10.19', prefix: '+', suffix: '%',      decimals: '2', label: 'Total Bankroll' },

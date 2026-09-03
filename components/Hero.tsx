@@ -87,13 +87,13 @@ export default function Hero({ content, isLoggedIn = false, editMode, onEdit, re
           <div className="hero__actions">
             {isLoggedIn ? (
               <>
-                <Link href="/model-picks" className="btn btn--primary btn--lg">
+                <Link href="/portfolio" className="btn btn--primary btn--lg">
                   Today&apos;s Picks <IconArrowRight size={16} />
                 </Link>
-                <Link href="/betting-systems" className="btn btn--glass btn--lg">
+                <Link href="/vault/systems" className="btn btn--glass btn--lg">
                   <IconChartBar size={16} /> Betting Systems
                 </Link>
-                <Link href="/betting-trends" className="btn btn--glass btn--lg">
+                <Link href="/vault/trends" className="btn btn--glass btn--lg">
                   <IconTrendUp size={16} /> Betting Trends
                 </Link>
               </>
@@ -102,7 +102,7 @@ export default function Hero({ content, isLoggedIn = false, editMode, onEdit, re
                 <Link href="/signup" className="btn btn--primary btn--lg">
                   Sign Up Free <IconArrowRight size={16} />
                 </Link>
-                <Link href="/model-picks" className="btn btn--glass btn--lg">
+                <Link href="/portfolio" className="btn btn--glass btn--lg">
                   See Today&apos;s Picks
                 </Link>
               </>

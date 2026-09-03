@@ -31,9 +31,9 @@ export default function Footer() {
           <div>
             <h4 className="footer__heading">Navigation</h4>
             <div className="footer__links">
-              <Link href="/model-picks" className="footer__link">EdTheStatBot Picks</Link>
-              <Link href="/betting-systems" className="footer__link">Betting Systems</Link>
-              <Link href="/betting-trends" className="footer__link">Betting Trends</Link>
+              <Link href="/portfolio" className="footer__link">Model Picks</Link>
+              <Link href="/vault/systems" className="footer__link">Betting Systems</Link>
+              <Link href="/vault/trends" className="footer__link">Betting Trends</Link>
               <Link href="/blog" className="footer__link">Blog</Link>
             </div>
           </div>
@@ -41,7 +41,7 @@ export default function Footer() {
           <div>
             <h4 className="footer__heading">Resources</h4>
             <div className="footer__links">
-              <Link href="/results" className="footer__link">EdTheStatBot Results</Link>
+              <Link href="/portfolio/performance" className="footer__link">Model Results</Link>
               <Link href="/win" className="footer__link">Pricing</Link>
               <Link href="/contact" className="footer__link">Contact</Link>
             </div>
