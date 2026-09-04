@@ -49,3 +49,4 @@ data
 data*
 data/wp5f_users.csv
 .env*
+dev.log
