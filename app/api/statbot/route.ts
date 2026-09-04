@@ -6,40 +6,13 @@ import {
   consumeAnonQuota, recordAnonTokens, hashCaller,
 } from '@/lib/ai/quota'
 import { saveThread } from '@/lib/ai/thread'
+import { modelFor } from '@/lib/ai/model'
 import { describePage, pageContextPrompt } from '@/lib/ai/page-context'
 import { TIER_LABEL, TIER_SHORT_LABEL, TIER_RANK, type Tier } from '@/lib/access'
 
 // Streaming works on the default Node runtime under Fluid Compute -- there is
 // no reason to pin `edge` here, and doing so would cost us Node APIs.
 export const maxDuration = 60
-
-/**
- * The model per rung, through the Vercel AI Gateway. Plain "provider/model"
- * strings keep provider credentials in the gateway rather than in this app, and
- * let a model be swapped without touching anything else.
- *
- * Retail is free and capped, and its questions are mostly "what do I get",
- * which explain_membership answers from a static catalogue. Paying that with a
- * frontier model is spending the margin on the rung that has none. The Desk and
- * above reason over real rows, where the better model earns its cost.
- */
-const MODEL_FOR: Record<Tier, string> = {
-  retail: 'anthropic/claude-sonnet-5',
-  portfolio: 'anthropic/claude-sonnet-5',
-  desk: 'anthropic/claude-opus-5',
-  private: 'anthropic/claude-opus-5',
-  institutional: 'anthropic/claude-opus-5',
-}
-
-/**
- * Signed-out visitors get the same model as retail, not a cheaper one.
- *
- * The ceiling on anonymous cost is the five-message IP cap and a two-tool
- * toolset, not the model tier -- and this conversation is the one where someone
- * decides whether to sign up. Serving that badly to save fractions of a cent is
- * the wrong trade.
- */
-const ANON_MODEL = 'anthropic/claude-sonnet-5'
 
 /**
  * Total characters of conversation accepted in one request.
@@ -219,7 +192,7 @@ export async function POST(req: Request) {
   const modelMessages = await convertToModelMessages(messages)
 
   const result = streamText({
-    model: isAnon ? ANON_MODEL : MODEL_FOR[access.tier!],
+    model: modelFor(isAnon ? null : access.tier),
     system: systemPrompt(ctx.tier, ctx.isAdmin, pageContextPrompt(page)),
     messages: modelMessages,
     // The entitlement gate. Tools above this caller's rung are not in the map,
