@@ -38,17 +38,25 @@ const GATEWAY_ANON_MODEL = 'anthropic/claude-sonnet-5'
 /**
  * Google model ids, overridable without a code change.
  *
- * OVERRIDABLE ON PURPOSE. Google renames and retires model ids on their own
- * schedule, and a stale id is a hard failure on every message with a confusing
- * error. Setting STATBOT_GOOGLE_MODEL in the environment fixes that in one line
- * instead of a deploy. The defaults are Flash-class because the free tier does
- * not serve Pro -- it moved to paid-only in April 2026.
+ * A `-latest` ALIAS, not a pinned version. Google retires ids on their own
+ * schedule and a stale one is a hard failure on every message: probing this
+ * key found gemini-2.5-flash and gemini-2.5-flash-lite already returning
+ * "no longer available", and those were the ids most guides still recommend.
+ * The alias cannot go stale.
  *
- * There is no per-rung split here. On the free tier the meaningful limit is
- * requests per day, not model quality, and a single model keeps the failure
- * surface to one id instead of five.
+ * LITE-CLASS, because on the free tier the binding limit is requests per day
+ * and it is set PER MODEL, wildly unevenly, and documented nowhere reliable.
+ * gemini-3.5-flash turned out to allow TWENTY requests per day -- a demo
+ * allowance that this bot exhausted in one sitting. Lite carries the larger
+ * ceiling and handles this workload, which is a small toolset, typed filters
+ * and short answers. Verified with scripts/probe-statbot-models.mjs; run it
+ * again rather than trusting this comment.
+ *
+ * Still overridable, so swapping model is one env var and not a deploy. There
+ * is deliberately no per-rung split: the meaningful limit is requests per day,
+ * not model quality, and one model keeps the failure surface to one id.
  */
-const GOOGLE_MODEL = process.env.STATBOT_GOOGLE_MODEL || 'gemini-3.5-flash'
+const GOOGLE_MODEL = process.env.STATBOT_GOOGLE_MODEL || 'gemini-flash-lite-latest'
 
 /** True when a direct Google key is configured. */
 export function usingGoogle(): boolean {

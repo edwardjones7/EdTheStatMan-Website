@@ -1,72 +1,111 @@
+'use client'
+
+import { useId } from 'react'
+
 /**
- * EdTheStatBot's face.
+ * EdTheStatBot's profile picture.
  *
  * ONE COMPONENT, four call sites (the FAB, the panel header, every assistant
  * message, and the typing indicator). The boundary is the point: swapping this
- * drawn mark for a real image later is a one-file change and every call site
- * follows automatically.
+ * for a raster portrait later is a one-file change and every call site follows.
  *
- * DELIBERATELY NOT THE LOGO. public/logo.png is the company's mark and already
- * renders in the nav and the footer; a third instance in the corner reads as
- * branding rather than as a character, and he is a named analyst, not a widget.
+ * COMPOSED AS A PORTRAIT, not an icon. The subject fills the circle and is
+ * cropped at the shoulders, the background sits behind him, and the eyes are
+ * the focal point -- that framing is what makes something read as a profile
+ * picture rather than a glyph. He is an analyst at a desk, so he has a headset.
  *
- * DELIBERATELY DRAWN, NOT RASTER. He has to be legible at 26px inside a message
- * row and 52px in the FAB, in both themes. A 272px PNG scaled to 26px is muddy,
- * and next.config.js sets `images: { unoptimized: true }`, so next/image would
- * ship the full file at every size for nothing.
+ * DRAWN, NOT RASTER. He has to be legible at 26px in a message row and 52px in
+ * the FAB, in both themes. A photo scaled to 26px is mud, and next.config.js
+ * sets `images: { unoptimized: true }`, so a PNG would ship at full weight for
+ * every size. Everything below 30px is deliberately chunky for that reason:
+ * the visor and the eyes carry the recognition, the fine detail is a bonus at
+ * larger sizes and simply disappears cleanly at small ones.
  */
 
 interface Props {
-  /** Outer diameter in px. 26 in message rows, 34 in the header, 30 in the FAB. */
+  /** Rendered diameter in px. 26 in message rows, 34 in the header, 52 in the FAB. */
   size?: number
-  /**
-   * Draw the gradient disc behind the face.
-   *
-   * Off inside the FAB, which already IS a gradient circle -- painting a second
-   * one inside the first produces a visible ring.
-   */
-  disc?: boolean
   className?: string
 }
 
-export default function StatBotAvatar({ size = 32, disc = true, className }: Props) {
-  // The face is drawn on a 24x24 grid to match every icon in Icons.tsx, then
-  // inset when it sits on a disc so it does not touch the edge.
-  const inner = disc ? Math.round(size * 0.62) : size
-
-  const face = (
-    <svg
-      width={inner}
-      height={inner}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={1.6}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      {/* Head. Squarer than a circle so he reads as built rather than drawn. */}
-      <rect x="3.5" y="7" width="17" height="12.5" rx="3.5" />
-      {/* Antenna. The one asymmetric flourish, so he is not just a rounded box. */}
-      <path d="M12 7V4" />
-      <circle cx="12" cy="2.9" r="1.35" fill="currentColor" stroke="none" />
-      {/* Eyes, filled so they survive being scaled to 16px. */}
-      <circle cx="9" cy="12.4" r="1.5" fill="currentColor" stroke="none" />
-      <circle cx="15" cy="12.4" r="1.5" fill="currentColor" stroke="none" />
-      {/* Not a smile -- a baseline with an uptick. He reads a chart for a living. */}
-      <path d="M8.6 16.4h2.2l1.5-2 1.6 2h1.5" />
-    </svg>
-  )
-
-  if (!disc) return face
+export default function StatBotAvatar({ size = 32, className }: Props) {
+  // Gradient ids are document-global, and four of these render at once. Without
+  // a unique suffix per instance they collide and every avatar picks up the
+  // first one's fills.
+  const uid = useId().replace(/:/g, '')
+  const bg = `sb-bg-${uid}`
+  const body = `sb-body-${uid}`
+  const head = `sb-head-${uid}`
+  const clip = `sb-clip-${uid}`
 
   return (
-    <span
-      className={className ? `statbot-avatar ${className}` : 'statbot-avatar'}
-      style={{ width: size, height: size }}
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 100 100"
+      className={className}
+      role="img"
+      aria-label="EdTheStatBot"
     >
-      {face}
-    </span>
+      <defs>
+        {/* Lit from the upper left, like every other portrait. */}
+        <radialGradient id={bg} cx="35%" cy="28%" r="85%">
+          <stop offset="0%" stopColor="#123044" />
+          <stop offset="100%" stopColor="#071219" />
+        </radialGradient>
+        <linearGradient id={body} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#a8e063" />
+          <stop offset="55%" stopColor="#2dd4bf" />
+          <stop offset="100%" stopColor="#38bdf8" />
+        </linearGradient>
+        <linearGradient id={head} x1="0.2" y1="0" x2="0.8" y2="1">
+          <stop offset="0%" stopColor="#f2fbfa" />
+          <stop offset="100%" stopColor="#b9d9d6" />
+        </linearGradient>
+        {/* The crop. Everything is drawn past the edge and cut to the circle,
+            which is what lets the shoulders run off the bottom like a real
+            portrait instead of floating inside a frame. */}
+        <clipPath id={clip}>
+          <circle cx="50" cy="50" r="50" />
+        </clipPath>
+      </defs>
+
+      <g clipPath={`url(#${clip})`}>
+        <circle cx="50" cy="50" r="50" fill={`url(#${bg})`} />
+
+        {/* Shoulders, running off the bottom edge. */}
+        <path d="M50 62c19 0 33 11 37 28v10H13v-10c4-17 18-28 37-28Z" fill={`url(#${body})`} />
+        {/* Collar notch, so the head reads as sitting on a body. */}
+        <path d="M42 66c2 5 4.5 7.5 8 7.5s6-2.5 8-7.5" fill="none" stroke="#071219"
+              strokeOpacity="0.35" strokeWidth="3" strokeLinecap="round" />
+
+        {/* Antenna. The flourish that stops him being a rounded box. */}
+        <path d="M50 20V13" stroke="#a8e063" strokeWidth="3.5" strokeLinecap="round" />
+        <circle cx="50" cy="10.5" r="4" fill="#a8e063" />
+
+        {/* Head. */}
+        <rect x="24" y="20" width="52" height="44" rx="15" fill={`url(#${head})`} />
+
+        {/* Headset: he works a desk. Cans either side, band tucked behind. */}
+        <rect x="16.5" y="33" width="9" height="18" rx="4.5" fill="#2dd4bf" />
+        <rect x="74.5" y="33" width="9" height="18" rx="4.5" fill="#2dd4bf" />
+
+        {/* Visor. The dark band is what makes the eyes readable at 26px. */}
+        <rect x="30" y="31" width="40" height="20" rx="9" fill="#071219" />
+        <circle cx="41" cy="41" r="4.6" fill="#2dd4bf" />
+        <circle cx="59" cy="41" r="4.6" fill="#2dd4bf" />
+        {/* Catchlights. Invisible when small, alive when large. */}
+        <circle cx="42.6" cy="39.4" r="1.5" fill="#ecfffb" />
+        <circle cx="60.6" cy="39.4" r="1.5" fill="#ecfffb" />
+
+        {/* Not a mouth -- a rising line. He reads charts for a living. */}
+        <path d="M40 57.5h5l4-5 4 5h7" fill="none" stroke="#2dd4bf" strokeWidth="3"
+              strokeLinecap="round" strokeLinejoin="round" />
+      </g>
+
+      {/* Inner rim, so he holds an edge against both the dark panel and the
+          light FAB gradient without needing a border on the element itself. */}
+      <circle cx="50" cy="50" r="48.5" fill="none" stroke="#ffffff" strokeOpacity="0.14" strokeWidth="3" />
+    </svg>
   )
 }

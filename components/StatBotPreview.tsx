@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import type { StatBotContent } from '@/lib/site-content'
 import EditableText from './EditableText'
-import { IconBot } from './Icons'
+import StatBotAvatar from './StatBotAvatar'
 
 /**
  * Asks the real bot. StatBot is mounted separately in the root layout, so this
@@ -94,7 +94,7 @@ export default function StatBotPreview({ content, editMode, onEdit, resetKey = 0
 
           <div className="statbot-chat">
             <div className="statbot-chat__header">
-              <div className="statbot-chat__avatar"><IconBot size={20} /></div>
+              <StatBotAvatar size={36} />
               <div>
                 <div className="statbot-chat__name">EdTheStatBot</div>
                 <div className="statbot-chat__status">&#9679; Online</div>

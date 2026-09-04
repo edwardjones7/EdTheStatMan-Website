@@ -3467,15 +3467,14 @@ textarea.form-input {
   border-bottom: 1px solid var(--border-color);
 }
 
+/* Kept for the shape only. The portrait draws its own background now, so this
+   no longer paints a gradient behind it -- doing so put a visible ring around
+   his head. StatBotPreview renders StatBotAvatar directly. */
 .statbot-chat__avatar {
   width: 36px;
   height: 36px;
-  background: var(--gradient-primary);
   border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1rem;
+  flex-shrink: 0;
 }
 
 .statbot-chat__name {
@@ -7614,23 +7613,30 @@ textarea.form-input {
   justify-content: center;
   border: 0;
   border-radius: 50%;
+  /* The portrait fills the button, so the gradient only shows for the instant
+     before the SVG paints. Padding stays at zero for the same reason. */
   background: var(--gradient-primary);
+  padding: 0;
   color: var(--bg-primary);
   box-shadow: 0 6px 24px rgba(var(--teal-rgb), 0.32);
   cursor: pointer;
   overflow: hidden;
-  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast),
+              filter var(--transition-fast);
 }
 
 .analyst-fab:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(var(--teal-rgb), 0.44); }
-/* An inset ring rather than a border: a real border changes the content box by
-   1px on each side, which makes the face visibly jump when the panel toggles.
-   Same trick as the account hero avatar. */
+/* Open state. The FAB is his portrait now, so it cannot signal "open" by
+   swapping an icon colour the way a glyph could. Dimming it reads as "this is
+   the thing you already have open" and keeps him recognisable.
+   An inset ring rather than a border, because a real border changes the content
+   box by 1px on each side and makes the face jump on every toggle. */
 .analyst-fab.is-open {
-  background: var(--bg-card);
-  color: var(--accent-teal);
-  box-shadow: inset 0 0 0 1px var(--border-color), 0 6px 24px rgba(var(--teal-rgb), 0.18);
+  filter: saturate(0.55) brightness(0.8);
+  box-shadow: inset 0 0 0 2px rgba(var(--teal-rgb), 0.5), 0 4px 16px rgba(0, 0, 0, 0.3);
 }
+
+.analyst-fab.is-open:hover { filter: none; }
 
 .analyst-panel {
   position: fixed;
@@ -7646,21 +7652,6 @@ textarea.form-input {
   border: 1px solid rgba(var(--teal-rgb), 0.25);
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-lg);
-  overflow: hidden;
-}
-
-/* The face. Matches the house avatar style used by nav__user-avatar, the
-   account hero and the admin user rows -- square box, full circle, brand
-   gradient, flex-centred, never shrinks -- and adds the overflow:hidden every
-   one of those is missing, so a real image could drop straight in. */
-.statbot-avatar {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  background: var(--gradient-primary);
-  color: var(--bg-primary);
-  flex-shrink: 0;
   overflow: hidden;
 }
 
@@ -7789,8 +7780,13 @@ textarea.form-input {
 .analyst-msg--user .analyst-msg__parts { align-items: flex-end; }
 
 /* Sits level with the first line of the bubble rather than centred on a reply
-   that may be ten lines tall. */
-.analyst-msg__avatar { margin-top: 2px; }
+   that may be ten lines tall. flex-shrink because a wide table in the bubble
+   would otherwise crush his face into an ellipse. */
+.analyst-msg__avatar {
+  margin-top: 2px;
+  flex-shrink: 0;
+  border-radius: 50%;
+}
 
 .analyst-msg__text {
   padding: 10px 14px;

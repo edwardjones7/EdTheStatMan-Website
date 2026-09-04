@@ -241,7 +241,7 @@ export default function StatBot({ tier, tierLabel }: Props) {
         onClick={() => setOpen(o => !o)}
         aria-label={open ? 'Close EdTheStatBot' : 'Open EdTheStatBot'}
       >
-        <StatBotAvatar size={26} disc={false} />
+        <StatBotAvatar size={52} />
       </button>
 
       {open && (
