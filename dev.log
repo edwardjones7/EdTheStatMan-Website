@@ -52,3 +52,139 @@ Using the user object as returned from supabase.auth.getSession() or from some s
  GET /vault/systems 200 in 1362ms
  ✓ Compiled /vault/trends in 356ms (1248 modules)
  GET /vault/trends 200 in 699ms
+ ✓ Compiled /desk/[sport]/g/[slug] in 412ms (1216 modules)
+ ✓ Compiled /api/track in 164ms (763 modules)
+ POST /api/track 200 in 1328ms
+ POST /api/track 200 in 520ms
+ ✓ Compiled /blog in 326ms (1253 modules)
+ ✓ Compiled /vault in 335ms (1257 modules)
+ POST /api/track 200 in 410ms
+ ✓ Compiled /desk in 204ms (1248 modules)
+ POST /api/track 200 in 409ms
+ POST /api/track 200 in 368ms
+ POST /api/track 200 in 371ms
+ ✓ Compiled /api/statbot/thread in 300ms (730 modules)
+ GET /api/statbot/thread 200 in 1503ms
+Using the user object as returned from supabase.auth.getSession() or from some supabase.auth.onAuthStateChange() events could be insecure! This value comes directly from the storage medium (usually cookies on the server) and may not be authentic. Use supabase.auth.getUser() instead which authenticates the data by contacting the Supabase Auth server.
+ GET /desk/nfl/g/2026-wk1-ne-at-sea 200 in 977ms
+ ✓ Compiled /api/track in 398ms (760 modules)
+ ✓ Compiled (785 modules)
+ GET /icon.png?017a5615c4f6cc73 200 in 678ms
+ POST /api/track 200 in 974ms
+ GET /api/statbot/thread 200 in 375ms
+ ✓ Compiled /desk in 292ms (728 modules)
+ ✓ Compiled /api/track in 164ms (756 modules)
+ POST /api/track 200 in 1211ms
+ POST /api/track 200 in 379ms
+ POST /api/track 200 in 429ms
+ POST /api/track 200 in 503ms
+ POST /api/track 200 in 367ms
+ POST /api/track 200 in 329ms
+ POST /api/track 200 in 342ms
+ POST /api/track 200 in 423ms
+ POST /api/track 200 in 339ms
+ POST /api/track 200 in 499ms
+ ○ Compiling /api/statbot ...
+ ✓ Compiled /api/statbot in 1297ms (874 modules)
+GatewayInternalServerError: AI Gateway requires a valid credit card on file to service requests. Please visit https://vercel.com/d?to=%2F%5Bteam%5D%2F%7E%2Fai%3Fmodal%3Dadd-credit-card to add a card and unlock your free credits.
+    at createGatewayErrorFromResponse (webpack-internal:///(rsc)/./node_modules/@ai-sdk/gateway/dist/index.js:530:14)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async asGatewayError (webpack-internal:///(rsc)/./node_modules/@ai-sdk/gateway/dist/index.js:644:12)
+    at async _GatewayBatchLanguageModel.doStream (webpack-internal:///(rsc)/./node_modules/@ai-sdk/gateway/dist/index.js:1118:13)
+    at async execute (webpack-internal:///(rsc)/./node_modules/ai/dist/index.js:8682:26)
+    ... 5 lines matching cause stack trace ...
+    at async eval (webpack-internal:///(rsc)/./node_modules/ai/dist/index.js:10498:7) {
+  statusCode: 403,
+  cause: APICallError [AI_APICallError]: {"error":{"message":"AI Gateway requires a valid credit card on file to service requests. Please visit https://vercel.com/d?to=%2F%5Bteam%5D%2F%7E%2Fai%3Fmodal%3Dadd-credit-card to add a card and unlock your free credits.","type":"customer_verification_required"}}
+      at eval (webpack-internal:///(rsc)/./node_modules/@ai-sdk/provider-utils/dist/index.js:3804:14)
+      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+      at async postToApi (webpack-internal:///(rsc)/./node_modules/@ai-sdk/provider-utils/dist/index.js:3440:28)
+      at async postJsonToApi (webpack-internal:///(rsc)/./node_modules/@ai-sdk/provider-utils/dist/index.js:3381:7)
+      at async _GatewayBatchLanguageModel.doStream (webpack-internal:///(rsc)/./node_modules/@ai-sdk/gateway/dist/index.js:1068:52)
+      at async execute (webpack-internal:///(rsc)/./node_modules/ai/dist/index.js:8682:26)
+      at async runWithTracingChannelSpan (webpack-internal:///(rsc)/./node_modules/ai/dist/index.js:4401:12)
+      at async executeLanguageModelCall (webpack-internal:///(rsc)/./node_modules/ai/dist/index.js:4609:14)
+      at async streamLanguageModelCall (webpack-internal:///(rsc)/./node_modules/ai/dist/index.js:8680:7)
+      at async retryWithExponentialBackoffInternal (webpack-internal:///(rsc)/./node_modules/@ai-sdk/provider-utils/dist/index.js:3655:12)
+      at async streamStep (webpack-internal:///(rsc)/./node_modules/ai/dist/index.js:10112:15)
+      at async eval (webpack-internal:///(rsc)/./node_modules/ai/dist/index.js:10498:7) {
+    cause: undefined,
+    url: 'https://ai-gateway.vercel.sh/v4/ai/language-model',
+    requestBodyValues: {
+      maxOutputTokens: undefined,
+      temperature: undefined,
+      topP: undefined,
+      topK: undefined,
+      presencePenalty: undefined,
+      frequencyPenalty: undefined,
+      stopSequences: undefined,
+      seed: undefined,
+      reasoning: undefined,
+      tools: [Array],
+      toolChoice: [Object],
+      responseFormat: undefined,
+      prompt: [Array],
+      providerOptions: undefined,
+      headers: undefined,
+      includeRawChunks: false
+    },
+    statusCode: 403,
+    responseHeaders: {
+      'cache-control': 'public, max-age=0, must-revalidate',
+      'content-encoding': 'br',
+      'content-type': 'application/json',
+      date: 'Fri, 04 Sep 2026 01:23:26 GMT',
+      server: 'Vercel',
+      'strict-transport-security': 'max-age=63072000; includeSubDomains; preload',
+      'transfer-encoding': 'chunked',
+      'x-matched-path': '/v4/ai/language-model',
+      'x-vercel-cache': 'MISS',
+      'x-vercel-id': 'iad1::iad1::hnz7z-1788485006607-1972f4ff755c'
+    },
+    responseBody: '{"error":{"message":"AI Gateway requires a valid credit card on file to service requests. Please visit https://vercel.com/d?to=%2F%5Bteam%5D%2F%7E%2Fai%3Fmodal%3Dadd-credit-card to add a card and unlock your free credits.","type":"customer_verification_required"}}',
+    isRetryable: false,
+    data: { error: [Object] },
+    [Symbol(vercel.ai.error)]: true,
+    [Symbol(vercel.ai.error.AI_APICallError)]: true
+  },
+  generationId: undefined,
+  isRetryable: false,
+  type: 'internal_server_error',
+  [Symbol(vercel.ai.gateway.error)]: true,
+  [Symbol(vercel.ai.gateway.error.GatewayInternalServerError)]: true
+}
+ POST /api/statbot 200 in 2180ms
+ ✓ Compiled in 575ms (1213 modules)
+Using the user object as returned from supabase.auth.getSession() or from some supabase.auth.onAuthStateChange() events could be insecure! This value comes directly from the storage medium (usually cookies on the server) and may not be authentic. Use supabase.auth.getUser() instead which authenticates the data by contacting the Supabase Auth server.
+ ✓ Compiled in 608ms (1227 modules)
+Using the user object as returned from supabase.auth.getSession() or from some supabase.auth.onAuthStateChange() events could be insecure! This value comes directly from the storage medium (usually cookies on the server) and may not be authentic. Use supabase.auth.getUser() instead which authenticates the data by contacting the Supabase Auth server.
+ ✓ Compiled in 314ms (727 modules)
+Using the user object as returned from supabase.auth.getSession() or from some supabase.auth.onAuthStateChange() events could be insecure! This value comes directly from the storage medium (usually cookies on the server) and may not be authentic. Use supabase.auth.getUser() instead which authenticates the data by contacting the Supabase Auth server.
+ GET /desk/nfl 200 in 547ms
+ GET /desk/nfl 200 in 416ms
+ GET /desk/nfl 200 in 560ms
+ GET /desk/nfl 200 in 442ms
+ GET /desk/nfl 200 in 458ms
+ GET /desk/nfl 200 in 418ms
+ GET /desk/nfl 200 in 618ms
+ ✓ Compiled /api/track in 148ms (755 modules)
+ POST /api/track 200 in 632ms
+Using the user object as returned from supabase.auth.getSession() or from some supabase.auth.onAuthStateChange() events could be insecure! This value comes directly from the storage medium (usually cookies on the server) and may not be authentic. Use supabase.auth.getUser() instead which authenticates the data by contacting the Supabase Auth server.
+ GET /desk/nfl 200 in 1119ms
+ POST /api/track 200 in 396ms
+ POST /api/track 200 in 551ms
+ ✓ Compiled /blog in 377ms (761 modules)
+Using the user object as returned from supabase.auth.getSession() or from some supabase.auth.onAuthStateChange() events could be insecure! This value comes directly from the storage medium (usually cookies on the server) and may not be authentic. Use supabase.auth.getUser() instead which authenticates the data by contacting the Supabase Auth server.
+ POST /api/track 200 in 429ms
+ ✓ Compiled /api/statbot/thread in 271ms (764 modules)
+Using the user object as returned from supabase.auth.getSession() or from some supabase.auth.onAuthStateChange() events could be insecure! This value comes directly from the storage medium (usually cookies on the server) and may not be authentic. Use supabase.auth.getUser() instead which authenticates the data by contacting the Supabase Auth server.
+ GET /api/statbot/thread 200 in 1199ms
+ GET /desk/nfl 200 in 1490ms
+ POST /api/track 200 in 382ms
+ GET /api/statbot/thread 200 in 342ms
+ ✓ Compiled /portfolio in 303ms (773 modules)
+Using the user object as returned from supabase.auth.getSession() or from some supabase.auth.onAuthStateChange() events could be insecure! This value comes directly from the storage medium (usually cookies on the server) and may not be authentic. Use supabase.auth.getUser() instead which authenticates the data by contacting the Supabase Auth server.
+ POST /api/track 200 in 538ms
+Using the user object as returned from supabase.auth.getSession() or from some supabase.auth.onAuthStateChange() events could be insecure! This value comes directly from the storage medium (usually cookies on the server) and may not be authentic. Use supabase.auth.getUser() instead which authenticates the data by contacting the Supabase Auth server.
+ GET /desk/nfl 200 in 1184ms
+ POST /api/track 200 in 405ms

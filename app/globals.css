@@ -8403,31 +8403,35 @@ textarea.form-input {
 }
 
 .desk-skel__card {
-  padding: 14px 16px 16px;
+  /* Heights below are tuned so this block measures the same as a real
+     .desk-card (256px at the 400px column width the grid produces). Measured,
+     not guessed: a short skeleton makes the page jump on swap, which is the
+     one thing it exists to prevent. Re-measure if the card layout changes. */
+  padding: 14px 16px 22px;
   background: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
 }
 
-.desk-skel__card-top { width: 60%; height: 11px; margin-bottom: 18px; }
+.desk-skel__card-top { width: 60%; height: 11px; margin-bottom: 22px; }
 
 .desk-skel__card-side {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 12px;
+  margin-bottom: 18px;
 }
 
 .desk-skel__logo { width: 28px; height: 28px; border-radius: 50%; flex: 0 0 auto; }
 .desk-skel__team { width: 45%; height: 14px; }
 
 .desk-skel__card-odds {
-  height: 46px;
+  height: 62px;
   margin-top: 16px;
   border-radius: var(--radius-md);
 }
 
-.desk-skel__card-foot { width: 42%; height: 11px; margin-top: 14px; }
+.desk-skel__card-foot { width: 42%; height: 11px; margin-top: 18px; }
 
 @media (max-width: 640px) {
   .desk-skel__stats { grid-template-columns: repeat(2, 1fr); row-gap: 20px; }
