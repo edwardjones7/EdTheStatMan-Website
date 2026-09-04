@@ -65,13 +65,18 @@ DECLARE
   v_day  date := (now() AT TIME ZONE 'America/New_York')::date;
   v_used integer;
 BEGIN
-  INSERT INTO public.ai_usage (user_id, day, messages)
+  -- The target is ALIASED as `u`. Inside ON CONFLICT DO UPDATE and RETURNING
+  -- the insert target is only in scope under its unqualified name, so writing
+  -- `public.ai_usage.messages` there fails to resolve; Postgres then reports the
+  -- next token instead, as `relation "v_used" does not exist`, which points at
+  -- the wrong line entirely. `INSERT INTO ... AS u` is the documented fix.
+  INSERT INTO public.ai_usage AS u (user_id, day, messages)
   VALUES (p_user, v_day, 1)
   ON CONFLICT (user_id, day) DO UPDATE
-    SET messages = public.ai_usage.messages + 1,
+    SET messages = u.messages + 1,
         updated_at = now()
-    WHERE public.ai_usage.messages < p_limit
-  RETURNING public.ai_usage.messages INTO v_used;
+    WHERE u.messages < p_limit
+  RETURNING u.messages INTO v_used;
 
   IF NOT FOUND THEN
     -- At the limit. Report the real count without touching it.

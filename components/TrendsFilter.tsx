@@ -333,7 +333,7 @@ export default function TrendsFilter({ trends, lockedCounts = {}, lockedTeasers 
           No betting trends available yet. Check back soon.
         </div>
         {isAdmin && (
-          <div style={{ position: 'fixed', bottom: '28px', right: '28px', zIndex: 200, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+          <div style={{ position: 'fixed', bottom: '28px', left: '28px', zIndex: 200, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
             <button
               onClick={() => setEditMode(true)}
               title="Edit trends"
@@ -860,9 +860,11 @@ export default function TrendsFilter({ trends, lockedCounts = {}, lockedTeasers 
       {/* Admin FAB */}
       {isAdmin && (
         <div style={{
+          /* Bottom-LEFT. EdTheStatBot owns the bottom-right corner on every
+             page, and .back-to-top stacks above it there. */
           position: 'fixed',
           bottom: '28px',
-          right: '28px',
+          left: '28px',
           zIndex: 200,
           display: 'flex',
           flexDirection: 'column',

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import type { AllSiteContent } from '@/lib/site-content'
 import Hero from './Hero'
 import Features from './Features'
@@ -10,10 +10,17 @@ import CTASection from './CTASection'
 import { IconPencil } from './Icons'
 
 interface Props {
+  /**
+   * Today's Brief, already rendered on the server. Passed as a node rather than
+   * imported here because this is a client component and the brief is a server
+   * component holding entitlement-filtered rows — importing it would drag that
+   * gating into the browser bundle.
+   */
+  brief?: ReactNode
   content: AllSiteContent
 }
 
-export default function HomeEditor({ content }: Props) {
+export default function HomeEditor({ content, brief }: Props) {
   const [editMode, setEditMode] = useState(false)
   const [draft, setDraft] = useState<AllSiteContent>(content)
   const [dirty, setDirty] = useState(false)
@@ -77,6 +84,7 @@ export default function HomeEditor({ content }: Props) {
     <>
       {/* The ticker is rendered globally by the root layout (editable there). */}
       <Hero            content={draft.hero}             isLoggedIn={true} {...ep('hero')} />
+      {brief}
       <Features        content={draft.features}          {...ep('features')} />
       <SportsBand />
       <StatBotPreview  content={draft.statbot_preview}   {...ep('statbot_preview')} />

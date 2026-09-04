@@ -3635,9 +3635,12 @@ textarea.form-input {
 
 /* ---------- Back to Top ---------- */
 .back-to-top {
+  /* Stacked above the EdTheStatBot FAB, which now owns bottom/right 24px.
+     `right` is 26px rather than 24px so this 48px circle centres on the 52px
+     one below it. */
   position: fixed;
-  bottom: 32px;
-  right: 32px;
+  bottom: 88px;
+  right: 26px;
   width: 48px;
   height: 48px;
   background: var(--bg-card);
@@ -7329,7 +7332,14 @@ textarea.form-input {
 .desk-card__tile {
   flex: 0 0 auto;
   min-width: 44px;
-  padding: 5px 8px;
+  /* Fixed height so a logo tile and a type tile line up in the same column —
+     NFL rows carry an image, CFB/CFL rows fall back to the abbreviation, and
+     the two must not sit at different heights next to each other. */
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 8px;
   text-align: center;
   font-family: var(--font-mono);
   font-size: 0.76rem;
@@ -7341,11 +7351,49 @@ textarea.form-input {
   border-radius: var(--radius-md);
 }
 
+/* The logo carries the identity, so the tile chrome recedes behind it. */
+.desk-card__tile:has(.desk-card__logo) {
+  background: transparent;
+  border-color: transparent;
+  padding: 0;
+}
+
+.desk-card__logo {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  display: block;
+}
+
+/* A beaten side is already dimmed by opacity on the row; desaturating the mark
+   keeps a bright logo from fighting that. */
+.desk-card__side.is-beaten .desk-card__logo {
+  filter: grayscale(1);
+  opacity: 0.55;
+}
+
 /* The side laying the points is the one the board is built around. */
 .desk-card__side.is-fav .desk-card__tile {
   color: var(--accent-teal);
   background: rgba(var(--teal-rgb), 0.1);
   border-color: rgba(var(--teal-rgb), 0.3);
+}
+
+/* On a logo row the favourite cue moves off the tile and onto the name.
+   A filled teal box behind a team logo reads as a rendering fault, but the cue
+   itself has to survive somewhere — it is the only thing marking who is laying
+   the points. Type-tile rows (CFB, CFL, any unresolved abbreviation) keep the
+   original filled treatment above.
+   Specificity note: these must outrank .desk-card__side.is-fav .desk-card__tile
+   (0,3,0), which is why the tile rule below carries the .is-fav qualifier
+   rather than relying on source order. */
+.desk-card__side.is-fav .desk-card__tile:has(.desk-card__logo) {
+  background: transparent;
+  border-color: transparent;
+}
+
+.desk-card__side.is-fav:has(.desk-card__logo) .desk-card__name {
+  color: var(--accent-teal);
 }
 
 .desk-card__ident {
@@ -7550,10 +7598,13 @@ textarea.form-input {
    =================================================================== */
 
 .analyst-fab {
-  /* Bottom-LEFT on purpose: .back-to-top owns bottom/right 32px, and the admin
-     edit FAB stacks in the same corner on editable pages. */
+  /* Bottom-RIGHT: the bot is on every page, so it gets the corner people
+     actually reach for. The two things that used to live here moved out of its
+     way -- .back-to-top stacks directly above it at 88px, and the admin edit
+     FABs in SportTabsSystem/TrendsFilter went to the bottom-LEFT corner the
+     bot vacated. Anything new in this corner joins the top of that stack. */
   position: fixed;
-  left: 24px;
+  right: 24px;
   bottom: 24px;
   z-index: 90;
   width: 52px;
@@ -7575,7 +7626,7 @@ textarea.form-input {
 
 .analyst-panel {
   position: fixed;
-  left: 24px;
+  right: 24px;
   bottom: 88px;
   z-index: 91;
   width: min(420px, calc(100vw - 32px));
@@ -7819,7 +7870,7 @@ textarea.form-input {
 
 @media (max-width: 520px) {
   .analyst-panel { right: 12px; left: 12px; width: auto; bottom: 80px; }
-  .analyst-fab { left: 16px; bottom: 16px; }
+  .analyst-fab { right: 16px; bottom: 16px; }
 }
 
 
@@ -7986,4 +8037,403 @@ textarea.form-input {
   font-family: var(--font-mono);
   font-size: 0.72rem;
   color: var(--accent-teal);
+}
+
+/* ---------- Today's Brief (homepage daily card) ----------------------------
+   Sits directly under the hero. Deliberately quieter than the hero and louder
+   than the feature cards: it is the one section that changes daily, so it reads
+   as a dated dispatch rather than another marketing block. */
+.brief {
+  padding-top: 56px;
+  padding-bottom: 8px;
+}
+
+.brief__card {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 32px 36px 24px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Hairline accent along the top edge — the "dispatch" cue. */
+.brief__card::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 2px;
+  background: var(--gradient-primary);
+}
+
+.brief__head {
+  margin-bottom: 18px;
+}
+
+.brief__eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--accent-teal);
+}
+
+.brief__pip {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent-teal);
+  box-shadow: 0 0 0 3px rgba(var(--teal-rgb), 0.15);
+  flex-shrink: 0;
+}
+
+.brief__date {
+  color: var(--text-muted);
+  font-weight: 500;
+  letter-spacing: 1px;
+}
+
+.brief__date::before {
+  content: '·';
+  margin-right: 10px;
+  color: var(--border-color);
+}
+
+.brief__title {
+  font-family: var(--font-heading);
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--text-heading);
+  margin: 8px 0 0;
+  line-height: 1.15;
+}
+
+.brief__summary {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin: 0 0 20px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.brief__summary--quiet {
+  color: var(--text-muted);
+}
+
+.brief__summary strong {
+  color: var(--text-heading);
+}
+
+.brief__chip {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 8px;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
+  background: rgba(148, 190, 200, 0.07);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+}
+
+.brief__list {
+  list-style: none;
+  margin: 0 0 4px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.brief__pick {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+}
+
+.brief__sport {
+  flex: 0 0 auto;
+  min-width: 46px;
+  text-align: center;
+  padding: 4px 7px;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--accent-teal);
+  background: rgba(var(--teal-rgb), 0.08);
+  border-radius: var(--radius-sm);
+}
+
+.brief__play {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.brief__bet {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--text-heading);
+}
+
+/* The number is the product, so it gets the mono treatment the tables use. */
+.brief__line {
+  margin-left: 8px;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--accent-teal);
+}
+
+.brief__opp {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.brief__result {
+  flex: 0 0 auto;
+  padding: 3px 9px;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+}
+
+.brief__result.is-win {
+  color: var(--accent-teal);
+  background: rgba(var(--teal-rgb), 0.1);
+  border-color: rgba(var(--teal-rgb), 0.3);
+}
+
+.brief__result.is-loss {
+  color: #f8717a;
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.brief__result.is-push {
+  color: var(--text-muted);
+  background: rgba(148, 190, 200, 0.07);
+  border-color: var(--border-color);
+}
+
+/* Locked plays are advertised as a count, never as redacted rows — a stack of
+   grey bars reads worse than one honest line. */
+.brief__locked {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  padding: 12px 14px;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  text-decoration: none;
+  background: rgba(var(--gold-rgb), 0.05);
+  border: 1px dashed rgba(var(--gold-rgb), 0.35);
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+}
+
+.brief__locked:hover {
+  background: rgba(var(--gold-rgb), 0.09);
+  border-color: rgba(var(--gold-rgb), 0.55);
+}
+
+.brief__locked svg {
+  color: var(--accent-gold);
+  flex-shrink: 0;
+}
+
+.brief__locked strong {
+  color: var(--accent-gold);
+}
+
+.brief__unlock {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--accent-gold);
+  white-space: nowrap;
+}
+
+.brief__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-color);
+}
+
+.brief__record {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.brief__record strong {
+  font-family: var(--font-mono);
+  color: var(--text-heading);
+  margin-left: 4px;
+}
+
+.brief__pct {
+  margin-left: 6px;
+  font-family: var(--font-mono);
+}
+
+.brief__more {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--accent-teal);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.brief__more:hover {
+  gap: 9px;
+}
+
+@media (max-width: 640px) {
+  .brief__card { padding: 24px 20px 18px; }
+  .brief__title { font-size: 1.4rem; }
+  .brief__pick { flex-wrap: wrap; gap: 10px; }
+  .brief__play { flex-basis: 100%; order: 3; }
+  .brief__foot { flex-direction: column; align-items: flex-start; }
+}
+
+/* ---------- Research Desk loading skeleton --------------------------------
+   Mirrors app/desk/[sport]/loading.tsx. Dimensions track the real board so the
+   swap from skeleton to content does not shift the page; if the board's layout
+   changes, these want changing with it.
+
+   Respects prefers-reduced-motion at the bottom: a shimmer across a full screen
+   of placeholders is exactly the kind of large-area motion that setting exists
+   to suppress. */
+.desk-skel__head {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.desk-skel__label { width: 150px; height: 12px; }
+.desk-skel__title { width: min(340px, 70%); height: 44px; border-radius: var(--radius-md); }
+.desk-skel__sub   { width: min(560px, 90%); height: 13px; }
+.desk-skel__sub--short { width: min(420px, 70%); }
+
+.desk-skel__weeks {
+  display: flex;
+  gap: 8px;
+  margin-top: 40px;
+  overflow: hidden;
+}
+
+.desk-skel__pill {
+  flex: 0 0 auto;
+  width: 74px;
+  height: 32px;
+  border-radius: 999px;
+}
+
+.desk-skel__stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  margin-top: 24px;
+  padding: 20px 0;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.desk-skel__stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+  padding: 0 16px;
+}
+
+.desk-skel__stat-n { width: 34px; height: 26px; }
+.desk-skel__stat-l { width: 82px; height: 10px; }
+
+.desk-skel__day { margin-top: 34px; }
+
+.desk-skel__dayhead {
+  width: 190px;
+  height: 12px;
+  margin-bottom: 16px;
+}
+
+.desk-skel__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+}
+
+.desk-skel__card {
+  padding: 14px 16px 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+}
+
+.desk-skel__card-top { width: 60%; height: 11px; margin-bottom: 18px; }
+
+.desk-skel__card-side {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.desk-skel__logo { width: 28px; height: 28px; border-radius: 50%; flex: 0 0 auto; }
+.desk-skel__team { width: 45%; height: 14px; }
+
+.desk-skel__card-odds {
+  height: 46px;
+  margin-top: 16px;
+  border-radius: var(--radius-md);
+}
+
+.desk-skel__card-foot { width: 42%; height: 11px; margin-top: 14px; }
+
+@media (max-width: 640px) {
+  .desk-skel__stats { grid-template-columns: repeat(2, 1fr); row-gap: 20px; }
+  .desk-skel__grid { grid-template-columns: 1fr; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton { animation: none; }
 }

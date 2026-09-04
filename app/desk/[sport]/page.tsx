@@ -83,37 +83,45 @@ export default async function DeskSport({
         .map(toPublicGame)
     : []
 
-  // Curated link counts per game — proof of depth without shipping the links.
-  const gameIds = weekGames.map(g => g.id)
-  const linkedCounts: Record<string, { systems: number; trends: number }> = {}
-  if (gameIds.length > 0) {
-    const [sysLinks, trendLinks] = await Promise.all([
-      (admin as any).from('nfl_game_systems').select('game_id').in('game_id', gameIds),
-      (admin as any).from('nfl_game_trends').select('game_id').in('game_id', gameIds),
-    ])
-    for (const id of gameIds) linkedCounts[id] = { systems: 0, trends: 0 }
-    for (const row of sysLinks.data ?? []) if (linkedCounts[row.game_id]) linkedCounts[row.game_id].systems++
-    for (const row of trendLinks.data ?? []) if (linkedCounts[row.game_id]) linkedCounts[row.game_id].trends++
-  }
-
   const season = allGames[0]?.season ?? new Date().getFullYear()
 
-  // The weekly desk note. The table arrives with tier_ladder_06; until then the
-  // query errors harmlessly and the note simply doesn't render.
-  let rawNote: {
-    title: string; body_html: string; min_tier: string; is_published: boolean
-  } | null = null
-  if (active) {
-    const { data: noteData } = await (admin as any)
-      .from('desk_notes')
-      .select('title, body_html, min_tier, is_published')
-      .eq('sport', sport)
-      .eq('season', season)
-      .eq('season_type', active.season_type)
-      .eq('week', active.week)
-      .maybeSingle()
-    rawNote = noteData ?? null
-  }
+  // The link counts and the desk note both depend only on `active`, so they go
+  // out together. They used to run in series, which cost a whole extra Supabase
+  // round trip (~200ms measured) on the render path of a page that already
+  // blocks on auth and the full game list before either can start.
+  const gameIds = weekGames.map(g => g.id)
+
+  type NoteRow = { title: string; body_html: string; min_tier: string; is_published: boolean }
+
+  const [linkRows, noteResult] = await Promise.all([
+    // Curated link counts per game — proof of depth without shipping the links.
+    gameIds.length > 0
+      ? Promise.all([
+          (admin as any).from('nfl_game_systems').select('game_id').in('game_id', gameIds),
+          (admin as any).from('nfl_game_trends').select('game_id').in('game_id', gameIds),
+        ])
+      : Promise.resolve([{ data: [] }, { data: [] }] as any[]),
+    // The weekly desk note. The table arrives with tier_ladder_06; until then
+    // the query errors harmlessly and the note simply doesn't render.
+    active
+      ? (admin as any)
+          .from('desk_notes')
+          .select('title, body_html, min_tier, is_published')
+          .eq('sport', sport)
+          .eq('season', season)
+          .eq('season_type', active.season_type)
+          .eq('week', active.week)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
+  ])
+
+  const [sysLinks, trendLinks] = linkRows as any[]
+  const linkedCounts: Record<string, { systems: number; trends: number }> = {}
+  for (const id of gameIds) linkedCounts[id] = { systems: 0, trends: 0 }
+  for (const row of sysLinks?.data ?? []) if (linkedCounts[row.game_id]) linkedCounts[row.game_id].systems++
+  for (const row of trendLinks?.data ?? []) if (linkedCounts[row.game_id]) linkedCounts[row.game_id].trends++
+
+  const rawNote: NoteRow | null = ((noteResult as any)?.data ?? null) as NoteRow | null
   // A draft is visible to its author only; everyone else sees no note at all.
   const note = rawNote && (rawNote.is_published || isAdmin) ? rawNote : null
   const canReadNote = note

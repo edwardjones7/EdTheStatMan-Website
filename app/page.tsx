@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { SITE_CONTENT_DEFAULTS } from '@/lib/site-content'
 import type { AllSiteContent } from '@/lib/site-content'
 import Hero from '@/components/Hero'
@@ -8,7 +9,10 @@ import CTASection from '@/components/CTASection'
 import SportsBand from '@/components/SportsBand'
 import StatBotPreview from '@/components/StatBotPreview'
 import HomeEditor from '@/components/HomeEditor'
+import TodaysBrief from '@/components/TodaysBrief'
 import { resolveAccess, ACCESS_SELECT } from '@/lib/access'
+import { buildBrief } from '@/lib/brief'
+import type { BriefSource } from '@/lib/brief'
 
 export const metadata: Metadata = {
   title: 'EdTheStatMan.com – Winning Sports Betting Picks, Systems & Trends',
@@ -77,17 +81,28 @@ export default async function Home() {
   }
   const { tier: userTier, isAdmin, isPaid, membership } = access
 
+  // Today's Brief. Read through the admin client for the same reason the
+  // Portfolio page does -- the app's tier logic is the gate, not RLS -- and
+  // gated immediately by buildBrief(), which drops locked picks server-side and
+  // returns only a count for them.
+  const { data: briefRows } = await (createAdminClient() as any)
+    .from('todays_bets')
+    .select('id, date, sport, bet, line, opponent, result, is_active, is_free, is_elite, show_on_results')
+  const brief = buildBrief((briefRows ?? []) as BriefSource[], userTier, isAdmin)
+  const briefNode = <TodaysBrief brief={brief} />
+
   return (
     <>
       {isAdmin ? (
         // Admin gets the interactive editor with a single pencil FAB
         // (LiveTicker is rendered inside HomeEditor for admins)
-        <HomeEditor content={content} />
+        <HomeEditor content={content} brief={briefNode} />
       ) : (
         // Everyone else gets static server-rendered sections
         // (the ticker is rendered globally by the root layout)
         <>
           <Hero            content={content.hero} isLoggedIn={userTier !== null} />
+          {briefNode}
           <Features        content={content.features} />
           <SportsBand />
           <StatBotPreview  content={content.statbot_preview} />

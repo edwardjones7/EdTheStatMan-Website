@@ -5,6 +5,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import type { PublicNflGame } from '@/lib/nfl'
 import { spreadLabel, moneylineLabel, lineMove } from '@/lib/nfl'
 import { IconLock, IconArrowRight } from './Icons'
+import { teamLogoUrl } from '@/lib/logos'
 
 interface WeekOption {
   season_type: number
@@ -196,7 +197,25 @@ export default function DeskWeekBoard({
                           winner && winner !== side.key ? ' is-beaten' : ''
                         }`}
                       >
-                        <span className="desk-card__tile">{side.abbrev}</span>
+                        <span className="desk-card__tile">
+                          {/* Logo when the abbreviation resolves (NFL), clean type
+                              otherwise. teamLogoUrl returns null rather than a
+                              guessed URL, so this never renders a broken image
+                              and never needs a client-side onError handler. */}
+                          {teamLogoUrl(sport, side.abbrev)
+                            ? <img
+                                className="desk-card__logo"
+                                src={teamLogoUrl(sport, side.abbrev)!}
+                                alt=""
+                                aria-hidden="true"
+                                loading="lazy"
+                                decoding="async"
+                                width={32}
+                                height={32}
+                              />
+                            : side.abbrev}
+                          <span className="sr-only">{side.abbrev}</span>
+                        </span>
                         <span className="desk-card__ident">
                           <span className="desk-card__name">{nickname(side.team)}</span>
                           {side.record && <span className="desk-card__rec">{side.record}</span>}

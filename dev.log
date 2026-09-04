@@ -1,0 +1,54 @@
+
+> edthestatman-website@1.0.0 dev
+> next dev
+
+  ▲ Next.js 14.2.35
+  - Local:        http://localhost:3000
+  - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 1734ms
+ ✓ Compiled /middleware in 225ms (124 modules)
+ ○ Compiling / ...
+Browserslist: caniuse-lite is outdated. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+ ✓ Compiled / in 4s (1090 modules)
+ GET / 200 in 4715ms
+ GET / 200 in 259ms
+ GET / 200 in 167ms
+ GET / 200 in 201ms
+ ✓ Compiled in 197ms (409 modules)
+ ✓ Compiled in 274ms (423 modules)
+ ✓ Compiled / in 328ms (646 modules)
+ GET / 200 in 1441ms
+Using the user object as returned from supabase.auth.getSession() or from some supabase.auth.onAuthStateChange() events could be insecure! This value comes directly from the storage medium (usually cookies on the server) and may not be authentic. Use supabase.auth.getUser() instead which authenticates the data by contacting the Supabase Auth server.
+ GET / 200 in 1297ms
+ ✓ Compiled /api/track in 246ms (674 modules)
+ POST /api/track 200 in 1036ms
+ ○ Compiling /desk/[sport] ...
+ ✓ Compiled /desk/[sport] in 985ms (1208 modules)
+Using the user object as returned from supabase.auth.getSession() or from some supabase.auth.onAuthStateChange() events could be insecure! This value comes directly from the storage medium (usually cookies on the server) and may not be authentic. Use supabase.auth.getUser() instead which authenticates the data by contacting the Supabase Auth server.
+ GET /desk/nfl 200 in 2847ms
+ POST /api/track 200 in 363ms
+Using the user object as returned from supabase.auth.getSession() or from some supabase.auth.onAuthStateChange() events could be insecure! This value comes directly from the storage medium (usually cookies on the server) and may not be authentic. Use supabase.auth.getUser() instead which authenticates the data by contacting the Supabase Auth server.
+ GET /desk/nfl 200 in 979ms
+ ✓ Compiled /icon.png in 451ms (772 modules)
+ GET /icon.png?017a5615c4f6cc73 200 in 641ms
+ POST /api/track 200 in 859ms
+ ✓ Compiled in 668ms (1251 modules)
+Using the user object as returned from supabase.auth.getSession() or from some supabase.auth.onAuthStateChange() events could be insecure! This value comes directly from the storage medium (usually cookies on the server) and may not be authentic. Use supabase.auth.getUser() instead which authenticates the data by contacting the Supabase Auth server.
+ GET /icon.png?017a5615c4f6cc73 200 in 30ms
+ GET /icon.png?017a5615c4f6cc73 200 in 20ms
+ GET / 200 in 466ms
+ GET /desk/nfl 200 in 585ms
+ ✓ Compiled /portfolio in 440ms (1226 modules)
+ GET /portfolio 200 in 861ms
+ ✓ Compiled in 558ms (1240 modules)
+Using the user object as returned from supabase.auth.getSession() or from some supabase.auth.onAuthStateChange() events could be insecure! This value comes directly from the storage medium (usually cookies on the server) and may not be authentic. Use supabase.auth.getUser() instead which authenticates the data by contacting the Supabase Auth server.
+ GET / 200 in 525ms
+ ○ Compiling /vault/systems ...
+ ✓ Compiled /vault/systems in 1068ms (1241 modules)
+ GET /vault/systems 200 in 1362ms
+ ✓ Compiled /vault/trends in 356ms (1248 modules)
+ GET /vault/trends 200 in 699ms
