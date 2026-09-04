@@ -415,9 +415,10 @@ const REGISTRY: Record<string, ToolSpec> = {
     minTier: 'private',
     build: (ctx) => tool({
       description:
-        'Search the full Vault library of systems and team trends. Filter by sport, team, ' +
-        'bet type or minimum sample size, and sort by win rate. Use this for open-ended ' +
-        'questions like "which NFL road underdog systems have the best record".',
+        'Find INDIVIDUAL systems and trends and show them. Returns rows, one per rule, each ' +
+        'with its own record. Filter by sport, team, bet type or minimum sample size and ' +
+        'sort by win rate. Use for "which NFL road underdog systems have the best record". ' +
+        'Do not use to total or average across many rows. ' + 'An empty result is a FINAL ANSWER -- report that nothing matched. Do not retry with different arguments and do not try another tool.',
       inputSchema: z.object({
         kind: z.enum(['systems', 'trends', 'both']).default('both'),
         sport: z.string().optional(),
@@ -456,51 +457,14 @@ const REGISTRY: Record<string, ToolSpec> = {
   },
 
   // --------------------------------------------------------- institutional
-  vault_aggregate: {
-    minTier: 'institutional',
-    build: (ctx) => tool({
-      description:
-        'Aggregate across the whole Vault: group systems and trends by a dimension and return ' +
-        'summed records and win rates. Use for portfolio-level questions such as "how do ATS ' +
-        'systems compare to totals across the NFL".',
-      inputSchema: z.object({
-        groupBy: z.enum(['sport', 'line', 'type', 'team', 'season']),
-        kind: z.enum(['systems', 'trends', 'both']).default('both'),
-        minGames: z.number().int().min(0).default(0),
-      }),
-      execute: async ({ groupBy, kind, minGames }) => {
-        const admin = createAdminClient() as any
-        const buckets = new Map<string, { w: number; l: number; t: number; units: number; rows: number }>()
-        for (const table of tablesFor(kind)) {
-          const { data } = await admin.from(table).select('*').eq('is_active', true)
-          for (const r of visibleRows((data ?? []) as any[], ctx.tier, 'private')) {
-            const games = (r.w ?? 0) + (r.l ?? 0) + (r.t ?? 0)
-            if (games < minGames) continue
-            const key = String(r[groupBy] ?? 'unknown')
-            const b = buckets.get(key) ?? { w: 0, l: 0, t: 0, units: 0, rows: 0 }
-            b.w += r.w ?? 0; b.l += r.l ?? 0; b.t += r.t ?? 0
-            b.units += Number(r.units ?? 0); b.rows++
-            buckets.set(key, b)
-          }
-        }
-        return [...buckets.entries()]
-          .map(([key, b]) => ({
-            [groupBy]: key, rows: b.rows, w: b.w, l: b.l, t: b.t,
-            units: Number(b.units.toFixed(2)),
-            winPct: b.w + b.l ? Number((b.w / (b.w + b.l)).toFixed(4)) : null,
-          }))
-          .sort((a, b) => (b.winPct ?? 0) - (a.winPct ?? 0))
-      },
-    }),
-  },
-
   export_vault: {
     minTier: 'institutional',
     build: (ctx) => tool({
       description:
-        'Export raw Vault rows as CSV: every field of every system or trend matching the ' +
-        'filters, not a summary. Use when the user asks to export, download, or get the raw ' +
-        'data. Tell them how many rows came back and whether it was truncated.',
+        'Produce a downloadable CSV FILE of raw Vault rows. Use ONLY when the user explicitly ' +
+        'asks to export, download, or get a file. Never call this to look something up -- ' +
+        'search_vault and analyze_vault answer questions, this one produces a file. ' +
+        'Tell them how many rows came back and whether it was truncated. ' + 'An empty result is a FINAL ANSWER -- report that nothing matched. Do not retry with different arguments and do not try another tool.',
       inputSchema: z.object({
         kind: z.enum(['systems', 'trends', 'both']).default('both'),
         sport: z.string().optional(),
@@ -555,14 +519,20 @@ const REGISTRY: Record<string, ToolSpec> = {
     }),
   },
 
-  query_vault: {
+  // Was query_vault + vault_aggregate. They were the same tool: query_vault
+  // already took a groupBy, so vault_aggregate was a strict subset of it, and
+  // two near-identical descriptions are what sent the model round the loop that
+  // spent five requests on the word "hey". Both were already 'institutional',
+  // so merging them changed no entitlement.
+  analyze_vault: {
     minTier: 'institutional',
     build: (ctx) => tool({
       description:
-        'Query builder over the whole Vault. Filter on any combination of sport, team, bet ' +
-        'type, season, sample size, win rate and units, then optionally group and sort. Use ' +
-        'this for precise multi-condition questions that search_vault cannot express, such ' +
-        'as "NFL road dog ATS systems with 80+ games and a win rate over 58%, grouped by season".',
+        'Compute GROUPED TOTALS across the Vault. Returns summed buckets, not individual ' +
+        'rows. Use only when the user asks to compare or roll up across a dimension -- by ' +
+        'season, sport, bet type or team -- such as "NFL road dog ATS systems with 80+ games ' +
+        'and a win rate over 58%, grouped by season". ' +
+        'For "show me the systems that match X", use search_vault instead. ' + 'An empty result is a FINAL ANSWER -- report that nothing matched. Do not retry with different arguments and do not try another tool.',
       inputSchema: z.object({
         kind: z.enum(['systems', 'trends', 'both']).default('both'),
         sport: z.string().optional(),
@@ -670,15 +640,93 @@ function entitledTo(ctx: ToolContext, spec: ToolSpec): boolean {
   return atLeastTier(ctx.tier, spec.minTier)
 }
 
+/** A key for a call's arguments that does not care about key order. */
+function argKey(args: unknown): string {
+  return JSON.stringify(args ?? {}, (_k, v) =>
+    v && typeof v === 'object' && !Array.isArray(v)
+      ? Object.fromEntries(Object.entries(v).sort(([a], [b]) => a.localeCompare(b)))
+      : v
+  )
+}
+
+/** Every "nothing found" shape the tools in this file can return. */
+function isEmptyResult(r: any): boolean {
+  if (r == null) return true
+  if (Array.isArray(r)) return r.length === 0
+  if (typeof r !== 'object') return false
+  for (const k of ['results', 'groups', 'picks', 'games', 'systems', 'trends']) {
+    if (Array.isArray(r[k])) return r[k].length === 0
+  }
+  return false
+}
+
+/**
+ * Make repeating a call pointless, and make an empty result final.
+ *
+ * The loop that prompted this: the word "hey" produced query_vault ×4 plus
+ * vault_aggregate -- five provider requests against a five-per-minute ceiling,
+ * for a greeting. Consolidating the Vault tools removed the ambiguity that
+ * invited it; this removes the model's reason to keep going.
+ *
+ * Two behaviours:
+ *   - An identical repeat is served from the ledger, skipping the database, and
+ *     comes back labelled as a repeat with an instruction to answer now.
+ *   - An empty result is labelled as a complete answer, because "no rows" is
+ *     what a model treats as failure and retries its way around.
+ *
+ * This does NOT save the provider request -- that is spent the moment the model
+ * emits the call. Saving requests is prepareStep's job in the route. This saves
+ * the round trip and, more importantly, removes the new-looking result that
+ * would justify another one.
+ */
+function withLedger(name: string, built: any, ledger: Map<string, any>): any {
+  const inner = built.execute
+  built.execute = async (args: any, opts: any) => {
+    const key = `${name}:${argKey(args)}`
+
+    const cached = ledger.get(key)
+    if (cached !== undefined) {
+      return {
+        ...cached,
+        repeatCall: true,
+        note:
+          `You already called ${name} with these exact arguments. This is that same ` +
+          'result. Calling it again cannot produce anything new -- answer now.',
+      }
+    }
+
+    let result = await inner(args, opts)
+
+    if (isEmptyResult(result)) {
+      const base = typeof result === 'object' && !Array.isArray(result) ? result : { results: result }
+      result = {
+        ...base,
+        empty: true,
+        note:
+          'Nothing matches. That is a complete and correct answer, not a failure. ' +
+          'Tell the user nothing matched, and name the filter that looks too narrow ' +
+          'if one does. Do not search again.',
+      }
+    }
+
+    ledger.set(key, result)
+    return result
+  }
+  return built
+}
+
 /**
  * The toolset for one caller. Tools above the caller's rung are omitted
  * entirely -- the model is never told they exist, so it cannot call them and
  * cannot be talked into calling them.
  */
 export function buildToolset(ctx: ToolContext): Record<string, any> {
+  // One ledger per toolset, and buildToolset is called once per request, so its
+  // lifetime is exactly one message.
+  const ledger = new Map<string, any>()
   const out: Record<string, any> = {}
   for (const [name, spec] of Object.entries(REGISTRY)) {
-    if (entitledTo(ctx, spec)) out[name] = spec.build(ctx)
+    if (entitledTo(ctx, spec)) out[name] = withLedger(name, spec.build(ctx), ledger)
   }
   return out
 }
@@ -695,17 +743,35 @@ export function buildToolset(ctx: ToolContext): Record<string, any> {
  * than expensive.
  *
  * Also the runaway-loop ceiling, which is why even the top rung has a number.
+ * The numbers are small because every step is one provider API request, and the
+ * Google free tier allows five per MINUTE -- a generous budget here does not buy
+ * a better answer, it buys a 429 halfway through one.
  */
 export const STEPS_FOR: Record<Tier, number> = {
-  retail: 4,
-  portfolio: 6,
-  desk: 8,
-  private: 12,
-  institutional: 16,
+  retail: 3,
+  portfolio: 4,
+  desk: 4,
+  private: 5,
+  institutional: 5,
 }
 
-/** Signed-out callers have two tools; two steps is a call and an answer. */
+/** Signed-out callers have two tools; three steps is a call and an answer. */
 export const ANON_STEPS = 3
+
+/**
+ * Tool calls allowed per message, enforced in code rather than asked for.
+ *
+ * The prompt asks the model to call one tool and answer. This is the number that
+ * makes it true: past this count, prepareStep() in the route hands back
+ * `toolChoice: 'none'` and the model must answer with what it has.
+ *
+ * TWO, because it was the model's judgement that failed. A greeting once cost
+ * five tool calls and 27 seconds before dying on a provider rate limit, and no
+ * amount of prompt wording is a guarantee. Two covers the shape of nearly every
+ * real question -- find the thing, then read it -- and a question that genuinely
+ * needs more gets a partial answer instead of a broken stream.
+ */
+export const MAX_TOOL_CALLS = 2
 
 /** The step budget for one caller, including the signed-out case. */
 export function stepBudget(ctx: ToolContext): number {

@@ -5,7 +5,9 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useChat } from '@ai-sdk/react'
 import { DefaultChatTransport, type UIMessage } from 'ai'
-import { IconBot, IconLock, IconArrowRight } from './Icons'
+import { IconLock, IconArrowRight } from './Icons'
+import StatBotAvatar from './StatBotAvatar'
+import { renderMarkdown } from '@/lib/ai/markdown'
 import { TIER_RANK, type Tier } from '@/lib/access'
 
 // The CSS block is still `.analyst-*` in globals.css. Renaming ~240 lines of
@@ -49,7 +51,7 @@ const PROMPTS: Record<string, string[]> = {
     'Show me the strongest home underdog trends',
   ],
   institutional: [
-    'NFL ATS systems with 80+ games and a win rate over 58%, grouped by season',
+    'Compare NFL ATS systems by season, 80+ games only',
     'Export every NFL system with 100+ games as CSV',
   ],
 }
@@ -57,8 +59,9 @@ const PROMPTS: Record<string, string[]> = {
 export default function StatBot({ tier, tierLabel }: Props) {
   const [open, setOpen] = useState(false)
   const [restoring, setRestoring] = useState(false)
+  const [cooldown, setCooldown] = useState(0)
   const [input, setInput] = useState('')
-  const [limitHit, setLimitHit] = useState<{ message: string; resetsAt: string; anonymous: boolean } | null>(null)
+  const [limitHit, setLimitHit] = useState<{ message: string; resetsAt?: string; anonymous: boolean; retryAfter?: number } | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
 
   // Where the visitor is, right now. The panel lives in the root layout and
@@ -140,7 +143,17 @@ export default function StatBot({ tier, tierLabel }: Props) {
     if (start === -1) return
     try {
       const body = JSON.parse(raw.slice(start))
-      if (body?.resetsAt && body?.limit) {
+      // Two different exhaustions arrive on this channel and they need
+      // different copy. `rateLimited` is the provider asking us to wait a few
+      // seconds; resetsAt/limit is the member's own daily allowance. Offering a
+      // sign-up link for a nine-second blip would be a lie.
+      if (body?.rateLimited) {
+        setLimitHit({
+          message: body.error ?? 'I am being asked to slow down.',
+          retryAfter: Number(body.retryAfter) || 30,
+          anonymous: false,
+        })
+      } else if (body?.resetsAt && body?.limit) {
         setLimitHit({
           message: body.error ?? `You have used today's ${body.limit} questions.`,
           resetsAt: body.resetsAt,
@@ -151,6 +164,21 @@ export default function StatBot({ tier, tierLabel }: Props) {
       // Not a quota response. Leave it to the generic error banner.
     }
   }, [error])
+
+  // A provider rate limit clears itself -- the recovery IS waiting. A banner
+  // that stayed up would turn a nine-second pause into a dead panel, and a
+  // "Dismiss" button asks the reader to do the timer's job.
+  useEffect(() => {
+    if (!limitHit?.retryAfter) return
+    setCooldown(limitHit.retryAfter)
+    const id = setInterval(() => {
+      setCooldown(s => {
+        if (s <= 1) { clearInterval(id); setLimitHit(null); return 0 }
+        return s - 1
+      })
+    }, 1000)
+    return () => clearInterval(id)
+  }, [limitHit])
 
   // The homepage preview hands questions over by event rather than through
   // shared state, since that section and this panel are mounted separately.
@@ -200,7 +228,7 @@ export default function StatBot({ tier, tierLabel }: Props) {
   // still thinks of you as a prospect. The gate goes quiet.
   const showUpsell = !isGuest && TIER_RANK[tier!] < TIER_RANK.private
 
-  const resetLabel = limitHit
+  const resetLabel = limitHit?.resetsAt
     ? new Date(limitHit.resetsAt).toLocaleTimeString('en-US', {
         hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York',
       })
@@ -213,15 +241,18 @@ export default function StatBot({ tier, tierLabel }: Props) {
         onClick={() => setOpen(o => !o)}
         aria-label={open ? 'Close EdTheStatBot' : 'Open EdTheStatBot'}
       >
-        <IconBot size={20} />
+        <StatBotAvatar size={26} disc={false} />
       </button>
 
       {open && (
         <div className="analyst-panel" role="dialog" aria-label="EdTheStatBot">
           <header className="analyst-head">
-            <div>
-              <span className="analyst-head__name">EdTheStatBot</span>
-              <span className="analyst-head__tier">{tierLabel}</span>
+            <div className="analyst-head__id">
+              <StatBotAvatar size={34} />
+              <div>
+                <span className="analyst-head__name">EdTheStatBot</span>
+                <span className="analyst-head__tier">{tierLabel}</span>
+              </div>
             </div>
             <div className="analyst-head__actions">
               {messages.length > 0 && (
@@ -270,9 +301,18 @@ export default function StatBot({ tier, tierLabel }: Props) {
 
             {messages.map(m => (
               <div key={m.id} className={`analyst-msg analyst-msg--${m.role}`}>
+                {m.role === 'assistant' && <StatBotAvatar size={26} className="analyst-msg__avatar" />}
+                <div className="analyst-msg__parts">
                 {m.parts.map((part, i) => {
                   if (part.type === 'text') {
-                    return <p key={i} className="analyst-msg__text">{part.text}</p>
+                    // Escaped inside renderMarkdown() before any tag is produced.
+                    return (
+                      <div
+                        key={i}
+                        className="analyst-msg__text"
+                        dangerouslySetInnerHTML={{ __html: renderMarkdown(part.text) }}
+                      />
+                    )
                   }
                   // Tool activity is shown, not hidden: seeing which tool ran is
                   // how a user knows the answer came from their data.
@@ -300,19 +340,25 @@ export default function StatBot({ tier, tierLabel }: Props) {
                   }
                   return null
                 })}
+                </div>
               </div>
             ))}
 
             {(busy || restoring) && (
               <div className="analyst-msg analyst-msg--assistant">
-                <span className="analyst-typing"><i /><i /><i /></span>
+                <StatBotAvatar size={26} className="analyst-msg__avatar" />
+                <div className="analyst-msg__parts">
+                  <span className="analyst-typing"><i /><i /><i /></span>
+                </div>
               </div>
             )}
 
             {limitHit ? (
               <div className="analyst-error">
                 {limitHit.message}{' '}
-                {limitHit.anonymous ? (
+                {limitHit.retryAfter ? (
+                  <>Ready again in {cooldown}s.</>
+                ) : limitHit.anonymous ? (
                   <>
                     <Link href="/signup" style={{ color: 'var(--accent-teal)' }}>
                       Create a free account
@@ -362,7 +408,11 @@ export default function StatBot({ tier, tierLabel }: Props) {
               className="analyst-input"
               value={input}
               onChange={e => setInput(e.target.value)}
-              placeholder={limitHit ? 'Back tomorrow…' : 'Ask EdTheStatBot…'}
+              placeholder={
+                limitHit?.retryAfter ? `Ready in ${cooldown}s…`
+                : limitHit ? 'Back tomorrow…'
+                : 'Ask EdTheStatBot…'
+              }
               disabled={busy || !!limitHit}
             />
             <button

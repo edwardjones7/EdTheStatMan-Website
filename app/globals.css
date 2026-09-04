@@ -7618,11 +7618,19 @@ textarea.form-input {
   color: var(--bg-primary);
   box-shadow: 0 6px 24px rgba(var(--teal-rgb), 0.32);
   cursor: pointer;
+  overflow: hidden;
   transition: transform var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 .analyst-fab:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(var(--teal-rgb), 0.44); }
-.analyst-fab.is-open { background: var(--bg-card); color: var(--accent-teal); border: 1px solid var(--border-color); }
+/* An inset ring rather than a border: a real border changes the content box by
+   1px on each side, which makes the face visibly jump when the panel toggles.
+   Same trick as the account hero avatar. */
+.analyst-fab.is-open {
+  background: var(--bg-card);
+  color: var(--accent-teal);
+  box-shadow: inset 0 0 0 1px var(--border-color), 0 6px 24px rgba(var(--teal-rgb), 0.18);
+}
 
 .analyst-panel {
   position: fixed;
@@ -7639,6 +7647,28 @@ textarea.form-input {
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-lg);
   overflow: hidden;
+}
+
+/* The face. Matches the house avatar style used by nav__user-avatar, the
+   account hero and the admin user rows -- square box, full circle, brand
+   gradient, flex-centred, never shrinks -- and adds the overflow:hidden every
+   one of those is missing, so a real image could drop straight in. */
+.statbot-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--gradient-primary);
+  color: var(--bg-primary);
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.analyst-head__id {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
 }
 
 .analyst-head {
@@ -7741,9 +7771,26 @@ textarea.form-input {
   color: var(--text-primary);
 }
 
-.analyst-msg { display: flex; flex-direction: column; gap: 6px; max-width: 92%; }
-.analyst-msg--user { align-self: flex-end; align-items: flex-end; }
-.analyst-msg--assistant { align-self: flex-start; }
+/* A ROW now, not a column: the avatar sits in a gutter beside a column of
+   parts. The parts must stay in their own column because .analyst-tool chips
+   are siblings of the text bubble and have to line up under it. */
+.analyst-msg { display: flex; flex-direction: row; gap: 8px; max-width: 92%; }
+.analyst-msg--user { align-self: flex-end; }
+/* The avatar costs ~34px of a ~353px row, so assistant messages get it back. */
+.analyst-msg--assistant { align-self: flex-start; max-width: calc(92% + 34px); }
+
+.analyst-msg__parts {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.analyst-msg--user .analyst-msg__parts { align-items: flex-end; }
+
+/* Sits level with the first line of the bubble rather than centred on a reply
+   that may be ten lines tall. */
+.analyst-msg__avatar { margin-top: 2px; }
 
 .analyst-msg__text {
   padding: 10px 14px;
@@ -7763,6 +7810,61 @@ textarea.form-input {
   border: 1px solid var(--border-color);
   color: var(--text-secondary);
 }
+
+/* ---- rendered markdown inside a reply ---- */
+/* The bubble was white-space: pre-wrap for raw text. Real block elements set
+   their own spacing now, so pre-wrap would double every gap. */
+.analyst-msg__text { white-space: normal; }
+.analyst-msg__text > :first-child { margin-top: 0; }
+.analyst-msg__text > :last-child { margin-bottom: 0; }
+.analyst-msg__text p { margin: 0 0 8px; }
+.analyst-msg__text ul,
+.analyst-msg__text ol { margin: 0 0 8px; padding-left: 18px; }
+.analyst-msg__text li { margin-bottom: 3px; }
+.analyst-msg__text strong { color: var(--text-primary); font-weight: 700; }
+.analyst-msg__text .analyst-md-h {
+  color: var(--text-primary);
+  font-weight: 700;
+  margin: 10px 0 5px;
+}
+.analyst-msg__text code {
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+  background: rgba(var(--teal-rgb), 0.1);
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+
+/* A table in a 380px panel will overflow. Let it scroll rather than forcing
+   the whole page sideways -- the panel is fixed, so it cannot grow. */
+.analyst-md-table {
+  display: block;
+  overflow-x: auto;
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0 0 8px;
+  font-size: 0.78rem;
+  font-family: var(--font-mono);
+}
+
+.analyst-md-table th,
+.analyst-md-table td {
+  padding: 4px 8px;
+  text-align: left;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.analyst-md-table th {
+  color: var(--accent-teal);
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+}
+
+.analyst-md-table tbody tr:last-child td { border-bottom: 0; }
+
 
 /* Tool activity is surfaced rather than hidden: seeing which tool ran is how
    the reader knows the answer came from their own data. */
@@ -7871,6 +7973,9 @@ textarea.form-input {
 @media (max-width: 520px) {
   .analyst-panel { right: 12px; left: 12px; width: auto; bottom: 80px; }
   .analyst-fab { right: 16px; bottom: 16px; }
+  /* The panel is near full width here and the avatar gutter costs ~34px of it,
+     so assistant bubbles get the whole row rather than 92% of it. */
+  .analyst-msg--assistant { max-width: 100%; }
 }
 
 

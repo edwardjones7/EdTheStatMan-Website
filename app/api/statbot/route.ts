@@ -1,6 +1,6 @@
 import { streamText, convertToModelMessages, stepCountIs, type UIMessage } from 'ai'
 import { getAccessWithProfile } from '@/lib/access-server'
-import { buildToolset, lockedToolNames, nextRung, stepBudget } from '@/lib/ai/tools'
+import { buildToolset, lockedToolNames, nextRung, stepBudget, MAX_TOOL_CALLS } from '@/lib/ai/tools'
 import {
   consumeQuota, recordTokens,
   consumeAnonQuota, recordAnonTokens, hashCaller,
@@ -57,9 +57,12 @@ function systemPrompt(
       pagePrompt,
       '',
       '## How to answer',
+      '- Greetings, thanks and "what can you do" need NO tool. Just reply.',
+      '- Otherwise call at most one tool, then answer.',
       '- Be genuinely useful about what this service is, what the record actually looks',
       '  like, and which membership fits what they described. That is the whole job.',
       '- Ground every number in a tool result. Never estimate a record.',
+      '- Markdown renders: **bold**, lists and pipe tables. Keep it short either way.',
       '- Break-even against standard -110 juice is 52.4%. Say so when a percentage comes up.',
       '- Keep it short. This is a small panel and they are browsing.',
       '',
@@ -91,14 +94,30 @@ function systemPrompt(
     '',
     pagePrompt,
     '',
+    '## When to use a tool',
+    '- Answer these WITHOUT calling anything: greetings, thanks, "what can you do",',
+    '  "who are you", and any follow-up you can answer from what you already',
+    '  retrieved earlier in this conversation. Just reply. Calling a tool to say',
+    '  hello wastes their time and your budget.',
+    '- Call a tool when the answer needs data you have not already fetched in this',
+    '  conversation: a record, a pick, a line, a schedule, a price.',
+    `- Call ONE tool, then answer. Pick the single best one rather than trying`,
+    `  several. You have a hard budget of ${MAX_TOOL_CALLS} tool calls per message.`,
+    '- Never call the same tool twice with the same arguments.',
+    '- An empty result is an answer. Say plainly that nothing matched. Do not retry',
+    '  and do not reach for a sibling tool.',
+    '',
     '## How to answer',
     '- Ground every factual claim in a tool result. You have no reliable memory of',
-    '  this data, so if a tool can answer the question, call it before answering.',
+    '  this data.',
     '- Always cite the record behind a claim, e.g. "34-18 (65.4%)". A system without',
     '  its record is an opinion, not research.',
     '- Note the sample size when it is small. Twelve games is a coincidence, not an edge.',
     '- Break-even against standard -110 juice is 52.4%. A 53% system is barely a system.',
-    '- Be concise and concrete. Tables beat paragraphs for anything with numbers.',
+    '- Be concise. You are writing in a narrow side panel, not a report.',
+    '- Markdown renders: **bold**, bullet lists, numbered lists, `code`, and pipe',
+    '  tables. Use a table when comparing more than two numbers, bold for the',
+    '  figure that matters, and prose for everything else.',
     '- When a tool returns CSV, do not paste the whole thing back. Say how many rows',
     '  it covers, show the first few, and let the download carry the rest.',
     '',
@@ -129,6 +148,70 @@ function systemPrompt(
     'If someone shows signs of a gambling problem, drop the analysis and point them',
     'to 1-800-GAMBLER.',
   ].filter(Boolean).join('\n')
+}
+
+/**
+ * Turn a streaming failure into something worth reading.
+ *
+ * A provider rate limit arrives INSIDE the stream, so no try/catch around
+ * streamText() ever sees it -- it surfaces here, in the stream's onError, whose
+ * return string is delivered to the client as the error text.
+ *
+ * Returns JSON because the panel already scans an error message for a `{` and
+ * parses it (the limitHit effect in components/StatBot.tsx). `rateLimited` is
+ * what lets it distinguish a transient provider blip from the member's own
+ * daily allowance -- offering someone a sign-up link because Google asked us to
+ * wait nine seconds would be a lie.
+ */
+function rateLimitRetryAfter(error: unknown, depth = 0): number | null {
+  if (!error || typeof error !== 'object' || depth > 4) return null
+  const e = error as any
+
+  const status = e.statusCode ?? e.status ?? e.response?.status
+  const body = typeof e.responseBody === 'string' ? e.responseBody : ''
+  const text = `${e.message ?? ''} ${body}`
+
+  if (status === 429 || /RESOURCE_EXHAUSTED|quota exceeded|rate limit|too many requests/i.test(text)) {
+    // Google states its own backoff twice: as "Please retry in 8.795183652s" in
+    // the message and as a RetryInfo "retryDelay":"9s" in the body. Prefer
+    // either over a guess, rounded up so we never say "try now" too early.
+    const stated =
+      text.match(/"retryDelay"\s*:\s*"([\d.]+)s"/)?.[1] ??
+      text.match(/retry in ([\d.]+)s/i)?.[1]
+    const seconds = stated ? Math.ceil(parseFloat(stated)) : NaN
+    return Number.isFinite(seconds) && seconds > 0 ? Math.min(seconds, 120) : 30
+  }
+
+  // The 429 arrives WRAPPED. The SDK retries, exhausts maxRetries, and throws
+  // AI_RetryError carrying the original APICallError in .lastError / .errors[].
+  // Reading only the top level finds a generic retry failure and reports it as
+  // "something went wrong", which is exactly the unhelpful message this exists
+  // to replace. Duck-typed rather than instanceof: the error class lives in
+  // @ai-sdk/provider, a transitive dependency, and instanceof across two
+  // resolved copies of a package fails in ways that only show up in production.
+  for (const nested of [e.lastError, e.cause, ...(Array.isArray(e.errors) ? e.errors : [])]) {
+    const found = rateLimitRetryAfter(nested, depth + 1)
+    if (found !== null) return found
+  }
+  return null
+}
+
+function describeStreamError(error: unknown): string {
+  const retryAfter = rateLimitRetryAfter(error)
+  if (retryAfter !== null) {
+    console.error(`[statbot] provider rate limit, retry in ${retryAfter}s`)
+    return JSON.stringify({
+      error: 'I am being asked to slow down.',
+      rateLimited: true,
+      retryAfter,
+    })
+  }
+
+  const raw = typeof error === 'string' ? error : (error as any)?.message ?? String(error ?? '')
+  console.error(`[statbot] stream failed: ${raw.slice(0, 300)}`)
+  // Deliberately vague: this string reaches the browser and provider errors
+  // quote request internals.
+  return JSON.stringify({ error: 'Something went wrong reaching the desk.' })
 }
 
 export async function POST(req: Request) {
@@ -198,10 +281,29 @@ export async function POST(req: Request) {
     // The entitlement gate. Tools above this caller's rung are not in the map,
     // so the model is never told they exist. See lib/ai/tools.ts.
     tools: buildToolset(ctx),
-    // Scales with the rung: enough turns for an Institutional question to
-    // search, group, cross-check and export, without letting a confused loop
-    // run up a bill on any rung. See stepBudget() in lib/ai/tools.ts.
+    // Scales with the rung, but small: every step is one provider request and
+    // the free tier allows five a minute. See stepBudget() in lib/ai/tools.ts.
     stopWhen: stepCountIs(stepBudget(ctx)),
+    // The hard stop. stopWhen bounds total steps; this bounds TOOL CALLS, which
+    // is the thing that actually ran away -- five calls for the word "hey".
+    // Past the cap the model keeps its turn but loses its tools, so it must
+    // answer with what it already has instead of trying another sibling.
+    prepareStep: ({ steps }) => {
+      const used = steps.reduce((n, step) => n + (step.toolCalls?.length ?? 0), 0)
+      // activeTools: [] as well as toolChoice, so the declarations are dropped
+      // from the final request too -- the answer step is cheaper in input tokens
+      // for having them gone.
+      return used >= MAX_TOOL_CALLS ? { toolChoice: 'none' as const, activeTools: [] } : {}
+    },
+    // ONE retry, not the SDK's default of two.
+    //
+    // The ceiling that bites is five requests per MINUTE, and the provider's own
+    // 429 asks for a backoff of several seconds. Retrying inside that window
+    // cannot succeed -- it just spends more of the minute. The failing request
+    // that prompted all this took 27 seconds, most of it backoff between retries
+    // that were never going to work. One attempt covers a genuine transient;
+    // past that, reporting the rate limit promptly is the better answer.
+    maxRetries: 1,
     // Cost attribution, best effort. Never blocks or fails the response.
     onFinish: ({ usage }) => {
       const tin = usage?.inputTokens ?? 0
@@ -212,6 +314,8 @@ export async function POST(req: Request) {
   })
 
   return result.toUIMessageStreamResponse({
+    // A rate limit or provider fault lands here, not in a try/catch above.
+    onError: describeStreamError,
     // Persistence mode: the callback receives the ORIGINAL messages plus
     // everything the model produced, already assembled as UIMessages, so the
     // stored thread is exactly what the panel would render.
