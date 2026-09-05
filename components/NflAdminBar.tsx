@@ -4,25 +4,27 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 interface Props {
+  /** Which league to sync. The route sweeps that league's own season shape. */
+  sport: string
   season: number
   /** Currently viewed week, used for the "Sync this week" button. */
   seasonType?: number
   week?: number
 }
 
-export default function NflAdminBar({ season, seasonType, week }: Props) {
+export default function NflAdminBar({ sport, season, seasonType, week }: Props) {
   const router = useRouter()
   const [syncing, setSyncing] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
 
-  async function runSync(body: Record<string, number | boolean>) {
+  async function runSync(body: Record<string, number | boolean | string>) {
     setSyncing(true)
     setMessage(null)
     try {
       const res = await fetch('/api/admin/nfl-sync', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
+        body: JSON.stringify({ sport, ...body }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error ?? 'Sync failed')

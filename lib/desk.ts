@@ -37,8 +37,29 @@ export const SPORT_SHORT: Record<Sport, string> = {
  * work — the tables and routes are already keyed by sport — but only do it once
  * the sync actually populates that league.
  */
-export const DESK_SPORTS = ['nfl'] as const
+export const DESK_SPORTS = ['nfl', 'cfb'] as const
 export type DeskSport = (typeof DESK_SPORTS)[number]
+
+/**
+ * How far the ESPN sweep runs for each league, because the two football
+ * seasons are not the same shape.
+ *
+ * NFL is 18 regular weeks and 5 postseason weeks (wild card through the Pro
+ * Bowl and Super Bowl). College is 16 regular weeks -- week 15 is Army-Navy
+ * and week 16 the last of the conference title games -- and the entire bowl
+ * and playoff slate arrives as postseason week 1, 46 games at once. Probed
+ * against cdn.espn.com 2026-09-05: college postseason weeks 2 and 3 answer
+ * with HTML rather than JSON, so sweeping them is a reported failure on every
+ * run rather than an empty week. Ask for what exists.
+ */
+export const DESK_SWEEP: Record<DeskSport, { regular: number; post: number }> = {
+  nfl: { regular: 18, post: 5 },
+  cfb: { regular: 16, post: 1 },
+}
+
+export function deskSweep(sport: string): { regular: number; post: number } {
+  return DESK_SWEEP[sport as DeskSport] ?? DESK_SWEEP.nfl
+}
 
 export function deskSportLabel(sport: string): string {
   return SPORT_LABEL[sport as Sport] ?? sport.toUpperCase()

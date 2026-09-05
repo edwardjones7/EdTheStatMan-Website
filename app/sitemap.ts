@@ -1,5 +1,6 @@
 import type { MetadataRoute } from 'next'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { DESK_SPORTS } from '@/lib/desk'
 
 const BASE = 'https://edthestatman.com'
 
@@ -8,14 +9,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const [{ data: posts }, { data: games }] = await Promise.all([
     (admin as any).from('posts').select('slug, updated_at').eq('published', true),
-    (admin as any).from('nfl_games').select('slug, updated_at').eq('is_published', true),
+    (admin as any).from('nfl_games').select('slug, sport, updated_at').eq('is_published', true),
   ])
 
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: BASE, lastModified: new Date(), changeFrequency: 'daily', priority: 1.0 },
     { url: `${BASE}/betting-systems`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
     { url: `${BASE}/betting-trends`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
-    { url: `${BASE}/nfl`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
+    ...DESK_SPORTS.map(sport => ({
+      url: `${BASE}/desk/${sport}`,
+      lastModified: new Date(),
+      changeFrequency: 'daily' as const,
+      priority: 0.9,
+    })),
     { url: `${BASE}/results`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
     { url: `${BASE}/blog`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
     { url: `${BASE}/win`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.7 },
@@ -29,8 +35,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }))
 
+  // A game lives under its own league's board. Emitting every row under /nfl
+  // both published a dead path (the v3 rename moved it to /desk/[sport]/g) and,
+  // now that the table holds more than one league, filed college games under
+  // the NFL.
   const gameRoutes: MetadataRoute.Sitemap = (games ?? []).map((game: any) => ({
-    url: `${BASE}/nfl/games/${game.slug}`,
+    url: `${BASE}/desk/${game.sport ?? 'nfl'}/g/${game.slug}`,
     lastModified: game.updated_at ? new Date(game.updated_at) : new Date(),
     changeFrequency: 'daily' as const,
     priority: 0.7,

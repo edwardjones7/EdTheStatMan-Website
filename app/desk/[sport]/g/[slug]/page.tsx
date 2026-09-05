@@ -21,14 +21,15 @@ export async function generateMetadata({ params }: { params: { sport: string; sl
   const { data: game } = await (admin as any)
     .from('nfl_games')
     .select('away_team, home_team, season_type, week, brief, kickoff, is_published')
+    .eq('sport', params.sport.toLowerCase())
     .eq('slug', params.slug)
-    .single()
+    .maybeSingle()
 
   if (!game || !game.is_published) return { title: 'Game Not Found' }
 
-  const title = `${game.away_team} at ${game.home_team} — ${weekLabel(game.season_type, game.week)} Prediction, Odds & Betting Analysis`
+  const title = `${game.away_team} at ${game.home_team} — ${weekLabel(game.season_type, game.week, params.sport)} Prediction, Odds & Betting Analysis`
   const description = game.brief
-    || `${game.away_team} at ${game.home_team}: betting systems, trends, and Elite analysis for ${weekLabel(game.season_type, game.week)}.`
+    || `${game.away_team} at ${game.home_team}: betting systems, trends, and Elite analysis for ${weekLabel(game.season_type, game.week, params.sport)}.`
   const url = `https://edthestatman.com/desk/${params.sport}/g/${params.slug}`
   return {
     title,
@@ -78,8 +79,11 @@ export default async function NflGamePage({ params }: { params: { sport: string;
   const { data: gameRow } = await (admin as any)
     .from('nfl_games')
     .select('*')
+    // Scoped by sport as well as slug: the slug is unique table-wide, but a
+    // game should only ever answer under its own league's path.
+    .eq('sport', params.sport.toLowerCase())
     .eq('slug', params.slug)
-    .single()
+    .maybeSingle()
 
   const game: NflGame | null = gameRow ?? null
   if (!game || (!game.is_published && !isAdmin)) notFound()
@@ -178,7 +182,7 @@ export default async function NflGamePage({ params }: { params: { sport: string;
           <header className="nfl-game-header reveal">
             <div className="nfl-game-header__meta">
               <span className="section-label" style={{ margin: 0 }}>
-                {game.season} · {weekLabel(game.season_type, game.week)}
+                {game.season} · {weekLabel(game.season_type, game.week, params.sport)}
               </span>
               <span className={`nfl-game-card__status nfl-game-card__status--${game.status}`}>
                 {STATUS_LABEL[game.status] ?? game.status}

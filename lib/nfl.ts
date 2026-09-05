@@ -125,8 +125,19 @@ export function toPublicGame(row: NflGame): PublicNflGame {
   }
 }
 
-/** Frozen at insert time — never regenerate for an existing row (SEO). */
+/**
+ * Frozen at insert time — never regenerate for an existing row (SEO).
+ *
+ * Every sport but NFL carries its own prefix, because `slug` is UNIQUE across
+ * the whole table and college shares abbreviations with the pros: MIA, HOU and
+ * CIN are each both an NFL franchise and an FBS program, so an unprefixed
+ * college slug can collide with a pro game in the same season and week. The
+ * sync inserts a season as one batch, so a collision does not just lose that
+ * row, it takes the batch with it. NFL slugs are left bare because they are
+ * already published and indexed.
+ */
 export function buildGameSlug(
+  sport: string,
   season: number,
   seasonType: number,
   week: number,
@@ -134,19 +145,30 @@ export function buildGameSlug(
   homeAbbrev: string
 ): string {
   const stage = seasonType === 3 ? `post${week}` : `wk${week}`
-  return `${season}-${stage}-${awayAbbrev}-at-${homeAbbrev}`.toLowerCase()
+  const prefix = sport === 'nfl' ? '' : `${sport}-`
+  return `${prefix}${season}-${stage}-${awayAbbrev}-at-${homeAbbrev}`.toLowerCase()
 }
 
-const POSTSEASON_LABELS: Record<number, string> = {
-  1: 'Wild Card',
-  2: 'Divisional Round',
-  3: 'Conference Championships',
-  4: 'Pro Bowl',
-  5: 'Super Bowl',
+const POSTSEASON_LABELS: Record<string, Record<number, string>> = {
+  nfl: {
+    1: 'Wild Card',
+    2: 'Divisional Round',
+    3: 'Conference Championships',
+    4: 'Pro Bowl',
+    5: 'Super Bowl',
+  },
+  // ESPN hands college the whole bowl and playoff slate as postseason week 1,
+  // so there is one label rather than a round-by-round ladder.
+  cfb: {
+    1: 'Bowls & Playoff',
+  },
 }
 
-export function weekLabel(seasonType: number, week: number): string {
-  if (seasonType === 3) return POSTSEASON_LABELS[week] ?? `Postseason Week ${week}`
+export function weekLabel(seasonType: number, week: number, sport = 'nfl'): string {
+  if (seasonType === 3) {
+    const labels = POSTSEASON_LABELS[sport] ?? POSTSEASON_LABELS.nfl
+    return labels[week] ?? `Postseason Week ${week}`
+  }
   return `Week ${week}`
 }
 

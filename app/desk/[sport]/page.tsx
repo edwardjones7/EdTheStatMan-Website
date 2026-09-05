@@ -43,68 +43,89 @@ export default async function DeskSport({
 
   const admin = createAdminClient()
 
-  // `nfl_games` is not one season. Completed seasons are backfilled into it so
-  // the Vault's situational rules have a history to check against, which means
-  // an unscoped read stacks 2024's Week 1 underneath the current one and the
-  // board opens on whichever season happens to sort first. The board is always
-  // the newest season we hold rows for. The season probe does not need the
-  // access check, so it rides along with it instead of adding a round trip.
-  const [access, { data: seasonRows }] = await Promise.all([
-    getAccess(),
-    (admin as any)
+  // `nfl_games` is neither one season nor one league. Completed seasons are
+  // backfilled into it so the Vault's situational rules have a history to check
+  // against, so an unscoped read stacks 2024's Week 1 underneath the current one
+  // and the board opens on whichever season happens to sort first. The board is
+  // always the newest season this viewer is allowed to see: published rows for a
+  // visitor, any row for an admin, so next season can be synced and staged before
+  // a game of it is published. Neither probe needs the access check, so both ride
+  // along with it rather than adding a round trip.
+  const latestSeason = (published: boolean) => {
+    let q = (admin as any)
       .from('nfl_games')
-      .select('season, sport, is_published')
-      .order('season', { ascending: false }),
+      .select('season')
+      .eq('sport', sport)
+      .order('season', { ascending: false })
+      .limit(1)
+    if (published) q = q.eq('is_published', true)
+    return q.maybeSingle()
+  }
+
+  const [access, publishedSeason, anySeason] = await Promise.all([
+    getAccess(),
+    latestSeason(true),
+    latestSeason(false),
   ])
   const { tier: userTier, isAdmin, membership } = access
 
-  // The `sport` column only exists after tier_ladder_06; before it, every row
-  // in this table is NFL by construction.
-  const rowSportOf = (r: { sport?: string | null }) => r.sport ?? 'nfl'
-
-  // Published rows decide the season for a visitor; an admin gets the newest
-  // season on the table either way, so next season can be synced and staged
-  // before any of it is published.
   const season: number =
-    (seasonRows ?? []).find(
-      (r: any) => rowSportOf(r) === sport && (r.is_published || isAdmin)
-    )?.season ?? new Date().getFullYear()
+    (isAdmin ? anySeason?.data?.season : publishedSeason?.data?.season)
+    ?? publishedSeason?.data?.season
+    ?? new Date().getFullYear()
 
   // The schedule itself is the public shell — a visitor should be able to see
   // that the board exists and how much is on it. The curated research attached
   // to each game is what the Desk rung buys.
   const hasDesk = isAdmin || access.atLeast('desk')
 
-  const { data: gamesData } = await (admin as any)
+  // The week rail needs every week of the season but none of the payload, so it
+  // reads four columns and the board reads one week of rows. A college season is
+  // roughly 1,400 games against the NFL's 272: pulling all of them with `*` to
+  // render a single week of cards is the shape that stops working the moment a
+  // second league lands.
+  const { data: weekRows } = await (admin as any)
     .from('nfl_games')
-    .select('*')
+    .select('season_type, week, kickoff, is_published')
+    .eq('sport', sport)
     .eq('season', season)
-    .order('kickoff', { ascending: true, nullsFirst: false })
 
-  const allGames: NflGame[] = (gamesData ?? []).filter(
-    (g: NflGame) => rowSportOf(g) === sport && (g.is_published || isAdmin)
+  type WeekRow = Pick<NflGame, 'season_type' | 'week' | 'kickoff' | 'is_published'>
+  const visibleWeekRows: WeekRow[] = (weekRows ?? []).filter(
+    (r: WeekRow) => r.is_published || isAdmin
   )
 
   // Week list derived from data — nothing hardcodes a week count.
   const weekMap = new Map<string, { season_type: number; week: number }>()
-  for (const g of allGames) weekMap.set(`${g.season_type}-${g.week}`, { season_type: g.season_type, week: g.week })
+  for (const r of visibleWeekRows) {
+    weekMap.set(`${r.season_type}-${r.week}`, { season_type: r.season_type, week: r.week })
+  }
   const weeks = [...weekMap.values()]
     .sort((a, b) => a.season_type - b.season_type || a.week - b.week)
-    .map(w => ({ ...w, label: weekLabel(w.season_type, w.week) }))
+    .map(w => ({ ...w, label: weekLabel(w.season_type, w.week, sport) }))
 
   const requestedType = searchParams.type === 'post' ? 3 : searchParams.week ? 2 : null
   const requestedWeek = Number(searchParams.week) || null
-  const fallback = currentWeekOf(allGames, new Date())
+  const fallback = currentWeekOf(visibleWeekRows, new Date())
   const active =
     requestedType && requestedWeek && weekMap.has(`${requestedType}-${requestedWeek}`)
       ? { season_type: requestedType, week: requestedWeek }
       : fallback ?? null
 
-  const weekGames: PublicNflGame[] = active
-    ? allGames
-        .filter(g => g.season_type === active.season_type && g.week === active.week)
-        .map(toPublicGame)
-    : []
+  const { data: gamesData } = active
+    ? await (admin as any)
+        .from('nfl_games')
+        .select('*')
+        .eq('sport', sport)
+        .eq('season', season)
+        .eq('season_type', active.season_type)
+        .eq('week', active.week)
+        .order('kickoff', { ascending: true, nullsFirst: false })
+    : { data: [] }
+
+  const weekGames: PublicNflGame[] = (gamesData ?? [])
+    .filter((g: NflGame) => g.is_published || isAdmin)
+    .map(toPublicGame)
 
   // The link counts and the desk note both depend only on `active`, so they go
   // out together. They used to run in series, which cost a whole extra Supabase
@@ -180,14 +201,14 @@ export default async function DeskSport({
 
           {isAdmin && (
             <>
-              <NflAdminBar season={season} seasonType={active?.season_type} week={active?.week} />
+              <NflAdminBar sport={sport} season={season} seasonType={active?.season_type} week={active?.week} />
               {active && (
                 <DeskNoteEditor
                   sport={sport}
                   season={season}
                   seasonType={active.season_type}
                   week={active.week}
-                  weekLabel={weekLabel(active.season_type, active.week)}
+                  weekLabel={weekLabel(active.season_type, active.week, sport)}
                   existing={rawNote}
                 />
               )}
@@ -214,7 +235,7 @@ export default async function DeskSport({
             </div>
           )}
 
-          {allGames.length === 0 ? (
+          {weeks.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '64px 0', color: 'var(--text-muted)' }}>
               The {season} {label} schedule lands here soon — check back before kickoff.
             </div>

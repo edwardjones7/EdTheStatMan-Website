@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { buildGameSlug } from '@/lib/nfl'
 import { fetchWeek, type ParsedGame } from '@/lib/espn'
+import { deskSweep } from '@/lib/desk'
 
 async function assertAdmin() {
   const supabase = await createClient()
@@ -65,14 +66,16 @@ export async function POST(req: Request) {
   // Only ever applied on INSERT -- is_published is admin-owned on existing rows.
   const publishNew: boolean = body.publish !== false
 
-  // Default sweep: regular season weeks 1-18 plus postseason weeks 1-5.
-  // Empty weeks (playoffs not yet scheduled) simply return no events.
+  // Default sweep: the league's own season shape, since college is 16 weeks
+  // and one bowl slate where the NFL is 18 and five rounds. Empty weeks
+  // (playoffs not yet scheduled) simply return no events.
+  const sweep = deskSweep(sport)
   const targets: { seasonType: number; week: number }[] = []
   if (body.seasonType && body.week) {
     targets.push({ seasonType: Number(body.seasonType), week: Number(body.week) })
   } else {
-    for (let w = 1; w <= 18; w++) targets.push({ seasonType: 2, week: w })
-    for (let w = 1; w <= 5; w++) targets.push({ seasonType: 3, week: w })
+    for (let w = 1; w <= sweep.regular; w++) targets.push({ seasonType: 2, week: w })
+    for (let w = 1; w <= sweep.post; w++) targets.push({ seasonType: 3, week: w })
   }
 
   const parsed: ParsedGame[] = []
@@ -117,7 +120,7 @@ export async function POST(req: Request) {
     .filter(g => !existing.has(g.espn_event_id))
     .map(g => pick(g, writeCols, {
       espn_event_id: g.espn_event_id,
-      slug: buildGameSlug(g.season, g.season_type, g.week, g.away_abbrev, g.home_abbrev),
+      slug: buildGameSlug(g.sport, g.season, g.season_type, g.week, g.away_abbrev, g.home_abbrev),
       is_published: publishNew,
       ...(withDesk ? { odds_updated_at: now } : {}),
     }))
