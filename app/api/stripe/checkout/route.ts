@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { OFFER_SKUS, skuByPriceId } from '@/lib/offer'
 import { TIER_RANK, normalizeTier } from '@/lib/access'
+import { siteUrl } from '@/lib/site-url'
 
 /** Derived from the catalog so it can never drift from what /win renders. */
 const ALLOWED_PRICES = new Set(OFFER_SKUS.map(s => s.priceId).filter(Boolean))
@@ -106,8 +107,8 @@ export async function POST(req: Request) {
     ...(sku.mode === 'subscription'
       ? { subscription_data: { metadata: { userId: user.id, tier: sku.tier, period: sku.period } } }
       : {}),
-    success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/account?success=1`,
-    cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/win?canceled=1`,
+    success_url: `${siteUrl()}/account?success=1`,
+    cancel_url: `${siteUrl()}/win?canceled=1`,
     metadata: { userId: user.id, priceId, tier: sku.tier, period: sku.period, ...attr },
     allow_promotion_codes: true,
   })

@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { safeNext } from '@/lib/safe-redirect'
+import { siteUrl } from '@/lib/site-url'
 
 export async function login(formData: FormData) {
   const supabase = await createClient()
@@ -40,7 +41,7 @@ export async function signup(formData: FormData) {
     email: formData.get('email') as string,
     password,
     options: {
-      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'}/auth/callback?next=${encodeURIComponent(next)}`,
+      emailRedirectTo: `${siteUrl()}/auth/callback?next=${encodeURIComponent(next)}`,
     },
   })
 
@@ -58,7 +59,7 @@ export async function loginWithGoogle() {
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'}/auth/callback`,
+      redirectTo: `${siteUrl()}/auth/callback`,
     },
   })
 
@@ -81,7 +82,7 @@ export async function forgotPassword(formData: FormData) {
   const email = formData.get('email') as string
 
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'}/auth/callback?next=/reset-password`,
+    redirectTo: `${siteUrl()}/auth/callback?next=/reset-password`,
   })
 
   if (error) {

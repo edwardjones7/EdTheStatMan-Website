@@ -416,41 +416,75 @@ const REGISTRY: Record<string, ToolSpec> = {
     build: (ctx) => tool({
       description:
         'Find INDIVIDUAL systems and trends and show them. Returns rows, one per rule, each ' +
-        'with its own record. Filter by sport, team, bet type or minimum sample size and ' +
-        'sort by win rate. Use for "which NFL road underdog systems have the best record". ' +
-        'Do not use to total or average across many rows. ' + 'An empty result is a FINAL ANSWER -- report that nothing matched. Do not retry with different arguments and do not try another tool.',
+        'with its own record. Filter by sport, team, free text, or minimum sample size, and ' +
+        'sort by win rate, sample size or units. Use for "which NFL road underdog systems ' +
+        'have the best record". Do not use to total or average across many rows. ' +
+        'An empty result is a FINAL ANSWER -- report that nothing matched. Do not retry with different arguments and do not try another tool.',
       inputSchema: z.object({
         kind: z.enum(['systems', 'trends', 'both']).default('both'),
         sport: z.string().optional(),
         team: z.string().optional().describe('Team name or abbreviation to filter on.'),
-        line: z.string().optional().describe('Bet type, e.g. "ATS", "O/U", "ML".'),
+        text: z.string().optional().describe(
+          'Words that must appear in the rule itself, e.g. "road underdog", "days of rest", ' +
+          '"off an ATS loss". This searches the rule text.'
+        ),
         minGames: z.number().int().min(0).optional().describe('Minimum W+L+T sample size.'),
-        minWinPct: z.number().min(0).max(1).optional().describe('Minimum win rate, 0-1.'),
+        minWinPct: z.number().min(0).max(1).optional().describe(
+          'Minimum win rate as a fraction, e.g. 0.6 for 60%.'
+        ),
+        sortBy: z.enum(['winPct', 'games', 'units']).default('winPct'),
+        direction: z.enum(['asc', 'desc']).default('desc'),
         limit: z.number().int().min(1).max(50).default(15),
       }),
-      execute: async ({ kind, sport, team, line, minGames, minWinPct, limit }) => {
+      execute: async ({ kind, sport, team, text, minGames, minWinPct, sortBy, direction, limit }) => {
         const admin = createAdminClient() as any
         const out: any[] = []
+        // A model asked for "60%+" emits 60, not 0.6, often enough to be worth
+        // one line here rather than a wrong answer that looks right.
+        const wantPct = minWinPct !== undefined && minWinPct > 1 ? minWinPct / 100 : minWinPct
+
         for (const table of tablesFor(kind)) {
           let q = admin.from(table).select('*').eq('is_active', true)
           if (sport) q = q.eq('sport', sport)
-          if (line) q = q.eq('line', line)
           if (team) q = q.ilike('team', `%${team}%`)
-          const { data } = await q
+          // The rule text is the product, and until now this tool -- the one
+          // actually named "search" -- could not look inside it at all.
+          // % and _ are LIKE wildcards, so they are stripped rather than
+          // escaped: a search for "50%" becomes "50", which still matches, and
+          // no escape syntax has to survive PostgREST's URL encoding.
+          if (text) {
+            const needle = text.replace(/[%_]/g, '').trim()
+            if (needle) q = q.ilike('description', `%${needle}%`)
+          }
+          // pct is real data today, so this predicate belongs in Postgres.
+          if (wantPct !== undefined) q = q.gte('pct', wantPct)
+
+          // OVER-FETCH, deliberately. Tier filtering happens below in Node, so
+          // ordering and slicing in SQL would let a page of Institutional rows
+          // consume the whole limit and hand a Private member three results out
+          // of fifty. Fetching a multiple and slicing after the filter also
+          // bounds us well inside PostgREST's 1000-row default, which no tool
+          // in this file previously guarded against.
+          const { data } = await q.limit(Math.min(limit * 10, 500))
+
           for (const r of visibleRows((data ?? []) as any[], ctx.tier, 'private')) {
             const games = (r.w ?? 0) + (r.l ?? 0) + (r.t ?? 0)
             if (minGames && games < minGames) continue
-            if (minWinPct && (r.pct ?? 0) < minWinPct) continue
             out.push({
               kind: table === 'betting_systems' ? 'system' : 'trend',
               sport: r.sport, team: r.team, description: r.description,
-              line: r.line, type: r.type, season: r.season,
+              season: r.season,
               record: `${r.w ?? 0}-${r.l ?? 0}${r.t ? `-${r.t}` : ''}`,
               games, winPct: r.pct, units: r.units,
             })
           }
         }
-        out.sort((a, b) => (b.winPct ?? 0) - (a.winPct ?? 0) || b.games - a.games)
+
+        const dir = direction === 'asc' ? -1 : 1
+        const key = (x: any) =>
+          sortBy === 'games' ? x.games : sortBy === 'units' ? (x.units ?? 0) : (x.winPct ?? 0)
+        out.sort((a, b) => dir * (key(b) - key(a)) || b.games - a.games)
+
         return { count: out.length, results: out.slice(0, limit) }
       },
     }),
@@ -565,7 +599,12 @@ const REGISTRY: Record<string, ToolSpec> = {
           if (a.type) q = q.eq('type', a.type)
           if (a.season) q = q.eq('season', a.season)
           if (a.team) q = q.ilike('team', `%${a.team}%`)
-          if (a.contains) q = q.ilike('description', `%${a.contains}%`)
+          // Same wildcard strip as search_vault: an unescaped % here would
+          // silently widen the match to the whole table.
+          if (a.contains) {
+            const needle = String(a.contains).replace(/[%_]/g, '').trim()
+            if (needle) q = q.ilike('description', `%${needle}%`)
+          }
           const { data } = await q
 
           for (const r of visibleRows((data ?? []) as any[], ctx.tier, 'private')) {
@@ -649,15 +688,24 @@ function argKey(args: unknown): string {
   )
 }
 
-/** Every "nothing found" shape the tools in this file can return. */
+/**
+ * Every "nothing found" shape the tools in this file can return.
+ *
+ * A result is empty only when EVERY array it carries is empty. The previous
+ * version returned on the first array-valued key it found, and 'systems'
+ * precedes 'trends' in the list -- so game_research returning no systems but
+ * five trends was stamped empty:true along with "Do not search again", and a
+ * paying Desk member was told nothing applied to their game while five trends
+ * sat in the same object.
+ */
 function isEmptyResult(r: any): boolean {
   if (r == null) return true
   if (Array.isArray(r)) return r.length === 0
   if (typeof r !== 'object') return false
-  for (const k of ['results', 'groups', 'picks', 'games', 'systems', 'trends']) {
-    if (Array.isArray(r[k])) return r[k].length === 0
-  }
-  return false
+  const present = ['results', 'groups', 'picks', 'games', 'systems', 'trends']
+    .filter(k => Array.isArray(r[k]))
+  if (present.length === 0) return false
+  return present.every(k => r[k].length === 0)
 }
 
 /**
@@ -689,7 +737,12 @@ function withLedger(name: string, built: any, ledger: Map<string, any>): any {
       return {
         ...cached,
         repeatCall: true,
-        note:
+        // agentNote, never `note`: several tools carry their own `note` that is
+        // load-bearing -- export_vault's "capped at 2000 rows" truncation
+        // warning and week_schedule's "no schedule loaded for this sport yet".
+        // Overwriting it made the model report a complete export that was
+        // actually truncated.
+        agentNote:
           `You already called ${name} with these exact arguments. This is that same ` +
           'result. Calling it again cannot produce anything new -- answer now.',
       }
@@ -702,7 +755,7 @@ function withLedger(name: string, built: any, ledger: Map<string, any>): any {
       result = {
         ...base,
         empty: true,
-        note:
+        agentNote:
           'Nothing matches. That is a complete and correct answer, not a failure. ' +
           'Tell the user nothing matched, and name the filter that looks too narrow ' +
           'if one does. Do not search again.',
