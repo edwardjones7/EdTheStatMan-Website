@@ -103,7 +103,19 @@ async function recompute(admin: any, userId: string) {
 }
 
 async function recordPurchase(admin: any, row: Record<string, unknown>, conflictKey: string) {
-  await admin.from('purchases').upsert(row, { onConflict: conflictKey, ignoreDuplicates: true })
+  const { error } = await admin
+    .from('purchases').upsert(row, { onConflict: conflictKey, ignoreDuplicates: true })
+  // NEVER swallow this. The ledger is the only record of revenue, and a failure
+  // here does not affect entitlement -- the member keeps the access they paid
+  // for -- so nothing else in the system will ever notice. A partial unique
+  // index on stripe_invoice_id made every subscription cycle fail with 42P10
+  // for exactly as long as this function ignored the result.
+  if (error) {
+    console.error(
+      `[stripe-webhook] PURCHASE LEDGER WRITE FAILED (${error.code}): ${error.message} ` +
+      `-- row ${JSON.stringify(row)}`
+    )
+  }
 }
 
 export async function POST(req: Request) {

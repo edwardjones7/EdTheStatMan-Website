@@ -87,8 +87,13 @@ ALTER TABLE public.stripe_events ENABLE ROW LEVEL SECURITY;
 -- and legacy values for old rows; normalizeTier() in lib/access.ts reads both.
 ALTER TABLE public.purchases ADD COLUMN IF NOT EXISTS kind text; -- 'pass' | 'subscription_cycle'
 ALTER TABLE public.purchases ADD COLUMN IF NOT EXISTS stripe_invoice_id text;
+-- NOT partial. `ON CONFLICT (stripe_invoice_id)` cannot infer a partial index
+-- unless the statement repeats the predicate, which PostgREST never emits, so a
+-- WHERE clause here breaks every subscription-cycle upsert with 42P10. A plain
+-- unique index already allows many NULLs. See tier_ladder_07, which repairs
+-- databases that took the original version.
 CREATE UNIQUE INDEX IF NOT EXISTS purchases_stripe_invoice_id_key
-  ON public.purchases(stripe_invoice_id) WHERE stripe_invoice_id IS NOT NULL;
+  ON public.purchases(stripe_invoice_id);
 -- Subscription cycles arrive as invoices and have no checkout session id.
 ALTER TABLE public.purchases ALTER COLUMN stripe_session_id DROP NOT NULL;
 

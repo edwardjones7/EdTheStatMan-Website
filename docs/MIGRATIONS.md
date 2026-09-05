@@ -43,6 +43,7 @@ means there is no way to prove afterwards that nobody's access changed.
 | 4 | `tier_ladder_04_rls_realign.sql` | **Recreates the `posts` policies dropped in steps 1 and 2** |
 | 5 | `tier_ladder_05_migrate_users.sql` | Moves existing paying members into the pass slot |
 | 6 | `tier_ladder_06_desk_games.sql` | `nfl_games` sport columns + `desk_notes` |
+| 7 | `tier_ladder_07_purchases_invoice_unique.sql` | Repairs the partial unique index that made EVERY subscription-cycle ledger write fail with 42P10. Independent of 1-6. **Required before taking a subscription payment.** |
 | ~~7~~ | `ai_usage_01_quota.sql` (two pastes) | EdTheStatBot per-member daily quota — **on `ed-the-statbot`, already applied in prod** |
 | ~~8~~ | `ai_usage_02_anon_and_threads.sql` (two pastes) | Anonymous quota + conversation persistence — **same** |
 
