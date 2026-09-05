@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { buildGameSlug } from '@/lib/nfl'
-import { fetchWeek, type ParsedGame } from '@/lib/espn'
+import { fetchWeek, fetchEventOdds, hasOdds, protectStoredOdds, ODDS_COLS, type ParsedGame } from '@/lib/espn'
 import { deskSweep } from '@/lib/desk'
 
 async function assertAdmin() {
@@ -35,9 +35,6 @@ const DESK_COLS = [
   'venue_name', 'venue_city', 'venue_state', 'venue_indoor',
   'broadcast', 'home_record', 'away_record',
 ] as const
-
-/** Opening lines are captured once and never moved -- that IS the movement. */
-const OPEN_COLS = ['spread_open', 'total_open', 'ml_home_open', 'ml_away_open'] as const
 
 async function hasDeskColumns(admin: any): Promise<boolean> {
   const { error } = await admin.from('nfl_games').select('spread_open').limit(1)
@@ -101,13 +98,64 @@ export async function POST(req: Request) {
 
   const { data: existingRows, error: readError } = await admin
     .from('nfl_games')
-    .select(withDesk ? `espn_event_id, ${OPEN_COLS.join(', ')}` : 'espn_event_id')
+    .select(withDesk ? `espn_event_id, status, ${ODDS_COLS.join(', ')}` : 'espn_event_id, status')
     .in('espn_event_id', parsed.map(g => g.espn_event_id))
   if (readError) return NextResponse.json({ error: readError.message }, { status: 500 })
 
   const existing = new Map<string, any>(
     (existingRows ?? []).map((r: any) => [r.espn_event_id, r])
   )
+
+  // ---- Fill in prices the schedule feed will not give us -------------------
+  // The week sweep returns no odds at all for a game that has kicked off, so
+  // without this a live or finished game shows no line and its close is never
+  // captured. Those prices are still published per event, one request each,
+  // which is why this is a targeted second pass rather than part of the sweep.
+  //
+  // Two cases need a price fetched, and the second is easy to miss. A game we
+  // hold no current line for, obviously. But also a game that has just kicked
+  // off for the first time: what we stored is whatever the line was at the last
+  // sync before kickoff, which is an approximation of the close. This is the one
+  // moment the real one can be read, so take it. `prior.status` being `pre`
+  // while ESPN now says otherwise is exactly "this is the first sync since it
+  // started", so each game is fetched once and no more.
+  //
+  // Games that have left `pre` go first, because for them the closing line is
+  // otherwise gone for good, where an unpriced upcoming game just gets its
+  // price on a later sync.
+  const needsOdds = parsed
+    .filter(g => {
+      if (!withDesk || hasOdds(g)) return false
+      const prior = existing.get(g.espn_event_id)
+      if (!prior) return true
+      const noLine = prior.spread_current === null || prior.spread_current === undefined
+      const justStarted = g.status !== 'pre' && prior.status === 'pre'
+      return noLine || justStarted
+    })
+    .sort((a, b) => Number(a.status === 'pre') - Number(b.status === 'pre'))
+
+  // A full college season is ~1,400 games, so a first run is capped rather than
+  // holding the request open for all of them. The response says what is left;
+  // running the sync again picks up where this stopped.
+  const ODDS_FILL_CAP = 400
+  const ODDS_FILL_CONCURRENCY = 8
+  const fillQueue = needsOdds.slice(0, ODDS_FILL_CAP)
+  const oddsPending = needsOdds.length - fillQueue.length
+
+  let oddsFilled = 0
+  if (fillQueue.length > 0) {
+    const queue = [...fillQueue]
+    await Promise.all(
+      Array.from({ length: Math.min(ODDS_FILL_CONCURRENCY, queue.length) }, async () => {
+        for (let g = queue.shift(); g; g = queue.shift()) {
+          const odds = await fetchEventOdds(sport, g.espn_event_id, g.home_abbrev, g.away_abbrev)
+          if (!odds) continue
+          Object.assign(g, odds)
+          oddsFilled++
+        }
+      })
+    )
+  }
 
   const now = new Date().toISOString()
 
@@ -149,16 +197,10 @@ export async function POST(req: Request) {
     const prior = existing.get(g.espn_event_id)
     if (!prior) continue
 
-    const patch = pick(g, writeCols, withDesk ? { odds_updated_at: now } : {})
-
-    if (withDesk) {
-      // An opening line is captured the first time we see it and then left
-      // alone forever -- overwriting it every sync would erase the movement,
-      // which is the entire point of storing both numbers.
-      for (const col of OPEN_COLS) {
-        if (prior[col] !== null && prior[col] !== undefined) delete patch[col]
-      }
-    }
+    const carriesOdds = hasOdds(g)
+    const raw = pick(g, writeCols, withDesk && carriesOdds ? { odds_updated_at: now } : {})
+    // Never let ESPN's silence after kickoff erase a price we already hold.
+    const patch = withDesk ? protectStoredOdds(raw, prior) : raw
 
     const { error } = await admin.from('nfl_games').update(patch).eq('espn_event_id', g.espn_event_id)
     if (error) failed.push(`update ${g.espn_event_id}: ${error.message}`)
@@ -170,6 +212,8 @@ export async function POST(req: Request) {
     updated,
     failed,
     published: publishNew,
+    oddsFilled,
+    oddsPending,
     source: [...sources].join(',') || 'none',
     odds: withDesk ? 'on' : 'pending tier_ladder_06_desk_games.sql',
   })

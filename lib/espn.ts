@@ -198,6 +198,129 @@ function eventsFromSiteApi(json: any): any[] {
   return json?.events ?? []
 }
 
+/** Opening lines are captured once and never moved -- that IS the movement. */
+export const OPEN_COLS = ['spread_open', 'total_open', 'ml_home_open', 'ml_away_open'] as const
+
+/** Every column carrying a price. */
+export const ODDS_COLS = [
+  ...OPEN_COLS,
+  'spread_current', 'spread_favorite',
+  'total_current', 'ml_home_current', 'ml_away_current',
+  'odds_provider',
+] as const
+
+/** True when ESPN actually sent a price for this game. */
+export function hasOdds(game: Partial<ParsedOdds>): boolean {
+  return ODDS_COLS.some(c => (game as any)[c] !== null && (game as any)[c] !== undefined)
+}
+
+/**
+ * Strip from an update patch any odds column that must not be written, given
+ * what the row already holds. Two rules, both about never losing a price:
+ *
+ *   1. An opening line is frozen once captured. Overwriting it each sync would
+ *      erase the movement, which is the entire point of storing both numbers.
+ *
+ *   2. No stored line is ever overwritten with nothing. ESPN drops the whole
+ *      `odds` object the moment a game leaves `pre` -- verified 2026-09-05
+ *      across live and completed slates in both leagues: 0 of 57 in-progress or
+ *      final college games carried a price, and 0 of 14 final NFL games. The
+ *      last number seen before kickoff IS the closing line, the one every ATS
+ *      result is computed from, so writing that absence back would destroy it
+ *      permanently on the first sync after kickoff -- on exactly the games
+ *      people are watching. An absent price is missing data, not a price.
+ *
+ * Returns a new patch; the input is not modified.
+ */
+export function protectStoredOdds(
+  patch: Record<string, unknown>,
+  prior: Record<string, unknown>
+): Record<string, unknown> {
+  const out = { ...patch }
+  for (const col of ODDS_COLS) {
+    const stored = prior[col] !== null && prior[col] !== undefined
+    if (!stored) continue
+    const frozen = (OPEN_COLS as readonly string[]).includes(col)
+    const erasing = out[col] === null || out[col] === undefined
+    if (frozen || erasing) delete out[col]
+  }
+  return out
+}
+
+const CORE = 'https://sports.core.api.espn.com/v2/sports'
+
+/**
+ * Opening and closing prices for ONE event, from the per-event core API.
+ *
+ * This exists because the schedule feed stops carrying prices. `cdn.espn.com`
+ * returns the full odds block for a game in `pre` and drops it entirely the
+ * moment the game kicks off -- verified 2026-09-05: of 57 in-progress or final
+ * college games and 14 final NFL games, not one carried a price. The schedule
+ * is therefore useless for the closing line, which is the number every ATS
+ * result is computed from.
+ *
+ * The prices are still published, per event rather than per week, which is why
+ * this is one request per game and not part of the week sweep. Confirmed to
+ * carry spread, total AND both moneylines for a completed NFL game and for a
+ * college game that was in progress at the time.
+ *
+ * Provider choice is not `items[0]`: the "Live Odds" provider on the same
+ * payload carries open and current but NO close, so taking the first item
+ * silently loses the closing number on some games. Prefer whoever actually has
+ * a close block. Same rule the history backfill script arrived at.
+ */
+export async function fetchEventOdds(
+  sport: string,
+  eventId: string,
+  homeAbbrev: string,
+  awayAbbrev: string
+): Promise<ParsedOdds | null> {
+  // The core API nests the league one level deeper than the other two hosts:
+  // /sports/football/leagues/nfl, where LEAGUE_PATH holds "football/nfl".
+  const [group, leagueSlug] = (LEAGUE_PATH[sport] ?? LEAGUE_PATH.nfl).split('/')
+  const url = `${CORE}/${group}/leagues/${leagueSlug}/events/${eventId}/competitions/${eventId}/odds`
+  const headers = { 'User-Agent': 'Mozilla/5.0 (compatible; EdTheStatMan/1.0)', Accept: 'application/json' }
+
+  let items: any[] = []
+  try {
+    const res = await fetch(url, { cache: 'no-store', headers })
+    if (!res.ok) return null
+    const json = await res.json()
+    items = json?.items ?? []
+  } catch {
+    return null
+  }
+  if (items.length === 0) return null
+
+  const it = items.find((x: any) => x?.homeTeamOdds?.close?.pointSpread) ?? items[0]
+  const home = it?.homeTeamOdds ?? {}
+  const away = it?.awayTeamOdds ?? {}
+
+  const spreadOpen = num(home?.open?.pointSpread?.alternateDisplayValue)
+  const spreadCurrent = num(home?.close?.pointSpread?.alternateDisplayValue)
+
+  // Home-relative, same convention as the schedule feed: negative means the
+  // home side is laying the points.
+  const favSource = spreadCurrent ?? spreadOpen
+  const favorite = favSource === null || favSource === 0
+    ? null
+    : favSource < 0 ? homeAbbrev : awayAbbrev
+
+  const odds: ParsedOdds = {
+    spread_open: spreadOpen,
+    spread_current: spreadCurrent,
+    spread_favorite: favorite,
+    total_open: num(it?.open?.total?.alternateDisplayValue),
+    total_current: num(it?.close?.total?.alternateDisplayValue),
+    ml_home_open: int(home?.open?.moneyLine?.alternateDisplayValue),
+    ml_home_current: int(home?.close?.moneyLine?.alternateDisplayValue),
+    ml_away_open: int(away?.open?.moneyLine?.alternateDisplayValue),
+    ml_away_current: int(away?.close?.moneyLine?.alternateDisplayValue),
+    odds_provider: it?.provider?.name ?? null,
+  }
+  return hasOdds(odds) ? odds : null
+}
+
 export interface WeekResult {
   games: ParsedGame[]
   source: 'cdn' | 'site-api' | 'none'
