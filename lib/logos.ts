@@ -14,14 +14,19 @@
 //
 // All 32 paths were verified against the CDN (200, image/png) on 2026-09-03.
 //
+// CFB works differently and is handled separately: ESPN keys college logos by
+// numeric team id rather than by abbreviation, so lib/logos-cfb.ts carries a
+// generated abbrev->id table. It is safe to key that table on the abbreviation
+// because a full-season sweep found zero collisions across 243 programs.
+//
 // NOT SUPPORTED, deliberately:
-//   - CFB. ESPN keys college logos by numeric team id, not abbreviation, so it
-//     needs a ~130-row name->id table plus upkeep as pick text varies.
 //   - CFL / WNBA / CBB. Not on this CDN path at all.
 //   - todays_bets. That table has no team column; the pick is free text in
 //     `bet` with `opponent` alongside, so there is nothing reliable to key on.
 // Each of those renders the typographic mark instead, which is why the fallback
 // is the common path rather than an error case.
+
+import { CFB_TEAM_IDS } from './logos-cfb'
 
 /** ESPN's NFL abbreviations. The sync writes these verbatim. */
 const NFL_ABBREVS = new Set([
@@ -46,15 +51,20 @@ const LOGO_SPORTS: Record<string, Set<string>> = {
  */
 export function teamLogoUrl(sport: string, abbrev: string | null | undefined): string | null {
   if (!abbrev) return null
-  const known = LOGO_SPORTS[sport?.toLowerCase() ?? '']
-  if (!known) return null
-
+  const league = sport?.toLowerCase() ?? ''
   const key = abbrev.trim().toUpperCase()
-  if (!known.has(key)) return null
 
   // 500px is the smallest square ESPN publishes that still looks right on a
   // 2x display at the ~28-40px we render it.
-  return `https://a.espncdn.com/i/teamlogos/${sport.toLowerCase().startsWith('nfl') ? 'nfl' : sport.toLowerCase()}/500/${key.toLowerCase()}.png`
+  if (league === 'cfb') {
+    const id = CFB_TEAM_IDS[key]
+    return id ? `https://a.espncdn.com/i/teamlogos/ncaa/500/${id}.png` : null
+  }
+
+  // Every other supported league puts the abbreviation straight in the path.
+  const known = LOGO_SPORTS[league]
+  if (!known || !known.has(key)) return null
+  return `https://a.espncdn.com/i/teamlogos/nfl/500/${key.toLowerCase()}.png`
 }
 
 /** True when this team will render as a logo rather than as type. */
