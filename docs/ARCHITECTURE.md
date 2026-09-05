@@ -100,7 +100,7 @@ Everything else admin-facing is edited **inline on the public pages**, not under
 
 **Public / semi-public**: `POST /api/track`, `POST /api/contact`, `POST|DELETE /api/push/subscribe`, `GET|POST /api/notifications/unsubscribe` (token-based, no session required, so a logged-out click still works).
 
-**EdTheStatBot**: `POST /api/statbot` — the only streaming route in the app, and the only one with a rate limit. See §8b.
+**EdTheStatBot**: not in this build. The route, its tools and its quota are parked on the `ed-the-statbot` branch. See §8b.
 
 > [!WARNING]
 > `GET /api/admin/content` has **no admin check** and returns all site content to any caller. The `PATCH` on the same route is guarded. Low severity — the content is rendered publicly anyway — but it is not the intent of the file.
@@ -307,50 +307,28 @@ Steps 01 and 02 drop the two `posts` RLS policies, because Postgres refuses `ALT
 
 `paidDefault` differs per table because the legacy defaults differ: systems and trends default `is_free = false` and belong to Private; `todays_bets` defaults `is_free = true` and belongs to the Portfolio.
 
-## 8b. EdTheStatBot
+## 8b. EdTheStatBot — parked
 
-A tool-calling AI analyst, mounted site-wide from `app/layout.tsx` via `components/StatBotMount.tsx`, streaming from `POST /api/statbot`. AI SDK v7, Node runtime under Fluid Compute (`maxDuration = 60`), model addressed as a plain `"provider/model"` gateway string so credentials stay in the gateway and a model swap is one line.
+**Not part of the MVP.** The bot was cut from `v3-tier-ladder` so the ladder could
+ship on its own, and lives in full on the **`ed-the-statbot`** branch: `app/api/statbot/`,
+`lib/ai/*` (tools, quota, thread, model, markdown, page-context), `components/StatBot*.tsx`,
+the `ai_usage_*` migrations, and this section of the document with its tool-by-rung table
+and its design notes. Read it there before rebuilding any of it.
 
-### The gate is the registry, not the prompt
+What stays behind on this branch:
 
-`lib/ai/tools.ts` holds a `REGISTRY` mapping each tool to the rung required to *see* it. `buildToolset(ctx)` omits every tool above the caller's rung, so the model is never told they exist and cannot be argued into calling one. The file states the rule outright: *a prompt instruction not to reveal Institutional data is not a gate.*
+- `components/StatBotPreview.tsx` — the homepage teaser, and it is **only** a teaser now.
+  Its composer is inert and labelled "Coming soon"; on the bot branch the same input
+  dispatches a `statbot:ask` event that the mounted panel answers.
+- `components/StatBotAvatar.tsx` — his portrait, which the teaser draws.
+- `lib/gate.ts` and `lib/access-server.ts` — the bot leaned on both, but the Vault,
+  Desk and Portfolio pages are the primary callers and always were.
 
-Defence in depth, because `betting_systems`, `betting_trends` and `todays_bets` are `FOR SELECT USING (true)` at the RLS layer and every tool reads through the service-role client — **the application filter is the only real gate.** So every tool independently re-filters its rows with `visibleRows(rows, ctx.tier, paidDefault)`, which routes through `rowMinTier()` and therefore works both before and after `tier_ladder_02` is applied.
-
-### Tools by rung
-
-| Tool | Rung | What it reaches |
-|---|---|---|
-| `explain_membership` | retail | The offer catalogue. No database. |
-| `performance_summary` | retail | Public graded top-line record. |
-| `current_picks` | portfolio | The live slate, filtered at `portfolio`. |
-| `pick_history` | portfolio | Graded history with record roll-up. |
-| `week_schedule` | desk | Schedule, spread/total, open vs current. |
-| `game_research` | desk | Curated systems and trends for one matchup. |
-| `desk_note` | desk | `desk_notes`, honouring that table's own `min_tier`. |
-| `game_writeup` | private | `nfl_games.writeup_html`. Re-checks the rung internally. |
-| `search_vault` | private | The whole library, filter and sort. |
-| `vault_aggregate` | institutional | Group-by summaries. |
-| `query_vault` | institutional | Query builder: filter, group, having, sort. |
-| `export_vault` | institutional | Raw row-level CSV. |
-
-**Institutional tools still filter rows at `private`.** The top two rungs differ on capability, not row count. `export_vault` and `query_vault` see exactly the rows `search_vault` sees; they buy new verbs over the same data.
-
-`export_vault` projects from an explicit `EXPORT_COLUMNS` list, never from the row. The queries behind it are `select('*')`, so deriving columns from the data would silently export every column these tables gain later.
-
-### Quota
-
-The only cost ceiling. `lib/ai/quota.ts` + `supabase/migrations/ai_usage_01_quota.sql`. Daily message caps per rung — retail 10, portfolio 40, desk 100, private 250, institutional 500 — claimed **before** the model call, so a stream that fails halfway has still spent its message and a failing loop is not free. Admins bypass.
-
-`consume_ai_quota()` increments and tests the limit in one `INSERT ... ON CONFLICT`. A read-then-write would let two concurrent requests both see `limit - 1` and both pass, and streaming responses make concurrent requests from one person the normal case. The day key is the New York date, matching the analytics convention.
-
-**It fails open.** If the RPC errors — most likely because the migration has not been hand-applied yet — the message is allowed and the failure logged. Refusing paying members over an outstanding migration is the worse failure. The log line is the signal.
-
-Model is tiered by rung: Sonnet for retail and portfolio, Opus for desk and above. Retail is free and mostly asks "what do I get", which `explain_membership` answers from a static catalogue.
-
-### Not built
-
-The backtester and the API key, both sold on the Institutional card in `lib/offer.ts`. There is no z-factor column and no per-game result rows, so an honest backtester needs data the schema does not yet hold.
+What comes back with him: the `ai`, `@ai-sdk/google`, `@ai-sdk/react` and `zod`
+dependencies (all four arrived with the bot and left with him), the `AI_GATEWAY_API_KEY` /
+`GOOGLE_GENERATIVE_AI_API_KEY` environment variables, and the `ai_usage`, `ai_usage_anon`
+and `ai_threads` tables — **which are already applied in production** and simply sit unused
+while he is parked. Nothing needs to be un-migrated.
 
 ## 9. Content domains
 
@@ -428,7 +406,7 @@ No `.env.example` exists. This table is it.
 | `SUPABASE_SERVICE_ROLE_KEY` | `lib/supabase/admin.ts`, all scripts |
 | `STRIPE_SECRET_KEY` | `lib/stripe.ts` |
 | `STRIPE_WEBHOOK_SECRET` | the webhook route |
-| `AI_GATEWAY_API_KEY` | EdTheStatBot, via the Vercel AI Gateway. **Required in production.** Locally, `next dev` falls back to `VERCEL_OIDC_TOKEN` if one is present and fresh, which is why a missing key fails opaquely rather than loudly. |
+| `AI_GATEWAY_API_KEY` | **Unused in this build** — EdTheStatBot is parked on `ed-the-statbot` (§8b). Required again only when he returns. |
 | `RESEND_API_KEY` | contact form + pick email |
 | `RESEND_BATCH_LIMIT` | test-only; leave unset in production |
 | `ANALYTICS_SALT` | `hashVisitor()` |
@@ -486,8 +464,8 @@ Existing members hold one-time passes, so there is no recurring price to freeze 
 - **`GET /api/admin/content` has no admin check.**
 - **`site_content` has no migration** and `add_vig_to_todays_bets.sql` is empty. The repo cannot rebuild the database.
 - **ESPN host migration is done in `lib/espn.ts` but the NFL section is mid-rewrite.** `site.api.espn.com` began returning 403 (probed 2026-08-31: `cdn.espn.com`, `sports.core.api.espn.com` and `example.com` all returned 200 from the same machine, so it is not connectivity). `cdn.espn.com` is now primary with `site.api` kept as fallback, and it returns *more* than the old host did: spread, moneyline and total with **both open and close** prices, which removes the need for a paid odds vendor. `/nfl` is being generalised to `/desk/[sport]`, backed by `tier_ladder_06_desk_games.sql` — which is independent of steps 01-05 and can be applied any time, since all its columns are nullable and read defensively.
-- **Four components have zero importers**: `AdminContentTab`, `AdminEditOverlay`, `SystemsOverview`, `ActionCard`. `AdminSystemsTab` and `AdminTrendsTab` are imported only for their types. (`StatBotPreview` was dead too; it is now rendered on the homepage and its input opens EdTheStatBot.)
-- **EdTheStatBot's Institutional card still oversells.** `lib/offer.ts` promises a backtester and an API key; neither exists. Export and the query builder now do.
+- **Four components have zero importers**: `AdminContentTab`, `AdminEditOverlay`, `SystemsOverview`, `ActionCard`. `AdminSystemsTab` and `AdminTrendsTab` are imported only for their types. (`StatBotPreview` was dead too; it is now rendered on the homepage, as a mockup — the bot it previews is parked, §8b.)
+- **The Institutional card still oversells.** `lib/offer.ts` promises a backtester and an API key; neither exists, and with EdTheStatBot parked (§8b) the export and query-builder tools that did exist are not in this build either.
 - **No tests, anywhere.** `npx tsc --noEmit` is the only automated check, and it currently passes on application code (the only errors are stale `.next/types/**` artifacts, which clear on the next build).
 - **A checked-in `.git-elenos-backup/` directory** is tracked in git and should not be.
 

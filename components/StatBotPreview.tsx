@@ -1,30 +1,18 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import type { StatBotContent } from '@/lib/site-content'
 import EditableText from './EditableText'
 import StatBotAvatar from './StatBotAvatar'
 
-/**
- * Asks the real bot. StatBot is mounted separately in the root layout, so this
- * hands the question over by event rather than by lifting shared state through
- * the whole page.
+/*
+ * Marketing teaser only. EdTheStatBot himself is parked on the `ed-the-statbot`
+ * branch and is not part of the MVP, so this panel is a mockup: the composer is
+ * inert and says so, rather than dispatching a `statbot:ask` event that nothing
+ * in this build is listening for.
  *
- * The bot now mounts for signed-out visitors too, so the acknowledgement below
- * normally arrives and the question is answered in the panel. The /signup
- * fallback survives for the one case that still has no listener: a click landing
- * in the window before StatBot has hydrated.
+ * When the bot comes back, that branch restores the live wiring here.
  */
-function askStatBot(text: string): boolean {
-  const value = text.trim()
-  if (!value) return false
-  const event = new CustomEvent('statbot:ask', { detail: { text: value }, cancelable: true })
-  window.dispatchEvent(event)
-  // StatBot calls preventDefault() to acknowledge. No listener means no bot.
-  return event.defaultPrevented
-}
 
 interface Props {
   content: StatBotContent
@@ -35,15 +23,6 @@ interface Props {
 
 export default function StatBotPreview({ content, editMode, onEdit, resetKey = 0 }: Props) {
   const ed = editMode && onEdit
-  const [question, setQuestion] = useState('')
-  const router = useRouter()
-
-  function ask(e: React.FormEvent) {
-    e.preventDefault()
-    if (!question.trim()) return
-    if (askStatBot(question)) setQuestion('')
-    else router.push('/signup?next=/')
-  }
 
   function patchBullet(i: number, v: string) {
     if (!onEdit) return
@@ -97,7 +76,7 @@ export default function StatBotPreview({ content, editMode, onEdit, resetKey = 0
               <StatBotAvatar size={36} />
               <div>
                 <div className="statbot-chat__name">EdTheStatBot</div>
-                <div className="statbot-chat__status">&#9679; Online</div>
+                <div className="statbot-chat__status">&#9679; Coming soon</div>
               </div>
             </div>
             {/* Illustrative, not a transcript. These are the SHAPES of question
@@ -121,16 +100,10 @@ export default function StatBotPreview({ content, editMode, onEdit, resetKey = 0
                 membership does. What I can reach depends on your rung.
               </div>
             </div>
-            <form className="statbot-chat__input" onSubmit={ask}>
-              <input
-                type="text"
-                value={question}
-                onChange={e => setQuestion(e.target.value)}
-                placeholder="Ask EdTheStatBot a question..."
-                aria-label="Ask EdTheStatBot a question"
-              />
-              <button type="submit">Ask</button>
-            </form>
+            <div className="statbot-chat__input" aria-hidden>
+              <input type="text" placeholder="Ask EdTheStatBot a question..." disabled />
+              <button type="button" disabled>Ask</button>
+            </div>
           </div>
         </div>
       </div>

@@ -4,10 +4,15 @@ There is no migration runner in this project. Every file in `supabase/migrations
 is applied **by hand, in order, in the Supabase SQL editor**. This document is the
 order and the verification.
 
-Verified against production on **2026-09-02**: none of the `tier_ladder_*` or
-`ai_usage_*` steps below had been applied. The application code is written to
-survive that (see "Why nothing is broken today"), but the AI cost ceiling is
-**inert** until step 7 lands.
+Verified against production on **2026-09-02**: none of the `tier_ladder_*` steps
+below had been applied. The application code is written to survive that (see
+"Why nothing is broken today").
+
+> **Steps 7 and 8 are not on this branch.** EdTheStatBot was cut from the MVP and
+> lives on `ed-the-statbot`, and the `ai_usage_*` files went with him. The tables
+> they create are already applied in production and simply sit unused — there is
+> nothing to un-migrate, and nothing here to run. They are documented below for
+> when he comes back.
 
 ---
 
@@ -38,8 +43,8 @@ means there is no way to prove afterwards that nobody's access changed.
 | 4 | `tier_ladder_04_rls_realign.sql` | **Recreates the `posts` policies dropped in steps 1 and 2** |
 | 5 | `tier_ladder_05_migrate_users.sql` | Moves existing paying members into the pass slot |
 | 6 | `tier_ladder_06_desk_games.sql` | `nfl_games` sport columns + `desk_notes` |
-| 7 | `ai_usage_01_quota.sql` (two pastes) | EdTheStatBot per-member daily quota |
-| 8 | `ai_usage_02_anon_and_threads.sql` (two pastes) | Anonymous quota + conversation persistence |
+| ~~7~~ | `ai_usage_01_quota.sql` (two pastes) | EdTheStatBot per-member daily quota — **on `ed-the-statbot`, already applied in prod** |
+| ~~8~~ | `ai_usage_02_anon_and_threads.sql` (two pastes) | Anonymous quota + conversation persistence — **same** |
 
 ### Steps 1 through 5 are ONE SESSION. Do not stop in the middle.
 
@@ -67,16 +72,12 @@ Deliberate, and worth not undoing:
 - **`rowMinTier()`** (`lib/gate.ts`) reads `min_tier` when the column exists and
   falls back to `is_free` / `is_elite` when it does not, using the same mapping
   the migration itself uses.
-- **`consumeQuota()`** (`lib/ai/quota.ts`) **fails open** and logs
-  `[statbot] quota check failed, allowing through`.
-
-The consequence of the third one is the reason step 7 matters: **until it is
-applied, `/api/statbot` has no cost ceiling for signed-in members at all.**
-Every message calls a frontier model, and retail is free.
-
-`consumeAnonQuota()` is the opposite — it **fails closed**. Signed-out visitors
-simply get "sign in to keep going" until step 8 lands, which is the correct
-default for an unauthenticated model endpoint on a public page.
+- **`consumeQuota()`** (`lib/ai/quota.ts`, on `ed-the-statbot`) **fails open** and
+  logs `[statbot] quota check failed, allowing through`. It fails open because
+  refusing paying members over an outstanding migration is the worse failure —
+  which means that on the bot branch, **step 7 is what stands between
+  `/api/statbot` and an uncapped model bill.** `consumeAnonQuota()` is the
+  opposite and fails closed. Neither runs in this build.
 
 ---
 
@@ -108,6 +109,9 @@ SELECT policyname FROM pg_policies WHERE tablename = 'posts';
 
 -- 6
 SELECT to_regclass('public.desk_notes'), to_regclass('public.nfl_games');
+
+-- 7 and 8 apply only on the `ed-the-statbot` branch. Both are already applied in
+-- production; these are the checks to re-run when the bot returns.
 
 -- 7
 SELECT to_regclass('public.ai_usage');
@@ -147,7 +151,9 @@ Two follow-ups that are easy to forget:
 2. **`access.hasElite`** is a deprecated shim mapping to `private`. Migrate call
    sites to `atLeast('private')`.
 
-## Operational note: the AI Gateway
+## Operational note: the AI Gateway (parked with the bot)
+
+None of this is live on this branch — it applies on `ed-the-statbot`.
 
 EdTheStatBot's model strings (`anthropic/claude-opus-5`, …) resolve through the
 **Vercel AI Gateway**, not a provider SDK. On Vercel this authenticates via OIDC
@@ -160,6 +166,7 @@ EdTheStatBot failing while the rest of the site is fine.
 ## Housekeeping
 
 `public.prune_ai_usage_anon(keep_days integer DEFAULT 30)` deletes stale
-anonymous counter rows. Nothing calls it automatically — run it from the SQL
+anonymous counter rows. With the bot parked nothing writes them, so there is
+nothing to prune until he returns. Nothing calls it automatically — run it from the SQL
 editor occasionally, or attach it to `pg_cron` if that is ever enabled on this
 project.
