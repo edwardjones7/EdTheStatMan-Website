@@ -178,28 +178,54 @@ export interface WeekRef {
 }
 
 /**
- * The week to land on by default: the earliest week that still has an
- * unfinished game (kickoff within the last ~6h counts as live). Falls back to
- * the final week once the season is over, or the first week before it starts.
+ * How long after kickoff a game is still assumed to be in progress when its
+ * status has not caught up. Generous on purpose: it only decides how quickly a
+ * finished week gives way to the next one.
  */
-export function currentWeekOf(games: Pick<NflGame, 'season_type' | 'week' | 'kickoff'>[], now: Date): WeekRef | null {
+const GAME_WINDOW_MS = 8 * 60 * 60 * 1000
+
+/**
+ * The week to land on by default: the earliest week that still has a game
+ * which has not been played. Falls back to the final week once the season is
+ * over, or the first week before it starts.
+ *
+ * A game counts as unplayed when ESPN has not marked it `post` AND its kickoff
+ * is not already well behind us. Both halves matter, and neither is enough on
+ * its own:
+ *
+ *   - Status alone would pin the board on a stale week forever if the sync
+ *     stopped running, since nothing would ever move off `pre`.
+ *   - Kickoff alone is a guess about when play ended, which is what this used
+ *     to do. It held the board on a finished week for hours after the last
+ *     whistle, and could hand it over early on a game that ran long.
+ *
+ * Read `status`, never the score: an unplayed game is 0-0, not null.
+ */
+export function currentWeekOf(
+  games: Pick<NflGame, 'season_type' | 'week' | 'kickoff' | 'status'>[],
+  now: Date
+): WeekRef | null {
   if (games.length === 0) return null
 
-  const byWeek = new Map<string, { ref: WeekRef; lastKickoff: number }>()
+  const byWeek = new Map<string, { ref: WeekRef; unplayed: boolean }>()
   for (const g of games) {
     const key = `${g.season_type}-${g.week}`
-    const ms = g.kickoff ? new Date(g.kickoff).getTime() : 0
+    const kickoff = g.kickoff ? new Date(g.kickoff).getTime() : 0
+    // A game with no kickoff time is scheduled but unplaced (a bowl slot, a
+    // flexed window), so it counts as still to come.
+    const started = kickoff > 0 && kickoff + GAME_WINDOW_MS <= now.getTime()
+    const unplayed = g.status !== 'post' && !started
+
     const entry = byWeek.get(key)
-    if (!entry) byWeek.set(key, { ref: { season_type: g.season_type, week: g.week }, lastKickoff: ms })
-    else if (ms > entry.lastKickoff) entry.lastKickoff = ms
+    if (!entry) byWeek.set(key, { ref: { season_type: g.season_type, week: g.week }, unplayed })
+    else if (unplayed) entry.unplayed = true
   }
 
   const weeks = [...byWeek.values()].sort(
     (a, b) => a.ref.season_type - b.ref.season_type || a.ref.week - b.ref.week
   )
 
-  const GAME_WINDOW_MS = 6 * 60 * 60 * 1000
-  const current = weeks.find(w => w.lastKickoff + GAME_WINDOW_MS > now.getTime())
+  const current = weeks.find(w => w.unplayed)
   return (current ?? weeks[weeks.length - 1]).ref
 }
 

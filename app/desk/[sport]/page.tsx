@@ -86,11 +86,11 @@ export default async function DeskSport({
   // second league lands.
   const { data: weekRows } = await (admin as any)
     .from('nfl_games')
-    .select('season_type, week, kickoff, is_published')
+    .select('season_type, week, kickoff, status, is_published')
     .eq('sport', sport)
     .eq('season', season)
 
-  type WeekRow = Pick<NflGame, 'season_type' | 'week' | 'kickoff' | 'is_published'>
+  type WeekRow = Pick<NflGame, 'season_type' | 'week' | 'kickoff' | 'status' | 'is_published'>
   const visibleWeekRows: WeekRow[] = (weekRows ?? []).filter(
     (r: WeekRow) => r.is_published || isAdmin
   )
