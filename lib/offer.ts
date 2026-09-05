@@ -71,6 +71,16 @@ export interface OfferPlan {
 //   - system-trigger alerts  no such code; lib/notify fires on pick inserts
 //   - all four Institutional tools  no export route, query builder, key issuing
 //                                   or backtester exists anywhere in the repo
+//
+// THE z SPLIT IS THE REAL PRIVATE/INSTITUTIONAL LINE: Private carries 2.5-2.99,
+// Institutional carries 3.0+. There is no `z` column -- it is computed from w
+// and l against a 50% null, pushes excluded:
+//     z = (w/(w+l) - 0.5) / sqrt(0.25 / (w+l))
+// Measured 2026-09-05 over active rows: 36 of 78 systems and 32 of 203 trends
+// reach 3.0+, so the tier has 68 rows of its own. Note the null matters ---
+// against the -110 break-even of 52.38% NOTHING reaches 3.0, and the card would
+// be empty. These two bullets are only true while rows are actually tagged
+// min_tier='institutional'; see docs/MIGRATIONS.md.
 // A season pass is one-time and runs to February, which is a long time for a
 // buyer to notice a bullet that was never true. That is the same dispute the
 // one-time pricing exists to avoid, so do not re-add a claim ahead of the code.
@@ -135,6 +145,7 @@ export const OFFER_PLANS: OfferPlan[] = [
       'Everything in The Research Desk',
       'The complete systems library, unlocked',
       'The complete team trends library, unlocked',
+      'Every qualifying system and trend from 2.5 to 2.99 z',
       'Filter and sort across the whole Vault',
       'Coming this season — alerts the moment a system triggers',
     ],
@@ -155,11 +166,11 @@ export const OFFER_PLANS: OfferPlan[] = [
     key: 'institutional',
     name: 'Vault — Institutional Intelligence',
     shortName: 'Institutional',
-    tagline: 'Everything in Private, and first access to what we build next.',
+    tagline: 'The strongest signals we have, and first access to what we build next.',
     badge: 'Institutional',
     features: [
       'Everything in Private Intelligence',
-      'Coming this season — the highest-conviction systems and trends, curated for this tier',
+      'The 3.0+ z library: our strongest signals, at this tier only',
       'Coming this season — full row-level export, every system and trend as CSV',
       'Coming this season — query builder across the entire Vault',
       'Coming this season — API key for programmatic access',
