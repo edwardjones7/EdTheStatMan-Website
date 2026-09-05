@@ -87,6 +87,21 @@ export function isPaidTier(tier: string | null | undefined): boolean {
   return atLeastTier(normalizeTier(tier), 'portfolio')
 }
 
+/**
+ * Every stored `subscription_tier` string that means "has paid" — the ladder
+ * values AND the pre-v3 ones, because a query runs against whichever vocabulary
+ * the column happens to hold at the time.
+ *
+ * For `.in('subscription_tier', ...)` filters, which need values rather than a
+ * predicate. Derived from the ladder, so a new rung or a new legacy alias is
+ * picked up without editing a list — a hand-written list here would have
+ * reported zero paying users the moment the migration renamed the tiers.
+ */
+export const PAID_TIER_VALUES: string[] = [
+  ...TIERS.filter(isPaidTier),
+  ...Object.keys(LEGACY_TIER).filter(isPaidTier),
+]
+
 /** Coarser than tier: distinguishes a never-paid user from a lapsed one. */
 export type Membership = 'logged-out' | 'free' | 'expired' | 'active' | 'admin'
 

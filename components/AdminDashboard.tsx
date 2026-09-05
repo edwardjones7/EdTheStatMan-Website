@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import type { SubscriptionTier, SubscriptionStatus, AccessLevel } from '@/lib/supabase/types'
-import { normalizeTier } from '@/lib/access'
+import { normalizeTier, TIERS, TIER_SHORT_LABEL } from '@/lib/access'
 
 interface User {
   id: string
@@ -114,12 +114,24 @@ function fmtDuration(secs: number): string {
   return `${Math.floor(s / 60)}m ${s % 60}s`
 }
 
+// Keyed on LADDER values, so every lookup goes through normalizeTier() first --
+// the column still holds legacy strings until the migration runs and ladder
+// ones after, and this component has to render both.
 const TIER_CLASS: Record<string, string> = {
-  free: 'nav__user-tier--free',
-  basic: 'nav__user-tier--basic',
-  premium: 'nav__user-tier--premium',
-  elite: 'nav__user-tier--elite',
+  ...Object.fromEntries(TIERS.map(t => [t, `nav__user-tier--${t}`])),
   admin: 'nav__user-tier--admin',
+}
+
+// 'all' and 'admin' are not rungs; between them is the ladder, in order. These
+// are compared against normalizeTier() output, so they must be ladder values --
+// the pre-v3 names here matched nothing, because normalizeTier('basic') is
+// 'desk' and never equalled the 'basic' the button sent.
+const TIER_FILTERS = ['all', ...TIERS, 'admin']
+
+function filterLabel(f: string): string {
+  if (f === 'all') return 'All'
+  if (f === 'admin') return 'Admin'
+  return TIER_SHORT_LABEL[f as (typeof TIERS)[number]]
 }
 
 const STATUS_COLOR: Record<string, string> = {
@@ -629,13 +641,13 @@ export default function AdminDashboard({ users, posts, initialTab, initialAnalyt
                 onChange={e => setUserSearch(e.target.value)}
               />
               <div className="admin-filters">
-                {['all', 'free', 'basic', 'premium', 'elite', 'admin'].map(f => (
+                {TIER_FILTERS.map(f => (
                   <button
                     key={f}
                     className={`admin-filter-btn ${tierFilter === f ? 'admin-filter-btn--active' : ''}`}
                     onClick={() => setTierFilter(f)}
                   >
-                    {f.charAt(0).toUpperCase() + f.slice(1)}
+                    {filterLabel(f)}
                   </button>
                 ))}
               </div>
@@ -669,8 +681,8 @@ export default function AdminDashboard({ users, posts, initialTab, initialAnalyt
                         </div>
                       </td>
                       <td>
-                        <span className={`nav__user-tier ${TIER_CLASS[user.is_admin ? 'admin' : user.subscription_tier]}`}>
-                          {user.is_admin ? 'Admin' : user.subscription_tier.charAt(0).toUpperCase() + user.subscription_tier.slice(1)}
+                        <span className={`nav__user-tier ${TIER_CLASS[user.is_admin ? 'admin' : normalizeTier(user.subscription_tier)]}`}>
+                          {user.is_admin ? 'Admin' : TIER_SHORT_LABEL[normalizeTier(user.subscription_tier)]}
                         </span>
                       </td>
                       <td>

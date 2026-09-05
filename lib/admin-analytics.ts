@@ -8,6 +8,7 @@
 //   getGlobalTotals   — all-time figures that never change with the range, so
 //                       the client fetches them once and reuses them.
 import { toNYDate, nyMidnightUTC } from '@/lib/analytics'
+import { PAID_TIER_VALUES } from '@/lib/access'
 
 const DAY = 24 * 60 * 60 * 1000
 
@@ -190,7 +191,7 @@ export async function getGlobalTotals(admin: any, now = new Date()): Promise<Glo
     a.from('purchases').select('amount_cents'),
     a.from('profiles').select('*', { count: 'exact', head: true }),
     a.from('profiles').select('*', { count: 'exact', head: true })
-      .in('subscription_tier', ['basic', 'premium', 'elite'])
+      .in('subscription_tier', PAID_TIER_VALUES)
       .gt('access_expires_at', now.toISOString()),
   ])
 
