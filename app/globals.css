@@ -7120,6 +7120,29 @@ textarea.form-input {
   color: var(--accent-teal);
 }
 
+/* A day whose games have all finished sits at the bottom of the board and is
+   dressed to match: the count chip drops its accent so a settled day does not
+   compete with the one still being played. */
+.desk-day.is-done .desk-day__count {
+  background: var(--bg-card-hover);
+  color: var(--text-muted);
+}
+
+.desk-day__done {
+  font-size: 0.62rem;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+}
+
+.desk-day__live {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.62rem;
+  letter-spacing: 1px;
+  color: var(--accent-red);
+}
+
 .desk-day__grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));

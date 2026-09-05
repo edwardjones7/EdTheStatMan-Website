@@ -4,7 +4,7 @@ import { useState, useTransition } from 'react'
 import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
 import type { PublicNflGame } from '@/lib/nfl'
-import { spreadLabel, moneylineLabel, lineMove } from '@/lib/nfl'
+import { spreadLabel, moneylineLabel, lineMove, groupSlate } from '@/lib/nfl'
 import { IconLock, IconArrowRight } from './Icons'
 import { teamLogoUrl } from '@/lib/logos'
 
@@ -36,12 +36,6 @@ function kickoffDisplay(kickoff: string | null): string {
   })
 }
 
-function dayKey(kickoff: string | null): string {
-  if (!kickoff) return 'TBD'
-  return new Date(kickoff).toLocaleDateString('en-US', {
-    weekday: 'long', month: 'short', day: 'numeric', timeZone: 'America/New_York',
-  })
-}
 
 /**
  * The city is already carried by the abbreviation tile, so the card leads with
@@ -84,14 +78,7 @@ export default function DeskWeekBoard({
     })
   }
 
-  // Group by day so the board reads like a slate, not a flat list.
-  const days: { label: string; games: PublicNflGame[] }[] = []
-  for (const g of games) {
-    const key = dayKey(g.kickoff)
-    const last = days[days.length - 1]
-    if (last && last.label === key) last.games.push(g)
-    else days.push({ label: key, games: [g] })
-  }
+  const days = groupSlate(games)
 
   // Week header numbers. These are the honest advertisement for the rung: how
   // much research is actually sitting on this week's board.
@@ -151,10 +138,20 @@ export default function DeskWeekBoard({
       )}
 
       {days.map(day => (
-        <section className="desk-day" key={day.label}>
+        <section className={`desk-day${day.done ? ' is-done' : ''}`} key={day.label}>
+          {/* The marker earns its place by explaining the order: a finished day
+              sits below an unfinished one, which only reads as deliberate if
+              the header says the day is over. */}
           <h3 className="desk-day__label">
             {day.label}
             <span className="desk-day__count">{day.games.length}</span>
+            {day.games.some(g => g.status === 'in') && (
+              <span className="desk-day__live">
+                <span className="desk-card__pulse" />
+                Live
+              </span>
+            )}
+            {day.done && <span className="desk-day__done">Final</span>}
           </h3>
 
           <div className="desk-day__grid">

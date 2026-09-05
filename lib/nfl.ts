@@ -230,6 +230,66 @@ export function currentWeekOf(
 }
 
 
+/**
+ * A day's worth of games on the board, already ordered.
+ */
+export interface SlateDay<G> {
+  label: string
+  games: G[]
+  /** Every game on this day has been played. */
+  done: boolean
+}
+
+type SlateGame = Pick<PublicNflGame, 'kickoff' | 'status'>
+
+/** "Sunday, Sep 14" in league time, which is how a slate is read. */
+export function slateDayLabel(kickoff: string | null): string {
+  if (!kickoff) return 'TBD'
+  return new Date(kickoff).toLocaleDateString('en-US', {
+    weekday: 'long', month: 'short', day: 'numeric', timeZone: 'America/New_York',
+  })
+}
+
+/**
+ * Group a week into days and order it by what the reader came for.
+ *
+ * Straight chronological order buries the game being played right now beneath
+ * every game that finished earlier the same day, so the most live information
+ * on the page is the part you have to scroll to. Instead: live games lead their
+ * day, then whatever has not kicked off, then finals; and a day that is
+ * entirely over sinks below the days that still have something to come.
+ *
+ * The sorts are stable and the day sink is keyed only on `done`, so the slate
+ * keeps its chronological shape inside each of those two groups. Nothing is
+ * reordered at all until something has actually finished.
+ *
+ * ORDERED ON `status`, NEVER ON A CLOCK READ. This runs during render in a
+ * client component: comparing kickoff times against Date.now() would let the
+ * browser order the board differently than the HTML it is hydrating. `status`
+ * comes from the server, so both renders agree.
+ */
+export function groupSlate<G extends SlateGame>(games: G[]): SlateDay<G>[] {
+  const RELEVANCE: Record<string, number> = { in: 0, pre: 1, post: 2 }
+  const relevance = (g: SlateGame) => RELEVANCE[g.status] ?? 1
+  const ms = (g: SlateGame) => (g.kickoff ? new Date(g.kickoff).getTime() : 0)
+
+  // Games arrive in kickoff order, so consecutive runs are days.
+  const days: SlateDay<G>[] = []
+  for (const g of games) {
+    const label = slateDayLabel(g.kickoff)
+    const last = days[days.length - 1]
+    if (last && last.label === label) last.games.push(g)
+    else days.push({ label, games: [g], done: false })
+  }
+
+  for (const day of days) {
+    day.games.sort((a, b) => relevance(a) - relevance(b) || ms(a) - ms(b))
+    day.done = day.games.every(g => g.status === 'post')
+  }
+
+  return days.sort((a, b) => Number(a.done) - Number(b.done))
+}
+
 /** "SEA -3.5" from a home-relative spread, or null when there is no line. */
 export function spreadLabel(
   spread: number | null | undefined,
