@@ -57,6 +57,21 @@ if (!key) {
   console.error(LIVE ? 'STRIPE_SECRET_KEY is not set.' : 'STRIPE_TEST_SECRET_KEY is not set. Pass --live to use the live key.')
   process.exit(1)
 }
+// MODE MUST MATCH THE KEY, not the flag. During a test rehearsal
+// STRIPE_SECRET_KEY is swapped to sk_test_ so the app runs in test mode, and
+// without this check `--live` would print "Stripe mode: LIVE" while quietly
+// reconfiguring the TEST endpoint -- leaving the live one still subscribed to
+// one event, which is the exact failure this script exists to fix. Same guard
+// create-stripe-prices.mjs already had.
+if (LIVE && !key.startsWith('sk_live_')) {
+  console.error('--live was passed but STRIPE_SECRET_KEY is not an sk_live_ key.')
+  console.error('Restore the live env first:  cp .env.local.live-backup .env.local')
+  process.exit(1)
+}
+if (!LIVE && !key.startsWith('sk_test_')) {
+  console.error('STRIPE_TEST_SECRET_KEY is not an sk_test_ key. Refusing.')
+  process.exit(1)
+}
 const stripe = new Stripe(key)
 
 console.log(`Stripe mode : ${LIVE ? 'LIVE' : 'test'}`)
