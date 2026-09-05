@@ -2,12 +2,32 @@ import { NextResponse } from 'next/server'
 import { getStripe, subscriptionPriceId } from '@/lib/stripe'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { OFFER_SKUS, skuByPriceId } from '@/lib/offer'
+import { OFFER_SKUS, skuByPriceId, type AccessGrant } from '@/lib/offer'
 import { TIER_RANK, normalizeTier } from '@/lib/access'
 import { siteUrl } from '@/lib/site-url'
 
 /** Derived from the catalog so it can never drift from what /win renders. */
 const ALLOWED_PRICES = new Set(OFFER_SKUS.map(s => s.priceId).filter(Boolean))
+
+/**
+ * Is buying `grant` a real upgrade for someone whose pass already runs to
+ * `heldUntilMs` at the SAME rung?
+ *
+ * Only a season pass qualifies. A rolling 'days' grant is measured from now, so
+ * it is ALWAYS a few seconds later than a pass bought a moment ago and would
+ * therefore always look like an extension -- which would let a member re-buy
+ * the same 30-day pass on day 1 and pay again for one extra day. That is the
+ * double-charge this guard exists to prevent, and it is the exact dispute we
+ * refuse to create.
+ *
+ * A season pass is a fixed date, so "does it run past what they hold?" is a
+ * real question with a real answer, and month -> season is the conversion we
+ * most want to be reachable.
+ */
+function isSameRungUpgrade(grant: AccessGrant, heldUntilMs: number): boolean {
+  if (grant.kind !== 'until') return false
+  return new Date(grant.endsAt).getTime() > heldUntilMs
+}
 
 export async function POST(req: Request) {
   const supabase = await createClient()
@@ -45,19 +65,38 @@ export async function POST(req: Request) {
     .eq('id', user.id)
     .single()
 
-  // ---- Guard: already holds a pass at or above what they're buying ---------
+  // ---- Guard: already holds a pass worth at least what they're buying ------
   // Do not take another payment for something they already own until February.
   // Never create a reason to dispute -- the same instinct as pushing the season
   // pass in the first place.
+  //
+  // The comparison is RANK **and** EXPIRY, not rank alone. A rank-only `>=`
+  // also blocks the single most valuable conversion there is: a 30-day member
+  // upgrading to the season pass at the SAME rung. That is the SKU we push
+  // hardest -- one sale and one dispute window instead of twelve of each -- and
+  // it was unreachable until the short pass lapsed.
+  //
+  // Buying a LOWER rung is always refused, even when it would run longer,
+  // because the pass slot holds one tier: writing portfolio over a live desk
+  // pass would silently demote a member who just paid.
   const passTier = (profile as any)?.pass_tier as string | null
   const passUntil = (profile as any)?.pass_expires_at as string | null
   const passLive = !!passUntil && new Date(passUntil).getTime() > Date.now()
-  if (passLive && passTier && TIER_RANK[normalizeTier(passTier)] >= TIER_RANK[sku.tier]) {
-    return NextResponse.json({
-      error: 'You already hold access at this level.',
-      heldTier: normalizeTier(passTier),
-      heldUntil: passUntil,
-    }, { status: 409 })
+
+  if (passLive && passTier) {
+    const heldRank = TIER_RANK[normalizeTier(passTier)]
+    const wantRank = TIER_RANK[sku.tier]
+    // A subscription grants no pass expiry, so it can never be a same-rung
+    // upgrade and only a strictly higher rung gets through.
+    const sameRungUpgrade = isSameRungUpgrade(sku.grant, new Date(passUntil).getTime())
+
+    if (wantRank < heldRank || (wantRank === heldRank && !sameRungUpgrade)) {
+      return NextResponse.json({
+        error: 'You already hold access at this level.',
+        heldTier: normalizeTier(passTier),
+        heldUntil: passUntil,
+      }, { status: 409 })
+    }
   }
 
   async function freshCustomer(): Promise<string> {
