@@ -19,6 +19,7 @@ interface AccountClientProps {
     is_admin: boolean
     created_at: string
     stripe_customer_id: string | null
+    stripe_subscription_id: string | null
     notify_email: boolean
   }
   provider: string
@@ -51,6 +52,27 @@ export default function AccountClient({ profile, provider }: AccountClientProps)
   const [displayName, setDisplayName] = useState(profile.full_name ?? '')
   const [notifyEmail, setNotifyEmail] = useState(profile.notify_email)
   const [notifyMsg, setNotifyMsg] = useState<Msg | null>(null)
+  const [billingBusy, setBillingBusy] = useState(false)
+  const [billingMsg, setBillingMsg] = useState<Msg | null>(null)
+
+  const hasSubscription = !!profile.stripe_subscription_id
+  // The portal carries receipts and card details as well as cancellation, so a
+  // one-time buyer gets it too -- they simply see no subscription to cancel.
+  const canManageBilling = !!profile.stripe_customer_id && !profile.is_admin
+
+  async function openBillingPortal() {
+    setBillingBusy(true)
+    setBillingMsg(null)
+    try {
+      const res = await fetch('/api/stripe/portal', { method: 'POST' })
+      const data = await res.json()
+      if (!res.ok || !data.url) throw new Error(data.error ?? 'Could not open the billing portal.')
+      window.location.href = data.url
+    } catch (e: any) {
+      setBillingMsg({ type: 'error', text: e?.message ?? 'Could not open the billing portal.' })
+      setBillingBusy(false)
+    }
+  }
 
   const normalized = normalizeTier(profile.subscription_tier)
   const tierConfig = {
@@ -156,6 +178,11 @@ export default function AccountClient({ profile, provider }: AccountClientProps)
                 {isExpired ? 'Expired' : `Access until ${formatDate(expiresAt.toISOString())}`}
               </span>
             )}
+            {hasSubscription && !profile.is_admin && (
+              <p className="account-field-hint">
+                Cancel anytime in the billing portal. Access runs to the end of the period you have paid for.
+              </p>
+            )}
           </div>
 
           {!profile.is_admin && (
@@ -165,6 +192,23 @@ export default function AccountClient({ profile, provider }: AccountClientProps)
                   <IconBolt size={14} /> {isExpired ? 'Renew Access' : 'Upgrade Plan'}
                 </Link>
               ) : null}
+              {canManageBilling && (
+                <button
+                  type="button"
+                  className="btn btn--outline btn--sm"
+                  onClick={openBillingPortal}
+                  disabled={billingBusy}
+                >
+                  {billingBusy
+                    ? 'Opening…'
+                    : hasSubscription ? 'Manage Subscription' : 'Billing & Receipts'}
+                </button>
+              )}
+              {billingMsg && (
+                <p className="account-field-hint" style={{ textAlign: 'right', maxWidth: '220px' }}>
+                  {billingMsg.text}
+                </p>
+              )}
             </div>
           )}
         </div>

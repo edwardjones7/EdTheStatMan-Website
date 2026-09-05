@@ -19,7 +19,7 @@ export default async function AccountPage() {
 
   const { data: profile } = await (supabase as any)
     .from('profiles')
-    .select('full_name, subscription_tier, is_admin, created_at, stripe_customer_id, access_expires_at, notify_email')
+    .select('full_name, subscription_tier, is_admin, created_at, stripe_customer_id, stripe_subscription_id, access_expires_at, notify_email')
     .eq('id', user.id)
     .single()
 
@@ -35,6 +35,11 @@ export default async function AccountPage() {
         is_admin: profile?.is_admin ?? false,
         created_at: profile?.created_at ?? user.created_at,
         stripe_customer_id: profile?.stripe_customer_id ?? null,
+        // Deliberately NOT sub_tier / billing_mode: those columns arrive with
+        // tier_ladder_03 and selecting one that does not exist errors the whole
+        // query, blanking this page for every member. stripe_subscription_id is
+        // already in production and answers the only question the UI asks.
+        stripe_subscription_id: profile?.stripe_subscription_id ?? null,
         notify_email: profile?.notify_email ?? true,
       }}
       provider={provider}
