@@ -42,8 +42,33 @@ export default async function DeskSport({
   if (!DESK_SPORTS.includes(sport as any)) notFound()
 
   const admin = createAdminClient()
-  const access = await getAccess()
+
+  // `nfl_games` is not one season. Completed seasons are backfilled into it so
+  // the Vault's situational rules have a history to check against, which means
+  // an unscoped read stacks 2024's Week 1 underneath the current one and the
+  // board opens on whichever season happens to sort first. The board is always
+  // the newest season we hold rows for. The season probe does not need the
+  // access check, so it rides along with it instead of adding a round trip.
+  const [access, { data: seasonRows }] = await Promise.all([
+    getAccess(),
+    (admin as any)
+      .from('nfl_games')
+      .select('season, sport, is_published')
+      .order('season', { ascending: false }),
+  ])
   const { tier: userTier, isAdmin, membership } = access
+
+  // The `sport` column only exists after tier_ladder_06; before it, every row
+  // in this table is NFL by construction.
+  const rowSportOf = (r: { sport?: string | null }) => r.sport ?? 'nfl'
+
+  // Published rows decide the season for a visitor; an admin gets the newest
+  // season on the table either way, so next season can be synced and staged
+  // before any of it is published.
+  const season: number =
+    (seasonRows ?? []).find(
+      (r: any) => rowSportOf(r) === sport && (r.is_published || isAdmin)
+    )?.season ?? new Date().getFullYear()
 
   // The schedule itself is the public shell — a visitor should be able to see
   // that the board exists and how much is on it. The curated research attached
@@ -53,14 +78,12 @@ export default async function DeskSport({
   const { data: gamesData } = await (admin as any)
     .from('nfl_games')
     .select('*')
+    .eq('season', season)
     .order('kickoff', { ascending: true, nullsFirst: false })
 
-  const allGames: NflGame[] = (gamesData ?? []).filter((g: NflGame) => {
-    // The `sport` column only exists after tier_ladder_06; before it, every row
-    // in this table is NFL by construction.
-    const rowSport = g.sport ?? 'nfl'
-    return rowSport === sport && (g.is_published || isAdmin)
-  })
+  const allGames: NflGame[] = (gamesData ?? []).filter(
+    (g: NflGame) => rowSportOf(g) === sport && (g.is_published || isAdmin)
+  )
 
   // Week list derived from data — nothing hardcodes a week count.
   const weekMap = new Map<string, { season_type: number; week: number }>()
@@ -82,8 +105,6 @@ export default async function DeskSport({
         .filter(g => g.season_type === active.season_type && g.week === active.week)
         .map(toPublicGame)
     : []
-
-  const season = allGames[0]?.season ?? new Date().getFullYear()
 
   // The link counts and the desk note both depend only on `active`, so they go
   // out together. They used to run in series, which cost a whole extra Supabase
