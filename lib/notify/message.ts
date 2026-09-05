@@ -34,7 +34,7 @@ export interface RenderedMessage {
 export function renderPick(pick: NotifiablePick, audience: PickAudience): RenderedMessage {
   const sport = pick.sport ?? 'New'
   const label = AUDIENCE_LABEL[audience]
-  const url = `${SITE_URL}/model-picks`
+  const url = `${SITE_URL}/portfolio`
 
   if (isGated(audience)) {
     return {

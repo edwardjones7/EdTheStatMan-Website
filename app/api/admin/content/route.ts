@@ -41,7 +41,7 @@ export async function PATCH(req: Request) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
   revalidatePath('/')
-  revalidatePath('/results')
-  revalidatePath('/nfl')
+  revalidatePath('/portfolio/performance')
+  revalidatePath('/desk/nfl')
   return NextResponse.json({ success: true })
 }

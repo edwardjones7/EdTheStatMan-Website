@@ -12,17 +12,28 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     (admin as any).from('nfl_games').select('slug, sport, updated_at').eq('is_published', true),
   ])
 
+  // Grouped by product, and every URL is a v3 path. The six pre-v3 routes are
+  // 308s now (next.config.js), and a sitemap that lists a redirect asks every
+  // crawler to take the hop before it finds the page it was going to index.
+  // /desk is absent for the same reason: it is a bare redirect into the first
+  // board (app/desk/page.tsx), not a page. /vault and /portfolio are real.
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: BASE, lastModified: new Date(), changeFrequency: 'daily', priority: 1.0 },
-    { url: `${BASE}/betting-systems`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
-    { url: `${BASE}/betting-trends`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
+
+    { url: `${BASE}/portfolio`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
+    { url: `${BASE}/portfolio/performance`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
+
+    { url: `${BASE}/vault`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
+    { url: `${BASE}/vault/systems`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
+    { url: `${BASE}/vault/trends`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
+
     ...DESK_SPORTS.map(sport => ({
       url: `${BASE}/desk/${sport}`,
       lastModified: new Date(),
       changeFrequency: 'daily' as const,
       priority: 0.9,
     })),
-    { url: `${BASE}/results`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
+
     { url: `${BASE}/blog`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
     { url: `${BASE}/win`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.7 },
     { url: `${BASE}/contact`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.5 },

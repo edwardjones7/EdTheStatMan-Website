@@ -4,10 +4,10 @@ import Image from 'next/image'
 // Decorative sport navigation band. Static by design — not part of the
 // editable site_content set.
 const SPORTS = [
-  { label: 'NFL',                short: 'Pro Football',    img: '/images/sports/nfl.jpg',       href: '/betting-systems?sport=NFL' },
-  { label: 'College Football',   short: 'CFB',             img: '/images/sports/cfb.jpg',       href: '/betting-systems?sport=College+Football' },
-  { label: 'NBA',                short: 'Pro Basketball',  img: '/images/sports/nba.jpg',       href: '/betting-systems?sport=NBA' },
-  { label: 'College Basketball', short: 'CBB',             img: '/images/sports/cbb.jpg',       href: '/betting-systems?sport=College+Basketball' },
+  { label: 'NFL',                short: 'Pro Football',    img: '/images/sports/nfl.jpg',       href: '/vault/systems?sport=NFL' },
+  { label: 'College Football',   short: 'CFB',             img: '/images/sports/cfb.jpg',       href: '/vault/systems?sport=College+Football' },
+  { label: 'NBA',                short: 'Pro Basketball',  img: '/images/sports/nba.jpg',       href: '/vault/systems?sport=NBA' },
+  { label: 'College Basketball', short: 'CBB',             img: '/images/sports/cbb.jpg',       href: '/vault/systems?sport=College+Basketball' },
 ]
 
 export default function SportsBand() {
