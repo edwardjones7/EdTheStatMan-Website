@@ -81,6 +81,55 @@ Deliberate, and worth not undoing:
 
 ---
 
+## Re-running a step
+
+**Every step is idempotent. Re-running one is safe and is the correct response
+to a failure partway through.** Steps 1, 2 and 3 originally used bare
+`ADD CONSTRAINT`, which is the one statement in the ladder with no
+`IF NOT EXISTS` form; a second run died on
+`42710: constraint "..." already exists`. Each is now preceded by
+`DROP CONSTRAINT IF EXISTS`, the same pattern step 6 always used.
+
+**A constraint that already exists means the transaction that created it
+committed.** Steps 1 through 3 are each wrapped in `BEGIN`/`COMMIT`, so they
+are all-or-nothing: if you can see the constraint, that whole step landed and
+the re-run was not needed. The exception is running a hand-selected fragment of
+a file rather than the whole paste.
+
+Run this to see exactly where you are, rather than inferring it:
+
+```sql
+-- Step 1: the tier column is text, holding ladder values
+SELECT data_type FROM information_schema.columns
+ WHERE table_schema='public' AND table_name='profiles' AND column_name='subscription_tier';
+SELECT DISTINCT subscription_tier FROM public.profiles;
+
+-- Step 2: min_tier on all three content tables (expect 3 rows)
+SELECT table_name FROM information_schema.columns
+ WHERE table_schema='public' AND column_name='min_tier'
+   AND table_name IN ('betting_systems','betting_trends','todays_bets');
+
+-- Step 3: the seven billing columns (expect 7 rows)
+SELECT column_name FROM information_schema.columns
+ WHERE table_schema='public' AND table_name='profiles'
+   AND column_name IN ('pass_tier','pass_expires_at','sub_tier','sub_current_period_end',
+                       'sub_cancel_at_period_end','sub_event_at','billing_mode')
+ ORDER BY column_name;
+SELECT to_regclass('public.stripe_events');
+
+-- Step 3b: the function exists (expect 1 row)
+SELECT proname FROM pg_proc WHERE proname='recompute_entitlement';
+
+-- Step 4: both posts policies are back (expect 2 rows)
+SELECT policyname FROM pg_policies WHERE tablename='posts';
+
+-- Step 5: nobody is left on a legacy tier (expect 0 rows)
+SELECT id, subscription_tier FROM public.profiles
+ WHERE subscription_tier IN ('free','basic','premium','elite');
+```
+
+---
+
 ## Verifying, per step
 
 Run these in the SQL editor after each block. Each should return a row, not an error.

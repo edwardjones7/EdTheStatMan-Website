@@ -57,11 +57,14 @@ ALTER TABLE public.profiles
   ADD COLUMN IF NOT EXISTS sub_event_at             timestamptz,
   ADD COLUMN IF NOT EXISTS billing_mode             text NOT NULL DEFAULT 'none';
 
+ALTER TABLE public.profiles DROP CONSTRAINT IF EXISTS profiles_billing_mode_check;
 ALTER TABLE public.profiles ADD CONSTRAINT profiles_billing_mode_check
   CHECK (billing_mode IN ('none','pass','subscription','both'));
 
+ALTER TABLE public.profiles DROP CONSTRAINT IF EXISTS profiles_pass_tier_check;
 ALTER TABLE public.profiles ADD CONSTRAINT profiles_pass_tier_check
   CHECK (pass_tier IS NULL OR pass_tier IN ('retail','portfolio','desk','private','institutional'));
+ALTER TABLE public.profiles DROP CONSTRAINT IF EXISTS profiles_sub_tier_check;
 ALTER TABLE public.profiles ADD CONSTRAINT profiles_sub_tier_check
   CHECK (sub_tier IS NULL OR sub_tier IN ('retail','portfolio','desk','private','institutional'));
 

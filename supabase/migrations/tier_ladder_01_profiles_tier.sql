@@ -83,6 +83,7 @@ END;
 ALTER TABLE public.profiles ALTER COLUMN subscription_tier SET DEFAULT 'retail';
 ALTER TABLE public.profiles ALTER COLUMN subscription_tier SET NOT NULL;
 
+ALTER TABLE public.profiles DROP CONSTRAINT IF EXISTS profiles_subscription_tier_check;
 ALTER TABLE public.profiles
   ADD CONSTRAINT profiles_subscription_tier_check
   CHECK (subscription_tier IN ('retail','portfolio','desk','private','institutional'));

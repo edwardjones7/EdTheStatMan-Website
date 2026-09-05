@@ -55,10 +55,13 @@ ALTER TABLE public.betting_systems ALTER COLUMN min_tier SET NOT NULL;
 ALTER TABLE public.betting_trends  ALTER COLUMN min_tier SET NOT NULL;
 ALTER TABLE public.todays_bets     ALTER COLUMN min_tier SET NOT NULL;
 
+ALTER TABLE public.betting_systems DROP CONSTRAINT IF EXISTS betting_systems_min_tier_check;
 ALTER TABLE public.betting_systems ADD CONSTRAINT betting_systems_min_tier_check
   CHECK (min_tier IN ('retail','portfolio','desk','private','institutional'));
+ALTER TABLE public.betting_trends DROP CONSTRAINT IF EXISTS betting_trends_min_tier_check;
 ALTER TABLE public.betting_trends ADD CONSTRAINT betting_trends_min_tier_check
   CHECK (min_tier IN ('retail','portfolio','desk','private','institutional'));
+ALTER TABLE public.todays_bets DROP CONSTRAINT IF EXISTS todays_bets_min_tier_check;
 ALTER TABLE public.todays_bets ADD CONSTRAINT todays_bets_min_tier_check
   CHECK (min_tier IN ('retail','portfolio','desk','private','institutional'));
 
@@ -77,6 +80,7 @@ UPDATE public.posts SET access_level = CASE access_level
   WHEN 'members' THEN 'desk'
   ELSE 'retail' END;
 ALTER TABLE public.posts ALTER COLUMN access_level SET DEFAULT 'retail';
+ALTER TABLE public.posts DROP CONSTRAINT IF EXISTS posts_access_level_check;
 ALTER TABLE public.posts ADD CONSTRAINT posts_access_level_check
   CHECK (access_level IN ('retail','portfolio','desk','private','institutional'));
 
