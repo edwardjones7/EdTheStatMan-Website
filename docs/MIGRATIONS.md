@@ -10,7 +10,7 @@ below had been applied. The application code is written to survive that (see
 
 > **Steps 7 and 8 are not on this branch.** EdTheStatBot was cut from the MVP and
 > lives on `ed-the-statbot`, and the `ai_usage_*` files went with him. The tables
-> they create are already applied in production and simply sit unused — there is
+> they create were applied in production as of **2026-09-04** and simply sit unused — there is
 > nothing to un-migrate, and nothing here to run. They are documented below for
 > when he comes back.
 

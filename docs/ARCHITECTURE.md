@@ -327,8 +327,8 @@ What stays behind on this branch:
 What comes back with him: the `ai`, `@ai-sdk/google`, `@ai-sdk/react` and `zod`
 dependencies (all four arrived with the bot and left with him), the `AI_GATEWAY_API_KEY` /
 `GOOGLE_GENERATIVE_AI_API_KEY` environment variables, and the `ai_usage`, `ai_usage_anon`
-and `ai_threads` tables — **which are already applied in production** and simply sit unused
-while he is parked. Nothing needs to be un-migrated.
+and `ai_threads` tables — **applied in production as of 2026-09-04** and simply sitting unused
+while he is parked. Either way nothing needs to be un-migrated.
 
 ## 9. Content domains
 
