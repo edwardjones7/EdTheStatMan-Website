@@ -860,8 +860,9 @@ export default function TrendsFilter({ trends, lockedCounts = {}, lockedTeasers 
       {/* Admin FAB */}
       {isAdmin && (
         <div style={{
-          /* Bottom-LEFT. EdTheStatBot owns the bottom-right corner on every
-             page, and .back-to-top stacks above it there. */
+          /* Bottom-LEFT. It moved here when EdTheStatBot's FAB took the
+             bottom-right corner; the bot is parked now, but .back-to-top has
+             taken that corner back, so this stays where it is. */
           position: 'fixed',
           bottom: '28px',
           left: '28px',

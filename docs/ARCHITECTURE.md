@@ -315,12 +315,14 @@ ship on its own, and lives in full on the **`ed-the-statbot`** branch: `app/api/
 the `ai_usage_*` migrations, and this section of the document with its tool-by-rung table
 and its design notes. Read it there before rebuilding any of it.
 
+The homepage teaser went with him in a second pass: `StatBotPreview.tsx`, `StatBotAvatar.tsx`,
+its stylesheet, its `statbot_preview` key in `lib/site-content.ts` and its admin editor panel
+in `AdminContentTab.tsx`. **The `statbot_preview` row is still in the `site_content` table** —
+saves are per-key upserts, so removing the key from the schema does not delete the stored copy,
+and the wording Eddie has edited is waiting there when the section returns.
+
 What stays behind on this branch:
 
-- `components/StatBotPreview.tsx` — the homepage teaser, and it is **only** a teaser now.
-  Its composer is inert and labelled "Coming soon"; on the bot branch the same input
-  dispatches a `statbot:ask` event that the mounted panel answers.
-- `components/StatBotAvatar.tsx` — his portrait, which the teaser draws.
 - `lib/gate.ts` and `lib/access-server.ts` — the bot leaned on both, but the Vault,
   Desk and Portfolio pages are the primary callers and always were.
 
@@ -464,7 +466,7 @@ Existing members hold one-time passes, so there is no recurring price to freeze 
 - **`GET /api/admin/content` has no admin check.**
 - **`site_content` has no migration** and `add_vig_to_todays_bets.sql` is empty. The repo cannot rebuild the database.
 - **ESPN host migration is done in `lib/espn.ts` but the NFL section is mid-rewrite.** `site.api.espn.com` began returning 403 (probed 2026-08-31: `cdn.espn.com`, `sports.core.api.espn.com` and `example.com` all returned 200 from the same machine, so it is not connectivity). `cdn.espn.com` is now primary with `site.api` kept as fallback, and it returns *more* than the old host did: spread, moneyline and total with **both open and close** prices, which removes the need for a paid odds vendor. `/nfl` is being generalised to `/desk/[sport]`, backed by `tier_ladder_06_desk_games.sql` — which is independent of steps 01-05 and can be applied any time, since all its columns are nullable and read defensively.
-- **Four components have zero importers**: `AdminContentTab`, `AdminEditOverlay`, `SystemsOverview`, `ActionCard`. `AdminSystemsTab` and `AdminTrendsTab` are imported only for their types. (`StatBotPreview` was dead too; it is now rendered on the homepage, as a mockup — the bot it previews is parked, §8b.)
+- **Four components have zero importers**: `AdminContentTab`, `AdminEditOverlay`, `SystemsOverview`, `ActionCard`. `AdminSystemsTab` and `AdminTrendsTab` are imported only for their types. (`StatBotPreview` is gone from this branch entirely, with the bot it previewed — §8b.)
 - **The Institutional card still oversells.** `lib/offer.ts` promises a backtester and an API key; neither exists, and with EdTheStatBot parked (§8b) the export and query-builder tools that did exist are not in this build either.
 - **No tests, anywhere.** `npx tsc --noEmit` is the only automated check, and it currently passes on application code (the only errors are stale `.next/types/**` artifacts, which clear on the next build).
 - **A checked-in `.git-elenos-backup/` directory** is tracked in git and should not be.

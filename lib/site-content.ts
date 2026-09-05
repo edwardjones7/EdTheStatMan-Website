@@ -67,14 +67,6 @@ export interface CTAContent {
   text: string
 }
 
-export interface StatBotContent {
-  label: string
-  title: string
-  titleAccent: string
-  description: string
-  bullets: string[]
-}
-
 export interface SystemsOverviewCard {
   sport: 'nfl' | 'cfb' | 'nba' | 'cbb'
   name: string
@@ -123,7 +115,6 @@ export interface AllSiteContent {
   action_card: ActionCardContent
   features: FeaturesContent
   cta_section: CTAContent
-  statbot_preview: StatBotContent
   systems_overview: SystemsOverviewContent
   ticker: TickerContent
   model_picks: ModelPicksContent
@@ -239,20 +230,6 @@ export const DEFAULT_CTA: CTAContent = {
   title: 'Get Every Pick.',
   titleAccent: 'Never Miss an Edge.',
   text: 'Follow us on X for instant notifications on all betting systems, picks, and trend alerts.',
-}
-
-export const DEFAULT_STATBOT: StatBotContent = {
-  label: 'Live Now',
-  title: 'Meet',
-  titleAccent: 'EdTheStatBot',
-  description:
-    'Ask questions. Get answers, grounded in the same data your membership already opens. He reads your rung and never quotes a record he cannot pull.',
-  bullets: [
-    'Query team ATS records in any situation',
-    'Find over/under trends by team and venue',
-    'Discover edges with custom filters',
-    'Natural language — no coding required',
-  ],
 }
 
 export const DEFAULT_SYSTEMS_OVERVIEW: SystemsOverviewContent = {
@@ -377,7 +354,6 @@ export const SITE_CONTENT_DEFAULTS: AllSiteContent = {
   action_card: DEFAULT_ACTION_CARD,
   features: DEFAULT_FEATURES,
   cta_section: DEFAULT_CTA,
-  statbot_preview: DEFAULT_STATBOT,
   systems_overview: DEFAULT_SYSTEMS_OVERVIEW,
   ticker: DEFAULT_TICKER,
   model_picks: DEFAULT_MODEL_PICKS,

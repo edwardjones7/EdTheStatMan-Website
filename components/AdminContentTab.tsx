@@ -7,7 +7,6 @@ import type {
   ActionCardContent,
   FeaturesContent,
   CTAContent,
-  StatBotContent,
   SystemsOverviewContent,
   FeatureCard,
 } from '@/lib/site-content'
@@ -200,36 +199,6 @@ export default function AdminContentTab({ content: initialContent }: Props) {
             onChange={updated => {
               const cards = content.features.cards.map((c, j) => (j === i ? updated : c))
               patch('features', { cards })
-            }}
-          />
-        ))}
-      </ContentAccordion>
-
-      {/* ── StatBot Preview ── */}
-      <ContentAccordion
-        id="statbot_preview"
-        label="EdTheStatBot Preview"
-        open={open === 'statbot_preview'}
-        onToggle={() => toggle('statbot_preview')}
-        saving={saving === 'statbot_preview'}
-        saved={saved === 'statbot_preview'}
-        onSave={() => save('statbot_preview')}
-      >
-        <TwoCol>
-          <Field label="Section label" value={content.statbot_preview.label} onChange={v => patch('statbot_preview', { label: v })} />
-          <Field label="Title prefix (before accent)" value={content.statbot_preview.title} onChange={v => patch('statbot_preview', { title: v })} />
-          <Field label="Title accent" value={content.statbot_preview.titleAccent} onChange={v => patch('statbot_preview', { titleAccent: v })} />
-        </TwoCol>
-        <Field label="Description" type="textarea" value={content.statbot_preview.description} onChange={v => patch('statbot_preview', { description: v })} />
-        <SectionDivider label="Bullet Points" />
-        {content.statbot_preview.bullets.map((bullet, i) => (
-          <Field
-            key={i}
-            label={`Bullet ${i + 1}`}
-            value={bullet}
-            onChange={v => {
-              const bullets = content.statbot_preview.bullets.map((b, j) => (j === i ? v : b))
-              patch('statbot_preview', { bullets })
             }}
           />
         ))}

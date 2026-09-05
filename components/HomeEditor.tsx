@@ -5,7 +5,6 @@ import type { AllSiteContent } from '@/lib/site-content'
 import Hero from './Hero'
 import Features from './Features'
 import SportsBand from './SportsBand'
-import StatBotPreview from './StatBotPreview'
 import CTASection from './CTASection'
 import { IconPencil } from './Icons'
 
@@ -87,7 +86,6 @@ export default function HomeEditor({ content, brief }: Props) {
       {brief}
       <Features        content={draft.features}          {...ep('features')} />
       <SportsBand />
-      <StatBotPreview  content={draft.statbot_preview}   {...ep('statbot_preview')} />
       <CTASection      content={draft.cta_section}       {...ep('cta_section')} />
 
       {/* ── Single global FAB ── */}

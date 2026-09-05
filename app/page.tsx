@@ -7,7 +7,6 @@ import Hero from '@/components/Hero'
 import Features from '@/components/Features'
 import CTASection from '@/components/CTASection'
 import SportsBand from '@/components/SportsBand'
-import StatBotPreview from '@/components/StatBotPreview'
 import HomeEditor from '@/components/HomeEditor'
 import TodaysBrief from '@/components/TodaysBrief'
 import { resolveAccess, ACCESS_SELECT } from '@/lib/access'
@@ -62,7 +61,6 @@ export default async function Home() {
     action_card:      { ...SITE_CONTENT_DEFAULTS.action_card,      ...(raw.action_card      as object ?? {}) },
     features:         mergedFeatures,
     cta_section:      { ...SITE_CONTENT_DEFAULTS.cta_section,      ...(raw.cta_section      as object ?? {}) },
-    statbot_preview:  { ...SITE_CONTENT_DEFAULTS.statbot_preview,  ...(raw.statbot_preview  as object ?? {}) },
     systems_overview: { ...SITE_CONTENT_DEFAULTS.systems_overview, ...(raw.systems_overview as object ?? {}) },
     ticker:           { ...SITE_CONTENT_DEFAULTS.ticker,           ...(raw.ticker           as object ?? {}) },
     model_picks:      { ...SITE_CONTENT_DEFAULTS.model_picks,      ...(raw.model_picks      as object ?? {}) },
@@ -105,7 +103,6 @@ export default async function Home() {
           {briefNode}
           <Features        content={content.features} />
           <SportsBand />
-          <StatBotPreview  content={content.statbot_preview} />
           <CTASection      content={content.cta_section} membership={membership} />
         </>
       )}
