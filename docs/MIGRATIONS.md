@@ -48,6 +48,17 @@ means there is no way to prove afterwards that nobody's access changed.
 
 ### Steps 1 through 5 are ONE SESSION. Do not stop in the middle.
 
+> **Step 0 is not optional, and skipping it is only discovered at the very end.**
+> Step 5 commits its two UPDATEs and THEN runs a verification that joins
+> `tier_migration_audit`. With no snapshot that verification dies on 42P01 after
+> the data is already written, and it takes the rest of the file down with it --
+> including the `recompute_entitlement()` call, which is a real step and not a
+> check. If this has happened, use the fallback block at the bottom of
+> `tier_ladder_05_migrate_users.sql`. Do not create `tier_migration_audit`
+> after the fact to satisfy the original query: step 1 has already rewritten the
+> tier values, so a late snapshot reports every paying member as drifted.
+
+
 Postgres refuses `ALTER COLUMN ... TYPE` on a column an RLS policy references, so
 step 1 **drops the `posts` SELECT policies** and step 4 is what puts them back.
 Between those two steps the blog's row-level security is degraded. The blog pages

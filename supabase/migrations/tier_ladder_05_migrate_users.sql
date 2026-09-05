@@ -76,6 +76,77 @@ WHERE subscription_tier <> 'retail'
        OR pass_expires_at IS DISTINCT FROM access_expires_at);
 
 -- ---------------------------------------------------------------------------
+-- IF STEP 0 WAS NEVER RUN -- the fallback verification (used 2026-09-05)
+-- ---------------------------------------------------------------------------
+-- VERIFY 1 above joins tier_migration_audit and fails with
+-- `42P01: relation "public.tier_migration_audit" does not exist` when the step 0
+-- snapshot was skipped. That error lands AFTER the COMMIT on line 41, so the two
+-- UPDATEs are already applied; what is lost is the verification, not the data.
+--
+-- Do NOT create tier_migration_audit now to satisfy VERIFY 1. Step 1 already
+-- rewrote subscription_tier onto the ladder, so a table captured today holds
+-- ladder values, and VERIFY 1's CASE maps every one of them through its ELSE to
+-- 'retail'. It would report every paying member as drifted. The before-picture
+-- is genuinely unrecoverable; do not fake one.
+--
+-- WHAT IS STILL PROVABLE, AND WHY IT IS ENOUGH.
+-- The two UPDATEs above write pass_tier, pass_expires_at, sub_tier,
+-- subscription_status and billing_mode. They do not write subscription_tier or
+-- access_expires_at. resolveAccess() reads access_expires_at and nothing else.
+-- So the data migration CANNOT have changed anyone's access, by inspection of
+-- the SQL rather than by comparison against a snapshot.
+--
+-- The one remaining step that can move a member is recompute_entitlement(),
+-- which writes both derived columns. So: capture, run it, diff.
+
+-- A. Did the UPDATEs land? One statement -- the SQL editor only renders the last.
+WITH checks AS (
+  SELECT 1 AS n, 'paid members not yet in pass slot (need 0)' AS stage,
+         (SELECT count(*)::text FROM public.profiles
+           WHERE subscription_tier <> 'retail' AND pass_tier IS NULL) AS result
+  UNION ALL SELECT 2, 'members now holding a pass',
+         (SELECT count(*)::text FROM public.profiles WHERE pass_tier IS NOT NULL)
+  UNION ALL SELECT 3, 'legacy subscription_status left (need 0)',
+         (SELECT count(*)::text FROM public.profiles
+           WHERE pass_tier IS NOT NULL AND subscription_status IS NOT NULL)
+)
+SELECT stage, result FROM checks ORDER BY n;
+
+-- B. Capture the state immediately BEFORE recompute_entitlement() runs.
+--    access_expires_at has not been written by any ladder step, so this column
+--    is still its pre-migration value and the diff in D is meaningful.
+CREATE TABLE IF NOT EXISTS public.tier_migration_recheck AS
+SELECT id, email, subscription_tier, access_expires_at,
+       pass_tier, pass_expires_at, sub_tier, billing_mode, now() AS captured_at
+FROM public.profiles;
+
+-- C. The call that VERIFY 2 never reached.
+SELECT public.recompute_entitlement(id)
+FROM public.profiles
+WHERE pass_tier IS NOT NULL;
+
+-- D. Nobody moved. MUST return zero rows.
+SELECT p.email,
+       b.subscription_tier AS tier_before, p.subscription_tier AS tier_after,
+       b.access_expires_at AS exp_before,  p.access_expires_at AS exp_after,
+       b.billing_mode      AS mode_before, p.billing_mode      AS mode_after
+FROM public.profiles p
+JOIN public.tier_migration_recheck b ON b.id = p.id
+WHERE p.subscription_tier IS DISTINCT FROM b.subscription_tier
+   OR p.access_expires_at IS DISTINCT FROM b.access_expires_at;
+
+-- E. VERIFY 3 from above, which needs no snapshot. Also zero rows.
+SELECT email, subscription_tier, access_expires_at, pass_tier, pass_expires_at,
+       sub_tier, billing_mode
+FROM public.profiles
+WHERE subscription_tier <> 'retail'
+  AND (pass_tier IS DISTINCT FROM subscription_tier
+       OR pass_expires_at IS DISTINCT FROM access_expires_at);
+
+-- Keep tier_migration_recheck for a week of clean production, then:
+--   DROP TABLE public.tier_migration_recheck;
+
+-- ---------------------------------------------------------------------------
 -- GRANDFATHERING (Stripe side, no app code)
 -- ---------------------------------------------------------------------------
 -- These members hold one-time passes, so there is no recurring price to freeze
