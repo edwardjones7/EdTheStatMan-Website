@@ -7934,6 +7934,99 @@ textarea.form-input {
   .brief__foot { flex-direction: column; align-items: flex-start; }
 }
 
+/* ---------- Research Desk: switching weeks ---------------------------------
+   The skeleton in loading.tsx covers arriving at the board. This covers moving
+   around inside it, which Next does NOT show a loading boundary for: a change
+   of search params on a force-dynamic page re-runs the server render while
+   React keeps the current screen on display. The click had no visible effect at
+   all before this, on a wait that is several database round trips long.
+
+   Three signals, in order of how quickly they land: the clicked pill goes
+   active immediately (optimistic, in the component), the bar under the rail
+   starts moving, and the stale slate recedes. */
+.desk-board__bar {
+  position: relative;
+  height: 2px;
+  margin: 10px 0 -12px;
+  border-radius: 999px;
+  overflow: hidden;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.desk-board.is-switching .desk-board__bar {
+  opacity: 1;
+  background: rgba(var(--teal-rgb), 0.12);
+}
+
+.desk-board__bar-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 40%;
+  border-radius: inherit;
+  background: linear-gradient(90deg,
+    rgba(var(--teal-rgb), 0) 0%,
+    var(--accent-teal) 50%,
+    rgba(var(--teal-rgb), 0) 100%);
+  transform: translateX(-100%);
+}
+
+.desk-board.is-switching .desk-board__bar-fill {
+  animation: desk-bar-sweep 1.05s ease-in-out infinite;
+}
+
+@keyframes desk-bar-sweep {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(350%); }
+}
+
+/* The slate being replaced recedes rather than disappearing: dropping it would
+   collapse the page height and bounce the scroll position, which is worse than
+   the wait. Not clickable while stale, so a click cannot open the game you are
+   navigating away from. */
+.desk-board.is-switching .desk-summary,
+.desk-board.is-switching .desk-day,
+.desk-board.is-switching .desk-empty {
+  opacity: 0.38;
+  pointer-events: none;
+  transition: opacity 160ms ease-out;
+}
+
+/* The pill you clicked, still waiting on its data. */
+.desk-week-pill.is-loading {
+  position: relative;
+  overflow: hidden;
+}
+
+.desk-week-pill.is-loading::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(var(--teal-rgb), 0.28) 50%,
+    transparent 100%);
+  animation: desk-pill-sweep 1.05s ease-in-out infinite;
+}
+
+@keyframes desk-pill-sweep {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* Motion is the whole mechanism here, so with it suppressed the state has to be
+   carried by something static: a filled bar and the dimmed slate still say
+   "working" without anything sweeping across the screen. */
+@media (prefers-reduced-motion: reduce) {
+  .desk-board.is-switching .desk-board__bar-fill {
+    animation: none;
+    width: 100%;
+    transform: none;
+    background: rgba(var(--teal-rgb), 0.5);
+  }
+  .desk-week-pill.is-loading::after { animation: none; opacity: 0; }
+}
+
 /* ---------- Research Desk loading skeleton --------------------------------
    Mirrors app/desk/[sport]/loading.tsx. Dimensions track the real board so the
    swap from skeleton to content does not shift the page; if the board's layout

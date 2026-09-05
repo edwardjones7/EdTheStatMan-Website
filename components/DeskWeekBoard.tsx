@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useTransition } from 'react'
 import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
 import type { PublicNflGame } from '@/lib/nfl'
@@ -58,13 +59,29 @@ export default function DeskWeekBoard({
   const router = useRouter()
   const pathname = usePathname()
 
+  // Switching weeks is a server round trip on a force-dynamic page, and React
+  // holds the old screen while it runs. Without a pending state the board looks
+  // inert for the whole trip: the pill you clicked does not light up, nothing
+  // moves, and the natural read is that the click missed.
+  const [isPending, startTransition] = useTransition()
+  const [requested, setRequested] = useState<{ season_type: number; week: number } | null>(null)
+
+  // Show the requested week as selected the moment it is clicked. When the
+  // transition ends this falls back to `active`, which by then is the server's
+  // answer — so a failed or superseded navigation cannot leave the rail lying.
+  const shown = isPending && requested ? requested : active
+
   // Selected week lives in the URL so it survives refresh and sharing — the
   // same pattern the sport tabs use on the Vault pages.
   function selectWeek(w: WeekOption) {
+    if (shown && shown.season_type === w.season_type && shown.week === w.week) return
+    setRequested({ season_type: w.season_type, week: w.week })
     const params = new URLSearchParams()
     params.set('week', String(w.week))
     if (w.season_type === 3) params.set('type', 'post')
-    router.replace(`${pathname}?${params.toString()}`, { scroll: false })
+    startTransition(() => {
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false })
+    })
   }
 
   // Group by day so the board reads like a slate, not a flat list.
@@ -92,17 +109,17 @@ export default function DeskWeekBoard({
   ]
 
   return (
-    <div className="desk-board">
+    <div className={`desk-board${isPending ? ' is-switching' : ''}`} aria-busy={isPending}>
       <div className="desk-weeks-wrap">
         <div className="desk-weeks" role="tablist" aria-label="Week">
           {weeks.map(w => {
-            const isActive = !!active && active.season_type === w.season_type && active.week === w.week
+            const isActive = !!shown && shown.season_type === w.season_type && shown.week === w.week
             return (
               <button
                 key={`${w.season_type}-${w.week}`}
                 role="tab"
                 aria-selected={isActive}
-                className={`desk-week-pill${isActive ? ' is-active' : ''}`}
+                className={`desk-week-pill${isActive ? ' is-active' : ''}${isActive && isPending ? ' is-loading' : ''}`}
                 onClick={() => selectWeek(w)}
               >
                 {w.label}
@@ -110,6 +127,12 @@ export default function DeskWeekBoard({
             )
           })}
         </div>
+      </div>
+
+      {/* Indeterminate, because the wait is a database round trip with no
+          progress to report. Present only while switching. */}
+      <div className="desk-board__bar" aria-hidden="true">
+        <span className="desk-board__bar-fill" />
       </div>
 
       {games.length > 0 && (
