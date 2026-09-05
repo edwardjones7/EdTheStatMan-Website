@@ -63,6 +63,17 @@ export interface OfferPlan {
   season: OfferSku
 }
 
+// EVERY BULLET WITHOUT A "Coming this season" PREFIX MUST BE TRUE TODAY.
+// Checked against production 2026-09-05 before launch, and several were not:
+//   - "unit sizing"        todays_bets.risk is NULL on all 206 rows
+//   - Desk curated trends  nfl_game_trends = 0 rows
+//   - the weekly desk note desk_notes = 0 rows
+//   - system-trigger alerts  no such code; lib/notify fires on pick inserts
+//   - all four Institutional tools  no export route, query builder, key issuing
+//                                   or backtester exists anywhere in the repo
+// A season pass is one-time and runs to February, which is a long time for a
+// buyer to notice a bullet that was never true. That is the same dispute the
+// one-time pricing exists to avoid, so do not re-add a claim ahead of the code.
 export const OFFER_PLANS: OfferPlan[] = [
   {
     key: 'portfolio',
@@ -71,7 +82,7 @@ export const OFFER_PLANS: OfferPlan[] = [
     tagline: 'The picks themselves. Every play, graded.',
     features: [
       'Every model pick, unlocked',
-      'Full line, number and unit sizing',
+      'Full line and number on every play',
       'Instant alerts by email, push and Discord',
       'Complete graded history',
     ],
@@ -97,9 +108,10 @@ export const OFFER_PLANS: OfferPlan[] = [
     features: [
       'Everything in The Portfolio',
       'The full season schedule, live as it moves',
-      'Curated trends attached to every matchup',
       'Opening and current lines: spread, total and moneyline',
-      'The weekly desk note, and the reasoning behind it',
+      'Every game on its own page, NFL and college football',
+      'Coming this season — curated trends attached to each matchup',
+      'Coming this season — the weekly desk note',
     ],
     month: {
       tier: 'desk', period: 'month', mode: 'subscription', price: '$129',
@@ -124,7 +136,7 @@ export const OFFER_PLANS: OfferPlan[] = [
       'The complete systems library, unlocked',
       'The complete team trends library, unlocked',
       'Filter and sort across the whole Vault',
-      'Alerts the moment a system triggers',
+      'Coming this season — alerts the moment a system triggers',
     ],
     month: {
       tier: 'private', period: 'month', mode: 'subscription', price: '$199',
@@ -143,14 +155,15 @@ export const OFFER_PLANS: OfferPlan[] = [
     key: 'institutional',
     name: 'Vault — Institutional Intelligence',
     shortName: 'Institutional',
-    tagline: 'The raw material. Build your own edge on top of ours.',
+    tagline: 'Everything in Private, and first access to what we build next.',
     badge: 'Institutional',
     features: [
       'Everything in Private Intelligence',
-      'Full row-level export: every system, every trend, as CSV',
-      'Query builder across the entire Vault',
-      'API key for programmatic access',
-      'Backtest your own systems against our data',
+      'Coming this season — the highest-conviction systems and trends, curated for this tier',
+      'Coming this season — full row-level export, every system and trend as CSV',
+      'Coming this season — query builder across the entire Vault',
+      'Coming this season — API key for programmatic access',
+      'Coming this season — backtest your own systems against our data',
     ],
     month: {
       tier: 'institutional', period: 'month', mode: 'subscription', price: '$399',
