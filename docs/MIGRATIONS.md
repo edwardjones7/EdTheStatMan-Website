@@ -110,24 +110,39 @@ WITH checks AS (
          COALESCE((SELECT data_type FROM information_schema.columns
                     WHERE table_schema='public' AND table_name='profiles'
                       AND column_name='subscription_tier'), 'MISSING') AS result
-  UNION ALL SELECT 2, 'step 2   min_tier tables (need 3)',
+  UNION ALL SELECT 2, 'step 1   legacy tier values left (need 0)',
+         (SELECT count(*)::text FROM public.profiles
+           WHERE subscription_tier IN ('free','basic','premium','elite'))
+  UNION ALL SELECT 3, 'step 2   min_tier tables (need 3)',
          (SELECT count(*)::text FROM information_schema.columns
            WHERE table_schema='public' AND column_name='min_tier'
              AND table_name IN ('betting_systems','betting_trends','todays_bets'))
-  UNION ALL SELECT 3, 'step 3   billing columns (need 7)',
+  UNION ALL SELECT 4, 'step 3   billing columns (need 7)',
          (SELECT count(*)::text FROM information_schema.columns
            WHERE table_schema='public' AND table_name='profiles'
              AND column_name IN ('pass_tier','pass_expires_at','sub_tier','sub_current_period_end',
                                  'sub_cancel_at_period_end','sub_event_at','billing_mode'))
-  UNION ALL SELECT 4, 'step 3   stripe_events table',
+  UNION ALL SELECT 5, 'step 3   stripe_events table',
          COALESCE(to_regclass('public.stripe_events')::text, 'MISSING')
-  UNION ALL SELECT 5, 'step 3b  recompute_entitlement()',
+  UNION ALL SELECT 6, 'step 3b  recompute_entitlement()',
          COALESCE((SELECT proname FROM pg_proc WHERE proname='recompute_entitlement' LIMIT 1), 'MISSING')
-  UNION ALL SELECT 6, 'step 4   posts policies (need 2)',
-         (SELECT count(*)::text FROM pg_policies WHERE tablename='posts')
-  UNION ALL SELECT 7, 'step 5   legacy tiers left (need 0)',
+  -- Count the two policies step 4 creates BY NAME. Counting every policy on
+  -- posts also counts the admin write policies, which step 1 never dropped, so
+  -- a bare count reads as partial progress when there has been none.
+  UNION ALL SELECT 7, 'step 4   the 2 ladder posts policies (need 2)',
+         (SELECT count(*)::text FROM pg_policies
+           WHERE tablename='posts' AND policyname IN (
+             'Anyone can view published retail posts',
+             'Members can view posts at or below their tier'))
+  UNION ALL SELECT 8, 'step 4   all posts policies present',
+         COALESCE((SELECT string_agg(policyname, ' | ' ORDER BY policyname)
+                     FROM pg_policies WHERE tablename='posts'), '(none)')
+  -- Step 5 moves paying members into the pass slot. It does NOT change
+  -- subscription_tier -- step 1 already did that -- so the tier column tells
+  -- you nothing about whether step 5 ran.
+  UNION ALL SELECT 9, 'step 5   paid members not yet in pass slot (need 0)',
          (SELECT count(*)::text FROM public.profiles
-           WHERE subscription_tier IN ('free','basic','premium','elite'))
+           WHERE subscription_tier <> 'retail' AND pass_tier IS NULL)
 )
 SELECT stage, result FROM checks ORDER BY n;
 ```
