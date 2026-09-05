@@ -97,13 +97,19 @@ COMMIT;
 
 -- ===========================================================================
 -- STEP 3b -- RUN THIS AS ITS OWN SEPARATE PASTE, after the above commits.
--- (Separate because a $$ quoting error would otherwise roll back the DDL.)
+-- (Separate because a dollar-quote error would otherwise roll back the DDL.)
+-- The body is tagged $recompute$, not a bare double-dollar, and NO comment in this
+-- file may contain that bare token: the Supabase SQL editor splits statements
+-- before it strips comments, so a bare token inside a comment opens a string
+-- there, the AS tag below closes it, and the function body is then sent to the
+-- server as loose SQL. It fails with 42P01 relation "r" does not exist, which
+-- names a plpgsql variable and points nowhere near the actual fault.
 -- ===========================================================================
 -- The single reconciliation rule. Webhook handlers write ONE slot and then call
 -- this; they never compute a tier or an expiry themselves.
 
 CREATE OR REPLACE FUNCTION public.recompute_entitlement(p_user uuid)
-RETURNS void LANGUAGE plpgsql AS $$
+RETURNS void LANGUAGE plpgsql AS $recompute$
 DECLARE
   r        public.profiles%ROWTYPE;
   ladder   text[] := ARRAY['retail','portfolio','desk','private','institutional'];
@@ -162,7 +168,7 @@ BEGIN
       access_expires_at = eff_exp,
       billing_mode      = mode
   WHERE id = p_user;
-END $$;
+END $recompute$;
 
 -- The ladder array above duplicates TIER_RANK in lib/access.ts. That is the
 -- price of enforcing the rule once, in the database. Change both together.

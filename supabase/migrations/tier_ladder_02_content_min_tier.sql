@@ -99,7 +99,9 @@ COMMIT;
 
 -- ===========================================================================
 -- STEP 2b -- RUN THIS AS ITS OWN SEPARATE PASTE, after the above commits.
--- (Separate because a $$ quoting error would otherwise roll back the backfill.)
+-- (Separate because a dollar-quote error would otherwise roll back the backfill.)
+-- The body below is tagged $sync$ rather than a bare double-dollar, and no
+-- comment here may carry that bare token -- see the note in step 3b.
 -- ===========================================================================
 -- COMPATIBILITY TRIGGER -- SLICE 1 ONLY. DELETE IN SLICE 2.
 --
@@ -118,7 +120,7 @@ COMMIT;
 -- write, which is far harder to notice.
 --
 -- CREATE OR REPLACE FUNCTION public.sync_min_tier_from_flags()
--- RETURNS trigger LANGUAGE plpgsql AS $$
+-- RETURNS trigger LANGUAGE plpgsql AS $sync$
 -- BEGIN
 --   NEW.min_tier := CASE
 --     WHEN COALESCE(NEW.is_elite, false)              THEN 'private'
@@ -126,7 +128,7 @@ COMMIT;
 --     ELSE TG_ARGV[0]
 --   END;
 --   RETURN NEW;
--- END $$;
+-- END $sync$;
 --
 -- DROP TRIGGER IF EXISTS betting_systems_sync_min_tier ON public.betting_systems;
 -- CREATE TRIGGER betting_systems_sync_min_tier BEFORE INSERT OR UPDATE
