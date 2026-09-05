@@ -60,16 +60,18 @@ export async function POST(req: Request) {
     }, { status: 409 })
   }
 
-  let customerId = (profile as any)?.stripe_customer_id as string | null
-
-  if (!customerId) {
+  async function freshCustomer(): Promise<string> {
     const customer = await getStripe().customers.create({
-      email: user.email!,
-      metadata: { supabaseUserId: user.id },
+      email: user!.email!,
+      metadata: { supabaseUserId: user!.id },
     })
-    customerId = customer.id
-    await (admin as any).from('profiles').update({ stripe_customer_id: customerId }).eq('id', user.id)
+    await (admin as any).from('profiles')
+      .update({ stripe_customer_id: customer.id }).eq('id', user!.id)
+    return customer.id
   }
+
+  let customerId = (profile as any)?.stripe_customer_id as string | null
+  if (!customerId) customerId = await freshCustomer()
 
   // ---- Guard: switching plans on a live subscription ----------------------
   // Opening a second checkout session would create a SECOND subscription and
@@ -97,7 +99,7 @@ export async function POST(req: Request) {
     }
   }
 
-  const checkoutSession = await getStripe().checkout.sessions.create({
+  const sessionParams = {
     customer: customerId,
     line_items: [{ price: priceId, quantity: 1 }],
     mode: sku.mode,
@@ -111,7 +113,27 @@ export async function POST(req: Request) {
     cancel_url: `${siteUrl()}/win?canceled=1`,
     metadata: { userId: user.id, priceId, tier: sku.tier, period: sku.period, ...attr },
     allow_promotion_codes: true,
-  })
+  }
+
+  // A STORED CUSTOMER ID CAN BE STALE, and trusting it absolutely is a dead end
+  // for the member: deleted in Stripe, or belonging to a different account or
+  // mode, and every checkout 500s forever with an empty body and no way for
+  // them to recover. Same reasoning as the stale-subscription catch above --
+  // that one already exists, this one was missing.
+  //
+  // Only 'resource_missing' on the customer param is recoverable this way. Any
+  // other Stripe error still throws, because re-pointing a member at a brand
+  // new customer record is not a fix for a problem that is not the customer.
+  let checkoutSession
+  try {
+    checkoutSession = await getStripe().checkout.sessions.create(sessionParams)
+  } catch (e: any) {
+    const staleCustomer = e?.code === 'resource_missing' && e?.param === 'customer'
+    if (!staleCustomer) throw e
+    console.error(`[checkout] stale stripe_customer_id ${customerId} for ${user.id}; recreating`)
+    sessionParams.customer = await freshCustomer()
+    checkoutSession = await getStripe().checkout.sessions.create(sessionParams)
+  }
 
   return NextResponse.json({ url: checkoutSession.url })
 }
