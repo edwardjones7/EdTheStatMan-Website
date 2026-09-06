@@ -8603,12 +8603,27 @@ textarea.form-input {
    on iOS, so it is restated on the elements themselves and paired with the
    max-height escape hatch: the autosizer skips any element with a max-height,
    which is the only reliable way to opt a specific block out. */
-.ticker__item,
-.ticker__sport,
-.ticker__record,
-.ticker__trend {
-  -webkit-text-size-adjust: 100%;
-  text-size-adjust: 100%;
+.ticker,
+.ticker * {
+  /* text-size-adjust: NONE, not 100%.
+     100% is the documented way to stop this and it did not work on iOS: Safari
+     kept inflating the longest items while short ones rendered normally, so the
+     same .ticker__record class showed at two sizes in one row. max-height is a
+     Chrome-only escape hatch and Safari's autosizer ignores it. `none` is the
+     only value iOS honours.
+     Normally `none` is wrong -- it blocks the reader's own text scaling. It is
+     scoped to the ticker alone, which is a decorative marquee nobody needs to
+     enlarge, and every other element on the site keeps the 100% set on html. */
+  -webkit-text-size-adjust: none;
+  text-size-adjust: none;
+
+  /* ONE SIZE for everything in the ticker. Three different sizes (0.86 / 0.8 /
+     0.72rem) gave the autosizer three baselines to scale from and made the
+     inflation look arbitrary rather than systematic. A single value is also
+     what the row should have looked like regardless. */
+  font-size: 0.72rem;
+
+  /* Retained for Chrome/Android, which does key off max-height. */
   max-height: 999999px;
 }
 
