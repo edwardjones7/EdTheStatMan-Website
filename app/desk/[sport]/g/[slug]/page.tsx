@@ -10,6 +10,7 @@ import {
   gameBrief, gameBriefSentences, spreadLabel, moneylineLabel, lineMove,
 } from '@/lib/nfl'
 import type { NflGame } from '@/lib/nfl'
+import { deskSportLabel } from '@/lib/desk'
 import { toTeaser } from '@/lib/teaser'
 import type { LockedTeaser } from '@/lib/teaser'
 import NflGameAdminPanel from '@/components/NflGameAdminPanel'
@@ -133,51 +134,66 @@ export default async function NflGamePage({ params }: { params: { sport: string;
   const systems = partition(systemsResult.data ?? [])
   const trends = partition(trendsResult.data ?? [])
 
-  // Admin-only: full NFL system/trend lists for the linking UI.
+  // Admin-only: the sport's full system/trend lists for the linking UI.
   let adminPanel: JSX.Element | null = null
   if (isAdmin) {
-    // Offer the sport THIS game is in. The list was pinned to nfl/nflpre, so a
-    // college game page handed the admin NFL systems to link against it -- wrong
-    // rows entirely, and /desk/cfb is live. Preseason and regular NFL share a
-    // library, so they stay paired.
+    // ONE SPORT PER PICKER. A game can only ever be linked to rows from its own
+    // league, so the picker offers exactly that sport and nothing else. nfl and
+    // nflpre used to be paired here because they share a library, but the Desk
+    // has no preseason games (nfl_games carries season_type 2 and 3 only), so
+    // pairing them only buried the 24 NFL systems under 18 preseason ones.
     const sportKey = params.sport.toLowerCase()
-    const linkSports = sportKey === 'nfl' || sportKey === 'nflpre'
-      ? ['nfl', 'nflpre']
-      : [sportKey]
+    const linkSports = [sportKey]
 
+    // `code` is the Vault key (NFLS0006, CFBT0010) — the handle the admin
+    // searches by, so it has to cross the wire.
+    //
+    // NOTE: betting_systems has NO `team` column (only betting_trends does).
+    // Selecting it made PostgREST fail the whole query, `.data` came back null,
+    // and the systems picker silently rendered empty for every sport. The
+    // column list below is verified against the live schema.
     const [allSystems, allTrends] = await Promise.all([
-      (admin as any).from('betting_systems').select('id, description, sport, team, w, l, t').in('sport', linkSports),
-      (admin as any).from('betting_trends').select('id, description, sport, team, w, l, t').in('sport', linkSports),
+      (admin as any).from('betting_systems').select('id, code, description, sport, w, l, t').in('sport', linkSports),
+      (admin as any).from('betting_trends').select('id, code, description, sport, team, w, l, t').in('sport', linkSports),
     ])
 
     // Ordered for the person doing the linking, not by insert date.
     //
-    // The number is inside the description ("NFL System #5 - ...", "Bills Trend
-    // #1 - ..."), not a column, so it is parsed rather than sorted in SQL. Every
-    // NFL row carries one (42 systems, 86 trends, none missing), but other
-    // sports may not, so anything unnumbered sorts last by description instead
-    // of silently landing at #0.
+    // The Vault code is the primary key to the eye as well as to the search box,
+    // so it drives the order: prefix first, then the number INSIDE it compared
+    // numerically. Text order would be wrong -- college codes are padded to five
+    // digits and one legacy row to four, so CFBS0025 would land after CFBS00061.
+    const codeParts = (code: string | null | undefined): [string, number] => {
+      const m = /^([A-Za-z]*)(\d*)/.exec((code ?? '').trim())
+      return [(m?.[1] ?? '').toUpperCase(), m?.[2] ? parseInt(m[2], 10) : Number.MAX_SAFE_INTEGER]
+    }
+    // Fallback for a row imported without a code: the number inside the
+    // description ("NFL System #5 - ..."), which every NFL row carries and
+    // almost no college row does. Unnumbered rows sort last, by description,
+    // instead of silently landing at #0.
     const linkNo = (d: string | null | undefined) => {
-      const m = /#s*(d+)/.exec(d ?? '')
+      const m = /#\s*(\d+)/.exec(d ?? '')
       return m ? parseInt(m[1], 10) : Number.MAX_SAFE_INTEGER
     }
-    // Sport before number, because nfl and nflpre share this picker: without it
-    // "NFL Preseason System #1" and "NFL System #1" tie on the number and the two
-    // libraries interleave all the way down. Alphabetical puts nfl before nflpre.
-    const byNumber = (a: any, b: any) =>
-      (a.sport ?? '').localeCompare(b.sport ?? '') ||
-      linkNo(a.description) - linkNo(b.description) ||
-      (a.description ?? '').localeCompare(b.description ?? '')
-    // Team first, then number within the team. Teamless rows go last rather
-    // than sorting to the top on an empty string.
-    const byTeamThenNumber = (a: any, b: any) => {
+    const byCode = (a: any, b: any) => {
+      const ca = (a.code ?? '').trim(), cb = (b.code ?? '').trim()
+      // A codeless row goes last rather than riding an empty string to the top.
+      if (!ca !== !cb) return ca ? -1 : 1
+      const [pa, na] = codeParts(ca), [pb, nb] = codeParts(cb)
+      return pa.localeCompare(pb) || na - nb ||
+        linkNo(a.description) - linkNo(b.description) ||
+        (a.description ?? '').localeCompare(b.description ?? '')
+    }
+    // Trends group by team first, then by code within the team. Teamless rows
+    // go last, same reasoning.
+    const byTeamThenCode = (a: any, b: any) => {
       const ta = (a.team ?? '').trim(), tb = (b.team ?? '').trim()
       if (!ta !== !tb) return ta ? -1 : 1
-      return ta.localeCompare(tb) || byNumber(a, b)
+      return ta.localeCompare(tb) || byCode(a, b)
     }
 
-    const sortedSystems = [...(allSystems.data ?? [])].sort(byNumber)
-    const sortedTrends = [...(allTrends.data ?? [])].sort(byTeamThenNumber)
+    const sortedSystems = [...(allSystems.data ?? [])].sort(byCode)
+    const sortedTrends = [...(allTrends.data ?? [])].sort(byTeamThenCode)
     adminPanel = (
       <NflGameAdminPanel
         game={{
@@ -186,6 +202,7 @@ export default async function NflGamePage({ params }: { params: { sport: string;
           writeup_html: game.writeup_html,
           is_published: game.is_published,
         }}
+        sportLabel={deskSportLabel(sportKey)}
         allSystems={sortedSystems}
         allTrends={sortedTrends}
         linkedSystemIds={systemIds}

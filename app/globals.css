@@ -6583,6 +6583,53 @@ textarea.form-input {
   white-space: nowrap;
 }
 
+/* Search the picker by Vault key. The list runs to 84 rows on college, and
+   the code (NFLS0006, CFBT0010) is how a row is referred to everywhere else,
+   so it is both the search field and a visible column. */
+.nfl-link-picker__search { margin-bottom: 6px; }
+
+.nfl-link-picker__search .admin-form-input {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  padding: 7px 10px;
+}
+
+.nfl-link-picker__meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+  font-size: 0.74rem;
+  color: var(--text-muted);
+}
+
+.nfl-link-picker__only {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.nfl-link-picker__code {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.02em;
+  color: var(--accent-teal);
+  background: rgba(var(--teal-rgb), 0.08);
+  border-radius: 4px;
+  padding: 2px 5px;
+  white-space: nowrap;
+}
+
+.nfl-link-picker__empty {
+  padding: 10px 12px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
 
 /* ===================================================================
    v3 LADDER — offer page
