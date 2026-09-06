@@ -5,6 +5,29 @@ are in [`docs/RELEASING.md`](docs/RELEASING.md).
 
 This file starts at 3.0.0. Everything before it shipped untagged; see `git log`.
 
+## [3.1.0] — 2026-09-06
+
+### Added
+
+- **Comp, extend and revoke access from the admin dashboard.** `PATCH
+  /api/admin/users/[id]` writes the pass slot and lets `recompute_entitlement()`
+  reconcile, so a comp can sit on top of a paid subscription without either one
+  clobbering the other. There was previously no users route at all — granting
+  access meant a hand-written UPDATE against production.
+- An **Access** column on the users table: the expiry date, and whether the
+  entitlement comes from a pass, a subscription, or both. A **Lapsed** filter
+  and a lapsed count alongside the free/paid split.
+
+### Fixed
+
+- **The dashboard counted lapsed members as paying customers.** It read
+  `subscription_tier`, which is derived and only recomputed by a webhook —
+  and expiry fires no webhook. Two members who lapsed in May and August read as
+  Private and Research Desk with no expiry shown. Every row now resolves the way
+  `resolveAccess()` does.
+- Admins were counted as Institutional *and* as Admins, inflating paid members
+  by two. The breakdown sums to the total again.
+
 ## [3.0.0] — 2026-09-06
 
 The ladder. Four flat tiers became five rungs sold as three named products, the
