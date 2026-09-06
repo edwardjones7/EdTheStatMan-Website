@@ -6,6 +6,8 @@ import type { ModelPicksContent } from '@/lib/site-content'
 import type { TodaysBet } from '@/components/TodaysBets'
 import ModelPicksPage from '@/components/ModelPicksPage'
 import ModelPicksEditor from '@/components/ModelPicksEditor'
+import RecentPicksResults from '@/components/RecentPicksResults'
+import ModelPerformance from '@/components/ModelPerformance'
 import { getAccess } from '@/lib/access-server'
 import { atLeastTier } from '@/lib/access'
 import { rowMinTier } from '@/lib/gate'
@@ -75,18 +77,44 @@ export default async function Portfolio() {
     .slice(0, BET_TEASER_LIMIT)
     .map(toBetTeaser)
 
-  return isAdmin ? (
-    <ModelPicksEditor rows={todaysBets} userTier={userTier} headerContent={headerContent} />
-  ) : (
-    <ModelPicksPage
-      rows={todaysBets}
-      isAdmin={false}
-      userTier={userTier}
-      isMember={isMember}
-      lockedCount={lockedCount}
-      lockedBets={lockedBets}
-      eliteLockedBets={eliteLockedBets}
-      headerContent={headerContent}
-    />
+  // ---- The graded record, under the open plays -------------------------------
+  // TodaysBets drops every show_on_results row (components/TodaysBets.tsx:209),
+  // so this page rendered only the handful of open picks and the 199 graded ones
+  // appeared nowhere on it. "Complete graded history" is a Portfolio bullet, so
+  // the record belongs on the product's own page, not only on /portfolio/performance.
+  //
+  // Same source, filter and arithmetic as that page, deliberately: two pages
+  // quoting different records is worse than either number alone. allBets is
+  // already ordered created_at desc, which is the order both components expect.
+  //
+  // NOT gated. The record is public on /portfolio/performance and in the homepage
+  // brief; hiding it here would make the paywall look like it covers the results
+  // rather than the picks.
+  const recentPicks: TodaysBet[] = allBets.filter(b => b.show_on_results)
+  const wins   = recentPicks.filter(p => p.result === 'win').length
+  const losses = recentPicks.filter(p => p.result === 'loss').length
+  const pushes = recentPicks.filter(p => p.result === 'push').length
+  const winPct = (wins + losses) > 0 ? (wins / (wins + losses)) * 100 : 0
+  const calcStats = { wins, losses, pushes, winPct }
+
+  return (
+    <>
+      {isAdmin ? (
+        <ModelPicksEditor rows={todaysBets} userTier={userTier} headerContent={headerContent} />
+      ) : (
+        <ModelPicksPage
+          rows={todaysBets}
+          isAdmin={false}
+          userTier={userTier}
+          isMember={isMember}
+          lockedCount={lockedCount}
+          lockedBets={lockedBets}
+          eliteLockedBets={eliteLockedBets}
+          headerContent={headerContent}
+        />
+      )}
+      <ModelPerformance calcStats={calcStats} picks={recentPicks} />
+      <RecentPicksResults rows={recentPicks} />
+    </>
   )
 }
