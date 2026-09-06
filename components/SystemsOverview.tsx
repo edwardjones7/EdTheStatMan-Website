@@ -15,8 +15,11 @@ interface Props {
 
 const SPORT_ICONS: Record<string, typeof IconFootball> = {
   nfl: IconFootball,
+  nflpre: IconFootball,
   cfb: IconFootball,
+  cfl: IconFootball,
   nba: IconBasketball,
+  wnba: IconBasketball,
   cbb: IconBasketball,
 }
 

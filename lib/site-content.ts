@@ -68,7 +68,11 @@ export interface CTAContent {
 }
 
 export interface SystemsOverviewCard {
-  sport: 'nfl' | 'cfb' | 'nba' | 'cbb'
+  // The full vocabulary from lib/desk.ts, not a subset. This was
+  // 'nfl'|'cfb'|'nba'|'cbb' back when the cards were hand-typed for whatever
+  // season it was; CFL and WNBA both carry active systems today and could not
+  // be represented at all.
+  sport: 'nfl' | 'nflpre' | 'cfb' | 'cfl' | 'nba' | 'wnba' | 'cbb'
   name: string
   statusLabel: string
   statusType: 'ended' | 'active' | 'hot'

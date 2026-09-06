@@ -1243,6 +1243,9 @@ html[data-navigating] .nav__progress-fill {
 .sys-card--cfb::before  { background: var(--accent-gold); }
 .sys-card--nba::before  { background: var(--accent-orange); }
 .sys-card--cbb::before  { background: var(--accent-teal); }
+.sys-card--cfl::before    { background: var(--accent-lime); }
+.sys-card--wnba::before   { background: var(--accent-orange); }
+.sys-card--nflpre::before { background: var(--accent-gold); }
 
 /* Background radial glow */
 .sys-card::after {
@@ -1262,6 +1265,9 @@ html[data-navigating] .nav__progress-fill {
 .sys-card--cfb::after  { background: radial-gradient(circle, rgba(var(--gold-rgb), 0.06), transparent 70%); }
 .sys-card--nba::after  { background: radial-gradient(circle, rgba(217, 138, 111, 0.06), transparent 70%); }
 .sys-card--cbb::after  { background: radial-gradient(circle, rgba(var(--teal-rgb), 0.06), transparent 70%); }
+.sys-card--cfl::after    { background: radial-gradient(circle, rgba(var(--lime-rgb), 0.06), transparent 70%); }
+.sys-card--wnba::after   { background: radial-gradient(circle, rgba(217, 138, 111, 0.06), transparent 70%); }
+.sys-card--nflpre::after { background: radial-gradient(circle, rgba(var(--gold-rgb), 0.06), transparent 70%); }
 
 .sys-card:hover {
   transform: translateY(-2px);
@@ -7116,7 +7122,9 @@ textarea.form-input {
 .desk-weeks-rail {
   display: flex;
   align-items: center;
-  gap: 2px;
+  /* Matches the gap between the pills themselves, so the buttons read as part
+     of the same row rather than as something bolted to the ends of it. */
+  gap: 8px;
 }
 
 .desk-weeks-nav {
@@ -7149,9 +7157,11 @@ textarea.form-input {
 }
 
 /* Touch scrolls the rail directly, and on a narrow screen these would cost
-   width the pills need more. */
+   width the pills need more. With them gone nothing is holding the scroller off
+   the container edge, so the pills take their old flush alignment back. */
 @media (max-width: 640px) {
   .desk-weeks-nav { display: none; }
+  .desk-weeks-wrap { margin: 0 -4px; }
 }
 
 .desk-weeks-wrap {
@@ -7160,7 +7170,12 @@ textarea.form-input {
      forcing it wider than the page. */
   flex: 1 1 auto;
   min-width: 0;
-  margin: 0 -4px;
+  /* No negative margin here. It used to pull the rail out over the container
+     edge to cancel the scroller's own 4px padding, but against a flex sibling
+     it pulls over the button instead: -4px against an 8px gap left the wrap
+     sitting 2px on top of each chevron, and the edge fade below paints opaque
+     at that end, so it clipped the inside of both buttons. */
+  margin: 0;
 }
 
 .desk-weeks-wrap::before,

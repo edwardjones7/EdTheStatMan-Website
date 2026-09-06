@@ -1,13 +1,16 @@
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { DEFAULT_MODEL_PICKS } from '@/lib/site-content'
-import type { ModelPicksContent } from '@/lib/site-content'
+import { DEFAULT_MODEL_PICKS, DEFAULT_SYSTEMS_OVERVIEW } from '@/lib/site-content'
+import type { ModelPicksContent, SystemsOverviewContent } from '@/lib/site-content'
 import type { TodaysBet } from '@/components/TodaysBets'
 import ModelPicksPage from '@/components/ModelPicksPage'
 import ModelPicksEditor from '@/components/ModelPicksEditor'
 import RecentPicksResults from '@/components/RecentPicksResults'
 import ModelPerformance from '@/components/ModelPerformance'
+import SystemsOverview from '@/components/SystemsOverview'
+import { SPORT_LABEL, isSport } from '@/lib/desk'
+import type { Sport } from '@/lib/desk'
 import { getAccess } from '@/lib/access-server'
 import { atLeastTier } from '@/lib/access'
 import { rowMinTier } from '@/lib/gate'
@@ -32,15 +35,60 @@ export default async function Portfolio() {
   const supabase = await createClient()
   const adminDb = createAdminClient()
 
-  const [betsResult, contentResult] = await Promise.all([
+  const [betsResult, contentResult, systemsResult] = await Promise.all([
     (adminDb as any).from('todays_bets').select('*').order('created_at', { ascending: false }),
-    (supabase as any).from('site_content').select('value').eq('key', 'model_picks').single(),
+    (supabase as any).from('site_content').select('key, value').in('key', ['model_picks', 'systems_overview']),
+    (adminDb as any).from('betting_systems').select('sport, w, l, t').eq('is_active', true),
   ])
 
   const allBets: TodaysBet[] = betsResult.data ?? []
+
+  // .in() rather than two .single() calls -- and no .single(), which errors when
+  // a key has never been saved rather than falling back to the default.
+  const contentByKey: Record<string, unknown> = {}
+  for (const row of (contentResult.data ?? []) as { key: string; value: unknown }[]) {
+    contentByKey[row.key] = row.value
+  }
+
   const headerContent: ModelPicksContent = {
     ...DEFAULT_MODEL_PICKS,
-    ...(contentResult.data?.value as object ?? {}),
+    ...(contentByKey.model_picks as object ?? {}),
+  }
+
+  // Per-sport records, COMPUTED from the active systems rather than typed.
+  //
+  // The saved site_content copy was four hand-maintained cards, every one of
+  // them 0-0, still naming NBA Playoffs and the NCAA Tournament from last
+  // basketball season. Rendering that on the page a buyer decides on is worse
+  // than rendering nothing. Hand-kept numbers next to live ones is the whole
+  // failure mode; these move on their own.
+  //
+  // Copy stays editable (title, subtitle, footer); only the cards are derived.
+  const sportAgg = new Map<Sport, { w: number; l: number; t: number }>()
+  for (const r of (systemsResult.data ?? []) as { sport: string; w: number; l: number; t: number }[]) {
+    const key = (r.sport ?? '').toLowerCase()
+    if (!isSport(key)) continue
+    const a = sportAgg.get(key) ?? { w: 0, l: 0, t: 0 }
+    a.w += r.w ?? 0; a.l += r.l ?? 0; a.t += r.t ?? 0
+    sportAgg.set(key, a)
+  }
+
+  const savedOverview = (contentByKey.systems_overview as Partial<SystemsOverviewContent>) ?? {}
+  const systemsOverview: SystemsOverviewContent = {
+    ...DEFAULT_SYSTEMS_OVERVIEW,
+    ...savedOverview,
+    // Every card here is an ACTIVE system by construction, so none is 'ended' --
+    // which matters, because SystemsOverview filters ended cards out entirely.
+    cards: [...sportAgg.entries()]
+      .sort((a, b) => (b[1].w + b[1].l) - (a[1].w + a[1].l))
+      .map(([sport, a]) => ({
+        sport,
+        name: SPORT_LABEL[sport],
+        statusLabel: 'Active',
+        statusType: 'active' as const,
+        wins: a.w,
+        losses: a.l,
+      })),
   }
 
   const access = await getAccess()
@@ -114,6 +162,7 @@ export default async function Portfolio() {
         />
       )}
       <ModelPerformance calcStats={calcStats} picks={recentPicks} />
+      <SystemsOverview content={systemsOverview} />
       <RecentPicksResults rows={recentPicks} />
     </>
   )
