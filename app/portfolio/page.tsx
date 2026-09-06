@@ -8,7 +8,7 @@ import ModelPicksPage from '@/components/ModelPicksPage'
 import ModelPicksEditor from '@/components/ModelPicksEditor'
 import RecentPicksResults from '@/components/RecentPicksResults'
 import ModelPerformance from '@/components/ModelPerformance'
-import type { TeamRecord } from '@/components/ModelPerformance'
+import type { SportRecord } from '@/components/ModelPerformance'
 import { getAccess } from '@/lib/access-server'
 import { atLeastTier } from '@/lib/access'
 import { rowMinTier } from '@/lib/gate'
@@ -106,27 +106,25 @@ export default async function Portfolio() {
   const winPct = (wins + losses) > 0 ? (wins / (wins + losses)) * 100 : 0
   const calcStats = { wins, losses, pushes, winPct }
 
-  // Per-team split of the SAME graded picks, so the headline and the breakdown
-  // can never disagree. `bet` holds the team taken; `opponent` is the other side.
+  // Per-sport split of the SAME graded picks the headline uses, so the two can
+  // never disagree.
   //
-  // The floor is not decoration. Of the 50 teams picked, 15 have exactly ONE
-  // graded pick, and a 1-0 team rendering "100%" is noise wearing the costume of
-  // a result -- on the page where somebody decides to pay.
+  // The floor still bites at this grain: College Football has exactly ONE graded
+  // pick, and a 1-0 sport rendering "100%" beside a 90-pick record is noise
+  // wearing the costume of a result.
   const BREAKDOWN_MIN = 5
-  const teamAgg = new Map<string, TeamRecord>()
+  const sportAgg = new Map<string, SportRecord>()
   for (const r of recentPicks) {
-    const team = (r.bet ?? '').trim()
-    if (!team) continue
-    // Keyed with the sport: the same nickname can exist in two leagues.
-    const key = team + '|' + (r.sport ?? '')
-    const agg = teamAgg.get(key) ?? { team, sport: r.sport ?? '', wins: 0, losses: 0, pushes: 0 }
+    const sport = (r.sport ?? '').trim()
+    if (!sport) continue
+    const agg = sportAgg.get(sport) ?? { sport, wins: 0, losses: 0, pushes: 0 }
     if (r.result === 'win') agg.wins++
     else if (r.result === 'loss') agg.losses++
     else if (r.result === 'push') agg.pushes++
-    teamAgg.set(key, agg)
+    sportAgg.set(sport, agg)
   }
-  const breakdown: TeamRecord[] = [...teamAgg.values()]
-    .filter(t => t.wins + t.losses >= BREAKDOWN_MIN)
+  const breakdown: SportRecord[] = [...sportAgg.values()]
+    .filter(s => s.wins + s.losses >= BREAKDOWN_MIN)
     .sort((x, y) => {
       const px = x.wins / (x.wins + x.losses)
       const py = y.wins / (y.wins + y.losses)

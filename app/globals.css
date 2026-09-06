@@ -8322,16 +8322,16 @@ textarea.form-input {
 }
 
 
-/* ---- Model performance: per-team breakdown --------------------------------
+/* ---- Model performance: per-sport breakdown --------------------------------
    Sits INSIDE the Model Performance section, under the hero, so the overall
    record and its split read as one block rather than two claims. Tone is keyed
    to the -110 break-even (52.4%), not to 50%: a team at 51% is losing money and
    must not be coloured like a winner. */
-.perf-teams {
+.perf-split {
   margin-top: 40px;
 }
 
-.perf-teams__head {
+.perf-split__head {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
@@ -8340,7 +8340,7 @@ textarea.form-input {
   margin-bottom: 16px;
 }
 
-.perf-teams__title {
+.perf-split__title {
   font-family: var(--font-heading);
   font-size: 1.05rem;
   letter-spacing: 0.02em;
@@ -8348,7 +8348,7 @@ textarea.form-input {
   color: var(--text-primary);
 }
 
-.perf-teams__note {
+.perf-split__note {
   font-family: var(--font-mono);
   font-size: 0.72rem;
   letter-spacing: 0.04em;
@@ -8356,13 +8356,13 @@ textarea.form-input {
   color: var(--text-muted);
 }
 
-.perf-teams__grid {
+.perf-split__grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   gap: 10px;
 }
 
-.perf-team {
+.perf-split-card {
   position: relative;
   padding: 12px 14px;
   border: 1px solid var(--border-color);
@@ -8371,7 +8371,7 @@ textarea.form-input {
   overflow: hidden;
 }
 
-.perf-team::before {
+.perf-split-card::before {
   content: '';
   position: absolute;
   inset: 0 auto 0 0;
@@ -8379,11 +8379,11 @@ textarea.form-input {
   background: var(--text-muted);
 }
 
-.perf-team--up::before   { background: var(--accent-teal); }
-.perf-team--even::before { background: var(--accent-gold); }
-.perf-team--down::before { background: var(--accent-red); }
+.perf-split-card--up::before   { background: var(--accent-teal); }
+.perf-split-card--even::before { background: var(--accent-gold); }
+.perf-split-card--down::before { background: var(--accent-red); }
 
-.perf-team__top {
+.perf-split-card__top {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
@@ -8391,7 +8391,7 @@ textarea.form-input {
   margin-bottom: 8px;
 }
 
-.perf-team__name {
+.perf-split-card__name {
   font-size: 0.86rem;
   font-weight: 600;
   color: var(--text-primary);
@@ -8400,7 +8400,7 @@ textarea.form-input {
   text-overflow: ellipsis;
 }
 
-.perf-team__sport {
+.perf-split-card__sport {
   font-family: var(--font-mono);
   font-size: 0.62rem;
   letter-spacing: 0.06em;
@@ -8408,17 +8408,17 @@ textarea.form-input {
   flex-shrink: 0;
 }
 
-.perf-team__pct {
+.perf-split-card__pct {
   font-family: var(--font-mono);
   font-size: 1.35rem;
   line-height: 1;
   color: var(--text-primary);
 }
 
-.perf-team--up .perf-team__pct   { color: var(--accent-teal); }
-.perf-team--down .perf-team__pct { color: var(--accent-red); }
+.perf-split-card--up .perf-split-card__pct   { color: var(--accent-teal); }
+.perf-split-card--down .perf-split-card__pct { color: var(--accent-red); }
 
-.perf-team__record {
+.perf-split-card__record {
   font-family: var(--font-mono);
   font-size: 0.74rem;
   color: var(--text-muted);
@@ -8426,5 +8426,5 @@ textarea.form-input {
 }
 
 @media (max-width: 480px) {
-  .perf-teams__grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
+  .perf-split__grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
 }

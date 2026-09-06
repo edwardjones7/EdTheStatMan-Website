@@ -7,9 +7,8 @@ interface CalcStats {
   winPct: number
 }
 
-/** One team's graded record. Built server-side; see app/portfolio/page.tsx. */
-export interface TeamRecord {
-  team: string
+/** One sport's graded record. Built server-side; see app/portfolio/page.tsx. */
+export interface SportRecord {
   sport: string
   wins: number
   losses: number
@@ -19,8 +18,8 @@ export interface TeamRecord {
 interface Props {
   calcStats: CalcStats
   picks?: TodaysBet[]
-  /** Per-team split of the same picks, rendered inside this section. */
-  breakdown?: TeamRecord[]
+  /** Per-sport split of the same picks, rendered inside this section. */
+  breakdown?: SportRecord[]
   /** Sample floor the breakdown was filtered at, quoted in the footnote. */
   breakdownMin?: number
 }
@@ -97,31 +96,31 @@ export default function ModelPerformance({ calcStats, picks = [], breakdown = []
         </div>
 
         {breakdown.length > 0 && (
-          <div className="perf-teams reveal">
-            <div className="perf-teams__head">
-              <h3 className="perf-teams__title">By Team</h3>
-              <span className="perf-teams__note">
+          <div className="perf-split reveal">
+            <div className="perf-split__head">
+              <h3 className="perf-split__title">By Sport</h3>
+              <span className="perf-split__note">
                 {breakdownMin > 1
-                  ? `Teams with ${breakdownMin}+ graded picks`
-                  : 'Every team picked'}
+                  ? `Sports with ${breakdownMin}+ graded picks`
+                  : 'Every sport picked'}
               </span>
             </div>
-            <div className="perf-teams__grid">
+            <div className="perf-split__grid">
               {breakdown.map(t => {
                 const decided = t.wins + t.losses
                 const pct = decided > 0 ? (t.wins / decided) * 100 : 0
-                // Coloured against the -110 break-even, not 50%. A 51% team is
-                // losing money, and showing it in the same green as a 70% team
+                // Coloured against the -110 break-even, not 50%. A 51% sport is
+                // losing money, and showing it in the same green as a 70% one
                 // would be the chart lying politely.
                 const tone = pct >= 52.4 ? 'up' : pct >= 50 ? 'even' : 'down'
                 return (
-                  <div key={t.team + t.sport} className={`perf-team perf-team--${tone}`}>
-                    <div className="perf-team__top">
-                      <span className="perf-team__name">{t.team}</span>
-                      <span className="perf-team__sport">{t.sport}</span>
+                  <div key={t.sport} className={`perf-split-card perf-split-card--${tone}`}>
+                    <div className="perf-split-card__top">
+                      <span className="perf-split-card__name">{t.sport}</span>
+                      <span className="perf-split-card__sport">{decided} picks</span>
                     </div>
-                    <div className="perf-team__pct">{pct.toFixed(0)}%</div>
-                    <div className="perf-team__record">
+                    <div className="perf-split-card__pct">{pct.toFixed(0)}%</div>
+                    <div className="perf-split-card__record">
                       {t.wins}&#8202;-&#8202;{t.losses}{t.pushes > 0 ? ` - ${t.pushes}` : ''}
                     </div>
                   </div>
