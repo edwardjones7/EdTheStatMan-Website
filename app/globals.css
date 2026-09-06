@@ -1746,24 +1746,73 @@ html[data-navigating] .nav__progress-fill {
   background: rgba(var(--gold-rgb), 0.05);
 }
 
-/* Decorative stand-in for a withheld cell — contains no text. */
+/* Stand-in for a withheld cell — contains no text.
+
+   NOT a skeleton, and it must stop looking like one. There is nothing behind
+   these: lib/teaser.ts copies fields one at a time precisely so the pick, line
+   and opponent never reach the client. So this is not a blur of real content,
+   it is a placeholder that has to read as WITHHELD.
+
+   The old treatment was a pale rounded bar with a left-to-right gradient, which
+   is the exact visual vocabulary of a loading skeleton, so the table read as
+   still loading rather than locked. Blurred glyphs in gold instead: gold is
+   already how this site says locked (.pricing-card--elite, .sys-gate-card--elite,
+   and .bet-unlock-link in the same row), and nothing that is merely loading is
+   ever blurred. */
 .bet-cell-redacted {
   display: inline-block;
   width: 150px;
   max-width: 100%;
-  height: 10px;
-  border-radius: 3px;
-  background: linear-gradient(
-    90deg,
-    rgba(148, 190, 200, 0.16) 0%,
-    rgba(148, 190, 200, 0.07) 50%,
-    rgba(148, 190, 200, 0.16) 100%
-  );
-  user-select: none;
+  height: 13px;
+  overflow: hidden;
   vertical-align: middle;
+  user-select: none;
+  white-space: nowrap;
+  /* Trailing fade so the blur ends softly rather than on a cut line, and so the
+     cell reads as continuing past what is shown. */
+  -webkit-mask-image: linear-gradient(90deg, #000 68%, transparent 100%);
+  mask-image: linear-gradient(90deg, #000 68%, transparent 100%);
+}
+
+.bet-cell-redacted::before {
+  /* Block-shading glyphs, not letters. Blurring letters would amount to
+     inventing a pick that does not exist; these smear into something obviously
+     synthetic. The span is aria-hidden either way. */
+  content: '▓▒░▒▓░▓▒░▒▓▒░▓░▒▓▒░▓▒░▒▓';
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  line-height: 13px;
+  letter-spacing: -0.03em;
+  color: rgba(var(--gold-rgb), 0.42);
+  filter: blur(2px);
 }
 
 .bet-cell-redacted--sm { width: 44px; }
+.bet-cell-redacted--sm::before { content: '▓▒░▓▒░▒'; }
+
+/* Vary the run per row. With one fixed width and one glyph string, every PICK
+   cell was pixel-identical down the column, which reads as a repeated graphic
+   rather than as concealed text -- real picks differ in length. Three widths and
+   three runs, cycled on the locked row, break the pattern without any of it
+   meaning anything. */
+.bet-row--locked:nth-of-type(3n+1) .bet-cell-redacted { width: 138px; }
+.bet-row--locked:nth-of-type(3n+2) .bet-cell-redacted { width: 156px; }
+.bet-row--locked:nth-of-type(3n)   .bet-cell-redacted { width: 124px; }
+
+.bet-row--locked:nth-of-type(3n+2) .bet-cell-redacted::before {
+  content: '░▓▒░▒▓▒░▓░▒▓▒░▒▓░▓▒░▒▓▒';
+}
+.bet-row--locked:nth-of-type(3n) .bet-cell-redacted::before {
+  content: '▒░▓▒░▓░▒▓▒░▒▓░▓▒░▓▒░▒░▓';
+}
+
+/* The three narrow cells keep their own width; only the run varies. */
+.bet-row--locked:nth-of-type(3n+1) .bet-cell-redacted--sm,
+.bet-row--locked:nth-of-type(3n+2) .bet-cell-redacted--sm,
+.bet-row--locked:nth-of-type(3n)   .bet-cell-redacted--sm { width: 44px; }
+.bet-row--locked:nth-of-type(3n+2) .bet-cell-redacted--sm::before { content: '░▓▒░▓▒'; }
+.bet-row--locked:nth-of-type(3n)   .bet-cell-redacted--sm::before { content: '▒░▓▒░▒'; }
 
 .bet-unlock-link {
   display: inline-flex;
