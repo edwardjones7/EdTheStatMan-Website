@@ -8,6 +8,7 @@ import {
   invoiceSubscriptionId,
 } from '@/lib/stripe'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { notifyPayment } from '@/lib/notify/admin'
 import { syncDiscordRole } from '@/lib/discord/roles'
 import type { AccessGrant } from '@/lib/offer'
 import type { Tier } from '@/lib/access'
@@ -43,13 +44,16 @@ const DAY_MS = 24 * 60 * 60 * 1000
 
 interface ProfileRow {
   id: string
+  email: string | null
   pass_expires_at: string | null
   attributed_at: string | null
   last_stripe_session_id: string | null
   sub_event_at: string | null
 }
 
-const PROFILE_COLS = 'id, pass_expires_at, attributed_at, last_stripe_session_id, sub_event_at'
+// `email` is here only so the admin alerts can name the customer; nothing
+// else in this route reads it.
+const PROFILE_COLS = 'id, email, pass_expires_at, attributed_at, last_stripe_session_id, sub_event_at'
 
 async function profileById(admin: any, userId: string): Promise<ProfileRow | null> {
   const { data } = await admin.from('profiles').select(PROFILE_COLS).eq('id', userId).single()
@@ -234,6 +238,16 @@ export async function POST(req: Request) {
       }).eq('id', userId)
 
       await recompute(admin, userId)
+      // Awaited, not fired and forgotten: on Vercel the function can be frozen
+      // the moment the response returns, which would drop an in-flight send.
+      // notifyPayment never throws, so this cannot fail the grant above.
+      await notifyPayment({
+        kind: 'payment',
+        email: existing?.email ?? session.customer_details?.email ?? null,
+        tier: resolved.tier,
+        amountCents: session.amount_total,
+        currency: session.currency,
+      })
       break
     }
 
@@ -270,6 +284,15 @@ export async function POST(req: Request) {
       }).eq('id', profile.id)
 
       await recompute(admin, profile.id)
+      // Only the start. `updated` fires on every status churn and every card
+      // change, which would bury the events worth reading.
+      if (event.type === 'customer.subscription.created') {
+        await notifyPayment({
+          kind: 'subscription_started',
+          email: profile.email ?? null,
+          tier,
+        })
+      }
       break
     }
 
@@ -294,6 +317,11 @@ export async function POST(req: Request) {
       }).eq('id', profile.id)
 
       await recompute(admin, profile.id)
+      await notifyPayment({
+        kind: 'cancelled',
+        email: profile.email ?? null,
+        detail: 'Subscription slot cleared. Any season pass they also hold is untouched.',
+      })
       break
     }
 
@@ -337,6 +365,14 @@ export async function POST(req: Request) {
           currency: invoice.currency ?? 'usd',
         }, 'stripe_invoice_id')
       }
+
+      await notifyPayment({
+        kind: 'renewal',
+        email: profile.email ?? invoice.customer_email ?? null,
+        tier,
+        amountCents: invoice.amount_paid,
+        currency: invoice.currency,
+      })
 
       await recompute(admin, profile.id)
       break

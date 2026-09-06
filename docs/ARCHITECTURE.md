@@ -415,6 +415,19 @@ No `.env.example` exists. This table is it.
 | `DISCORD_WEBHOOK_URL` | `lib/notify/discord.ts` |
 | `DISCORD_FREE_ROLE_ID` | `lib/notify/discord.ts` |
 | `DISCORD_MEMBERS_ROLE_ID` | `lib/notify/discord.ts` |
+| `DISCORD_SIGNUPS_WEBHOOK_URL` | `lib/notify/admin.ts` — new verified accounts. |
+| `DISCORD_SIGNUPS_ROLE_ID` | `lib/notify/admin.ts` — optional ping for that channel. |
+| `DISCORD_PAYMENTS_WEBHOOK_URL` | `lib/notify/admin.ts` — payments, subscription starts, renewals, cancellations. |
+| `DISCORD_PAYMENTS_ROLE_ID` | `lib/notify/admin.ts` — optional ping for that channel. |
+
+Both admin webhooks MUST point at private channels, and at channels other than
+`DISCORD_WEBHOOK_URL`: that one posts to members, and every admin alert carries a
+customer's email address. Either being unset silently skips that channel's alerts,
+so the code is safe to deploy before the channels exist. There is deliberately no
+fallback between the two — a payment appearing in the signups channel because one
+variable was missing would be wrong in a way that looks right. The role IDs are
+optional: without one the alerts still post but ping nobody, because Discord only
+pushes to a device when the mention sits in `content`.
 | `VAPID_PRIVATE_KEY` | `lib/notify/push.ts` |
 | `VAPID_SUBJECT` | defaults to `mailto:ed@edthestatman.com` |
 | `NOTIFICATIONS_ENABLED` | only the literal `'false'` disables |
