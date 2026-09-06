@@ -10,7 +10,7 @@ import { TIER_RANK, normalizeTier, type Membership, type Tier } from '@/lib/acce
 interface Props {
   membership: Membership
   currentTier: Tier | null
-  /** Include the Retail comparison column (offer page only). */
+  /** Include the free (Public Intelligence) comparison column (offer page only). */
   showFree?: boolean
   highlight?: OfferTierKey
 }
@@ -184,7 +184,7 @@ export default function PricingCards({
       {showFree && (
         <div className="retail-strip">
           <div className="retail-strip__head">
-            <span className="retail-strip__name">Vault {'—'} Retail Intelligence</span>
+            <span className="retail-strip__name">Vault {'—'} Public Intelligence</span>
             <span className="retail-strip__price">Free</span>
           </div>
           <ul className="retail-strip__features">

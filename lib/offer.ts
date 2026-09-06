@@ -195,7 +195,7 @@ export const OFFER_PLANS: OfferPlan[] = [
   },
 ]
 
-/** Vault — Retail Intelligence: the free rung, shown as a comparison strip. */
+/** Vault — Public Intelligence: the free rung, shown as a comparison strip. */
 export const OFFER_FREE_FEATURES: { text: string; included: boolean }[] = [
   { text: 'Free-tagged model picks', included: true },
   { text: 'Curated free systems and trends', included: true },

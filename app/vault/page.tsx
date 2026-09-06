@@ -16,11 +16,11 @@ export const dynamic = 'force-dynamic'
 // here too produced "The Vault — EdTheStatMan.com – EdTheStatMan.com" in the tab.
 export const metadata: Metadata = {
   title: 'The Vault',
-  description: 'Every betting system and team trend we track, in one place. Retail, Private and Institutional access levels.',
+  description: 'Every betting system and team trend we track, in one place. Free, Private and Institutional access levels.',
   alternates: { canonical: 'https://edthestatman.com/vault' },
   openGraph: {
     title: 'The Vault — EdTheStatMan.com',
-    description: 'Every betting system and team trend we track, in one place. Retail, Private and Institutional access levels.',
+    description: 'Every betting system and team trend we track, in one place. Free, Private and Institutional access levels.',
     url: 'https://edthestatman.com/vault',
     images: [{ url: '/og-cover.jpg', width: 1200, height: 630 }],
   },
@@ -35,7 +35,7 @@ const LEVELS: {
 }[] = [
   {
     tier: 'retail',
-    name: 'Retail Intelligence',
+    name: 'Public Intelligence',
     price: 'Free',
     body: 'A curated set of free systems and trends. On everything else you still see the record, the sample size and the win rate — just not the system itself.',
     features: ['Curated free systems', 'Record and sample size on every locked row', 'Sport filters'],
@@ -169,7 +169,7 @@ export default async function VaultLanding() {
                 <span className="vault-door__name">{door.name}</span>
                 <p className="vault-door__desc">{door.desc}</p>
                 <span className="vault-door__foot">
-                  <span className="vault-door__free">{door.free} open to Retail</span>
+                  <span className="vault-door__free">{door.free} open to free</span>
                   <span className="vault-door__go">
                     Browse <IconArrowRight size={14} />
                   </span>

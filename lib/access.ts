@@ -9,7 +9,8 @@
 /**
  * The v3 ladder. Each rung includes everything below it.
  *
- *   retail        Vault — Retail Intelligence      free
+ *   retail        Vault — Public Intelligence      free (the 'retail' key
+ *                 is the stored DB value; copy says Public / free)
  *   portfolio     The Portfolio (picks)            $49 once / $199 season
  *   desk          The Research Desk                $129/mo  / $499 season
  *   private       Vault — Private Intelligence     $199/mo  / $799 season
@@ -28,7 +29,7 @@ export const TIER_RANK: Record<Tier, number> = {
 
 /** Full product names. The single source of tier copy for the whole app. */
 export const TIER_LABEL: Record<Tier, string> = {
-  retail: 'Vault — Retail Intelligence',
+  retail: 'Vault — Public Intelligence',
   portfolio: 'The Portfolio',
   desk: 'The Research Desk',
   private: 'Vault — Private Intelligence',
@@ -37,7 +38,7 @@ export const TIER_LABEL: Record<Tier, string> = {
 
 /** Short names for nav pills, badges and inline confirmations. */
 export const TIER_SHORT_LABEL: Record<Tier, string> = {
-  retail: 'Retail',
+  retail: 'Free',
   portfolio: 'Portfolio',
   desk: 'Research Desk',
   private: 'Private',

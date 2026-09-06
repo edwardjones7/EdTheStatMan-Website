@@ -206,7 +206,7 @@ Five rungs, each including everything below it:
 
 | Rung | Product | Free? |
 |---|---|---|
-| `retail` | Vault — Retail Intelligence | yes |
+| `retail` | Vault — Public Intelligence (copy says "free") | yes |
 | `portfolio` | The Portfolio | |
 | `desk` | The Research Desk | |
 | `private` | Vault — Private Intelligence | |
