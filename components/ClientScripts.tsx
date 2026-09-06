@@ -88,7 +88,43 @@ function init() {
     chartObserver.observe(chartContainer)
   }
 
+  // Everything above is a snapshot of the DOM as it stands right now, and on a
+  // client navigation that DOM is the *previous* page. This effect re-runs on
+  // `pathname`, which the App Router updates about 215ms into a navigation,
+  // while the old page is still the only thing rendered -- the new one arrives
+  // up to a couple of seconds later. So the snapshot observed the page being
+  // left, and nothing ever observed the page being arrived at.
+  //
+  // That is not a cosmetic miss. `.reveal` is `opacity: 0` until this observer
+  // adds `.visible`, so an element the snapshot missed stays invisible for as
+  // long as the page is open. Verified on the Research Desk: header into the
+  // DOM 2.5s after the click, `observe()` never called on it, computed opacity
+  // 0. It read as text that loads only sometimes, "sometimes" being whether
+  // you arrived by a fresh load or by a link.
+  //
+  // Keeping the registration live rather than one-shot fixes it wherever it
+  // happens, and re-observing an element is a no-op, so overlap is harmless.
+  const groups: [string, IntersectionObserver][] = [
+    ['.reveal, .reveal-left, .reveal-right, .reveal-scale, .stagger-children', observer],
+    ['.system-card__bar-fill, .perf-winbar__fill, .perf-ratio__seg', barObserver],
+    ['[data-count]', counterObserver],
+  ]
+
+  const late = new MutationObserver(records => {
+    for (const record of records) {
+      for (const node of record.addedNodes) {
+        if (!(node instanceof Element)) continue
+        for (const [selector, io] of groups) {
+          if (node.matches(selector)) io.observe(node)
+          node.querySelectorAll(selector).forEach(el => io.observe(el))
+        }
+      }
+    }
+  })
+  late.observe(document.body, { childList: true, subtree: true })
+
   return () => {
+    late.disconnect()
     observer.disconnect()
     barObserver.disconnect()
     counterObserver.disconnect()
