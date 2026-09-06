@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo, useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import type { SubscriptionTier, SubscriptionStatus, AccessLevel } from '@/lib/supabase/types'
 import { normalizeTier, TIERS, TIER_SHORT_LABEL, type Tier } from '@/lib/access'
@@ -18,6 +19,47 @@ const TIER_ROW_COLOR: Record<Tier, string> = {
   institutional: 'var(--accent-gold)',
 }
 
+/**
+ * What this member can actually open right now.
+ *
+ * The same rule resolveAccess() applies on every page render, repeated here
+ * because the dashboard reads profiles directly. It is not a formality: a paid
+ * tier with a past expiry is `retail` to the whole site, but the stored column
+ * still says what they last paid for, so the dashboard was calling two members
+ * who lapsed in May and August paying customers, and counting them in Paid
+ * Members. Nothing recomputes that column when a pass simply runs out -- expiry
+ * fires no webhook -- so it can only be resolved at read time.
+ */
+function liveTier(u: User): Tier {
+  // Deliberately NOT special-cased for admins, even though resolveAccess()
+  // hands them institutional on the site. Admin is an overlay on this screen,
+  // not a rung: it has its own row, and the two are counted separately so the
+  // breakdown still sums to the total. Returning 'institutional' here put both
+  // admins into the Institutional row AND the Admins row, and inflated Paid
+  // Members by two people who have never paid.
+  const stored = normalizeTier(u.subscription_tier)
+  if (stored === 'retail') return 'retail'
+  const exp = u.access_expires_at ? new Date(u.access_expires_at).getTime() : 0
+  return exp > Date.now() ? stored : 'retail'
+}
+
+/** Paid at some point, but not today. The number worth seeing on its own. */
+function hasLapsed(u: User): boolean {
+  return !u.is_admin && normalizeTier(u.subscription_tier) !== 'retail' && liveTier(u) === 'retail'
+}
+
+/** Where a live entitlement comes from, for the Access column. */
+function accessSource(u: User): string | null {
+  const live = (t: string | null, when: string | null) =>
+    !!t && !!when && new Date(when).getTime() > Date.now()
+  const pass = live(u.pass_tier, u.pass_expires_at)
+  const sub = live(u.sub_tier, u.sub_current_period_end)
+  if (pass && sub) return 'pass + sub'
+  if (pass) return 'pass'
+  if (sub) return 'subscription'
+  return null
+}
+
 interface User {
   id: string
   email: string
@@ -30,6 +72,17 @@ interface User {
   created_at: string
   updated_at: string
   last_seen_at: string | null
+  // Entitlement. subscription_tier is DERIVED and goes stale the moment a pass
+  // runs out, because nothing recomputes it on a clock -- expiry fires no
+  // webhook. access_expires_at is the only field that says whether the tier
+  // above is still true today.
+  access_expires_at: string | null
+  pass_tier: SubscriptionTier | null
+  pass_expires_at: string | null
+  sub_tier: SubscriptionTier | null
+  sub_current_period_end: string | null
+  billing_mode: string | null
+  discord_user_id: string | null
 }
 
 interface Post {
@@ -139,11 +192,12 @@ const TIER_CLASS: Record<string, string> = {
 // are compared against normalizeTier() output, so they must be ladder values --
 // the pre-v3 names here matched nothing, because normalizeTier('basic') is
 // 'desk' and never equalled the 'basic' the button sent.
-const TIER_FILTERS = ['all', ...TIERS, 'admin']
+const TIER_FILTERS = ['all', ...TIERS, 'lapsed', 'admin']
 
 function filterLabel(f: string): string {
   if (f === 'all') return 'All'
   if (f === 'admin') return 'Admin'
+  if (f === 'lapsed') return 'Lapsed'
   return TIER_SHORT_LABEL[f as (typeof TIERS)[number]]
 }
 
@@ -182,6 +236,7 @@ function isThisMonth(dateStr: string) {
 }
 
 export default function AdminDashboard({ users, posts, initialTab, initialAnalytics }: Props) {
+  const router = useRouter()
   const [tab, setTab]     = useState<'users' | 'posts'>(
     (['users', 'posts'].includes(initialTab ?? '') ? initialTab : 'users') as 'users'
   )
@@ -265,7 +320,8 @@ export default function AdminDashboard({ users, posts, initialTab, initialAnalyt
 
   const stats = useMemo(() => {
     // Legacy values may still be in the column until tier_ladder_01 is applied.
-    const at = (t: string) => users.filter(u => normalizeTier(u.subscription_tier) === t).length
+    // liveTier, not the stored column: see the note on liveTier().
+    const at = (t: string) => users.filter(u => liveTier(u) === t).length
     // One count per rung of the ladder, built from TIERS rather than named one
     // by one. The hand-written version had no 'portfolio' line, so every buyer
     // of the entry SKU appeared in none of the five rows and was missing from
@@ -274,6 +330,7 @@ export default function AdminDashboard({ users, posts, initialTab, initialAnalyt
     const byTier = Object.fromEntries(TIERS.map(t => [t, at(t)])) as Record<Tier, number>
     const freeUsers = byTier.retail
     const paidUsers = TIERS.filter(t => t !== 'retail').reduce((n, t) => n + byTier[t], 0)
+    const lapsedUsers  = users.filter(hasLapsed).length
     const activeUsers  = users.filter(u => u.subscription_status === 'active').length
     const pastDue      = users.filter(u => u.subscription_status === 'past_due').length
     const newThisMonth = users.filter(u => isThisMonth(u.created_at)).length
@@ -283,7 +340,7 @@ export default function AdminDashboard({ users, posts, initialTab, initialAnalyt
     const freePosts      = posts.filter(p => normalizeTier(p.access_level) === 'retail').length
     const membersPosts   = posts.filter(p => normalizeTier(p.access_level) !== 'retail').length
     return {
-      totalUsers: users.length, freeUsers, paidUsers, byTier,
+      totalUsers: users.length, freeUsers, paidUsers, lapsedUsers, byTier,
       activeUsers, pastDue, newThisMonth, adminCount,
       totalPosts: posts.length, publishedPosts, draftPosts, freePosts, membersPosts,
     }
@@ -293,7 +350,11 @@ export default function AdminDashboard({ users, posts, initialTab, initialAnalyt
     const q = userSearch.toLowerCase()
     return users.filter(u => {
       const matchSearch = !q || u.email.toLowerCase().includes(q) || (u.full_name ?? '').toLowerCase().includes(q)
-      const matchTier   = tierFilter === 'all' || normalizeTier(u.subscription_tier) === tierFilter || (tierFilter === 'admin' && u.is_admin)
+      const matchTier =
+        tierFilter === 'all' ||
+        (tierFilter === 'admin' && u.is_admin) ||
+        (tierFilter === 'lapsed' && hasLapsed(u)) ||
+        (tierFilter !== 'admin' && tierFilter !== 'lapsed' && liveTier(u) === tierFilter)
       return matchSearch && matchTier
     })
   }, [users, userSearch, tierFilter])
@@ -389,7 +450,7 @@ export default function AdminDashboard({ users, posts, initialTab, initialAnalyt
           <KpiCard
             label="Total Users"
             value={stats.totalUsers}
-            sub={`${stats.freeUsers} free · ${stats.paidUsers} paid`}
+            sub={`${stats.freeUsers} free · ${stats.paidUsers} paid${stats.lapsedUsers ? ` · ${stats.lapsedUsers} lapsed` : ''}`}
             color="cyan"
             badge={stats.newThisMonth > 0 ? `+${stats.newThisMonth} this mo` : undefined}
             badgeColor="green"
@@ -681,53 +742,73 @@ export default function AdminDashboard({ users, posts, initialTab, initialAnalyt
                   <tr>
                     <th>User</th>
                     <th>Plan</th>
-                    <th>Status</th>
-                    <th>Stripe</th>
-                    <th>Admin</th>
-                    <th>Joined</th>
+                    <th>Access</th>
+                    <th>Billing</th>
                     <th>Last Active</th>
+                    <th>Comp</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredUsers.length === 0 ? (
-                    <tr><td colSpan={7} className="admin-table__empty">No users found.</td></tr>
-                  ) : filteredUsers.map(user => (
+                    <tr><td colSpan={6} className="admin-table__empty">No users found.</td></tr>
+                  ) : filteredUsers.map(user => {
+                    const tier = liveTier(user)
+                    const lapsed = hasLapsed(user)
+                    const source = accessSource(user)
+                    return (
                     <tr key={user.id}>
                       <td>
                         <div className="admin-user-cell">
                           <div className="admin-avatar">{(user.full_name ?? user.email).charAt(0).toUpperCase()}</div>
                           <div>
-                            <div className="admin-user-name">{user.full_name ?? <span className="admin-muted">—</span>}</div>
+                            <div className="admin-user-name" title={`Joined ${fmt(user.created_at)}`}>
+                              {user.full_name ?? <span className="admin-muted">—</span>}
+                              {user.is_admin && <span className="admin-badge admin-badge--gold" style={{ marginLeft: '6px' }}>Admin</span>}
+                            </div>
                             <div className="admin-user-email">{user.email}</div>
                           </div>
                         </div>
                       </td>
                       <td>
-                        <span className={`nav__user-tier ${TIER_CLASS[user.is_admin ? 'admin' : normalizeTier(user.subscription_tier)]}`}>
-                          {user.is_admin ? 'Admin' : TIER_SHORT_LABEL[normalizeTier(user.subscription_tier)]}
+                        {/* The rung they can open TODAY, not the one they last
+                            paid for. A lapsed member reads Free, with what they
+                            had underneath it. */}
+                        <span className={`nav__user-tier ${TIER_CLASS[user.is_admin ? 'admin' : tier]}`}>
+                          {user.is_admin ? 'Admin' : TIER_SHORT_LABEL[tier]}
                         </span>
+                        {lapsed && (
+                          <div className="admin-muted admin-cell-note">
+                            was {TIER_SHORT_LABEL[normalizeTier(user.subscription_tier)]}
+                          </div>
+                        )}
+                      </td>
+                      <td>
+                        {user.is_admin ? (
+                          <span className="admin-muted">always</span>
+                        ) : user.access_expires_at ? (
+                          <>
+                            <span className={lapsed ? 'admin-badge admin-badge--red' : undefined}>
+                              {lapsed ? `ended ${fmt(user.access_expires_at)}` : `until ${fmt(user.access_expires_at)}`}
+                            </span>
+                            {source && <div className="admin-muted admin-cell-note">{source}</div>}
+                          </>
+                        ) : <span className="admin-muted">—</span>}
                       </td>
                       <td>
                         {user.subscription_status ? (
                           <span className={`admin-badge ${STATUS_COLOR[user.subscription_status] ?? ''}`}>
                             {user.subscription_status.replace('_', ' ')}
                           </span>
+                        ) : user.stripe_customer_id ? (
+                          <span className="admin-muted">stripe</span>
                         ) : <span className="admin-muted">—</span>}
                       </td>
-                      <td>
-                        {user.stripe_customer_id
-                          ? <span className="admin-badge admin-badge--green">Connected</span>
-                          : <span className="admin-muted">—</span>}
-                      </td>
-                      <td>
-                        {user.is_admin
-                          ? <span className="admin-badge admin-badge--gold">Yes</span>
-                          : <span className="admin-muted">No</span>}
-                      </td>
-                      <td className="admin-muted">{fmt(user.created_at)}</td>
                       <td className="admin-muted">{timeAgo(user.last_seen_at)}</td>
+                      <td>
+                        <CompCell user={user} onDone={() => router.refresh()} />
+                      </td>
                     </tr>
-                  ))}
+                  )})}
                 </tbody>
               </table>
             </div>
@@ -823,6 +904,104 @@ export default function AdminDashboard({ users, posts, initialTab, initialAnalyt
         v{process.env.NEXT_PUBLIC_APP_VERSION ?? 'unknown'}
       </footer>
     </main>
+  )
+}
+
+/**
+ * Comp, extend or revoke one member's access, inline in the row.
+ *
+ * Writes the PASS slot through /api/admin/users/[id]; the subscription slot is
+ * Stripe's and is never touched from here. That is what lets a comp sit on top
+ * of a paid subscription without either one clobbering the other, and it is why
+ * Revoke cannot cancel something a member is paying for.
+ */
+function CompCell({ user, onDone }: { user: User; onDone: () => void }) {
+  const [open, setOpen] = useState(false)
+  const [tier, setTier] = useState<Tier>('private')
+  const [until, setUntil] = useState('season')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  // A pass that has already run out is not a comp, it is a leftover. Labelling
+  // the row "Private pass / Change" for somebody whose pass ended in May reads
+  // as though they still have it.
+  const comped =
+    !!user.pass_tier &&
+    !!user.pass_expires_at &&
+    new Date(user.pass_expires_at).getTime() > Date.now()
+
+  async function send(body: Record<string, unknown>) {
+    setBusy(true)
+    setError(null)
+    try {
+      const res = await fetch(`/api/admin/users/${user.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+      if (!res.ok) throw new Error((await res.json()).error ?? 'Failed')
+      setOpen(false)
+      onDone()
+    } catch (e: any) {
+      setError(e.message ?? 'Failed')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  if (user.is_admin) return <span className="admin-muted">—</span>
+
+  if (!open) {
+    return (
+      <div className="admin-comp">
+        {comped && (
+          <span className="admin-muted admin-cell-note">
+            {TIER_SHORT_LABEL[normalizeTier(user.pass_tier)]} pass
+          </span>
+        )}
+        <button className="admin-action-btn" onClick={() => { setTier(comped ? normalizeTier(user.pass_tier) : 'private'); setOpen(true) }}>
+          {comped ? 'Change' : 'Comp'}
+        </button>
+        {error && <div className="admin-comp__error">{error}</div>}
+      </div>
+    )
+  }
+
+  return (
+    <div className="admin-comp admin-comp--open">
+      <select className="admin-comp__field" value={tier} onChange={e => setTier(e.target.value as Tier)}>
+        {PAID_TIERS.map(t => <option key={t} value={t}>{TIER_SHORT_LABEL[t]}</option>)}
+      </select>
+      <select className="admin-comp__field" value={until} onChange={e => setUntil(e.target.value)}>
+        <option value="season">To the Super Bowl</option>
+        <option value="30">30 days</option>
+        <option value="365">1 year</option>
+      </select>
+      <div className="admin-comp__actions">
+        <button
+          className="admin-action-btn admin-action-btn--primary"
+          disabled={busy}
+          onClick={() => send({
+            action: 'grant',
+            tier,
+            expiresAt: until === 'season'
+              ? 'season'
+              : new Date(Date.now() + Number(until) * 86_400_000).toISOString(),
+          })}
+        >
+          {busy ? '…' : 'Apply'}
+        </button>
+        {comped && (
+          <button className="admin-action-btn" disabled={busy} onClick={() => send({ action: 'revoke' })}>
+            Revoke
+          </button>
+        )}
+        <button className="admin-action-btn" disabled={busy} onClick={() => { setOpen(false); setError(null) }}>
+          Cancel
+        </button>
+      </div>
+      {error && <div className="admin-comp__error">{error}</div>}
+    </div>
   )
 }
 

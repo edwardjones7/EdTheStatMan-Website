@@ -8744,3 +8744,55 @@ textarea.form-input {
   text-align: right;
   letter-spacing: 0.04em;
 }
+
+/* ── Admin: entitlement cells and the inline comp control ────────────────── */
+
+/* Second line inside a table cell: what a lapsed member used to have, where an
+   entitlement comes from, which pass is on an account. Secondary by design --
+   it explains the badge above it, it does not compete with it. */
+.admin-cell-note {
+  margin-top: 3px;
+  font-size: 0.7rem;
+  line-height: 1.3;
+}
+
+.admin-comp {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.admin-comp--open {
+  gap: 5px;
+  min-width: 150px;
+}
+
+.admin-comp__field {
+  width: 100%;
+  padding: 4px 6px;
+  font-family: inherit;
+  font-size: 0.74rem;
+  color: var(--text-primary);
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 5px;
+}
+
+.admin-comp__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.admin-comp__error {
+  font-size: 0.7rem;
+  color: #ef4444;
+  max-width: 160px;
+}
+
+.admin-action-btn--primary {
+  color: var(--bg-primary);
+  background: var(--accent-teal);
+  border-color: var(--accent-teal);
+}

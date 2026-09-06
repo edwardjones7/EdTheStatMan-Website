@@ -54,7 +54,7 @@ export default async function AdminPage({
     fetchAllPaged<any>((from, to) =>
       (admin as any)
         .from('profiles')
-        .select('id, email, full_name, subscription_tier, subscription_status, is_admin, stripe_customer_id, stripe_subscription_id, created_at, updated_at, last_seen_at')
+        .select('id, email, full_name, subscription_tier, subscription_status, is_admin, stripe_customer_id, stripe_subscription_id, created_at, updated_at, last_seen_at, access_expires_at, pass_tier, pass_expires_at, sub_tier, sub_current_period_end, billing_mode, discord_user_id')
         .order('last_seen_at', { ascending: false, nullsFirst: false })
         .range(from, to),
     ),
