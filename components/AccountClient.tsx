@@ -6,7 +6,7 @@ import { useSearchParams } from 'next/navigation'
 import { logout } from '@/app/actions/auth'
 import { updateProfile, updatePassword, updateNotifyEmail } from '@/app/account/actions'
 import PushOptIn from './PushOptIn'
-import { IconUser, IconLock, IconBolt, IconBell } from './Icons'
+import { IconUser, IconLock, IconBolt, IconBell, IconChat } from './Icons'
 import type { SubscriptionTier } from '@/lib/supabase/types'
 import { normalizeTier, TIER_SHORT_LABEL } from '@/lib/access'
 
@@ -23,6 +23,8 @@ interface AccountClientProps {
     notify_email: boolean
   }
   provider: string
+  /** Whether this member has already linked a Discord account. */
+  discordLinked?: boolean
 }
 
 // Labels come from TIER_SHORT_LABEL in lib/access.ts -- tier copy used to be
@@ -43,7 +45,7 @@ function formatDate(dateStr: string) {
 
 type Msg = { type: 'success' | 'error'; text: string }
 
-export default function AccountClient({ profile, provider }: AccountClientProps) {
+export default function AccountClient({ profile, provider, discordLinked = false }: AccountClientProps) {
   const searchParams = useSearchParams()
   const subscribeSuccess = searchParams.get('success') === '1'
   const [isPending, startTransition] = useTransition()
@@ -338,6 +340,27 @@ export default function AccountClient({ profile, provider }: AccountClientProps)
                 {notifyMsg.text}
               </div>
             )}
+          </div>
+        </div>
+
+        {/* Discord — link once, then the role tracks the membership. */}
+        <div className="account-card">
+          <div className="account-card__header">
+            <div className="account-card__icon"><IconChat size={18} /></div>
+            <h2 className="account-card__title">Discord</h2>
+          </div>
+          <div className="form-group">
+            <span className="account-field-hint" style={{ display: 'block', marginBottom: '12px' }}>
+              {discordLinked
+                ? 'Connected. The Members role is granted while your access is active, and removed when it lapses.'
+                : 'Connect your Discord account to get the Members role automatically for as long as your access is active.'}
+            </span>
+            <a
+              className={`btn btn--sm ${discordLinked ? 'btn--outline' : 'btn--primary'}`}
+              href="/api/discord/connect"
+            >
+              {discordLinked ? 'Reconnect Discord' : 'Connect Discord'}
+            </a>
           </div>
         </div>
 

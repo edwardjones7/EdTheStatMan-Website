@@ -23,6 +23,18 @@ export default async function AccountPage() {
     .eq('id', user.id)
     .single()
 
+  // Queried SEPARATELY and allowed to fail. discord_user_id arrives with
+  // discord_01_link.sql; folding it into the select above would repeat the exact
+  // mistake that comment warns about -- one missing column errors the whole
+  // query and blanks this page for every member. On its own, a miss just means
+  // "not linked".
+  const { data: link } = await (supabase as any)
+    .from('profiles')
+    .select('discord_user_id')
+    .eq('id', user.id)
+    .maybeSingle()
+  const discordLinked = !!link?.discord_user_id
+
   const provider = user.app_metadata?.provider ?? 'email'
 
   return (
@@ -43,6 +55,7 @@ export default async function AccountPage() {
         notify_email: profile?.notify_email ?? true,
       }}
       provider={provider}
+      discordLinked={discordLinked}
     />
   )
 }

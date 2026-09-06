@@ -8,6 +8,7 @@ import {
   invoiceSubscriptionId,
 } from '@/lib/stripe'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { syncDiscordRole } from '@/lib/discord/roles'
 import type { AccessGrant } from '@/lib/offer'
 import type { Tier } from '@/lib/access'
 import type Stripe from 'stripe'
@@ -97,9 +98,19 @@ function passExpiryFrom(grant: AccessGrant, currentMs: number, ref: string): str
   return new Date(Math.max(now, currentMs)).toISOString()
 }
 
+// Every handler funnels through here after writing its one slot, so hooking the
+// Discord sync in this single place covers purchase, renewal, plan change,
+// cancellation, dunning and refund without touching six call sites.
 async function recompute(admin: any, userId: string) {
   const { error } = await admin.rpc('recompute_entitlement', { p_user: userId })
   if (error) console.error(`[stripe-webhook] recompute_entitlement failed for ${userId}: ${error.message}`)
+
+  // Fire-and-forget by contract: syncDiscordRole never throws and never blocks a
+  // payment. A Discord outage must not fail a webhook Stripe will then retry.
+  const discord = await syncDiscordRole(userId)
+  if (discord.outcome === 'error') {
+    console.error(`[stripe-webhook] discord sync failed for ${userId}: ${discord.detail}`)
+  }
 }
 
 async function recordPurchase(admin: any, row: Record<string, unknown>, conflictKey: string) {
