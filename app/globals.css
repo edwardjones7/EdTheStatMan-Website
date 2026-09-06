@@ -976,7 +976,17 @@ html[data-navigating] .nav__progress-fill {
 
 .ticker__track {
   display: flex;
-  gap: 48px;
+  /* NO GAP HERE — the spacing lives on .ticker__item instead, and that is
+     load-bearing rather than stylistic.
+     LiveTicker renders the items twice ([...items, ...items]) and the keyframe
+     travels -50%, which is the standard seamless marquee. But N items laid out
+     with `gap` produce N-1 gaps, not N. With 14 items at 48px the track is
+     7594px, so -50% moves 3797px while one full copy plus its trailing gap is
+     3821px. The loop therefore SNAPPED BACK 24px -- exactly half a gap -- every
+     110 seconds, which reads as the ticker restarting.
+     Carrying the space as margin-right on each item makes every copy
+     self-contained: total = 2N x (item + 48), and half of that is exactly one
+     copy. Measured after the change: seam 0px. */
   animation: ticker-scroll 110s linear infinite;
   width: max-content;
 }
@@ -985,6 +995,9 @@ html[data-navigating] .nav__progress-fill {
   display: flex;
   align-items: center;
   gap: 12px;
+  /* The track's spacing, moved here so each copy carries its own trailing
+     space and -50% lands exactly on the seam. See .ticker__track. */
+  margin-right: 48px;
   white-space: nowrap;
   font-size: 0.86rem;
   font-weight: 500;
@@ -8621,7 +8634,7 @@ textarea.form-input {
      0.72rem) gave the autosizer three baselines to scale from and made the
      inflation look arbitrary rather than systematic. A single value is also
      what the row should have looked like regardless. */
-  font-size: 0.72rem;
+  font-size: 0.8rem;
 
   /* Retained for Chrome/Android, which does key off max-height. */
   max-height: 999999px;
