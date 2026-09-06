@@ -390,6 +390,102 @@ input, textarea, select {
   gap: 8px;
 }
 
+/* ---------- Nav route-change feedback -------------------------------------
+   Why this exists rather than loading.tsx doing the job: the router will not
+   mount a loading boundary until it has committed to the new segment, and it
+   will not commit until the server has answered. Measured on a production
+   build, clicking Research Desk held the previous page up, entirely unchanged,
+   for ~1.0s -- and when the route had been prefetched the skeleton never
+   rendered at all. The skeleton is still right for the wait after that; this
+   covers the second before it, which is the one that reads as a dead click.
+
+   Same three-part grammar the week rail already uses: the thing you clicked
+   marks itself, a bar sweeps, and both give up together on arrival. */
+.nav__progress {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  overflow: hidden;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+  pointer-events: none;
+}
+
+html[data-navigating] .nav__progress {
+  opacity: 1;
+  background: rgba(var(--teal-rgb), 0.12);
+}
+
+.nav__progress-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 38%;
+  background: linear-gradient(90deg,
+    rgba(var(--teal-rgb), 0) 0%,
+    var(--accent-teal) 50%,
+    rgba(var(--teal-rgb), 0) 100%);
+  transform: translateX(-100%);
+}
+
+html[data-navigating] .nav__progress-fill {
+  animation: nav-progress-sweep 1.05s ease-in-out infinite;
+}
+
+@keyframes nav-progress-sweep {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(350%); }
+}
+
+/* The link you clicked, still waiting on its page. ::before because the active
+   underline already owns ::after, and a link can be both at once. */
+.nav__link.is-pending,
+.mobile-menu__link.is-pending {
+  /* .nav__link already is; the mobile one is not, and without this the sweep
+     would size itself to the fixed panel instead of to the row. */
+  position: relative;
+  color: var(--text-heading);
+  overflow: hidden;
+}
+
+.nav__link.is-pending::before,
+.mobile-menu__link.is-pending::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(var(--teal-rgb), 0.28) 50%,
+    transparent 100%);
+  animation: nav-link-sweep 1.05s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes nav-link-sweep {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* Motion is the entire mechanism, so suppressing it cannot just leave nothing:
+   the bar fills and holds, and the clicked link keeps a flat tint. */
+@media (prefers-reduced-motion: reduce) {
+  html[data-navigating] .nav__progress-fill {
+    animation: none;
+    width: 100%;
+    transform: none;
+    background: rgba(var(--teal-rgb), 0.5);
+  }
+  .nav__link.is-pending::before,
+  .mobile-menu__link.is-pending::before {
+    animation: none;
+    transform: none;
+    background: rgba(var(--teal-rgb), 0.16);
+  }
+}
+
+
 .nav__cta {
   display: inline-flex;
   align-items: center;
@@ -7014,8 +7110,56 @@ textarea.form-input {
 /* The week rail scrolls on narrow screens; the native scrollbar underneath it
    read as a stray white bar, so it is hidden and the overflow is signalled by
    fade masks on both edges instead. */
+/* [chevron] [scrolling rail] [chevron]. The buttons sit beside the rail rather
+   than on top of it: overlaid on the edge fades they would cover the very pills
+   you are scrolling toward, and the leftmost one permanently. */
+.desk-weeks-rail {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.desk-weeks-nav {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-full);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.desk-weeks-nav:hover:not(:disabled) {
+  color: var(--accent-teal);
+  border-color: var(--accent-teal);
+}
+
+/* Kept in place rather than removed at the ends of the rail: the pills would
+   slide sideways under the cursor every time you reached an end, which is the
+   one moment you are most likely to click again. */
+.desk-weeks-nav:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+/* Touch scrolls the rail directly, and on a narrow screen these would cost
+   width the pills need more. */
+@media (max-width: 640px) {
+  .desk-weeks-nav { display: none; }
+}
+
 .desk-weeks-wrap {
   position: relative;
+  /* min-width so the scroller may shrink inside the flex row instead of
+     forcing it wider than the page. */
+  flex: 1 1 auto;
+  min-width: 0;
   margin: 0 -4px;
 }
 

@@ -1,11 +1,11 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useEffect, useRef, useCallback, useTransition } from 'react'
 import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
 import type { PublicNflGame } from '@/lib/nfl'
 import { spreadLabel, moneylineLabel, lineMove, groupSlate } from '@/lib/nfl'
-import { IconLock, IconArrowRight } from './Icons'
+import { IconLock, IconArrowRight, IconChevronLeft, IconChevronRight } from './Icons'
 import { teamLogoUrl } from '@/lib/logos'
 
 interface WeekOption {
@@ -78,6 +78,60 @@ export default function DeskWeekBoard({
     })
   }
 
+  // ---- Week rail scrolling -------------------------------------------------
+  // The rail holds up to 23 pills for the NFL and 17 for college, well past
+  // what fits, and it hides its scrollbar. The edge fades say there is more
+  // without saying how to reach it, which leaves a trackpad or a drag as the
+  // only way across.
+  const rail = useRef<HTMLDivElement | null>(null)
+  // Assume there is somewhere to go, because with this many weeks there almost
+  // always is. Guessing wrong for one frame is better than the buttons popping
+  // in after the measurement.
+  const [reach, setReach] = useState({ back: false, on: true })
+
+  const measure = useCallback(() => {
+    const el = rail.current
+    if (!el) return
+    // A pixel of slack: fractional scroll positions are normal at any zoom
+    // other than 100%, and an exact comparison leaves the button enabled at
+    // the end of the rail with nothing left to scroll to.
+    const end = el.scrollWidth - el.clientWidth
+    setReach({ back: el.scrollLeft > 1, on: el.scrollLeft < end - 1 })
+  }, [])
+
+  useEffect(() => {
+    const el = rail.current
+    if (!el) return
+    measure()
+    el.addEventListener('scroll', measure, { passive: true })
+    // Watches the element rather than the window: the rail also changes width
+    // when the sport switches under it, which no resize event would report.
+    const ro = new ResizeObserver(measure)
+    ro.observe(el)
+    return () => {
+      el.removeEventListener('scroll', measure)
+      ro.disconnect()
+    }
+  }, [measure, weeks])
+
+  // Just under a screenful, so the pill you were last looking at stays on
+  // screen as an anchor instead of the rail jumping somewhere unrecognisable.
+  const scrollRail = (dir: 1 | -1) => {
+    const el = rail.current
+    if (!el) return
+    // Asked here rather than in CSS: an explicit `behavior` on scrollBy wins
+    // over `scroll-behavior`, so a stylesheet rule for this would be silently
+    // ignored. Jumping straight there loses nothing, the destination is the
+    // whole message.
+    const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    el.scrollBy({
+      left: dir * Math.round(el.clientWidth * 0.8),
+      behavior: still ? 'auto' : 'smooth',
+    })
+  }
+
+  const scrollable = reach.back || reach.on
+
   const days = groupSlate(games)
 
   // Week header numbers. These are the honest advertisement for the rung: how
@@ -97,8 +151,21 @@ export default function DeskWeekBoard({
 
   return (
     <div className={`desk-board${isPending ? ' is-switching' : ''}`} aria-busy={isPending}>
-      <div className="desk-weeks-wrap">
-        <div className="desk-weeks" role="tablist" aria-label="Week">
+      <div className="desk-weeks-rail">
+        {scrollable && (
+          <button
+            type="button"
+            className="desk-weeks-nav"
+            onClick={() => scrollRail(-1)}
+            disabled={!reach.back}
+            aria-label="Scroll to earlier weeks"
+          >
+            <IconChevronLeft size={16} />
+          </button>
+        )}
+
+        <div className="desk-weeks-wrap">
+          <div className="desk-weeks" ref={rail} role="tablist" aria-label="Week">
           {weeks.map(w => {
             const isActive = !!shown && shown.season_type === w.season_type && shown.week === w.week
             return (
@@ -113,7 +180,20 @@ export default function DeskWeekBoard({
               </button>
             )
           })}
+          </div>
         </div>
+
+        {scrollable && (
+          <button
+            type="button"
+            className="desk-weeks-nav"
+            onClick={() => scrollRail(1)}
+            disabled={!reach.on}
+            aria-label="Scroll to later weeks"
+          >
+            <IconChevronRight size={16} />
+          </button>
+        )}
       </div>
 
       {/* Indeterminate, because the wait is a database round trip with no
