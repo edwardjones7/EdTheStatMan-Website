@@ -115,6 +115,30 @@ export default async function RootLayout({
             })
           }}
         />
+        {/* -webkit-text-size-adjust, inlined ON PURPOSE.
+
+            Autoprefixer STRIPS this one property from globals.css. Verified
+            against the production bundle: every other -webkit- prefix in the
+            stylesheet survives -- mask-image, overflow-scrolling,
+            font-smoothing, user-select -- and only -webkit-text-size-adjust is
+            removed. iOS Safari supports ONLY the prefixed form, so the rule was
+            being deleted before it ever reached a phone, which is why three
+            rounds of fixing the ticker changed nothing on mobile.
+
+            Inlined here because this <style> is emitted verbatim and never
+            passes through PostCSS. Keep the unprefixed copies in globals.css for
+            Chrome and Firefox; this is the Safari half.
+
+            'none' is scoped to the ticker only -- a decorative marquee nobody
+            needs to enlarge. Everything else stays at 100%, which preserves the
+            reader's own text scaling. */}
+        <style
+          dangerouslySetInnerHTML={{
+            __html:
+              'html{-webkit-text-size-adjust:100%}' +
+              '.ticker,.ticker *{-webkit-text-size-adjust:none}',
+          }}
+        />
       </head>
       <body>
         <BackgroundEffects />
