@@ -7,6 +7,7 @@ import type { PublicNflGame } from '@/lib/nfl'
 import { spreadLabel, moneylineLabel, lineMove, groupSlate } from '@/lib/nfl'
 import { IconLock, IconArrowRight, IconChevronLeft, IconChevronRight } from './Icons'
 import { teamLogoUrl } from '@/lib/logos'
+import { CFB_SCHOOLS } from '@/lib/teams-cfb'
 
 interface WeekOption {
   season_type: number
@@ -38,11 +39,23 @@ function kickoffDisplay(kickoff: string | null): string {
 
 
 /**
- * The city is already carried by the abbreviation tile, so the card leads with
- * the nickname — "Bengals", not "Cincinnati Bengals". Falls back to the whole
- * string for single-word names.
+ * What the card calls a team.
+ *
+ * The two leagues want opposite halves of the same string. In the NFL the city
+ * is already on the abbreviation tile, so the card leads with the mascot:
+ * "Bengals", not "Cincinnati Bengals". In college the mascot is the useless
+ * half — of the 243 programs in CFB_SCHOOLS, nine are Wildcats, nine are Tigers
+ * and eight are Bulldogs, so a board of mascots cannot be read at all — and it
+ * is the school that identifies the team.
+ *
+ * College cannot take the school off the string, which is why the table exists:
+ * "Alabama Crimson Tide" is Alabama and "Alabama State Hornets" is Alabama
+ * State, identically shaped and different answers. Dropping the last word is
+ * wrong for 37 of the 243 teams. A team missing from the table falls back to
+ * its full stored name, which is long but never wrong.
  */
-function nickname(team: string): string {
+function teamName(sport: string, team: string, abbrev: string): string {
+  if (sport === 'cfb') return CFB_SCHOOLS[abbrev] ?? team
   const parts = team.trim().split(/\s+/)
   return parts.length > 1 ? parts[parts.length - 1] : team
 }
@@ -317,7 +330,7 @@ export default function DeskWeekBoard({
                           <span className="sr-only">{side.abbrev}</span>
                         </span>
                         <span className="desk-card__ident">
-                          <span className="desk-card__name">{nickname(side.team)}</span>
+                          <span className="desk-card__name">{teamName(sport, side.team, side.abbrev)}</span>
                           {side.record && <span className="desk-card__rec">{side.record}</span>}
                         </span>
                         {final && side.score !== null && (
