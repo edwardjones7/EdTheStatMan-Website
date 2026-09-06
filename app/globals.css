@@ -8325,10 +8325,15 @@ textarea.form-input {
 /* ---- Model performance: per-sport breakdown --------------------------------
    Sits INSIDE the Model Performance section, under the hero, so the overall
    record and its split read as one block rather than two claims. Tone is keyed
-   to the -110 break-even (52.4%), not to 50%: a team at 51% is losing money and
+   to the -110 break-even (52.4%), not to 50%: a sport at 51% is losing money and
    must not be coloured like a winner. */
 .perf-split {
-  margin-top: 40px;
+  /* Capped and centred so the split sits UNDER the hero rather than sprawling
+     the full container width beside it. The hero is a narrow centred card; a
+     1232px row of four 167px cards left the right half empty and pushed the
+     heading and its note to opposite ends of the screen. */
+  max-width: 720px;
+  margin: 40px auto 0;
 }
 
 .perf-split__head {
@@ -8358,7 +8363,10 @@ textarea.form-input {
 
 .perf-split__grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  /* auto-FIT, not auto-fill: auto-fill keeps empty tracks, so four cards were
+     laid into seven columns and huddled on the left. auto-fit collapses the
+     empty ones and lets the cards share the row. */
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 10px;
 }
 
@@ -8410,7 +8418,7 @@ textarea.form-input {
 
 .perf-split-card__pct {
   font-family: var(--font-mono);
-  font-size: 1.35rem;
+  font-size: 1.5rem;
   line-height: 1;
   color: var(--text-primary);
 }
