@@ -8320,3 +8320,111 @@ textarea.form-input {
 @media (prefers-reduced-motion: reduce) {
   .skeleton { animation: none; }
 }
+
+
+/* ---- Model performance: per-team breakdown --------------------------------
+   Sits INSIDE the Model Performance section, under the hero, so the overall
+   record and its split read as one block rather than two claims. Tone is keyed
+   to the -110 break-even (52.4%), not to 50%: a team at 51% is losing money and
+   must not be coloured like a winner. */
+.perf-teams {
+  margin-top: 40px;
+}
+
+.perf-teams__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.perf-teams__title {
+  font-family: var(--font-heading);
+  font-size: 1.05rem;
+  letter-spacing: 0.02em;
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.perf-teams__note {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.perf-teams__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.perf-team {
+  position: relative;
+  padding: 12px 14px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+  overflow: hidden;
+}
+
+.perf-team::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 2px;
+  background: var(--text-muted);
+}
+
+.perf-team--up::before   { background: var(--accent-teal); }
+.perf-team--even::before { background: var(--accent-gold); }
+.perf-team--down::before { background: var(--accent-red); }
+
+.perf-team__top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.perf-team__name {
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.perf-team__sport {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.perf-team__pct {
+  font-family: var(--font-mono);
+  font-size: 1.35rem;
+  line-height: 1;
+  color: var(--text-primary);
+}
+
+.perf-team--up .perf-team__pct   { color: var(--accent-teal); }
+.perf-team--down .perf-team__pct { color: var(--accent-red); }
+
+.perf-team__record {
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  margin-top: 3px;
+}
+
+@media (max-width: 480px) {
+  .perf-teams__grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
+}

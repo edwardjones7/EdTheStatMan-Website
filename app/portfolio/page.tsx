@@ -1,16 +1,14 @@
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { DEFAULT_MODEL_PICKS, DEFAULT_SYSTEMS_OVERVIEW } from '@/lib/site-content'
-import type { ModelPicksContent, SystemsOverviewContent } from '@/lib/site-content'
+import { DEFAULT_MODEL_PICKS } from '@/lib/site-content'
+import type { ModelPicksContent } from '@/lib/site-content'
 import type { TodaysBet } from '@/components/TodaysBets'
 import ModelPicksPage from '@/components/ModelPicksPage'
 import ModelPicksEditor from '@/components/ModelPicksEditor'
 import RecentPicksResults from '@/components/RecentPicksResults'
 import ModelPerformance from '@/components/ModelPerformance'
-import SystemsOverview from '@/components/SystemsOverview'
-import { SPORT_LABEL, isSport } from '@/lib/desk'
-import type { Sport } from '@/lib/desk'
+import type { TeamRecord } from '@/components/ModelPerformance'
 import { getAccess } from '@/lib/access-server'
 import { atLeastTier } from '@/lib/access'
 import { rowMinTier } from '@/lib/gate'
@@ -35,10 +33,9 @@ export default async function Portfolio() {
   const supabase = await createClient()
   const adminDb = createAdminClient()
 
-  const [betsResult, contentResult, systemsResult] = await Promise.all([
+  const [betsResult, contentResult] = await Promise.all([
     (adminDb as any).from('todays_bets').select('*').order('created_at', { ascending: false }),
-    (supabase as any).from('site_content').select('key, value').in('key', ['model_picks', 'systems_overview']),
-    (adminDb as any).from('betting_systems').select('sport, w, l, t').eq('is_active', true),
+    (supabase as any).from('site_content').select('key, value').eq('key', 'model_picks'),
   ])
 
   const allBets: TodaysBet[] = betsResult.data ?? []
@@ -53,42 +50,6 @@ export default async function Portfolio() {
   const headerContent: ModelPicksContent = {
     ...DEFAULT_MODEL_PICKS,
     ...(contentByKey.model_picks as object ?? {}),
-  }
-
-  // Per-sport records, COMPUTED from the active systems rather than typed.
-  //
-  // The saved site_content copy was four hand-maintained cards, every one of
-  // them 0-0, still naming NBA Playoffs and the NCAA Tournament from last
-  // basketball season. Rendering that on the page a buyer decides on is worse
-  // than rendering nothing. Hand-kept numbers next to live ones is the whole
-  // failure mode; these move on their own.
-  //
-  // Copy stays editable (title, subtitle, footer); only the cards are derived.
-  const sportAgg = new Map<Sport, { w: number; l: number; t: number }>()
-  for (const r of (systemsResult.data ?? []) as { sport: string; w: number; l: number; t: number }[]) {
-    const key = (r.sport ?? '').toLowerCase()
-    if (!isSport(key)) continue
-    const a = sportAgg.get(key) ?? { w: 0, l: 0, t: 0 }
-    a.w += r.w ?? 0; a.l += r.l ?? 0; a.t += r.t ?? 0
-    sportAgg.set(key, a)
-  }
-
-  const savedOverview = (contentByKey.systems_overview as Partial<SystemsOverviewContent>) ?? {}
-  const systemsOverview: SystemsOverviewContent = {
-    ...DEFAULT_SYSTEMS_OVERVIEW,
-    ...savedOverview,
-    // Every card here is an ACTIVE system by construction, so none is 'ended' --
-    // which matters, because SystemsOverview filters ended cards out entirely.
-    cards: [...sportAgg.entries()]
-      .sort((a, b) => (b[1].w + b[1].l) - (a[1].w + a[1].l))
-      .map(([sport, a]) => ({
-        sport,
-        name: SPORT_LABEL[sport],
-        statusLabel: 'Active',
-        statusType: 'active' as const,
-        wins: a.w,
-        losses: a.l,
-      })),
   }
 
   const access = await getAccess()
@@ -145,6 +106,33 @@ export default async function Portfolio() {
   const winPct = (wins + losses) > 0 ? (wins / (wins + losses)) * 100 : 0
   const calcStats = { wins, losses, pushes, winPct }
 
+  // Per-team split of the SAME graded picks, so the headline and the breakdown
+  // can never disagree. `bet` holds the team taken; `opponent` is the other side.
+  //
+  // The floor is not decoration. Of the 50 teams picked, 15 have exactly ONE
+  // graded pick, and a 1-0 team rendering "100%" is noise wearing the costume of
+  // a result -- on the page where somebody decides to pay.
+  const BREAKDOWN_MIN = 5
+  const teamAgg = new Map<string, TeamRecord>()
+  for (const r of recentPicks) {
+    const team = (r.bet ?? '').trim()
+    if (!team) continue
+    // Keyed with the sport: the same nickname can exist in two leagues.
+    const key = team + '|' + (r.sport ?? '')
+    const agg = teamAgg.get(key) ?? { team, sport: r.sport ?? '', wins: 0, losses: 0, pushes: 0 }
+    if (r.result === 'win') agg.wins++
+    else if (r.result === 'loss') agg.losses++
+    else if (r.result === 'push') agg.pushes++
+    teamAgg.set(key, agg)
+  }
+  const breakdown: TeamRecord[] = [...teamAgg.values()]
+    .filter(t => t.wins + t.losses >= BREAKDOWN_MIN)
+    .sort((x, y) => {
+      const px = x.wins / (x.wins + x.losses)
+      const py = y.wins / (y.wins + y.losses)
+      return py !== px ? py - px : (y.wins + y.losses) - (x.wins + x.losses)
+    })
+
   return (
     <>
       {isAdmin ? (
@@ -161,8 +149,12 @@ export default async function Portfolio() {
           headerContent={headerContent}
         />
       )}
-      <ModelPerformance calcStats={calcStats} picks={recentPicks} />
-      <SystemsOverview content={systemsOverview} />
+      <ModelPerformance
+        calcStats={calcStats}
+        picks={recentPicks}
+        breakdown={breakdown}
+        breakdownMin={BREAKDOWN_MIN}
+      />
       <RecentPicksResults rows={recentPicks} />
     </>
   )
