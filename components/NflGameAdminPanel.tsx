@@ -110,7 +110,7 @@ export default function NflGameAdminPanel({ game, allSystems, allTrends, linkedS
       </div>
 
       <div className="admin-form-field admin-form-field--wide" style={{ marginBottom: '14px' }}>
-        <label className="admin-form-label">Elite breakdown (members with the Season Pass only)</label>
+        <label className="admin-form-label">Institutional breakdown (gated at the Institutional rung)</label>
         <div className="nfl-writeup-editor">
           <EditorContent editor={editor} />
         </div>

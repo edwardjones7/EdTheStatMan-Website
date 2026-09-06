@@ -6,7 +6,7 @@ import Link from 'next/link'
 import type { BettingTrend } from './AdminTrendsTab'
 import LockedTeaserCard from './LockedTeaserCard'
 import type { LockedTeaser } from '@/lib/teaser'
-import { isPaidTier, normalizeTier, accessBadge, VAULT_ACCESS_OPTIONS, type Tier } from '@/lib/access'
+import { isPaidTier, normalizeTier, accessBadge, TIER_SHORT_LABEL, VAULT_ACCESS_OPTIONS, type Tier } from '@/lib/access'
 import { IconLock, IconPencil } from './Icons'
 import RecordStrip from './RecordStrip'
 
@@ -373,16 +373,16 @@ export default function TrendsFilter({ trends, lockedCounts = {}, lockedTeasers 
       {/* Summary stats bar */}
       <div className="sys-stats-bar reveal" style={{ marginTop: '32px' }}>
         <div className="sys-stats-chip">
-          <span className="sys-stats-chip__label">Free Trends</span>
+          <span className="sys-stats-chip__label">{TIER_SHORT_LABEL.retail} Trends</span>
           <span className="sys-stats-chip__value">{freeCount}</span>
         </div>
         <div className="sys-stats-chip">
-          <span className="sys-stats-chip__label">Member Trends</span>
+          <span className="sys-stats-chip__label">{TIER_SHORT_LABEL.private} Trends</span>
           <span className="sys-stats-chip__value">{memberCount}</span>
         </div>
         {eliteCount > 0 && (
           <div className="sys-stats-chip sys-stats-chip--elite">
-            <span className="sys-stats-chip__label">Elite Trends</span>
+            <span className="sys-stats-chip__label">{TIER_SHORT_LABEL.institutional} Trends</span>
             <span className="sys-stats-chip__value">{eliteCount}</span>
           </div>
         )}
@@ -503,7 +503,7 @@ export default function TrendsFilter({ trends, lockedCounts = {}, lockedTeasers 
                     color: sheet.is_free ? '#38bdf8' : 'var(--accent-gold)',
                   }}
                 >
-                  {sheet.is_free ? 'Free' : 'Members'}
+                  {sheet.is_free ? 'Free' : 'Private'}
                 </button>
               </div>
             ))}
@@ -830,11 +830,11 @@ export default function TrendsFilter({ trends, lockedCounts = {}, lockedTeasers 
         <div className="sys-gate-card sys-gate-card--elite reveal">
           <div className="sys-gate-card__icon"><IconLock size={30} /></div>
           <div className="content-gate-card__title">
-            {eliteLockedCount} Elite trend{eliteLockedCount !== 1 ? 's' : ''}
+            {eliteLockedCount} Institutional trend{eliteLockedCount !== 1 ? 's' : ''}
             {activeTab !== 'all' && ` in ${activeTabLabel}`}
           </div>
           <p className="content-gate-card__desc">
-            Our highest-conviction, curated edges — Elite members only.
+            Our highest-conviction, curated edges — Institutional members only.
           </p>
           <div className="content-gate-card__actions">
             <Link href="/win" className="btn btn--primary">Go Institutional &rarr;</Link>
@@ -845,7 +845,7 @@ export default function TrendsFilter({ trends, lockedCounts = {}, lockedTeasers 
       {!isAdmin && lockedForTab.length > 0 && (
         <>
           <div className="sys-locked-heading">
-            <IconLock size={13} /> Members Only — records shown, systems hidden
+            <IconLock size={13} /> Private Intelligence — records shown, trends hidden
           </div>
           <div className="sys-card-grid">
             {lockedForTab.map(t => (
@@ -868,7 +868,7 @@ export default function TrendsFilter({ trends, lockedCounts = {}, lockedTeasers 
             {activeTab !== 'all' && ` in ${activeTabLabel}`}
           </div>
           <p className="content-gate-card__desc">
-            Full records, win percentages, and season data — members only.
+            Full records, win percentages, and season data — Private Intelligence and above.
           </p>
           <div className="content-gate-card__actions">
             <Link href="/win" className="btn btn--primary">Open the Vault &rarr;</Link>

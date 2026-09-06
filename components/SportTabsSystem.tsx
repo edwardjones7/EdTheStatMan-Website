@@ -6,7 +6,7 @@ import Link from 'next/link'
 import type { BettingSystem } from './AdminSystemsTab'
 import LockedTeaserCard from './LockedTeaserCard'
 import type { LockedTeaser } from '@/lib/teaser'
-import { isPaidTier, normalizeTier, accessBadge, VAULT_ACCESS_OPTIONS, type Tier } from '@/lib/access'
+import { isPaidTier, normalizeTier, accessBadge, TIER_SHORT_LABEL, VAULT_ACCESS_OPTIONS, type Tier } from '@/lib/access'
 import { IconLock, IconPencil } from './Icons'
 import RecordStrip from './RecordStrip'
 
@@ -384,16 +384,16 @@ export default function SportTabsSystem({ systems, lockedCounts = {}, lockedTeas
       {/* Summary stats bar */}
       <div className="sys-stats-bar reveal" style={{ marginTop: '32px' }}>
         <div className="sys-stats-chip">
-          <span className="sys-stats-chip__label">Free Systems</span>
+          <span className="sys-stats-chip__label">{TIER_SHORT_LABEL.retail} Systems</span>
           <span className="sys-stats-chip__value">{freeCount}</span>
         </div>
         <div className="sys-stats-chip">
-          <span className="sys-stats-chip__label">Member Systems</span>
+          <span className="sys-stats-chip__label">{TIER_SHORT_LABEL.private} Systems</span>
           <span className="sys-stats-chip__value">{memberCount}</span>
         </div>
         {eliteCount > 0 && (
           <div className="sys-stats-chip sys-stats-chip--elite">
-            <span className="sys-stats-chip__label">Elite Systems</span>
+            <span className="sys-stats-chip__label">{TIER_SHORT_LABEL.institutional} Systems</span>
             <span className="sys-stats-chip__value">{eliteCount}</span>
           </div>
         )}
@@ -514,7 +514,7 @@ export default function SportTabsSystem({ systems, lockedCounts = {}, lockedTeas
                     color: sheet.is_free ? '#38bdf8' : 'var(--accent-gold)',
                   }}
                 >
-                  {sheet.is_free ? 'Free' : 'Members'}
+                  {sheet.is_free ? 'Free' : 'Private'}
                 </button>
               </div>
             ))}
@@ -851,11 +851,11 @@ export default function SportTabsSystem({ systems, lockedCounts = {}, lockedTeas
         <div className="sys-gate-card sys-gate-card--elite reveal">
           <div className="sys-gate-card__icon"><IconLock size={30} /></div>
           <div className="content-gate-card__title">
-            {eliteLockedCount} Elite system{eliteLockedCount !== 1 ? 's' : ''}
+            {eliteLockedCount} Institutional system{eliteLockedCount !== 1 ? 's' : ''}
             {activeTab !== 'all' && ` in ${activeTabLabel}`}
           </div>
           <p className="content-gate-card__desc">
-            Our highest-conviction, curated edges — Elite members only.
+            Our highest-conviction, curated edges — Institutional members only.
           </p>
           <div className="content-gate-card__actions">
             <Link href="/win" className="btn btn--primary">Go Institutional &rarr;</Link>
@@ -889,7 +889,7 @@ export default function SportTabsSystem({ systems, lockedCounts = {}, lockedTeas
             {activeTab !== 'all' && ` in ${activeTabLabel}`}
           </div>
           <p className="content-gate-card__desc">
-            Full records, win percentages, and season data — members only.
+            Full records, win percentages, and season data — Private Intelligence and above.
           </p>
           <div className="content-gate-card__actions">
             <Link href="/win" className="btn btn--primary">Open the Vault &rarr;</Link>

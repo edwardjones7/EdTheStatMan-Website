@@ -434,8 +434,9 @@ export default function TodaysBets({ rows, isAdmin, userTier, isMember, lockedCo
                     )
                   })}
 
-                  {/* Edge picks locked for everyone below elite — same redaction
-                      rules as member-locked rows, gold Elite treatment. */}
+                  {/* Edge picks sit above the Portfolio rung, so they stay locked
+                      for members too. Same redaction rules as a Portfolio-locked
+                      row; the gold treatment is what marks them apart. */}
                   {eliteLockedBets.map(t => (
                     <tr key={t.id} className="bet-row--locked bet-row--elite-locked" style={{ borderBottom: '1px solid var(--border)' }}>
                       <td style={tdStyle}>
@@ -447,7 +448,7 @@ export default function TodaysBets({ rows, isAdmin, userTier, isMember, lockedCo
                       <td style={{ ...tdStyle, color: 'var(--accent-teal)', fontWeight: 600 }}>{t.sport ?? '—'}</td>
                       <td style={{ ...tdStyle, maxWidth: '200px' }}>
                         <span className="bet-cell-locked" aria-hidden="true"><IconLock size={13} /></span>
-                        <span className="sr-only">Elite-only Edge pick</span>
+                        <span className="sr-only">Edge pick — Private Intelligence only</span>
                       </td>
                       <td style={tdStyle}><span className="bet-cell-locked" aria-hidden="true"><IconLock size={13} /></span></td>
                       <td style={tdStyle}><span className="bet-cell-locked" aria-hidden="true"><IconLock size={13} /></span></td>
@@ -469,7 +470,7 @@ export default function TodaysBets({ rows, isAdmin, userTier, isMember, lockedCo
                       </td>
                       <td style={tdStyle}>
                         <Link href="/win" className="bet-unlock-link bet-unlock-link--elite">
-                          <IconLock size={12} /> Go Elite
+                          <IconLock size={12} /> Go Private
                         </Link>
                       </td>
                     </tr>
