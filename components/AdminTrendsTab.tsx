@@ -5,17 +5,15 @@ import { useRouter } from 'next/navigation'
 
 export interface BettingTrend {
   id: string
+  /** The Vault business key (CFBS0001). Null until one is typed. */
+  code: string | null
   sport: string
   description: string
-  line: string
   season: string
   pct: number | null
-  units: number | null
-  type: string
   w: number
   l: number
   t: number
-  date: string
   team: string
   /** The rung a row is gated at, and the only column the read paths consult.
    *  is_free / is_elite below are the pre-v3 pair it replaced: still on the
@@ -32,12 +30,10 @@ const SPORT_LABELS: Record<string, string> = { nba: 'NBA', wnba: 'WNBA', cbb: 'C
 
 const BLANK = {
   sport: 'cbb',
+  code: '',
   description: '',
-  line: '',
   season: '',
   pct: '' as number | null | string,
-  units: '' as number | null | string,
-  type: '',
   w: 0,
   l: 0,
   t: 0,
@@ -66,12 +62,10 @@ export default function AdminTrendsTab({ trends }: { trends: BettingTrend[] }) {
   function openEdit(t: BettingTrend) {
     setForm({
       sport: t.sport,
+      code: t.code ?? '',
       description: t.description,
-      line: t.line,
       season: t.season,
       pct: t.pct,
-      units: t.units,
-      type: t.type,
       w: t.w,
       l: t.l,
       t: t.t,
@@ -97,7 +91,7 @@ export default function AdminTrendsTab({ trends }: { trends: BettingTrend[] }) {
     const payload = {
       ...form,
       pct: (w + l) > 0 ? w / (w + l) : null,
-      units: form.units === '' || form.units === null ? null : Number(form.units),
+      code: form.code.trim() ? form.code.trim().toUpperCase() : null,
     }
 
     const res = await fetch(
@@ -168,26 +162,22 @@ export default function AdminTrendsTab({ trends }: { trends: BettingTrend[] }) {
                 {SPORTS.map(s => <option key={s} value={s}>{SPORT_LABELS[s]}</option>)}
               </select>
             </div>
+            <div className="admin-form-field">
+              <label className="admin-form-label">Trend ID</label>
+              <input className="admin-form-input" value={form.code} onChange={e => set('code', e.target.value.toUpperCase())} placeholder="CFBT0001" />
+            </div>
 
             <div className="admin-form-field admin-form-field--wide">
               <label className="admin-form-label">Description / Rule</label>
               <textarea className="admin-form-input" rows={2} value={form.description} onChange={e => set('description', e.target.value)} placeholder="e.g. Teams off 2+ days rest vs teams on back-to-back" />
             </div>
 
-            <div className="admin-form-field">
-              <label className="admin-form-label">Line</label>
-              <input className="admin-form-input" value={form.line} onChange={e => set('line', e.target.value)} placeholder="e.g. ATS, O/U, ML" />
-            </div>
 
             <div className="admin-form-field">
               <label className="admin-form-label">Season</label>
               <input className="admin-form-input" value={form.season} onChange={e => set('season', e.target.value)} placeholder="e.g. 2023-24" />
             </div>
 
-            <div className="admin-form-field">
-              <label className="admin-form-label">Type</label>
-              <input className="admin-form-input" value={form.type} onChange={e => set('type', e.target.value)} placeholder="e.g. Situational, Trend" />
-            </div>
 
             <div className="admin-form-field">
               <label className="admin-form-label">W</label>
@@ -204,10 +194,6 @@ export default function AdminTrendsTab({ trends }: { trends: BettingTrend[] }) {
               <input className="admin-form-input" type="number" min={0} value={form.t} onChange={e => set('t', +e.target.value)} />
             </div>
 
-            <div className="admin-form-field">
-              <label className="admin-form-label">Units</label>
-              <input className="admin-form-input" type="number" step="0.1" value={form.units ?? ''} onChange={e => set('units', e.target.value)} placeholder="12.5" />
-            </div>
 
             <div className="admin-form-field">
               <label className="admin-form-label">Sort Order</label>
@@ -249,7 +235,7 @@ export default function AdminTrendsTab({ trends }: { trends: BettingTrend[] }) {
                 <th>Sport</th>
                 <th>W-L-T</th>
                 <th>Pct</th>
-                <th>Type</th>
+                <th>ID</th>
                 <th>Access</th>
                 <th>Visible</th>
                 <th>Actions</th>
@@ -266,7 +252,7 @@ export default function AdminTrendsTab({ trends }: { trends: BettingTrend[] }) {
                   <td><span className="admin-tag">{SPORT_LABELS[t.sport] ?? t.sport}</span></td>
                   <td className="admin-muted">{t.w}-{t.l}-{t.t}</td>
                   <td className="admin-muted">{t.pct !== null && t.pct !== undefined ? `${Math.round(t.pct * 100)}%` : '—'}</td>
-                  <td className="admin-muted">{t.type || '—'}</td>
+                  <td className="admin-muted">{t.code || '—'}</td>
                   <td>
                     <span className={`admin-badge ${t.is_free ? 'admin-badge--blue' : 'admin-badge--purple'}`}>
                       {t.is_free ? 'Free' : 'Members'}

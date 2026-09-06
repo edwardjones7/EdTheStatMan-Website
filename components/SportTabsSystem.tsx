@@ -7,6 +7,7 @@ import type { BettingSystem } from './AdminSystemsTab'
 import LockedTeaserCard from './LockedTeaserCard'
 import type { LockedTeaser } from '@/lib/teaser'
 import { isPaidTier, normalizeTier, accessBadge, TIER_SHORT_LABEL, VAULT_ACCESS_OPTIONS, type Tier } from '@/lib/access'
+import { nextCode, compareCode } from '@/lib/codes'
 import { IconLock, IconPencil } from './Icons'
 import RecordStrip from './RecordStrip'
 
@@ -50,17 +51,15 @@ const SPORT_LABELS: Record<string, string> = { nba: 'NBA', wnba: 'WNBA', cbb: 'C
 
 const BLANK = {
   sport: 'cbb',
+  // The business key, typed by hand: CFBS0001. openAdd() suggests the next one
+  // for the sport you are on; the unique index on the table is what enforces it.
+  code: '',
   description: '',
-  line: '',
   season: '',
   pct: '' as number | null | string,
-  units: '' as number | null | string,
-  type: '',
   w: 0,
   l: 0,
   t: 0,
-  date: '',
-  team: '',
   // Matches the column default in tier_ladder_02_content_min_tier.sql: a system
   // is Private unless someone says otherwise. is_free / is_elite are no longer
   // in the form -- saveRow derives them, see there for why they are still written.
@@ -85,20 +84,16 @@ function systemTotal(s: { w?: number | null; l?: number | null; t?: number | nul
   return (s.w ?? 0) + (s.l ?? 0) + (s.t ?? 0)
 }
 
-// Sort priority: biggest sample size first (total W+L+T), then highest win %
-// (pctless rows last), then most recent date first (dateless rows last).
+// Sort priority: System ID ascending, uncoded rows last, then biggest sample
+// size and highest win % for anything still tied. Mirrors compareByCode() in
+// lib/gate.ts, which orders the same rows on the server -- the two must not
+// drift, because that order also decides which rows become teasers.
 function compareSystems(a: BettingSystem, b: BettingSystem): number {
+  const byCode = compareCode(a.code, b.code)
+  if (byCode !== 0) return byCode
   const totalDiff = systemTotal(b) - systemTotal(a)
   if (totalDiff !== 0) return totalDiff
-  const aPct = a.pct ?? -1
-  const bPct = b.pct ?? -1
-  if (aPct !== bPct) return bPct - aPct
-  const aDate = a.date || ''
-  const bDate = b.date || ''
-  if (aDate === bDate) return 0
-  if (!aDate) return 1
-  if (!bDate) return -1
-  return bDate.localeCompare(aDate)
+  return (b.pct ?? -1) - (a.pct ?? -1)
 }
 
 function parseNum(val: unknown): number | null {
@@ -187,8 +182,10 @@ export default function SportTabsSystem({ systems, lockedCounts = {}, lockedTeas
 
   function openAdd() {
     // Default a new row to the sport you're currently viewing, so adding while
-    // on the NFL tab creates an NFL system (not the blank default).
-    setForm({ ...BLANK, sport: activeTab !== 'all' ? activeTab : BLANK.sport })
+    // on the NFL tab creates an NFL system (not the blank default), and suggest
+    // the next free code for that sport from the rows already on the page.
+    const sport = activeTab !== 'all' ? activeTab : BLANK.sport
+    setForm({ ...BLANK, sport, code: nextCode(sport, 'S', systems.map(s => s.code)) })
     setEditId(null)
     setFormMode('add')
     setFormError(null)
@@ -197,17 +194,13 @@ export default function SportTabsSystem({ systems, lockedCounts = {}, lockedTeas
   function openEdit(s: BettingSystem) {
     setForm({
       sport: s.sport,
+      code: s.code ?? '',
       description: s.description,
-      line: s.line,
       season: s.season,
       pct: s.pct,
-      units: s.units,
-      type: s.type,
       w: s.w,
       l: s.l,
       t: s.t,
-      date: s.date ?? '',
-      team: s.team ?? '',
       // normalizeTier so a legacy or unrecognised stored value opens as a real
       // option rather than leaving the select with nothing selected.
       min_tier: normalizeTier(s.min_tier),
@@ -237,7 +230,10 @@ export default function SportTabsSystem({ systems, lockedCounts = {}, lockedTeas
     const payload = {
       ...form,
       pct: (w + l) > 0 ? w / (w + l) : null,
-      units: form.units === '' || form.units === null ? null : Number(form.units),
+      // Null, not '', for a blank code: the unique index treats NULLs as
+      // distinct, so any number of uncoded rows can coexist, while two rows
+      // both storing '' would collide on the second save.
+      code: form.code.trim() ? form.code.trim().toUpperCase() : null,
       // min_tier is the gate. is_free and is_elite are written alongside it only
       // to stop the old pair drifting into a contradiction: the XLSX importer
       // and the stats bar still read is_free, and lib/gate.ts falls back to the
@@ -310,12 +306,17 @@ export default function SportTabsSystem({ systems, lockedCounts = {}, lockedTeas
             const l = parseIntVal(row['l'] ?? row['L'] ?? row['losses'] ?? row['Losses'] ?? 0)
             return {
               sport: sheet.sport,
+              // Every spelling of the ID column a sheet might carry. Blank
+              // stays null rather than '' -- see saveRow for why.
+              code: parseStr(
+                row['code'] ?? row['Code'] ?? row['CODE'] ??
+                row['system id'] ?? row['System ID'] ?? row['SYSTEM ID'] ??
+                row['systemid'] ?? row['SystemID'] ?? row['systemId'] ??
+                row['id'] ?? row['ID'] ?? ''
+              ).trim().toUpperCase() || null,
               description: parseStr(row['description'] ?? row['Description'] ?? row['DESCRIPTION'] ?? row['rule'] ?? row['Rule'] ?? ''),
-              line: parseStr(row['line'] ?? row['Line'] ?? row['LINE'] ?? ''),
               season: parseStr(row['season'] ?? row['Season'] ?? row['SEASON'] ?? ''),
               pct: (w + l) > 0 ? w / (w + l) : null,
-              units: parseNum(row['units'] ?? row['Units'] ?? row['UNITS'] ?? ''),
-              type: parseStr(row['type'] ?? row['Type'] ?? row['TYPE'] ?? ''),
               w,
               l,
               t: parseIntVal(row['t'] ?? row['T'] ?? row['ties'] ?? row['Ties'] ?? 0),
@@ -546,29 +547,17 @@ export default function SportTabsSystem({ systems, lockedCounts = {}, lockedTeas
                 {SPORTS.map(s => <option key={s} value={s}>{SPORT_LABELS[s]}</option>)}
               </select>
             </div>
+            <div className="admin-form-field">
+              <label className="admin-form-label">System ID</label>
+              <input className="admin-form-input" value={form.code} onChange={e => setField('code', e.target.value.toUpperCase())} placeholder="CFBS0001" />
+            </div>
             <div className="admin-form-field admin-form-field--wide">
               <label className="admin-form-label">Description / Rule</label>
               <textarea className="admin-form-input" rows={2} value={form.description} onChange={e => setField('description', e.target.value)} placeholder="e.g. Teams off 2+ days rest vs teams on back-to-back" />
             </div>
             <div className="admin-form-field">
-              <label className="admin-form-label">Line</label>
-              <input className="admin-form-input" value={form.line} onChange={e => setField('line', e.target.value)} placeholder="ATS, O/U, ML" />
-            </div>
-            <div className="admin-form-field">
               <label className="admin-form-label">Season</label>
               <input className="admin-form-input" value={form.season} onChange={e => setField('season', e.target.value)} placeholder="2023-24" />
-            </div>
-            <div className="admin-form-field">
-              <label className="admin-form-label">Type</label>
-              <input className="admin-form-input" value={form.type} onChange={e => setField('type', e.target.value)} placeholder="Situational, Trend" />
-            </div>
-            <div className="admin-form-field">
-              <label className="admin-form-label">Date</label>
-              <input className="admin-form-input" value={form.date} onChange={e => setField('date', e.target.value)} placeholder="e.g. 2024-01-15" />
-            </div>
-            <div className="admin-form-field">
-              <label className="admin-form-label">Team</label>
-              <input className="admin-form-input" value={form.team} onChange={e => setField('team', e.target.value)} placeholder="e.g. Lakers" />
             </div>
             <div className="admin-form-field">
               <label className="admin-form-label">W</label>
@@ -581,10 +570,6 @@ export default function SportTabsSystem({ systems, lockedCounts = {}, lockedTeas
             <div className="admin-form-field">
               <label className="admin-form-label">T</label>
               <input className="admin-form-input" type="number" min={0} value={form.t} onChange={e => setField('t', +e.target.value)} />
-            </div>
-            <div className="admin-form-field">
-              <label className="admin-form-label">Units</label>
-              <input className="admin-form-input" type="number" step="0.1" value={form.units ?? ''} onChange={e => setField('units', e.target.value)} placeholder="12.5" />
             </div>
             <div className="admin-form-field">
               <label className="admin-form-label">Access</label>
@@ -615,8 +600,8 @@ export default function SportTabsSystem({ systems, lockedCounts = {}, lockedTeas
       )}
 
       {/* Free rows sit above the paywall. Locked rows reach the client only as
-          redacted teasers (sport + record + win%); descriptions, lines, teams,
-          dates and units never leave the server. See lib/teaser.ts. */}
+          redacted teasers (sport + record + win%); the description -- the rule
+          itself -- never leaves the server. See lib/teaser.ts. */}
       {lockedCount > 0 && baseRows.length > 0 && (
         <div className="sys-free-heading">Free Systems</div>
       )}
@@ -676,6 +661,12 @@ export default function SportTabsSystem({ systems, lockedCounts = {}, lockedTeas
                           <span className="sys-row-card__sport-badge">{style.label}</span>
                         </div>
 
+                        {/* System ID */}
+                        <div className="sys-row-card__field">
+                          <span className="sys-row-card__field-label">ID</span>
+                          <span className="sys-row-card__field-value">{row.code || '—'}</span>
+                        </div>
+
                         {/* Description */}
                         <div className="sys-row-card__desc-col">
                           <div className="sys-row-card__desc">
@@ -725,17 +716,6 @@ export default function SportTabsSystem({ systems, lockedCounts = {}, lockedTeas
                           <span className="sys-row-card__field-value">{row.season || '—'}</span>
                         </div>
 
-                        {/* Date */}
-                        <div className="sys-row-card__field">
-                          <span className="sys-row-card__field-label">Date</span>
-                          <span className="sys-row-card__field-value">{row.date || '—'}</span>
-                        </div>
-
-                        {/* Team */}
-                        <div className="sys-row-card__field sys-row-card__field--team">
-                          <span className="sys-row-card__field-label">Team</span>
-                          <span className="sys-row-card__field-value" style={{ whiteSpace: 'normal' }}>{row.team || '—'}</span>
-                        </div>
                       </div>
                     </div>
 
@@ -751,29 +731,17 @@ export default function SportTabsSystem({ systems, lockedCounts = {}, lockedTeas
                               {SPORTS.map(s => <option key={s} value={s}>{SPORT_LABELS[s]}</option>)}
                             </select>
                           </div>
+                          <div className="admin-form-field">
+                            <label className="admin-form-label">System ID</label>
+                            <input className="admin-form-input" value={form.code} onChange={e => setField('code', e.target.value.toUpperCase())} placeholder="CFBS0001" />
+                          </div>
                           <div className="admin-form-field admin-form-field--wide">
                             <label className="admin-form-label">Description / Rule</label>
                             <textarea className="admin-form-input" rows={2} value={form.description} onChange={e => setField('description', e.target.value)} placeholder="e.g. Teams off 2+ days rest vs teams on back-to-back" />
                           </div>
                           <div className="admin-form-field">
-                            <label className="admin-form-label">Line</label>
-                            <input className="admin-form-input" value={form.line} onChange={e => setField('line', e.target.value)} placeholder="ATS, O/U, ML" />
-                          </div>
-                          <div className="admin-form-field">
                             <label className="admin-form-label">Season</label>
                             <input className="admin-form-input" value={form.season} onChange={e => setField('season', e.target.value)} placeholder="2023-24" />
-                          </div>
-                          <div className="admin-form-field">
-                            <label className="admin-form-label">Type</label>
-                            <input className="admin-form-input" value={form.type} onChange={e => setField('type', e.target.value)} placeholder="Situational, Trend" />
-                          </div>
-                          <div className="admin-form-field">
-                            <label className="admin-form-label">Date</label>
-                            <input className="admin-form-input" value={form.date} onChange={e => setField('date', e.target.value)} placeholder="e.g. 2024-01-15" />
-                          </div>
-                          <div className="admin-form-field">
-                            <label className="admin-form-label">Team</label>
-                            <input className="admin-form-input" value={form.team} onChange={e => setField('team', e.target.value)} placeholder="e.g. Lakers" />
                           </div>
                           <div className="admin-form-field">
                             <label className="admin-form-label">W</label>
@@ -786,10 +754,6 @@ export default function SportTabsSystem({ systems, lockedCounts = {}, lockedTeas
                           <div className="admin-form-field">
                             <label className="admin-form-label">T</label>
                             <input className="admin-form-input" type="number" min={0} value={form.t} onChange={e => setField('t', +e.target.value)} />
-                          </div>
-                          <div className="admin-form-field">
-                            <label className="admin-form-label">Units</label>
-                            <input className="admin-form-input" type="number" step="0.1" value={form.units ?? ''} onChange={e => setField('units', e.target.value)} placeholder="12.5" />
                           </div>
                           <div className="admin-form-field">
                             <label className="admin-form-label">Access</label>

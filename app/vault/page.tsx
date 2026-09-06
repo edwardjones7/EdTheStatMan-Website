@@ -119,10 +119,11 @@ export default async function VaultLanding() {
   //
   // HOUSE RULE (lib/teaser.ts): a locked row is advertised by its RECORD, never
   // by its description -- the description is the betting rule, which is the
-  // product. So `description` and `line` are only copied onto the preview object
-  // when this visitor is entitled to the row; for everyone else those fields
-  // never leave the server. Field-by-field on purpose: the source query is
-  // select('*') and a spread would ship every present and future column.
+  // product. So `description` is only copied onto the preview object when this
+  // visitor is entitled to the row; for everyone else it never leaves the
+  // server. The code is a label, not the rule, so it rides along either way.
+  // Field-by-field on purpose: the source query is select('*') and a spread
+  // would ship every present and future column.
   const all = [...systems, ...trends]
   const preview = [...all]
     .sort(compareBySample)
@@ -136,7 +137,7 @@ export default async function VaultLanding() {
         open,
         required,
         description: open ? ((r.description ?? '') as string) : '',
-        line: open ? ((r.line ?? '') as string) : '',
+        code: (r.code ?? '') as string,
         w: (r.w ?? 0) as number,
         l: (r.l ?? 0) as number,
         t: (r.t ?? 0) as number,
@@ -216,7 +217,7 @@ export default async function VaultLanding() {
                     {row.open ? (
                       <>
                         <span>{row.description || 'Untitled system'}</span>
-                        {row.line && <span className="vault-peek__line">{row.line}</span>}
+                        {row.code && <span className="vault-peek__line">{row.code}</span>}
                       </>
                     ) : (
                       <span className="vault-peek__redacted">

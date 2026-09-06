@@ -400,6 +400,8 @@ function LinkedSection({ title, visible, locked, lockedElite, href }: {
               </div>
               <div className="sys-row-card__desc-col">
                 <div className="sys-row-card__desc">{row.description}</div>
+                {/* The Vault key, so a row can be found again in the library. */}
+                {row.code && <span className="sys-row-card__field-value">{row.code}</span>}
                 {row.is_elite && (
                   <span className="sys-row-card__access-badge sys-row-card__access-badge--elite">Elite</span>
                 )}

@@ -164,8 +164,8 @@ const { access, userId, email, fullName } = await getAccessWithProfile()  // nav
 |---|---|---|
 | `profiles` | 1:1 with `auth.users` | Auto-created by the `handle_new_user()` trigger. Holds tier, expiry, Stripe ids, admin flag, notification prefs, first-touch attribution. |
 | `posts` | Blog | `slug UNIQUE`, `access_level`, `published_at` stamped on first publish. |
-| `betting_systems` | The systems library | `sport` CHECK, W/L/T, `pct`, `units`, `is_free`, `is_elite`, `is_active`, `sort_order`. |
-| `betting_trends` | The trends library | Structurally identical to `betting_systems`. |
+| `betting_systems` | The systems library | `code` UNIQUE business key (CFBS0001), `sport` CHECK, W/L/T, `pct`, `min_tier`, `is_free`, `is_elite`, `is_active`, `sort_order`. `line`/`type`/`date`/`team`/`units` were dropped by `vault_02_drop_desk_columns.sql`. |
+| `betting_trends` | The trends library | Same, plus `team` — the trends surface groups by it. Its key is `CFBT0001`. |
 | `todays_bets` | The picks | `result` defaults `'pending'`; `is_free` defaults **true** here (the other two default false). |
 | `nfl_games` | Synced NFL schedule | `writeup_html` is gated IP. Admin-owned columns are never overwritten by a sync. |
 | `nfl_game_systems`, `nfl_game_trends` | Curated join tables | |

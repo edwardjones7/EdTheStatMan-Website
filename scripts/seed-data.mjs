@@ -64,12 +64,18 @@ async function seedSheet(wb, sheetIndex, config) {
 
   const records = rows.map((row, i) => ({
     sport: config.sport,
+    // The business key (CFBS0001 / CFBT0001), under any spelling a sheet uses.
+    // Blank stays null: the unique index treats NULLs as distinct, so uncoded
+    // rows coexist while two rows storing '' would collide.
+    code: parseStr(
+      row['code'] ?? row['Code'] ?? row['CODE'] ??
+      row['system id'] ?? row['System ID'] ?? row['trend id'] ?? row['Trend ID'] ??
+      row['systemid'] ?? row['SystemID'] ?? row['trendid'] ?? row['TrendID'] ??
+      row['id'] ?? row['ID'] ?? ''
+    ).trim().toUpperCase() || null,
     description: parseStr(row['description'] ?? row['Description'] ?? row['DESCRIPTION'] ?? row['rule'] ?? row['Rule'] ?? ''),
-    line: parseStr(row['line'] ?? row['Line'] ?? row['LINE'] ?? ''),
     season: parseStr(row['season'] ?? row['Season'] ?? row['SEASON'] ?? ''),
     pct: parseNum(row['pct'] ?? row['Pct'] ?? row['PCT'] ?? row['pct%'] ?? row['Pct%'] ?? ''),
-    units: parseNum(row['units'] ?? row['Units'] ?? row['UNITS'] ?? ''),
-    type: parseStr(row['type'] ?? row['Type'] ?? row['TYPE'] ?? ''),
     w: parseInt(row['w'] ?? row['W'] ?? row['wins'] ?? row['Wins'] ?? 0),
     l: parseInt(row['l'] ?? row['L'] ?? row['losses'] ?? row['Losses'] ?? 0),
     t: parseInt(row['t'] ?? row['T'] ?? row['ties'] ?? row['Ties'] ?? 0),

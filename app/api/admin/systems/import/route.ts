@@ -39,8 +39,32 @@ export async function POST(req: Request) {
     )
   }
 
+  // The System ID is the business key, and a duplicate is the mistake a
+  // hand-typed sheet actually makes. Caught here, naming both rows, because
+  // this is ONE batch insert: left to the unique index it comes back as an
+  // opaque 23505 and takes every other row of the import with it.
+  const seen = new Map<string, number>()
+  for (let i = 0; i < (records as any[]).length; i++) {
+    const code = String((records as any[])[i]?.code ?? '').trim().toUpperCase()
+    if (!code) continue
+    const first = seen.get(code)
+    if (first !== undefined) {
+      return NextResponse.json(
+        { error: `Rows ${first + 1} and ${i + 1} both use the System ID "${code}".` },
+        { status: 400 }
+      )
+    }
+    seen.set(code, i)
+  }
+
   const { error } = await admin.from('betting_systems').insert(records)
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) {
+    // 23505 is the code unique index. Say which key it was about.
+    const message = (error as any).code === '23505'
+      ? `One of these IDs is already in the library. Import with "clear first" ticked, or change the duplicate.`
+      : error.message
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
 
   return NextResponse.json({ inserted: records.length })
 }

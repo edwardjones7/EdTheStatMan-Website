@@ -7,6 +7,7 @@ import type { BettingTrend } from './AdminTrendsTab'
 import LockedTeaserCard from './LockedTeaserCard'
 import type { LockedTeaser } from '@/lib/teaser'
 import { isPaidTier, normalizeTier, accessBadge, TIER_SHORT_LABEL, VAULT_ACCESS_OPTIONS, type Tier } from '@/lib/access'
+import { nextCode, compareCode } from '@/lib/codes'
 import { IconLock, IconPencil } from './Icons'
 import RecordStrip from './RecordStrip'
 
@@ -51,15 +52,14 @@ const SPORT_LABELS: Record<string, string> = { nba: 'NBA', wnba: 'WNBA', cbb: 'C
 const BLANK = {
   sport: 'cbb',
   description: '',
-  line: '',
+  // The business key, typed by hand: CFBT0001. openAdd() suggests the next one
+  // for the sport you are on; the unique index on the table is what enforces it.
+  code: '',
   season: '',
   pct: '' as number | null | string,
-  units: '' as number | null | string,
-  type: '',
   w: 0,
   l: 0,
   t: 0,
-  date: '',
   team: '',
   // Matches the column default in tier_ladder_02_content_min_tier.sql: a trend
   // is Private unless someone says otherwise. is_free / is_elite are no longer
@@ -80,10 +80,15 @@ function pctDisplay(pct: number | null | undefined): string {
   return `${Math.round(pct * 100)}%`
 }
 
-// Sort priority: free trends first, then team name A→Z (teamless rows last);
-// remaining ties break by highest win % first (pctless rows last).
+// Sort priority: Trend ID ascending, uncoded rows last, then team name A→Z
+// (teamless rows last) and highest win % for anything still tied. Mirrors
+// compareByCode() in lib/gate.ts, which orders the same rows on the server --
+// the two must not drift, because that order also decides which rows become
+// teasers. Free-first is gone: the ID is the order now, and a code sorts a
+// sport together, which is what someone scanning this list is actually after.
 function compareTrends(a: BettingTrend, b: BettingTrend): number {
-  if (a.is_free !== b.is_free) return Number(b.is_free) - Number(a.is_free)
+  const byCode = compareCode(a.code, b.code)
+  if (byCode !== 0) return byCode
   const aTeam = (a.team || '').trim().toLowerCase()
   const bTeam = (b.team || '').trim().toLowerCase()
   if (aTeam !== bTeam) {
@@ -91,9 +96,7 @@ function compareTrends(a: BettingTrend, b: BettingTrend): number {
     if (!bTeam) return -1
     return aTeam.localeCompare(bTeam)
   }
-  const aPct = a.pct ?? -1
-  const bPct = b.pct ?? -1
-  return bPct - aPct
+  return (b.pct ?? -1) - (a.pct ?? -1)
 }
 
 function parseNum(val: unknown): number | null {
@@ -181,8 +184,10 @@ export default function TrendsFilter({ trends, lockedCounts = {}, lockedTeasers 
 
 
   function openAdd() {
-    // Default a new row to the sport you're currently viewing.
-    setForm({ ...BLANK, sport: activeTab !== 'all' ? activeTab : BLANK.sport })
+    // Default a new row to the sport you're currently viewing, and suggest the
+    // next free code for that sport from the rows already on the page.
+    const sport = activeTab !== 'all' ? activeTab : BLANK.sport
+    setForm({ ...BLANK, sport, code: nextCode(sport, 'T', trends.map(r => r.code)) })
     setEditId(null)
     setFormMode('add')
     setFormError(null)
@@ -191,16 +196,13 @@ export default function TrendsFilter({ trends, lockedCounts = {}, lockedTeasers 
   function openEdit(r: BettingTrend) {
     setForm({
       sport: r.sport,
+      code: r.code ?? '',
       description: r.description,
-      line: r.line,
       season: r.season,
       pct: r.pct,
-      units: r.units,
-      type: r.type,
       w: r.w,
       l: r.l,
       t: r.t,
-      date: r.date ?? '',
       team: r.team ?? '',
       // normalizeTier so a legacy or unrecognised stored value opens as a real
       // option rather than leaving the select with nothing selected.
@@ -231,7 +233,10 @@ export default function TrendsFilter({ trends, lockedCounts = {}, lockedTeasers 
     const payload = {
       ...form,
       pct: (w + l) > 0 ? w / (w + l) : null,
-      units: form.units === '' || form.units === null ? null : Number(form.units),
+      // Null, not '', for a blank code: the unique index treats NULLs as
+      // distinct, so any number of uncoded rows can coexist, while two rows
+      // both storing '' would collide on the second save.
+      code: form.code.trim() ? form.code.trim().toUpperCase() : null,
       // min_tier is the gate. The old pair rides along derived so the two can
       // never contradict each other -- see the same note in SportTabsSystem.
       is_free: form.min_tier === 'retail',
@@ -300,12 +305,17 @@ export default function TrendsFilter({ trends, lockedCounts = {}, lockedTeasers 
             const l = parseIntVal(row['l'] ?? row['L'] ?? row['losses'] ?? row['Losses'] ?? 0)
             return {
               sport: sheet.sport,
+              // Every spelling of the ID column a sheet might carry. Blank
+              // stays null rather than '' -- see saveRow for why.
+              code: parseStr(
+                row['code'] ?? row['Code'] ?? row['CODE'] ??
+                row['trend id'] ?? row['Trend ID'] ?? row['TREND ID'] ??
+                row['trendid'] ?? row['TrendID'] ?? row['trendId'] ??
+                row['id'] ?? row['ID'] ?? ''
+              ).trim().toUpperCase() || null,
               description: parseStr(row['description'] ?? row['Description'] ?? row['DESCRIPTION'] ?? row['rule'] ?? row['Rule'] ?? ''),
-              line: parseStr(row['line'] ?? row['Line'] ?? row['LINE'] ?? ''),
               season: parseStr(row['season'] ?? row['Season'] ?? row['SEASON'] ?? ''),
               pct: (w + l) > 0 ? w / (w + l) : null,
-              units: parseNum(row['units'] ?? row['Units'] ?? row['UNITS'] ?? ''),
-              type: parseStr(row['type'] ?? row['Type'] ?? row['TYPE'] ?? ''),
               w,
               l,
               t: parseIntVal(row['t'] ?? row['T'] ?? row['ties'] ?? row['Ties'] ?? 0),
@@ -535,21 +545,17 @@ export default function TrendsFilter({ trends, lockedCounts = {}, lockedTeasers 
                 {SPORTS.map(s => <option key={s} value={s}>{SPORT_LABELS[s]}</option>)}
               </select>
             </div>
+            <div className="admin-form-field">
+              <label className="admin-form-label">Trend ID</label>
+              <input className="admin-form-input" value={form.code} onChange={e => setField('code', e.target.value.toUpperCase())} placeholder="CFBT0001" />
+            </div>
             <div className="admin-form-field admin-form-field--wide">
               <label className="admin-form-label">Description / Rule</label>
               <textarea className="admin-form-input" rows={2} value={form.description} onChange={e => setField('description', e.target.value)} placeholder="e.g. Teams off 2+ days rest vs teams on back-to-back" />
             </div>
             <div className="admin-form-field">
-              <label className="admin-form-label">Line</label>
-              <input className="admin-form-input" value={form.line} onChange={e => setField('line', e.target.value)} placeholder="ATS, O/U, ML" />
-            </div>
-            <div className="admin-form-field">
               <label className="admin-form-label">Season</label>
               <input className="admin-form-input" value={form.season} onChange={e => setField('season', e.target.value)} placeholder="2023-24" />
-            </div>
-            <div className="admin-form-field">
-              <label className="admin-form-label">Type</label>
-              <input className="admin-form-input" value={form.type} onChange={e => setField('type', e.target.value)} placeholder="Situational, Trend" />
             </div>
             <div className="admin-form-field">
               <label className="admin-form-label">Team</label>
@@ -566,10 +572,6 @@ export default function TrendsFilter({ trends, lockedCounts = {}, lockedTeasers 
             <div className="admin-form-field">
               <label className="admin-form-label">T</label>
               <input className="admin-form-input" type="number" min={0} value={form.t} onChange={e => setField('t', +e.target.value)} />
-            </div>
-            <div className="admin-form-field">
-              <label className="admin-form-label">Units</label>
-              <input className="admin-form-input" type="number" step="0.1" value={form.units ?? ''} onChange={e => setField('units', e.target.value)} placeholder="12.5" />
             </div>
             <div className="admin-form-field">
               <label className="admin-form-label">Access</label>
@@ -600,8 +602,8 @@ export default function TrendsFilter({ trends, lockedCounts = {}, lockedTeasers 
       )}
 
       {/* Free rows sit above the paywall. Locked rows reach the client only as
-          redacted teasers (sport + record + win%); descriptions, lines, teams,
-          dates and units never leave the server. See lib/teaser.ts. */}
+          redacted teasers (sport + record + win%); the description -- the rule
+          itself -- never leaves the server. See lib/teaser.ts. */}
       {lockedCount > 0 && baseRows.length > 0 && (
         <div className="sys-free-heading">Free Trends</div>
       )}
@@ -659,6 +661,12 @@ export default function TrendsFilter({ trends, lockedCounts = {}, lockedTeasers 
                         {/* Sport badge */}
                         <div className="sys-row-card__sport-col">
                           <span className="sys-row-card__sport-badge">{style.label}</span>
+                        </div>
+
+                        {/* Trend ID */}
+                        <div className="sys-row-card__field">
+                          <span className="sys-row-card__field-label">ID</span>
+                          <span className="sys-row-card__field-value">{row.code || '—'}</span>
                         </div>
 
                         {/* Team */}
@@ -730,25 +738,17 @@ export default function TrendsFilter({ trends, lockedCounts = {}, lockedTeasers 
                               {SPORTS.map(s => <option key={s} value={s}>{SPORT_LABELS[s]}</option>)}
                             </select>
                           </div>
+                          <div className="admin-form-field">
+                            <label className="admin-form-label">Trend ID</label>
+                            <input className="admin-form-input" value={form.code} onChange={e => setField('code', e.target.value.toUpperCase())} placeholder="CFBT0001" />
+                          </div>
                           <div className="admin-form-field admin-form-field--wide">
                             <label className="admin-form-label">Description / Rule</label>
                             <textarea className="admin-form-input" rows={2} value={form.description} onChange={e => setField('description', e.target.value)} placeholder="e.g. Teams off 2+ days rest vs teams on back-to-back" />
                           </div>
                           <div className="admin-form-field">
-                            <label className="admin-form-label">Line</label>
-                            <input className="admin-form-input" value={form.line} onChange={e => setField('line', e.target.value)} placeholder="ATS, O/U, ML" />
-                          </div>
-                          <div className="admin-form-field">
                             <label className="admin-form-label">Season</label>
                             <input className="admin-form-input" value={form.season} onChange={e => setField('season', e.target.value)} placeholder="2023-24" />
-                          </div>
-                          <div className="admin-form-field">
-                            <label className="admin-form-label">Type</label>
-                            <input className="admin-form-input" value={form.type} onChange={e => setField('type', e.target.value)} placeholder="Situational, Trend" />
-                          </div>
-                          <div className="admin-form-field">
-                            <label className="admin-form-label">Date</label>
-                            <input className="admin-form-input" value={form.date} onChange={e => setField('date', e.target.value)} placeholder="e.g. 2024-01-15" />
                           </div>
                           <div className="admin-form-field">
                             <label className="admin-form-label">Team</label>
@@ -765,10 +765,6 @@ export default function TrendsFilter({ trends, lockedCounts = {}, lockedTeasers 
                           <div className="admin-form-field">
                             <label className="admin-form-label">T</label>
                             <input className="admin-form-input" type="number" min={0} value={form.t} onChange={e => setField('t', +e.target.value)} />
-                          </div>
-                          <div className="admin-form-field">
-                            <label className="admin-form-label">Units</label>
-                            <input className="admin-form-input" type="number" step="0.1" value={form.units ?? ''} onChange={e => setField('units', e.target.value)} placeholder="12.5" />
                           </div>
                           <div className="admin-form-field">
                             <label className="admin-form-label">Access</label>

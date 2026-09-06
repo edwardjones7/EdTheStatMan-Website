@@ -1,8 +1,9 @@
 // Redacted shape for locked systems/trends shown to non-members.
 //
 // Non-members see PROOF (the record) but never the PRODUCT (the system itself).
-// `description` is the intellectual property — the actual betting rule — and
-// along with line/team/date/units it must never leave the server.
+// `description` is the intellectual property — the actual betting rule — and it
+// must never leave the server. (It used to have company: line, team, date and
+// units, which vault_02_drop_desk_columns.sql removed.)
 //
 // Build these field by field. `betting_systems` and `betting_trends` are queried
 // with select('*'), so any object spread would silently ship every column,

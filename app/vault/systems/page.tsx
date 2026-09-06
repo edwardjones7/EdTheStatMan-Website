@@ -4,7 +4,7 @@ import SportTabsSystem from '@/components/SportTabsSystem'
 import PricingCards from '@/components/PricingCards'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getAccess } from '@/lib/access-server'
-import { partitionBySport, compareBySample } from '@/lib/gate'
+import { partitionBySport, compareByCode } from '@/lib/gate'
 
 export const dynamic = 'force-dynamic'
 
@@ -35,12 +35,24 @@ export default async function VaultSystems() {
   // through a matchup on the Research Desk, never as a browsable list.
   const canSeeAll = access.atLeast('private') || isAdmin
 
-  const systemsQuery = isAdmin
-    ? (admin as any).from('betting_systems').select('*')
-    : (admin as any).from('betting_systems').select('*').eq('is_active', true)
-
-  const { data: rawSystems } = await systemsQuery
-  const systems = (rawSystems ?? []).sort(compareBySample)
+  // Ordered by System ID (CFBS0001), uncoded rows last.
+  //
+  // The DB does the sort so the index earns its keep, and compareByCode applies
+  // it again here: it is the single comparator, it decides which rows become
+  // teasers, and the client re-sorts with the same rules.
+  //
+  // MIGRATION TOLERANT, like everything else that reads these tables. This
+  // deploys before vault_01_row_codes.sql is necessarily applied, and PostgREST
+  // answers an ORDER BY on an unknown column with 42703 -- which would render
+  // the whole library empty. So the ordered query is tried, and a failure falls
+  // back to the unordered one rather than to a blank page.
+  const base = () => {
+    const q = (admin as any).from('betting_systems').select('*')
+    return isAdmin ? q : q.eq('is_active', true)
+  }
+  let { data: rawSystems, error } = await base().order('code', { ascending: true, nullsFirst: false })
+  if (error) ({ data: rawSystems } = await base())
+  const systems = (rawSystems ?? []).sort(compareByCode)
 
   const { visible, lockedCounts, teasers } = partitionBySport(
     systems as any[], userTier, isAdmin, 'private'

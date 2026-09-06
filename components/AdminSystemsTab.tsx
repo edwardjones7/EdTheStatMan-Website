@@ -5,18 +5,15 @@ import { useRouter } from 'next/navigation'
 
 export interface BettingSystem {
   id: string
+  /** The Vault business key (CFBS0001). Null until one is typed. */
+  code: string | null
   sport: string
   description: string
-  line: string
   season: string
   pct: number | null
-  units: number | null
-  type: string
   w: number
   l: number
   t: number
-  date: string
-  team: string
   /** The rung a row is gated at, and the only column the read paths consult.
    *  is_free / is_elite below are the pre-v3 pair it replaced: still on the
    *  table, still written in step by the editor, but no longer authoritative. */
@@ -32,12 +29,10 @@ const SPORT_LABELS: Record<string, string> = { nba: 'NBA', wnba: 'WNBA', cbb: 'C
 
 const BLANK = {
   sport: 'cbb',
+  code: '',
   description: '',
-  line: '',
   season: '',
   pct: '' as number | null | string,
-  units: '' as number | null | string,
-  type: '',
   w: 0,
   l: 0,
   t: 0,
@@ -66,12 +61,10 @@ export default function AdminSystemsTab({ systems }: { systems: BettingSystem[] 
   function openEdit(s: BettingSystem) {
     setForm({
       sport: s.sport,
+      code: s.code ?? '',
       description: s.description,
-      line: s.line,
       season: s.season,
       pct: s.pct,
-      units: s.units,
-      type: s.type,
       w: s.w,
       l: s.l,
       t: s.t,
@@ -102,7 +95,7 @@ export default function AdminSystemsTab({ systems }: { systems: BettingSystem[] 
     const payload = {
       ...form,
       pct: form.pct === '' || form.pct === null ? null : Number(form.pct),
-      units: form.units === '' || form.units === null ? null : Number(form.units),
+      code: form.code.trim() ? form.code.trim().toUpperCase() : null,
     }
 
     const res = await fetch(
@@ -173,26 +166,22 @@ export default function AdminSystemsTab({ systems }: { systems: BettingSystem[] 
                 {SPORTS.map(s => <option key={s} value={s}>{SPORT_LABELS[s]}</option>)}
               </select>
             </div>
+            <div className="admin-form-field">
+              <label className="admin-form-label">System ID</label>
+              <input className="admin-form-input" value={form.code} onChange={e => set('code', e.target.value.toUpperCase())} placeholder="CFBS0001" />
+            </div>
 
             <div className="admin-form-field admin-form-field--wide">
               <label className="admin-form-label">Description / Rule</label>
               <textarea className="admin-form-input" rows={2} value={form.description} onChange={e => set('description', e.target.value)} placeholder="e.g. Teams off 2+ days rest vs teams on back-to-back" />
             </div>
 
-            <div className="admin-form-field">
-              <label className="admin-form-label">Line</label>
-              <input className="admin-form-input" value={form.line} onChange={e => set('line', e.target.value)} placeholder="e.g. ATS, O/U, ML" />
-            </div>
 
             <div className="admin-form-field">
               <label className="admin-form-label">Season</label>
               <input className="admin-form-input" value={form.season} onChange={e => set('season', e.target.value)} placeholder="e.g. 2023-24" />
             </div>
 
-            <div className="admin-form-field">
-              <label className="admin-form-label">Type</label>
-              <input className="admin-form-input" value={form.type} onChange={e => set('type', e.target.value)} placeholder="e.g. Situational, Trend" />
-            </div>
 
             <div className="admin-form-field">
               <label className="admin-form-label">W</label>
@@ -214,10 +203,6 @@ export default function AdminSystemsTab({ systems }: { systems: BettingSystem[] 
               <input className="admin-form-input" type="number" step="0.01" min={0} max={1} value={form.pct ?? ''} onChange={e => set('pct', e.target.value)} placeholder="0.65" />
             </div>
 
-            <div className="admin-form-field">
-              <label className="admin-form-label">Units</label>
-              <input className="admin-form-input" type="number" step="0.1" value={form.units ?? ''} onChange={e => set('units', e.target.value)} placeholder="12.5" />
-            </div>
 
             <div className="admin-form-field">
               <label className="admin-form-label">Sort Order</label>
@@ -259,7 +244,7 @@ export default function AdminSystemsTab({ systems }: { systems: BettingSystem[] 
                 <th>Sport</th>
                 <th>W-L-T</th>
                 <th>Pct</th>
-                <th>Type</th>
+                <th>ID</th>
                 <th>Access</th>
                 <th>Visible</th>
                 <th>Actions</th>
@@ -276,7 +261,7 @@ export default function AdminSystemsTab({ systems }: { systems: BettingSystem[] 
                   <td><span className="admin-tag">{SPORT_LABELS[s.sport] ?? s.sport}</span></td>
                   <td className="admin-muted">{s.w}-{s.l}-{s.t}</td>
                   <td className="admin-muted">{s.pct !== null && s.pct !== undefined ? `${Math.round(s.pct * 100)}%` : '—'}</td>
-                  <td className="admin-muted">{s.type || '—'}</td>
+                  <td className="admin-muted">{s.code || '—'}</td>
                   <td>
                     <span className={`admin-badge ${s.is_free ? 'admin-badge--blue' : 'admin-badge--purple'}`}>
                       {s.is_free ? 'Free' : 'Members'}

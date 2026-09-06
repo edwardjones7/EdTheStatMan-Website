@@ -17,11 +17,14 @@
 // queried with select('*') — a spread would ship every current and future column.
 
 import { TIER_RANK, atLeastTier, normalizeTier, type Tier } from './access'
+import { compareCode } from './codes'
 import { toTeaser, TEASER_LIMIT_PER_SPORT, type LockedTeaser } from './teaser'
 
 /** The columns gating actually reads. Rows carry far more; we never touch it. */
 export interface GatedRow {
   id: string
+  /** The Vault's business key (CFBS0001). Absent until vault_01 is applied. */
+  code?: string | null
   sport: string
   w: number | null
   l: number | null
@@ -107,10 +110,49 @@ export function partitionBySport(
 }
 
 /**
- * Biggest sample size first (W+L+T), then win %, then most recent date.
- * Mirrored by compareSystems() in SportTabsSystem, which re-sorts the same rows
- * on the client. This ordering also decides which rows become teasers, so the
- * two must not drift.
+ * The library order: by code, uncoded rows last, then biggest sample first.
+ *
+ * This is what the Vault sorts on now. A code is stable — it does not move
+ * when a record updates — which is the point of having one, and it groups a
+ * sport together because the sport is its prefix. Mirrored by compareRows() in
+ * SportTabsSystem and TrendsFilter, which re-sort the same rows on the client.
+ * This ordering also decides which rows become teasers, so the two must not
+ * drift.
+ */
+export function compareByCode(a: any, b: any): number {
+  const byCode = compareCode(a?.code, b?.code)
+  if (byCode !== 0) return byCode
+  return compareBySample(a, b)
+}
+
+/**
+ * The trends order: by code, then team A→Z (teamless rows last), then sample.
+ *
+ * Trends carry a team and systems do not, so the two surfaces tie-break
+ * differently once a code is missing — which is every row until
+ * vault_01_row_codes.sql has been applied. Mirrors compareTrends() in
+ * TrendsFilter.
+ */
+export function compareTrendRows(a: any, b: any): number {
+  const byCode = compareCode(a?.code, b?.code)
+  if (byCode !== 0) return byCode
+  const aTeam = (a?.team ?? '').trim().toLowerCase()
+  const bTeam = (b?.team ?? '').trim().toLowerCase()
+  if (aTeam !== bTeam) {
+    if (!aTeam) return 1
+    if (!bTeam) return -1
+    return aTeam.localeCompare(bTeam)
+  }
+  return compareBySample(a, b)
+}
+
+/**
+ * Biggest sample size first (W+L+T), then win %.
+ *
+ * Still the right order for a highlight reel — the Vault landing page's peek
+ * leads with the deepest samples — and the tiebreak under compareByCode for
+ * rows that have no code yet. The third key used to be `date`, which
+ * vault_02_drop_desk_columns.sql removed.
  */
 export function compareBySample(a: any, b: any): number {
   const total = (s: any) => (s.w ?? 0) + (s.l ?? 0) + (s.t ?? 0)
@@ -119,10 +161,5 @@ export function compareBySample(a: any, b: any): number {
   const aPct = a.pct ?? -1
   const bPct = b.pct ?? -1
   if (aPct !== bPct) return bPct - aPct
-  const aDate = a.date || ''
-  const bDate = b.date || ''
-  if (aDate === bDate) return 0
-  if (!aDate) return 1
-  if (!bDate) return -1
-  return bDate.localeCompare(aDate)
+  return compareCode(a?.code, b?.code)
 }

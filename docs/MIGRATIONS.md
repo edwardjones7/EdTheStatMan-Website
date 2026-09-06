@@ -46,6 +46,8 @@ means there is no way to prove afterwards that nobody's access changed.
 | 7 | `tier_ladder_07_purchases_invoice_unique.sql` | Repairs the partial unique index that made EVERY subscription-cycle ledger write fail with 42P10. Independent of 1-6. **Required before taking a subscription payment.** |
 | ~~7~~ | `ai_usage_01_quota.sql` (two pastes) | EdTheStatBot per-member daily quota — **on `ed-the-statbot`, already applied in prod** |
 | ~~8~~ | `ai_usage_02_anon_and_threads.sql` (two pastes) | Anonymous quota + conversation persistence — **same** |
+| 9 | `vault_01_row_codes.sql` | Adds `code` to `betting_systems` / `betting_trends`, backfills one per sport, unique index. Additive and independent of 1-7. |
+| 10 | `vault_02_drop_desk_columns.sql` | **Destructive.** Drops `line`/`type`/`date`/`units` from both tables and `team` from systems. Run only after the code that stopped writing them is live. |
 
 ### Steps 1 through 5 are ONE SESSION. Do not stop in the middle.
 
@@ -250,3 +252,52 @@ anonymous counter rows. With the bot parked nothing writes them, so there is
 nothing to prune until he returns. Nothing calls it automatically — run it from the SQL
 editor occasionally, or attach it to `pg_cron` if that is ever enabled on this
 project.
+
+---
+
+## The Vault row codes (steps 9 and 10)
+
+Independent of the tier ladder. Two files, and the deploy goes **between** them:
+step 9 only adds, step 10 removes columns the running code must already have
+stopped writing.
+
+| | |
+|---|---|
+| **9** | `vault_01_row_codes.sql` — adds `code`, backfills, indexes it |
+| **deploy** | the application code that reads `code` and no longer writes the dropped columns |
+| **10** | `vault_02_drop_desk_columns.sql` — drops `line`, `type`, `date`, `units` (+ `team` on systems) |
+
+### Why this order, and why it is safe to be out of order
+
+Reads never break: every query against these tables is `select('*')`, so a
+column that is present-but-unused or absent-but-expected is equally harmless.
+Two specific things are load-bearing:
+
+- **The Vault pages order by `code`.** PostgREST answers an `ORDER BY` on a
+  column that does not exist with **42703**, and an error there would render an
+  empty library rather than an unsorted one. Both pages therefore try the
+  ordered query and fall back to the unordered one, so the deploy is safe with
+  or without step 9. Ordering then happens in JS via `compareByCode()` either
+  way, and uncoded rows sort last.
+- **The admin editors POST a whole form object**, which is why the deploy sits
+  between the two files rather than before both. The new editor sends `code`, so
+  between the deploy and step 9 a save would come back **PGRST204** (`column
+  code does not exist`) — run step 9 first and that window never opens. The
+  mirror image applies at the other end: after step 10 an *old* bundle still
+  open in a browser tab would send `line` at a table without one and get the
+  same error, so hard-refresh the admin page once step 10 is done.
+- **Reading is fine in every combination.** Only writes and the ORDER BY care.
+
+### Verification
+
+Both files carry their verify queries at the bottom. After step 9 expect zero
+uncoded rows and no duplicate codes; after step 10 expect the column list to
+have lost the five (four on trends).
+
+### Note on the unique index
+
+`betting_systems_code_key` is on `upper(code)` and is **not partial**. NULLs are
+distinct to a unique index, so any number of uncoded rows coexist while two rows
+claiming CFBS0007 cannot. It is deliberately not `WHERE code IS NOT NULL`: a
+partial unique index cannot be used for `ON CONFLICT` through PostgREST (42P10),
+which on this project already cost a full ledger of revenue writes once.
