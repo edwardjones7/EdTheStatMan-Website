@@ -214,6 +214,20 @@ export const OFFER_DISCLAIMER =
 /** Entry price, for nav and CTA button copy. */
 export const OFFER_ENTRY_PRICE = OFFER_PLANS[0].month.price
 
+/**
+ * The offer in one sentence, for page metadata.
+ *
+ * Derived rather than typed: /win carried a hand-written description naming
+ * "Basic $19.99, Premium $119.99, the $249 Elite NFL Season Pass" for four days
+ * after the ladder replaced all three, and that string is what Google and every
+ * link preview showed. Anything that states the offer outside the cards should
+ * be computed from OFFER_PLANS so it cannot survive the next price change.
+ */
+export const OFFER_META_DESCRIPTION =
+  'Five rungs, one model. ' +
+  OFFER_PLANS.map(p => `${p.shortName} from ${p.month.price}`).join(', ') +
+  '. Season passes run through the Super Bowl and never auto-renew.'
+
 export function planByKey(key: string): OfferPlan | undefined {
   return OFFER_PLANS.find(p => p.key === key)
 }

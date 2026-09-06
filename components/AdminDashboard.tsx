@@ -3,7 +3,20 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import type { SubscriptionTier, SubscriptionStatus, AccessLevel } from '@/lib/supabase/types'
-import { normalizeTier, TIERS, TIER_SHORT_LABEL } from '@/lib/access'
+import { normalizeTier, TIERS, TIER_SHORT_LABEL, type Tier } from '@/lib/access'
+
+/** The four sellable rungs, in ladder order. */
+const PAID_TIERS: Tier[] = TIERS.filter(t => t !== 'retail')
+
+// Teal climbs into gold as the rung gets more expensive, the same reading the
+// rest of the site gives those two colours.
+const TIER_ROW_COLOR: Record<Tier, string> = {
+  retail: 'var(--text-muted)',
+  portfolio: 'var(--accent-teal)',
+  desk: 'var(--accent-teal)',
+  private: 'var(--accent-gold)',
+  institutional: 'var(--accent-gold)',
+}
 
 interface User {
   id: string
@@ -253,10 +266,14 @@ export default function AdminDashboard({ users, posts, initialTab, initialAnalyt
   const stats = useMemo(() => {
     // Legacy values may still be in the column until tier_ladder_01 is applied.
     const at = (t: string) => users.filter(u => normalizeTier(u.subscription_tier) === t).length
-    const freeUsers    = at('retail')
-    const basicUsers   = at('desk')
-    const premiumUsers = at('private')
-    const eliteUsers   = at('institutional')
+    // One count per rung of the ladder, built from TIERS rather than named one
+    // by one. The hand-written version had no 'portfolio' line, so every buyer
+    // of the entry SKU appeared in none of the five rows and was missing from
+    // the paid total -- a silent undercount of the cheapest, highest-volume
+    // product. Adding a rung to TIERS now adds it here.
+    const byTier = Object.fromEntries(TIERS.map(t => [t, at(t)])) as Record<Tier, number>
+    const freeUsers = byTier.retail
+    const paidUsers = TIERS.filter(t => t !== 'retail').reduce((n, t) => n + byTier[t], 0)
     const activeUsers  = users.filter(u => u.subscription_status === 'active').length
     const pastDue      = users.filter(u => u.subscription_status === 'past_due').length
     const newThisMonth = users.filter(u => isThisMonth(u.created_at)).length
@@ -266,7 +283,7 @@ export default function AdminDashboard({ users, posts, initialTab, initialAnalyt
     const freePosts      = posts.filter(p => normalizeTier(p.access_level) === 'retail').length
     const membersPosts   = posts.filter(p => normalizeTier(p.access_level) !== 'retail').length
     return {
-      totalUsers: users.length, freeUsers, basicUsers, premiumUsers, eliteUsers,
+      totalUsers: users.length, freeUsers, paidUsers, byTier,
       activeUsers, pastDue, newThisMonth, adminCount,
       totalPosts: posts.length, publishedPosts, draftPosts, freePosts, membersPosts,
     }
@@ -372,15 +389,15 @@ export default function AdminDashboard({ users, posts, initialTab, initialAnalyt
           <KpiCard
             label="Total Users"
             value={stats.totalUsers}
-            sub={`${stats.freeUsers} free · ${stats.basicUsers + stats.premiumUsers + stats.eliteUsers} paid`}
+            sub={`${stats.freeUsers} free · ${stats.paidUsers} paid`}
             color="cyan"
             badge={stats.newThisMonth > 0 ? `+${stats.newThisMonth} this mo` : undefined}
             badgeColor="green"
           />
           <KpiCard
             label="Paid Members"
-            value={stats.basicUsers + stats.premiumUsers + stats.eliteUsers}
-            sub={`${stats.basicUsers} basic · ${stats.premiumUsers} premium · ${stats.eliteUsers} elite`}
+            value={stats.paidUsers}
+            sub={PAID_TIERS.map(t => `${stats.byTier[t]} ${TIER_SHORT_LABEL[t].toLowerCase()}`).join(' · ')}
             color="green"
           />
           <KpiCard
@@ -548,11 +565,16 @@ export default function AdminDashboard({ users, posts, initialTab, initialAnalyt
             <div className="admin-breakdown-card">
               <h3 className="admin-breakdown-card__title">Users</h3>
               <div className="admin-breakdown-list">
-                <BreakdownRow label="Free"    value={stats.freeUsers}    total={stats.totalUsers} color="var(--text-muted)" />
-                <BreakdownRow label="Basic"   value={stats.basicUsers}   total={stats.totalUsers} color="var(--accent-teal)" />
-                <BreakdownRow label="Premium" value={stats.premiumUsers} total={stats.totalUsers} color="var(--accent-gold)" />
-                <BreakdownRow label="Elite"   value={stats.eliteUsers}   total={stats.totalUsers} color="var(--accent-gold)" />
-                <BreakdownRow label="Admins"  value={stats.adminCount}   total={stats.totalUsers} color="var(--accent-gold)" />
+                {TIERS.map(t => (
+                  <BreakdownRow
+                    key={t}
+                    label={TIER_SHORT_LABEL[t]}
+                    value={stats.byTier[t]}
+                    total={stats.totalUsers}
+                    color={TIER_ROW_COLOR[t]}
+                  />
+                ))}
+                <BreakdownRow label="Admins" value={stats.adminCount} total={stats.totalUsers} color="var(--accent-gold)" />
               </div>
               <div className="admin-breakdown-footer"><span>{stats.newThisMonth} new this month</span></div>
             </div>
@@ -793,6 +815,13 @@ export default function AdminDashboard({ users, posts, initialTab, initialAnalyt
         )}
 
       </div>
+
+      {/* Which release is actually deployed. `main` is production and every
+          push builds, so a tag on its own does not tell you whether Vercel
+          has caught up -- this number does. See docs/RELEASING.md. */}
+      <footer className="admin-version">
+        v{process.env.NEXT_PUBLIC_APP_VERSION ?? 'unknown'}
+      </footer>
     </main>
   )
 }

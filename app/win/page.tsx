@@ -3,24 +3,28 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import PricingCards from '@/components/PricingCards'
 import CheckoutAutoStart from '@/components/CheckoutAutoStart'
-import { OFFER_DISCLAIMER, planByKey } from '@/lib/offer'
+import { OFFER_DISCLAIMER, OFFER_META_DESCRIPTION, planByKey } from '@/lib/offer'
 import CTASection from '@/components/CTASection'
 import { resolveAccess, ACCESS_SELECT, TIER_SHORT_LABEL } from '@/lib/access'
 
+// Title and description are the ladder's, not the pre-v3 offer's. Both used to
+// name Basic, Premium and the Elite Season Pass at prices that no longer exist,
+// which is what search results and every shared link showed. The description is
+// derived from OFFER_PLANS so it cannot drift again.
 export const metadata: Metadata = {
-  title: 'Pricing',
-  description: 'Unlock full access to betting systems, trends, and expert analysis. Basic $19.99 (30 days), Premium $119.99 (365 days), or the $249 Elite NFL Season Pass.',
+  title: 'Membership',
+  description: OFFER_META_DESCRIPTION,
   alternates: { canonical: 'https://edthestatman.com/win' },
   openGraph: {
-    title: 'Pricing – EdTheStatMan.com',
-    description: 'Unlock full access to betting systems, trends, and expert analysis. Basic $19.99 (30 days), Premium $119.99 (365 days), or the $249 Elite NFL Season Pass.',
+    title: 'Membership – EdTheStatMan.com',
+    description: OFFER_META_DESCRIPTION,
     url: 'https://edthestatman.com/win',
     images: [{ url: '/og-cover.jpg', width: 1200, height: 630 }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Pricing – EdTheStatMan.com',
-    description: 'Unlock full access to betting systems, trends, and expert analysis.',
+    title: 'Membership – EdTheStatMan.com',
+    description: OFFER_META_DESCRIPTION,
     images: ['/og-cover.jpg'],
   },
 }

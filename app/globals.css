@@ -8731,3 +8731,16 @@ textarea.form-input {
     flex-shrink: 0;
   }
 }
+
+/* The deployed release, bottom of the admin dashboard. Deliberately quiet:
+   it is a thing you go looking for, not a thing that competes with the data. */
+.admin-version {
+  margin-top: 28px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-color);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  text-align: right;
+  letter-spacing: 0.04em;
+}
