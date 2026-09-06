@@ -76,6 +76,10 @@ export interface OfferPlan {
 // Institutional carries 3.0+. There is no `z` column -- it is computed from w
 // and l against a 50% null, pushes excluded:
 //     z = (w/(w+l) - 0.5) / sqrt(0.25 / (w+l))
+// NEVER PUT THOSE NUMBERS OR THAT FORMULA IN CUSTOMER COPY. The bullets say
+// "significance bar" and "strictest bar" on purpose --- the thresholds and the
+// null we test against are the product, not a selling point. Keep the split
+// internal; this comment is the only place it is written down in the app.
 // Measured 2026-09-05 over active rows: 36 of 78 systems and 32 of 203 trends
 // reach 3.0+, so the tier has 68 rows of its own. Note the null matters ---
 // against the -110 break-even of 52.38% NOTHING reaches 3.0, and the card would
@@ -145,7 +149,7 @@ export const OFFER_PLANS: OfferPlan[] = [
       'Everything in The Research Desk',
       'The complete systems library, unlocked',
       'The complete team trends library, unlocked',
-      'Every qualifying system and trend from 2.5 to 2.99 z',
+      'Every system and trend that clears our significance bar',
       'Filter and sort across the whole Vault',
       'Coming this season — alerts the moment a system triggers',
     ],
@@ -170,7 +174,7 @@ export const OFFER_PLANS: OfferPlan[] = [
     badge: 'Institutional',
     features: [
       'Everything in Private Intelligence',
-      'The 3.0+ z library: our strongest signals, at this tier only',
+      'The highest-conviction library: the signals that clear our strictest bar, at this tier only',
       'Coming this season — full row-level export, every system and trend as CSV',
       'Coming this season — query builder across the entire Vault',
       'Coming this season — API key for programmatic access',
