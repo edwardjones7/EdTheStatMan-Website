@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import type { ModelPicksContent } from '@/lib/site-content'
 import type { LockedBetTeaser } from '@/lib/teaser'
+import { TIER_RANK, normalizeTier, PICK_ACCESS_OPTIONS, type Tier } from '@/lib/access'
 import EditableText from './EditableText'
 import { IconLock, IconBolt, IconChat, IconChartBar, IconTrendUp } from './Icons'
 
@@ -21,6 +22,10 @@ export interface TodaysBet {
   result: string | null
   note: string | null
   is_active: boolean
+  /** The rung this pick is gated at, and the only column the read paths
+   *  consult. The pair below is the pre-v3 shape, still derived and written by
+   *  the API so lib/notify/audience.ts keeps choosing the same recipients. */
+  min_tier: string
   is_free: boolean
   is_elite: boolean
   show_on_results: boolean
@@ -83,9 +88,20 @@ function channelSummary(name: string, result: NotifyReport[keyof NotifyReport]):
   return `${name}: —`
 }
 
+/** Above the Portfolio rung: the pick the Vault sells, formerly is_elite. */
+function isEdgePick(row: { min_tier?: string | null }): boolean {
+  return TIER_RANK[normalizeTier(row.min_tier)] > TIER_RANK.portfolio
+}
+
+function isFreePick(row: { min_tier?: string | null }): boolean {
+  return normalizeTier(row.min_tier) === 'retail'
+}
+
 const EMPTY_FORM = {
   date: '', sport: '', risk: '', bet: '', line: '', vig: '', opponent: '', win: '', result: 'pending', note: '',
-  is_active: true, is_free: true, is_elite: false, show_on_results: false,
+  // 'retail' matches the todays_bets column default: a pick is free unless
+  // someone says otherwise, which is the opposite of the Vault tables.
+  is_active: true, min_tier: 'retail' as Tier, show_on_results: false,
 }
 
 export default function TodaysBets({ rows, isAdmin, userTier, isMember, lockedCount = 0, lockedBets = [], eliteLockedBets = [], editMode = false, headerContent, onHeaderEdit, resetKey = 0 }: Props) {
@@ -129,8 +145,7 @@ export default function TodaysBets({ rows, isAdmin, userTier, isMember, lockedCo
       result:          row.result ?? 'pending',
       note:            row.note   ?? '',
       is_active:       row.is_active,
-      is_free:         row.is_free,
-      is_elite:        row.is_elite ?? false,
+      min_tier:        normalizeTier(row.min_tier),
       show_on_results: row.show_on_results,
     })
     setEditId(row.id)
@@ -213,10 +228,11 @@ export default function TodaysBets({ rows, isAdmin, userTier, isMember, lockedCo
     if (dateDiff !== 0) return dateDiff
     const grp = groupOrder(a.note) - groupOrder(b.note)
     if (grp !== 0) return grp
-    // Edge picks lead their slate — it's what elite members paid for.
-    const elite = Number(!!b.is_elite) - Number(!!a.is_elite)
-    if (elite !== 0) return elite
-    return Number(b.is_free) - Number(a.is_free)
+    // Edge picks lead their slate — it's what elite members paid for. Read off
+    // min_tier now, but the same two comparisons in the same order.
+    const edge = Number(isEdgePick(b)) - Number(isEdgePick(a))
+    if (edge !== 0) return edge
+    return Number(isFreePick(b)) - Number(isFreePick(a))
   })
   const rs = (result: string | null) => RESULT_STYLE[result ?? 'pending'] ?? RESULT_STYLE.pending
 
@@ -347,9 +363,9 @@ export default function TodaysBets({ rows, isAdmin, userTier, isMember, lockedCo
                                   {/* Gate state is only meaningful to someone who
                                       can see both kinds — otherwise every row is free. */}
                                   {isMember && (
-                                    row.is_elite
+                                    isEdgePick(row)
                                       ? <span style={tagStyle('var(--accent-gold)', 'rgba(var(--gold-rgb),0.18)')}>Edge</span>
-                                      : row.is_free
+                                      : isFreePick(row)
                                       ? <span style={tagStyle('#38bdf8', 'rgba(56,189,248,0.12)')}>Free</span>
                                       : <span style={tagStyle('var(--accent-gold)', 'rgba(var(--gold-rgb),0.12)')}>Members</span>
                                   )}
@@ -574,7 +590,20 @@ function BetForm({ form, setField, onSave, onCancel, saving, error }: BetFormPro
           </select>
         </div>
 
-        <div style={{ gridColumn: 'span 2' }}>
+        <div>
+          <label style={labelStyle}>Access</label>
+          <select
+            value={form.min_tier}
+            onChange={e => setField('min_tier', e.target.value as Tier)}
+            style={inputStyle}
+          >
+            {PICK_ACCESS_OPTIONS.map(o => (
+              <option key={o.value} value={o.value}>{o.label}</option>
+            ))}
+          </select>
+        </div>
+
+        <div>
           <label style={labelStyle}>Note</label>
           <input
             value={form.note}
@@ -592,18 +621,6 @@ function BetForm({ form, setField, onSave, onCancel, saving, error }: BetFormPro
           active={form.is_active}
           onColor="var(--accent-teal)"
           onClick={() => setField('is_active', !form.is_active)}
-        />
-        <ToggleBtn
-          label="Free"
-          active={form.is_free}
-          onColor="var(--accent-teal)"
-          onClick={() => setField('is_free', !form.is_free)}
-        />
-        <ToggleBtn
-          label="Elite (Edge pick)"
-          active={form.is_elite}
-          onColor="var(--accent-gold)"
-          onClick={() => setField('is_elite', !form.is_elite)}
         />
         <ToggleBtn
           label="Show on Results"

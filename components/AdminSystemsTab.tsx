@@ -17,6 +17,10 @@ export interface BettingSystem {
   t: number
   date: string
   team: string
+  /** The rung a row is gated at, and the only column the read paths consult.
+   *  is_free / is_elite below are the pre-v3 pair it replaced: still on the
+   *  table, still written in step by the editor, but no longer authoritative. */
+  min_tier: string
   is_free: boolean
   is_elite: boolean
   is_active: boolean

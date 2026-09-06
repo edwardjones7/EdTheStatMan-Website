@@ -6,7 +6,7 @@ import Link from 'next/link'
 import type { BettingSystem } from './AdminSystemsTab'
 import LockedTeaserCard from './LockedTeaserCard'
 import type { LockedTeaser } from '@/lib/teaser'
-import { isPaidTier } from '@/lib/access'
+import { isPaidTier, normalizeTier, accessBadge, VAULT_ACCESS_OPTIONS, type Tier } from '@/lib/access'
 import { IconLock, IconPencil } from './Icons'
 import RecordStrip from './RecordStrip'
 
@@ -61,8 +61,10 @@ const BLANK = {
   t: 0,
   date: '',
   team: '',
-  is_free: false,
-  is_elite: false,
+  // Matches the column default in tier_ladder_02_content_min_tier.sql: a system
+  // is Private unless someone says otherwise. is_free / is_elite are no longer
+  // in the form -- saveRow derives them, see there for why they are still written.
+  min_tier: 'private' as Tier,
   is_active: true,
 }
 
@@ -206,8 +208,9 @@ export default function SportTabsSystem({ systems, lockedCounts = {}, lockedTeas
       t: s.t,
       date: s.date ?? '',
       team: s.team ?? '',
-      is_free: s.is_free,
-      is_elite: s.is_elite ?? false,
+      // normalizeTier so a legacy or unrecognised stored value opens as a real
+      // option rather than leaving the select with nothing selected.
+      min_tier: normalizeTier(s.min_tier),
       is_active: s.is_active,
     })
     setEditId(s.id)
@@ -235,6 +238,14 @@ export default function SportTabsSystem({ systems, lockedCounts = {}, lockedTeas
       ...form,
       pct: (w + l) > 0 ? w / (w + l) : null,
       units: form.units === '' || form.units === null ? null : Number(form.units),
+      // min_tier is the gate. is_free and is_elite are written alongside it only
+      // to stop the old pair drifting into a contradiction: the XLSX importer
+      // and the stats bar still read is_free, and lib/gate.ts falls back to the
+      // pair if min_tier is ever absent, so a row saying free=true/tier=private
+      // would be a trap waiting for whichever path looked first. is_elite is
+      // pinned false because nothing produces it any more.
+      is_free: form.min_tier === 'retail',
+      is_elite: false,
     }
     const res = await fetch(
       formMode === 'edit' ? `/api/admin/systems/${editId}` : '/api/admin/systems',
@@ -308,7 +319,13 @@ export default function SportTabsSystem({ systems, lockedCounts = {}, lockedTeas
               w,
               l,
               t: parseIntVal(row['t'] ?? row['T'] ?? row['ties'] ?? row['Ties'] ?? 0),
+              // Same rule as saveRow: min_tier is the gate, is_free rides along
+              // so the two cannot disagree. An imported sheet only ever says
+              // free or not, so it can reach Free or Private and never
+              // Institutional -- that is a per-row editorial call, made after.
+              min_tier: sheet.is_free ? 'retail' : 'private',
               is_free: sheet.is_free,
+              is_elite: false,
               is_active: true,
               sort_order: j,
             }
@@ -356,8 +373,8 @@ export default function SportTabsSystem({ systems, lockedCounts = {}, lockedTeas
   // Stats bar computed values — counts follow the selected sport tab. Members
   // see their rows directly; non-members only ever have the locked count.
   const activeSystems = allVisible.filter(s => s.is_active)
-  const freeCount = activeSystems.filter(s => s.is_free).length
-  const eliteVisibleCount = activeSystems.filter(s => s.is_elite).length
+  const freeCount = activeSystems.filter(s => normalizeTier(s.min_tier) === 'retail').length
+  const eliteVisibleCount = activeSystems.filter(s => normalizeTier(s.min_tier) === 'institutional').length
   const eliteCount = eliteVisibleCount + eliteLockedCount
   const memberCount = activeSystems.length - freeCount - eliteVisibleCount + lockedCount
   const totalCount = freeCount + memberCount + eliteCount
@@ -569,15 +586,19 @@ export default function SportTabsSystem({ systems, lockedCounts = {}, lockedTeas
               <label className="admin-form-label">Units</label>
               <input className="admin-form-input" type="number" step="0.1" value={form.units ?? ''} onChange={e => setField('units', e.target.value)} placeholder="12.5" />
             </div>
+            <div className="admin-form-field">
+              <label className="admin-form-label">Access</label>
+              <select
+                className="admin-form-input"
+                value={form.min_tier}
+                onChange={e => setField('min_tier', e.target.value as Tier)}
+              >
+                {VAULT_ACCESS_OPTIONS.map(o => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
+              </select>
+            </div>
             <div className="admin-form-field admin-form-field--checks">
-              <label className="admin-form-check">
-                <input type="checkbox" checked={form.is_free} onChange={e => setField('is_free', e.target.checked)} />
-                <span>Free tier access</span>
-              </label>
-              <label className="admin-form-check">
-                <input type="checkbox" checked={form.is_elite} onChange={e => setField('is_elite', e.target.checked)} />
-                <span>Elite only</span>
-              </label>
               <label className="admin-form-check">
                 <input type="checkbox" checked={form.is_active} onChange={e => setField('is_active', e.target.checked)} />
                 <span>Active (visible on public page)</span>
@@ -664,8 +685,8 @@ export default function SportTabsSystem({ systems, lockedCounts = {}, lockedTeas
                             {/* Non-members only ever see free rows, so the badge
                                 would be noise on every card. */}
                             {(isPaid || isAdmin) && (
-                              <span className={`sys-row-card__access-badge sys-row-card__access-badge--${row.is_elite ? 'elite' : row.is_free ? 'free' : 'members'}`}>
-                                {row.is_elite ? 'Elite' : row.is_free ? 'Free' : 'Members'}
+                              <span className={`sys-row-card__access-badge sys-row-card__access-badge--${accessBadge(row.min_tier).variant}`}>
+                                {accessBadge(row.min_tier).label}
                               </span>
                             )}
                             {isAdmin && (
@@ -770,15 +791,19 @@ export default function SportTabsSystem({ systems, lockedCounts = {}, lockedTeas
                             <label className="admin-form-label">Units</label>
                             <input className="admin-form-input" type="number" step="0.1" value={form.units ?? ''} onChange={e => setField('units', e.target.value)} placeholder="12.5" />
                           </div>
+                          <div className="admin-form-field">
+                            <label className="admin-form-label">Access</label>
+                            <select
+                              className="admin-form-input"
+                              value={form.min_tier}
+                              onChange={e => setField('min_tier', e.target.value as Tier)}
+                            >
+                              {VAULT_ACCESS_OPTIONS.map(o => (
+                                <option key={o.value} value={o.value}>{o.label}</option>
+                              ))}
+                            </select>
+                          </div>
                           <div className="admin-form-field admin-form-field--checks">
-                            <label className="admin-form-check">
-                              <input type="checkbox" checked={form.is_free} onChange={e => setField('is_free', e.target.checked)} />
-                              <span>Free tier access</span>
-                            </label>
-                            <label className="admin-form-check">
-                              <input type="checkbox" checked={form.is_elite} onChange={e => setField('is_elite', e.target.checked)} />
-                              <span>Elite only</span>
-                            </label>
                             <label className="admin-form-check">
                               <input type="checkbox" checked={form.is_active} onChange={e => setField('is_active', e.target.checked)} />
                               <span>Active (visible on public page)</span>

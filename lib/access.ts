@@ -45,6 +45,56 @@ export const TIER_SHORT_LABEL: Record<Tier, string> = {
   institutional: 'Institutional',
 }
 
+/**
+ * What an admin may gate a row at, per surface.
+ *
+ * Not the whole ladder, because not every rung gates every table. A Vault row
+ * offered at 'portfolio' or 'desk' would be unreachable: those are separate
+ * products with their own pages and neither renders the Vault library. A pick
+ * offered at 'institutional' would be a pick nobody has ever been sold.
+ *
+ * Both lists dropped 'elite'. It was a boolean beside is_free in the pre-v3
+ * pair and the ladder absorbed it: the whole Vault library IS the Private
+ * product, and what used to be Elite is Institutional. On the picks side the
+ * old Edge Pick is 'private', which is why buying the Vault is what unlocks
+ * one — the same split app/portfolio/page.tsx makes when it decides whether a
+ * locked pick advertises the Portfolio or the Vault.
+ *
+ * Production agrees with both lists as of 2026-09-05: systems and trends sit at
+ * retail / private / institutional, picks at retail / portfolio, and is_elite
+ * is false on every row of all three tables.
+ */
+export interface AccessOption { value: Tier; label: string }
+
+/** betting_systems and betting_trends. */
+export const VAULT_ACCESS_OPTIONS: AccessOption[] = [
+  { value: 'retail', label: 'Free' },
+  { value: 'private', label: 'Private Intelligence' },
+  { value: 'institutional', label: 'Institutional Intelligence' },
+]
+
+/** todays_bets. */
+export const PICK_ACCESS_OPTIONS: AccessOption[] = [
+  { value: 'retail', label: 'Free' },
+  { value: 'portfolio', label: 'Portfolio' },
+  { value: 'private', label: 'Edge pick (Private Intelligence)' },
+]
+
+/**
+ * Row badge for the admin lists. The CSS variants are the pre-v3 names —
+ * free / members / elite — and are left alone: they are three colours, and
+ * renaming them would mean touching every card in the Vault for no visible
+ * gain.
+ */
+export function accessBadge(minTier: string | null | undefined): { variant: string; label: string } {
+  switch (normalizeTier(minTier)) {
+    case 'retail': return { variant: 'free', label: 'Free' }
+    case 'institutional': return { variant: 'elite', label: 'Institutional' }
+    case 'portfolio': return { variant: 'members', label: 'Portfolio' }
+    default: return { variant: 'members', label: 'Private' }
+  }
+}
+
 /** Ladder order, lowest first. Safe to iterate for UI. */
 export const TIERS: Tier[] = ['retail', 'portfolio', 'desk', 'private', 'institutional']
 
