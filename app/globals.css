@@ -3865,18 +3865,9 @@ textarea.form-input {
   .newsletter {
     flex-direction: column;
   }
-
-  .sport-tabs {
-    overflow-x: auto;
-    flex-wrap: nowrap;
-    padding-bottom: 8px;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .sport-tab {
-    white-space: nowrap;
-    flex-shrink: 0;
-  }
+  /* The .sport-tabs scroll rules that lived here now start at 768px instead --
+     see the mobile fixes block at the end of this file. Duplicating them at two
+     breakpoints is how they drift apart. */
 }
 
 /* ---------- Custom Scrollbar ---------- */
@@ -8597,5 +8588,71 @@ textarea.form-input {
   .account-linked-pill__dot,
   .account-card--flash {
     animation: none;
+  }
+}
+
+
+/* ---- Mobile fixes: ticker inflation, chip clipping, tab overflow -----------
+
+   1. TICKER TEXT INFLATION.
+   iOS Safari and Chrome/Android "boost" text inside a block they judge to be far
+   wider than the viewport. .ticker__track is width:max-content and runs to about
+   8000px, so the LONGEST items were inflated while short ones were not -- the
+   same .ticker__record class rendering at two different sizes in one row.
+   text-size-adjust:100% is already on html and inherits, and it was not enough
+   on iOS, so it is restated on the elements themselves and paired with the
+   max-height escape hatch: the autosizer skips any element with a max-height,
+   which is the only reliable way to opt a specific block out. */
+.ticker__item,
+.ticker__sport,
+.ticker__record,
+.ticker__trend {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  max-height: 999999px;
+}
+
+@media (max-width: 768px) {
+  /* 2. "INSTITUTIONAL TRENDS" WAS CLIPPED TO "INSTITUTION".
+     Three chips share the row at min-width 88px, so each is about 114px wide
+     and 74px inside the padding -- narrower than the word at 0.72rem with
+     0.08em tracking, and .sys-stats-chip has overflow:hidden, so it cut. Two
+     per row instead of three gives roughly 180px each and the label fits with
+     room to spare. Tightened tracking and a break rule are belt and braces for
+     any longer rung name added later. */
+  .sys-stats-chip {
+    min-width: 140px;
+    padding: 12px 14px;
+  }
+
+  .sys-stats-chip__label {
+    font-size: 0.66rem;
+    letter-spacing: 0.04em;
+    overflow-wrap: anywhere;
+  }
+
+  /* 3. SPORT TABS RAN OFF THE EDGE.
+     The scroll rule existed only below 480px, so anything from a large phone
+     upward kept flex-wrap:wrap on a container with overflow:hidden and simply
+     clipped the sports past the edge. Scrolling now starts at 768px. */
+  .sport-tabs {
+    display: flex;
+    overflow-x: auto;
+    overflow-y: hidden;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    /* Fades the trailing edge so it is visible that more sports exist. Without
+       it the row just stops at the border and reads as truncated -- iOS shows
+       no scrollbar to suggest otherwise. */
+    -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent 100%);
+    mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent 100%);
+  }
+
+  .sport-tabs::-webkit-scrollbar { display: none; }
+
+  .sport-tab {
+    white-space: nowrap;
+    flex-shrink: 0;
   }
 }
