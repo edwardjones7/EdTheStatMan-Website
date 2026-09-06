@@ -4,10 +4,9 @@ import type { ModelPicksContent } from '@/lib/site-content'
 import type { TodaysBet } from './TodaysBets'
 import type { LockedBetTeaser } from '@/lib/teaser'
 import TodaysBets from './TodaysBets'
-import PushOptIn from './PushOptIn'
 import Link from 'next/link'
 import type { ComponentType } from 'react'
-import { IconChartBar, IconTrendUp, IconNews, IconBolt, IconChat } from './Icons'
+import { IconChartBar, IconTrendUp, IconNews } from './Icons'
 
 interface Props {
   rows: TodaysBet[]
@@ -46,7 +45,8 @@ export default function ModelPicksPage({
         resetKey={resetKey}
       />
 
-      {/* Below-table content */}
+      {/* Below-table content. The CTA that used to close this section now
+          closes the whole page, under the results. */}
       <section className="section">
         <div className="container">
 
@@ -55,7 +55,6 @@ export default function ModelPicksPage({
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
             gap: '20px',
-            marginBottom: '48px',
           }}>
             <InfoCard
               icon={IconChartBar}
@@ -78,46 +77,6 @@ export default function ModelPicksPage({
               href="/portfolio/performance"
               linkText="View Results"
             />
-          </div>
-
-          {/* CTA Banner */}
-          <div style={{
-            background: 'var(--bg-card)',
-            border: '1px solid var(--border-color)',
-            borderRadius: '16px',
-            padding: '48px 32px',
-            textAlign: 'center',
-          }}>
-            <h2 style={{
-              fontSize: 'clamp(1.4rem, 3vw, 2rem)',
-              marginBottom: '12px',
-              color: 'var(--text-heading)',
-            }}>
-              Never Miss a Pick
-            </h2>
-            <p style={{
-              color: 'var(--text-secondary)',
-              maxWidth: '540px',
-              margin: '0 auto 28px',
-              lineHeight: 1.7,
-            }}>
-              Get instant notifications the moment picks drop. Turn on browser alerts, or follow us on X and join Discord for real-time alerts, system updates, and community discussion.
-            </p>
-            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
-              {/* Push is per-account, so it's only offered to signed-in members. */}
-              {userTier !== null && <PushOptIn />}
-              <a href="https://x.com/EdTheStatMan" className="btn btn--primary btn--sm" target="_blank" rel="noopener">
-                <IconBolt size={14} /> Follow on X
-              </a>
-              <a href="https://discord.gg/rXBZkSPcJb" className="btn btn--secondary btn--sm" target="_blank" rel="noopener">
-                <IconChat size={14} /> Join Discord
-              </a>
-              {userTier === null && (
-                <Link href="/signup" className="btn btn--outline btn--sm">
-                  Sign Up Free
-                </Link>
-              )}
-            </div>
           </div>
 
         </div>

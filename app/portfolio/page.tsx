@@ -7,6 +7,7 @@ import type { TodaysBet } from '@/components/TodaysBets'
 import ModelPicksPage from '@/components/ModelPicksPage'
 import ModelPicksEditor from '@/components/ModelPicksEditor'
 import RecentPicksResults from '@/components/RecentPicksResults'
+import NeverMissAPick from '@/components/NeverMissAPick'
 import ModelPerformance from '@/components/ModelPerformance'
 import type { SportRecord } from '@/components/ModelPerformance'
 import { getAccess } from '@/lib/access-server'
@@ -154,6 +155,7 @@ export default async function Portfolio() {
         breakdownMin={BREAKDOWN_MIN}
       />
       <RecentPicksResults rows={recentPicks} />
+      <NeverMissAPick userTier={userTier} />
     </>
   )
 }
