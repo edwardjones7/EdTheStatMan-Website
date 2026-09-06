@@ -3,7 +3,7 @@
 import type { CTAContent } from '@/lib/site-content'
 import { DEFAULT_CTA } from '@/lib/site-content'
 import EditableText from './EditableText'
-import { IconBolt, IconChat, IconArrowRight } from './Icons'
+import { IconBolt, IconChat, IconArrowRight, IconInstagram } from './Icons'
 import Link from 'next/link'
 import { OFFER_ENTRY_PRICE } from '@/lib/offer'
 import type { Membership } from '@/lib/access'
@@ -65,6 +65,9 @@ export default function CTASection({ content = DEFAULT_CTA, editMode, onEdit, re
               <>
                 <a href="https://x.com/EdTheStatMan" className="btn btn--primary btn--lg" target="_blank" rel="noopener">
                   <span className="btn__icon"><IconBolt size={15} /></span> Follow on X
+                </a>
+                <a href="https://www.instagram.com/edthestatman" className="btn btn--secondary btn--lg" target="_blank" rel="noopener">
+                  <span className="btn__icon"><IconInstagram size={15} /></span> Instagram
                 </a>
                 <a href="https://discord.gg/rXBZkSPcJb" className="btn btn--secondary btn--lg" target="_blank" rel="noopener">
                   <span className="btn__icon"><IconChat size={15} /></span> Join Discord

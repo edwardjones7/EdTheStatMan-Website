@@ -4,7 +4,7 @@ import Link from 'next/link'
 import type { ActionCardContent } from '@/lib/site-content'
 import { DEFAULT_ACTION_CARD } from '@/lib/site-content'
 import EditableText from './EditableText'
-import { IconTrophy, IconBolt, IconChat, IconChartBar, IconTrendUp } from './Icons'
+import { IconTrophy, IconBolt, IconChat, IconChartBar, IconTrendUp, IconInstagram } from './Icons'
 
 interface Props {
   content?: ActionCardContent
@@ -99,6 +99,9 @@ export default function ActionCard({ content = DEFAULT_ACTION_CARD, editMode, on
             <div style={{ marginTop: '24px', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
               <a href="https://x.com/EdTheStatMan" className="btn btn--primary btn--sm" target="_blank" rel="noopener">
                 <IconBolt size={14} /> Follow on X
+              </a>
+              <a href="https://www.instagram.com/edthestatman" className="btn btn--secondary btn--sm" target="_blank" rel="noopener">
+                <IconInstagram size={14} /> Follow on Instagram
               </a>
               <a href="https://discord.gg/rXBZkSPcJb" className="btn btn--secondary btn--sm" target="_blank" rel="noopener">
                 <IconChat size={14} /> Join Discord

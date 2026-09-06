@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import PushOptIn from './PushOptIn'
-import { IconBolt, IconChat } from './Icons'
+import { IconBolt, IconChat, IconInstagram } from './Icons'
 
 /**
  * The "how to hear about the next one" banner, closing the Portfolio.
@@ -36,13 +36,16 @@ export default function NeverMissAPick({ userTier }: { userTier: string | null }
             margin: '0 auto 28px',
             lineHeight: 1.7,
           }}>
-            Get instant notifications the moment picks drop. Turn on browser alerts, or follow us on X and join Discord for real-time alerts, system updates, and community discussion.
+            Get instant notifications the moment picks drop. Turn on browser alerts, follow us on X and Instagram, or join Discord for real-time alerts, system updates, and community discussion.
           </p>
           <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
             {/* Push is per-account, so it's only offered to signed-in members. */}
             {userTier !== null && <PushOptIn />}
             <a href="https://x.com/EdTheStatMan" className="btn btn--primary btn--sm" target="_blank" rel="noopener">
               <IconBolt size={14} /> Follow on X
+            </a>
+            <a href="https://www.instagram.com/edthestatman" className="btn btn--secondary btn--sm" target="_blank" rel="noopener">
+              <IconInstagram size={14} /> Instagram
             </a>
             <a href="https://discord.gg/rXBZkSPcJb" className="btn btn--secondary btn--sm" target="_blank" rel="noopener">
               <IconChat size={14} /> Join Discord

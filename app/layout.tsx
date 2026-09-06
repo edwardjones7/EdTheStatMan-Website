@@ -101,7 +101,7 @@ export default async function RootLayout({
                   "name": "EdTheStatMan",
                   "url": "https://edthestatman.com",
                   "description": "Winning sports betting picks, systems and trends. Where handicappers get sharp and bettors win.",
-                  "sameAs": ["https://x.com/EdTheStatMan", "https://discord.gg/rXBZkSPcJb"]
+                  "sameAs": ["https://x.com/EdTheStatMan", "https://www.instagram.com/edthestatman", "https://discord.gg/rXBZkSPcJb"]
                 },
                 {
                   "@type": "WebSite",

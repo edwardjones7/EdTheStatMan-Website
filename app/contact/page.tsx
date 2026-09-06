@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import CTASection from '@/components/CTASection'
 import ContactForm from '@/components/ContactForm'
-import { IconMail } from '@/components/Icons'
+import { IconMail, IconInstagram } from '@/components/Icons'
 
 export const metadata: Metadata = {
   title: 'Contact Us',
@@ -74,14 +74,10 @@ export default function Contact() {
               </div>
 
               <div className="contact-info__item">
-                <div className="contact-info__icon">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L1.254 2.25H8.08l4.259 5.63 5.905-5.63zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-                  </svg>
-                </div>
+                <div className="contact-info__icon"><IconInstagram size={20} /></div>
                 <div>
-                  <div className="contact-info__label">X / Twitter</div>
-                  <a href="https://x.com/EdTheStatMan" className="contact-info__value" target="_blank" rel="noopener">@EdTheStatMan</a>
+                  <div className="contact-info__label">Instagram</div>
+                  <a href="https://www.instagram.com/edthestatman" className="contact-info__value" target="_blank" rel="noopener">@edthestatman</a>
                 </div>
               </div>
             </div>

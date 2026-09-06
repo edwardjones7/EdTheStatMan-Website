@@ -7,7 +7,7 @@ import type { ModelPicksContent } from '@/lib/site-content'
 import type { LockedBetTeaser } from '@/lib/teaser'
 import { TIER_RANK, normalizeTier, PICK_ACCESS_OPTIONS, type Tier } from '@/lib/access'
 import EditableText from './EditableText'
-import { IconLock, IconBolt, IconChat, IconChartBar, IconTrendUp } from './Icons'
+import { IconLock, IconBolt, IconChat, IconChartBar, IconTrendUp, IconInstagram } from './Icons'
 
 export interface TodaysBet {
   id: string
@@ -523,6 +523,9 @@ export default function TodaysBets({ rows, isAdmin, userTier, isMember, lockedCo
         <div style={{ marginTop: '32px', display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'center' }}>
           <a href="https://x.com/EdTheStatMan" className="btn btn--primary btn--sm" target="_blank" rel="noopener">
             <IconBolt size={14} /> Follow on X
+          </a>
+          <a href="https://www.instagram.com/edthestatman" className="btn btn--secondary btn--sm" target="_blank" rel="noopener">
+            <IconInstagram size={14} /> Follow on Instagram
           </a>
           <a href="https://discord.gg/rXBZkSPcJb" className="btn btn--secondary btn--sm" target="_blank" rel="noopener">
             <IconChat size={14} /> Join Discord
