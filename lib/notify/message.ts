@@ -6,13 +6,12 @@
 // never leave the server.
 
 import type { NotifiablePick, PickAudience } from './audience'
-import { isGated } from './audience'
+import { TIER_SHORT_LABEL } from '@/lib/access'
 
 export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://edthestatman.com'
 
-const AUDIENCE_LABEL: Record<PickAudience, string> = {
-  everyone: 'Free pick',
-  members: 'Members pick',
+function audienceLabel(audience: PickAudience): string {
+  return audience === 'retail' ? 'Free pick' : `${TIER_SHORT_LABEL[audience]} pick`
 }
 
 export interface RenderedMessage {
@@ -22,35 +21,31 @@ export interface RenderedMessage {
    * email — where gambling odds in the body trip spam filters — uses only this.
    */
   body: string
-  /**
-   * The pick itself, or null when the audience isn't entitled to it. Channels
-   * opt in; a gated pick returns null here no matter who asks, so no channel can
-   * leak one even by mistake.
-   */
-  detail: string | null
   url: string
 }
 
+/**
+ * NO CHANNEL EVER CARRIES THE PICK, free ones included.
+ *
+ * Email and push never did -- they render title/body/url only. Discord used to
+ * print the bet and line in full for free picks, which meant the one audience
+ * we most want on the site had no reason to visit. Every notification is now an
+ * announcement plus a link, and the pick itself exists only on /portfolio.
+ *
+ * That also collapses a whole class of paywall bug: there is no longer a code
+ * path where the pick can reach a channel, so no future change can leak one by
+ * getting an audience check wrong.
+ */
 export function renderPick(pick: NotifiablePick, audience: PickAudience): RenderedMessage {
   const sport = pick.sport ?? 'New'
-  const label = AUDIENCE_LABEL[audience]
+  const label = audienceLabel(audience)
   const url = `${SITE_URL}/portfolio`
 
-  if (isGated(audience)) {
-    return {
-      title: `${label} just dropped`,
-      body: `A new ${sport} pick is live. Log in to view it.`,
-      detail: null,
-      url,
-    }
-  }
-
-  const detail = [pick.bet, pick.line].filter(Boolean).join(' ')
   return {
-    title: `${label}: ${sport}`,
-    // Deliberately no odds — see `body` above.
-    body: `A new free ${sport} pick is live.`,
-    detail: detail || null,
+    title: `${label} just dropped`,
+    body: audience === 'retail'
+      ? `A new free ${sport} pick is live. View it on the site.`
+      : `A new ${sport} pick is live. Log in to view it.`,
     url,
   }
 }

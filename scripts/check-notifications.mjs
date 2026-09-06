@@ -122,20 +122,31 @@ if (noTok) problems.push(`${noTok} profiles have no notify_token — their unsub
 const { count: pushCount } = await db.from('push_subscriptions').select('*', { count: 'exact', head: true })
 console.log(`  web push subscriptions  ${pushCount}`)
 
-console.log('\n--- which rungs actually notify -----------------------------------')
-// audienceForPick() reads the legacy booleans, and the admin route derives them
-// from min_tier as: is_free = retail, is_elite = above portfolio. So everything
-// above Portfolio maps to is_elite, which audienceForPick deliberately silences.
+console.log('\n--- reach per rung ------------------------------------------------')
+// Notifications now use the ladder predicate the site gates with: a pick at
+// rung R reaches everyone at R or above, because the ladder is inclusive.
 const RANK = { retail: 0, portfolio: 1, desk: 2, private: 3, institutional: 4 }
-for (const t of Object.keys(RANK)) {
-  const isFree = t === 'retail', isElite = RANK[t] > RANK.portfolio
-  const who = isElite ? 'NOBODY — silent' : isFree ? 'everyone' : 'members'
-  console.log(`  min_tier=${(t + '              ').slice(0, 15)} -> ${who}`)
+const LEGACY = { free: 'retail', basic: 'desk', premium: 'private', elite: 'institutional' }
+const norm = v => (v in RANK ? v : LEGACY[v] ?? 'retail')
+const tierOf = r => {
+  if (r.is_admin) return 'institutional'
+  const live = r.access_expires_at && new Date(r.access_expires_at).getTime() > now
+  return live ? norm(r.subscription_tier) : 'retail'
 }
+for (const rung of Object.keys(RANK)) {
+  const n = mailable.filter(r => RANK[tierOf(r)] >= RANK[rung]).length
+  console.log(`  a ${(rung + "            ").slice(0, 14)} pick emails ${n} people`)
+}
+
 const { data: bets } = await db.from('todays_bets').select('min_tier')
-const above = (bets ?? []).filter(b => RANK[b.min_tier] > 1).length
-console.log(`\n  picks currently gated above Portfolio: ${above}`)
-if (above > 0) problems.push(`${above} picks are gated above Portfolio and notify nobody`)
+const counts = {}
+for (const bet of bets ?? []) counts[bet.min_tier ?? '(null)'] = (counts[bet.min_tier ?? '(null)'] ?? 0) + 1
+console.log('  picks by rung:', JSON.stringify(counts))
+for (const [t, n] of Object.entries(counts)) {
+  if (n > 0 && mailable.filter(r => RANK[tierOf(r)] >= RANK[t]).length === 0) {
+    problems.push(`${n} picks at "${t}" would reach nobody by email — no member holds that rung`)
+  }
+}
 
 console.log('\n--- optional sends ------------------------------------------------')
 if (DO_DISCORD) {

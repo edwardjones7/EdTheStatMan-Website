@@ -41,11 +41,11 @@ export async function notifyNewPick(pick: NotifiablePick): Promise<NotifyResult>
   // members to a page that doesn't show it.
   if (pick.is_active === false) return { skipped: 'pick is not active' }
 
+  // The rung the pick is gated at. Never null now: every pick reaches whoever
+  // is entitled to open it. Previously anything above Portfolio resolved to
+  // is_elite and returned null here, so three of the five rungs notified nobody
+  // and reported success while doing it.
   const audience = audienceForPick(pick)
-  // Elite picks notify nobody until the elite tier is fully integrated. Bailing
-  // before Discord matters: the Discord channel has no tier separation, so an
-  // elite post there would reach everyone.
-  if (audience === null) return { skipped: 'elite picks do not notify yet' }
 
   // Recipients drive both email and push; Discord doesn't need them and still
   // fires if this lookup fails.

@@ -6,9 +6,16 @@
 // receive a notification that reveals it.
 
 import { createAdminClient } from '@/lib/supabase/admin'
-import { resolveAccess, ACCESS_SELECT } from '@/lib/access'
+import { resolveAccess, ACCESS_SELECT, type Tier } from '@/lib/access'
+import { rowMinTier } from '@/lib/gate'
 
-export type PickAudience = 'everyone' | 'members'
+/**
+ * The rung a pick is gated at. Notifications use the SAME vocabulary as the
+ * read-side gate rather than a parallel one of their own -- the previous
+ * 'everyone' | 'members' pair had already drifted out of step with a five-rung
+ * ladder, and silently sent nothing at all for three of the five.
+ */
+export type PickAudience = Tier
 
 export interface NotifiablePick {
   id: string
@@ -17,30 +24,28 @@ export interface NotifiablePick {
   risk: string | null
   bet: string | null
   line: string | null
+  min_tier?: string | null
   is_free?: boolean | null
   is_elite?: boolean | null
   is_active?: boolean | null
 }
 
 /**
- * null means "notify nobody".
+ * The rung this pick sits at. Never null: every pick notifies whoever is
+ * entitled to open it, and nobody else.
  *
- * Elite picks deliberately notify nobody for now: the elite tier isn't fully
- * integrated yet, so elite alerts stay switched off until it is. Checked first
- * so an elite pick flagged free still stays silent.
+ * rowMinTier() is the same helper the site gates with, so this reads min_tier
+ * and falls back to the legacy is_free / is_elite pair exactly as the read path
+ * does. An unflagged pick defaults to 'portfolio' -- failing CLOSED, so a
+ * mis-saved pick under-notifies rather than mailing the whole list.
  *
- * Anything not explicitly free is treated as paid — failing closed here means a
- * mis-flagged pick under-notifies rather than leaking to the whole list.
+ * This used to return null for anything is_elite, which silenced it entirely.
+ * Correct when "elite" was one tier on top; under the ladder the admin route
+ * sets is_elite for every rung above Portfolio, so Desk, Private and
+ * Institutional picks would each have notified NOBODY, without an error.
  */
-export function audienceForPick(pick: NotifiablePick): PickAudience | null {
-  if (pick.is_elite) return null
-  if (pick.is_free) return 'everyone'
-  return 'members'
-}
-
-/** True when the pick's content must stay behind the paywall in the message body. */
-export function isGated(audience: PickAudience): boolean {
-  return audience !== 'everyone'
+export function audienceForPick(pick: NotifiablePick): PickAudience {
+  return rowMinTier(pick as any, 'portfolio')
 }
 
 export interface Recipient {
@@ -70,10 +75,11 @@ export async function recipientsFor(audience: PickAudience): Promise<Recipient[]
   return rows
     .filter((row) => {
       if (!row.email) return false
-      // 'members' mirrors the site's own gate in app/model-picks/page.tsx,
-      // which shows every non-free pick to any paying member.
-      if (audience === 'members') return resolveAccess(row, true).isPaid
-      return true
+      // The ladder predicate, not a parallel rule: if they could open the pick
+      // on the site, they hear about it. Inclusive, so a Private member is
+      // atLeast('desk') and gets Desk picks without being listed anywhere.
+      // Every row here is a registered profile, so all of them clear 'retail'.
+      return resolveAccess(row, true).atLeast(audience)
     })
     .map((row) => ({
       id: row.id,

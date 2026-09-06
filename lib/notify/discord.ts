@@ -10,12 +10,17 @@ import { renderPick } from './message'
 const BRAND_COLOR = 0x2dd4bf
 
 /**
- * Role to ping, by audience. An embed alone produces no notification — Discord
- * only pushes to a member's device when they're actually mentioned, and a
- * mention only counts if it sits in `content`, never inside an embed.
+ * Role to ping, by rung. An embed alone produces no notification — Discord only
+ * pushes to a member's device when they're actually mentioned, and a mention
+ * only counts if it sits in `content`, never inside an embed.
+ *
+ * TWO ROLES, NOT FIVE. The server is one shared channel with no tier
+ * separation, and five roles for five paying members is machinery maintained
+ * for nobody. Retail pings the free role, every paid rung pings the members
+ * role. Split it per rung when a rung has the population to justify it.
  */
 function roleIdFor(audience: PickAudience): string | undefined {
-  const id = audience === 'everyone'
+  const id = audience === 'retail'
     ? process.env.DISCORD_FREE_ROLE_ID
     : process.env.DISCORD_MEMBERS_ROLE_ID
   return id || undefined
@@ -28,12 +33,12 @@ export async function sendDiscord(
   const webhook = process.env.DISCORD_WEBHOOK_URL
   if (!webhook) return { sent: 0, mentioned: null }
 
-  const { title, body, detail, url } = renderPick(pick, audience)
+  const { title, body, url } = renderPick(pick, audience)
 
   const fields: Array<{ name: string; value: string; inline: boolean }> = []
-  // Discord isn't an inbox, so no spam filter to dodge — show the pick in full
-  // whenever the audience is entitled to it. `detail` is null for gated picks.
-  if (detail) fields.push({ name: 'Pick', value: detail, inline: false })
+  // The pick itself is NOT posted here, free ones included. Printing the bet and
+  // line in Discord gave the audience we most want on the site no reason to
+  // visit it. Sport and risk are context, not the pick.
   if (pick.sport) fields.push({ name: 'Sport', value: pick.sport, inline: true })
   if (pick.risk) fields.push({ name: 'Risk', value: pick.risk, inline: true })
 

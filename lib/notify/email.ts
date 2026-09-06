@@ -7,6 +7,7 @@
 import { Resend } from 'resend'
 import type { NotifiablePick, PickAudience, Recipient } from './audience'
 import { renderPick, SITE_URL } from './message'
+import { TIER_SHORT_LABEL } from '@/lib/access'
 
 const FROM = 'EdTheStatMan Picks <noreply@edthestatman.com>'
 /**
@@ -60,8 +61,10 @@ function html(
   unsub: string,
   audience: PickAudience
 ): string {
-  const isFree = audience === 'everyone'
-  const badgeText = isFree ? 'FREE PICK' : 'MEMBERS ONLY'
+  // Teal for the open rung, gold for anything paid -- the same two-colour rule
+  // the site uses for free versus locked.
+  const isFree = audience === 'retail'
+  const badgeText = isFree ? 'FREE PICK' : TIER_SHORT_LABEL[audience].toUpperCase()
   const badgeColor = isFree ? C.teal : C.gold
 
   return `<!doctype html>
