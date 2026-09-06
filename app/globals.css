@@ -6425,6 +6425,65 @@ textarea.form-input {
   margin-bottom: 16px;
 }
 
+/* The posted market, on the detail page. Same chips as the week board so a
+   game reads the same whether you are scanning the slate or standing on it. */
+.nfl-game-market {
+  margin-top: 24px;
+}
+
+.nfl-game-market__grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: var(--border-color);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.nfl-game-market__attrib {
+  margin: 10px 0 0;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+@media (max-width: 560px) {
+  .nfl-game-market__grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* Nothing curated yet. An empty page reads as broken; this reads as early. */
+.nfl-game-empty {
+  margin-top: 40px;
+  padding: 28px 24px;
+  border: 1px dashed var(--border-color);
+  border-radius: 12px;
+  background: var(--bg-card);
+  text-align: center;
+}
+
+.nfl-game-empty__title {
+  font-size: 1.05rem;
+  color: var(--text-heading);
+  margin: 0 0 8px;
+}
+
+.nfl-game-empty__text {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  line-height: 1.7;
+  margin: 0 auto;
+  max-width: 520px;
+}
+
+.nfl-game-empty__link {
+  display: inline-block;
+  margin-top: 14px;
+  color: var(--accent-teal);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
 /* Admin: writeup TipTap editor + link pickers */
 .nfl-writeup-editor {
   border: 1px solid var(--border-color);

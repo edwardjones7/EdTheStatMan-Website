@@ -323,3 +323,111 @@ export function lineMove(
   if (delta === 0) return null
   return { delta, label: delta > 0 ? `+${delta}` : String(delta) }
 }
+
+/**
+ * Everything the brief reads. Both NflGame and PublicNflGame satisfy it, so
+ * the same paragraph backs the page and its meta description.
+ */
+export type BriefGame = Pick<
+  PublicNflGame,
+  | 'season' | 'season_type' | 'week' | 'kickoff' | 'status'
+  | 'home_team' | 'home_abbrev' | 'away_team' | 'away_abbrev'
+  | 'home_score' | 'away_score'
+> & GameOdds
+
+/**
+ * A plain-language brief for a game, built from the row we already have.
+ *
+ * Nothing here is analysis and nothing here is IP — it is the matchup, the
+ * venue, the records and the posted line, written out. It exists because a
+ * game with no curated systems and no writeup used to render as a headline, a
+ * kickoff time and empty space, which reads as a broken page rather than an
+ * unwritten one. An admin-typed `brief` always wins over this.
+ *
+ * Returned as sentences so the meta description can take the first couple
+ * without cutting one in half. Every clause is dropped when its column is
+ * null, so a row that predates the odds migration still gets a real paragraph.
+ */
+export function gameBriefSentences(g: BriefGame): string[] {
+  const sport = g.sport ?? 'nfl'
+  const league = sport === 'cfb' ? 'college football' : 'NFL'
+  // A played game reads wrong in the present tense, and every clause below
+  // is written for a game that has already happened once status flips.
+  const played = g.status === 'post'
+  const out: string[] = []
+
+  out.push(
+    `${g.away_team} ${played ? 'visited' : 'visit'} ${g.home_team} in ${weekLabel(g.season_type, g.week, sport)} of the ${g.season} ${league} season.`
+  )
+
+  // Where and on what. "indoors at" is worth the word on a totals page.
+  const place = [g.venue_city, g.venue_state].filter(Boolean).join(', ')
+  // Some venue names already carry the city -- "Memorial Stadium
+  // (Bloomington, IN)" -- and appending it again reads as a machine wrote it.
+  const placeIsNew = Boolean(place) && !(g.venue_name ?? '').toLowerCase().includes((g.venue_city ?? '').toLowerCase())
+  const at = g.venue_name
+    ? `${g.venue_indoor ? 'indoors at' : 'at'} ${g.venue_name}${placeIsNew ? ` in ${place}` : ''}`
+    : place
+      ? `in ${place}`
+      : ''
+  const meet = played ? 'They met' : 'They meet'
+  if (at && g.broadcast) out.push(`${meet} ${at}, with ${g.broadcast} carrying the broadcast.`)
+  else if (at) out.push(`${meet} ${at}.`)
+  else if (g.broadcast) out.push(`${g.broadcast} ${played ? 'carried' : 'carries'} the broadcast.`)
+
+  // 0-0 is not a record, it is Week 1. Saying it out loud makes the brief
+  // look generated, which is exactly the impression it exists to avoid.
+  const realRecord = (rec: string | null | undefined) =>
+    rec && !/^0-0(-0)?$/.test(rec.trim()) ? rec.trim() : null
+  const awayRec = realRecord(g.away_record)
+  const homeRec = realRecord(g.home_record)
+  const standAt = played ? 'stand at' : 'come in at'
+  if (awayRec && homeRec) {
+    out.push(`${g.away_abbrev} ${standAt} ${awayRec}, ${g.home_abbrev} at ${homeRec}.`)
+  } else if (awayRec) {
+    out.push(`${g.away_abbrev} ${standAt} ${awayRec}.`)
+  } else if (homeRec) {
+    out.push(`${g.home_abbrev} ${standAt} ${homeRec}.`)
+  }
+
+  // The market, current number first — the opener is context, not the price.
+  const spread = g.spread_current ?? g.spread_open ?? null
+  const spreadText = spreadLabel(spread, g.home_abbrev, g.away_abbrev)
+  const total = g.total_current ?? g.total_open ?? null
+  const market = played ? 'The market had' : 'The market has'
+  if (spreadText) {
+    out.push(
+      total === null
+        ? `${market} ${spreadText}.`
+        : `${market} ${spreadText} with a total of ${total}.`
+    )
+    const openText = spreadLabel(g.spread_open, g.home_abbrev, g.away_abbrev)
+    if (openText && lineMove(g.spread_open, g.spread_current)) {
+      out.push(`It opened ${openText}.`)
+    }
+  } else if (total !== null) {
+    out.push(played ? `The total was ${total}.` : `No spread is posted yet; the total is ${total}.`)
+  } else {
+    out.push('No line is posted for this game yet.')
+  }
+
+  if (g.status === 'post' && g.home_score !== null && g.away_score !== null) {
+    if (g.home_score === g.away_score) out.push(`It finished ${g.home_score}-${g.away_score}.`)
+    else {
+      const homeWon = g.home_score > g.away_score
+      const winner = homeWon ? g.home_abbrev : g.away_abbrev
+      const hi = Math.max(g.home_score, g.away_score)
+      const lo = Math.min(g.home_score, g.away_score)
+      out.push(`${winner} won it ${hi}-${lo}.`)
+    }
+  } else if (g.status === 'in') {
+    out.push('The game is in progress.')
+  }
+
+  return out
+}
+
+/** The brief as one paragraph. */
+export function gameBrief(g: BriefGame): string {
+  return gameBriefSentences(g).join(' ')
+}

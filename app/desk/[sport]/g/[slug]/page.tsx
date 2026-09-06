@@ -5,7 +5,10 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { resolveAccess, ACCESS_SELECT, atLeastTier } from '@/lib/access'
 import { rowMinTier } from '@/lib/gate'
-import { toPublicGame, weekLabel, writeupWordCount } from '@/lib/nfl'
+import {
+  toPublicGame, weekLabel, writeupWordCount,
+  gameBrief, gameBriefSentences, spreadLabel, moneylineLabel, lineMove,
+} from '@/lib/nfl'
 import type { NflGame } from '@/lib/nfl'
 import { toTeaser } from '@/lib/teaser'
 import type { LockedTeaser } from '@/lib/teaser'
@@ -20,7 +23,7 @@ export async function generateMetadata({ params }: { params: { sport: string; sl
   const admin = createAdminClient()
   const { data: game } = await (admin as any)
     .from('nfl_games')
-    .select('away_team, home_team, season_type, week, brief, kickoff, is_published')
+    .select('*')
     .eq('sport', params.sport.toLowerCase())
     .eq('slug', params.slug)
     .maybeSingle()
@@ -28,8 +31,9 @@ export async function generateMetadata({ params }: { params: { sport: string; sl
   if (!game || !game.is_published) return { title: 'Game Not Found' }
 
   const title = `${game.away_team} at ${game.home_team} — ${weekLabel(game.season_type, game.week, params.sport)} Prediction, Odds & Betting Analysis`
-  const description = game.brief
-    || `${game.away_team} at ${game.home_team}: betting systems, trends, and Elite analysis for ${weekLabel(game.season_type, game.week, params.sport)}.`
+  // The generated brief is the fallback description: two sentences of it say
+  // more about the matchup than the old boilerplate did, and it is never empty.
+  const description = game.brief || gameBriefSentences(game).slice(0, 2).join(' ')
   const url = `https://edthestatman.com/desk/${params.sport}/g/${params.slug}`
   return {
     title,
@@ -192,6 +196,22 @@ export default async function NflGamePage({ params }: { params: { sport: string;
 
   const showScore = game.status !== 'pre' && game.home_score !== null && game.away_score !== null
   const words = writeupWordCount(game.writeup_html)
+
+  // The page used to be a headline, a kickoff time and whitespace until someone
+  // wrote it up. These three give every game something to read: the brief, the
+  // posted market, and an honest empty state where the research will go.
+  const brief = gameBrief(publicGame)
+  const spreadText = spreadLabel(publicGame.spread_current ?? publicGame.spread_open, game.home_abbrev, game.away_abbrev)
+  const spreadMove = lineMove(publicGame.spread_open, publicGame.spread_current)
+  const totalNow = publicGame.total_current ?? publicGame.total_open ?? null
+  const totalMove = lineMove(publicGame.total_open, publicGame.total_current)
+  const awayMl = moneylineLabel(publicGame.ml_away_current ?? publicGame.ml_away_open)
+  const homeMl = moneylineLabel(publicGame.ml_home_current ?? publicGame.ml_home_open)
+  const hasMarket = Boolean(spreadText || totalNow !== null || awayMl || homeMl)
+  const linkedCount =
+    systems.visible.length + systems.locked.length + systems.lockedElite.length +
+    trends.visible.length + trends.locked.length + trends.lockedElite.length
+  const hasResearch = publicGame.has_writeup || linkedCount > 0
   const url = `https://edthestatman.com/desk/${params.sport}/g/${game.slug}`
 
   return (
@@ -238,8 +258,62 @@ export default async function NflGamePage({ params }: { params: { sport: string;
                 <span>{game.home_abbrev} {game.home_score}</span>
               </div>
             )}
-            {game.brief && <p className="nfl-game-header__brief">{game.brief}</p>}
+            <p className="nfl-game-header__brief">{game.brief || brief}</p>
           </header>
+
+          {hasMarket && (
+            <section className="nfl-game-market reveal" aria-label="Market">
+              <div className="nfl-game-market__grid">
+                <span className="desk-chip">
+                  <span className="desk-chip__key">Spread</span>
+                  {spreadText ? (
+                    <span className="desk-chip__val">
+                      {spreadText}
+                      {spreadMove && (
+                        <span className={`desk-chip__move desk-chip__move--${spreadMove.delta > 0 ? 'up' : 'down'}`}>
+                          {spreadMove.label}
+                        </span>
+                      )}
+                    </span>
+                  ) : (
+                    <span className="desk-chip__val desk-chip__val--none">&mdash;</span>
+                  )}
+                </span>
+                <span className="desk-chip">
+                  <span className="desk-chip__key">Total</span>
+                  {totalNow !== null ? (
+                    <span className="desk-chip__val">
+                      {totalNow}
+                      {totalMove && (
+                        <span className={`desk-chip__move desk-chip__move--${totalMove.delta > 0 ? 'up' : 'down'}`}>
+                          {totalMove.label}
+                        </span>
+                      )}
+                    </span>
+                  ) : (
+                    <span className="desk-chip__val desk-chip__val--none">&mdash;</span>
+                  )}
+                </span>
+                <span className="desk-chip">
+                  <span className="desk-chip__key">{game.away_abbrev} ML</span>
+                  <span className={`desk-chip__val${awayMl ? '' : ' desk-chip__val--none'}`}>
+                    {awayMl ?? '—'}
+                  </span>
+                </span>
+                <span className="desk-chip">
+                  <span className="desk-chip__key">{game.home_abbrev} ML</span>
+                  <span className={`desk-chip__val${homeMl ? '' : ' desk-chip__val--none'}`}>
+                    {homeMl ?? '—'}
+                  </span>
+                </span>
+              </div>
+              {publicGame.odds_provider && (
+                <p className="nfl-game-market__attrib">
+                  Lines via {publicGame.odds_provider}. Odds shown for reference only.
+                </p>
+              )}
+            </section>
+          )}
 
           {adminPanel}
 
@@ -284,6 +358,22 @@ export default async function NflGamePage({ params }: { params: { sport: string;
               lockedElite={trends.lockedElite}
               href="/vault/trends"
             />
+          )}
+
+          {/* Say so rather than ending the page. Admins see this too -- it is
+              the same signal the board's "No research yet" tag gives them. */}
+          {!hasResearch && (
+            <div className="nfl-game-empty reveal">
+              <h2 className="nfl-game-empty__title">No research added yet</h2>
+              <p className="nfl-game-empty__text">
+                Nothing has been attached to this matchup yet. The systems and trends
+                that qualify, and the full breakdown once it is written, land here as
+                the week fills in — check back closer to kickoff.
+              </p>
+              <Link href={`/desk/${params.sport}`} className="nfl-game-empty__link">
+                See the rest of the week &rarr;
+              </Link>
+            </div>
           )}
         </div>
       </section>
