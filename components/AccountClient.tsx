@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useEffect, useState, useTransition } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { logout } from '@/app/actions/auth'
@@ -48,6 +48,30 @@ type Msg = { type: 'success' | 'error'; text: string }
 export default function AccountClient({ profile, provider, discordLinked = false }: AccountClientProps) {
   const searchParams = useSearchParams()
   const subscribeSuccess = searchParams.get('success') === '1'
+
+  // The OAuth callback redirects back with ?discord=<status>. Every outcome gets
+  // words, including the ones that are nobody's fault -- a silent return to the
+  // account page reads as "nothing happened" when in fact something failed.
+  const discordStatus = searchParams.get('discord')
+  const discordMsg: Msg | null =
+    discordStatus === 'connected'      ? { type: 'success', text: 'Discord connected. Your Members role has been applied.' } :
+    discordStatus === 'join-server'    ? { type: 'success', text: 'Discord connected. Join the server and the role will be applied automatically.' } :
+    discordStatus === 'already-linked' ? { type: 'error', text: 'That Discord account is already linked to another membership.' } :
+    discordStatus === 'cancelled'      ? { type: 'error', text: 'Discord connection cancelled.' } :
+    discordStatus === 'bad-state'      ? { type: 'error', text: 'That link expired. Please try connecting again.' } :
+    discordStatus === 'not-configured' ? { type: 'error', text: 'Discord is not configured yet.' } :
+    discordStatus === 'failed'         ? { type: 'error', text: 'Could not connect Discord. Please try again.' } :
+    null
+  const discordFlash = discordStatus === 'connected' || discordStatus === 'join-server'
+
+  // Strip the parameter once it has been read, so a refresh or a shared URL does
+  // not replay a stale "connected" that may no longer be true.
+  useEffect(() => {
+    if (!discordStatus) return
+    const url = new URL(window.location.href)
+    url.searchParams.delete('discord')
+    window.history.replaceState({}, '', url.toString())
+  }, [discordStatus])
   const [isPending, startTransition] = useTransition()
   const [profileMsg, setProfileMsg] = useState<Msg | null>(null)
   const [passwordMsg, setPasswordMsg] = useState<Msg | null>(null)
@@ -341,26 +365,39 @@ export default function AccountClient({ profile, provider, discordLinked = false
               </div>
             )}
           </div>
-        </div>
 
-        {/* Discord — link once, then the role tracks the membership. */}
-        <div className="account-card">
-          <div className="account-card__header">
-            <div className="account-card__icon"><IconChat size={18} /></div>
-            <h2 className="account-card__title">Discord</h2>
-          </div>
-          <div className="form-group">
-            <span className="account-field-hint" style={{ display: 'block', marginBottom: '12px' }}>
-              {discordLinked
-                ? 'Connected. The Members role is granted while your access is active, and removed when it lapses.'
-                : 'Connect your Discord account to get the Members role automatically for as long as your access is active.'}
-            </span>
-            <a
-              className={`btn btn--sm ${discordLinked ? 'btn--outline' : 'btn--primary'}`}
-              href="/api/discord/connect"
-            >
-              {discordLinked ? 'Reconnect Discord' : 'Connect Discord'}
-            </a>
+          {/* Discord — link once, then the role tracks the membership. */}
+          <div className={`account-card account-card--discord${discordFlash ? ' account-card--flash' : ''}`}>
+            <div className="account-card__header">
+              <div className="account-card__icon"><IconChat size={18} /></div>
+              <h2 className="account-card__title">Discord</h2>
+              {discordLinked && (
+                <span className="account-linked-pill">
+                  <span className="account-linked-pill__dot" />
+                  Connected
+                </span>
+              )}
+            </div>
+
+            {discordMsg && (
+              <div className={discordMsg.type === 'error' ? 'auth-error' : 'auth-success'}>
+                {discordMsg.text}
+              </div>
+            )}
+
+            <div className="form-group">
+              <span className="account-field-hint" style={{ display: 'block', marginBottom: '12px' }}>
+                {discordLinked
+                  ? 'The Members role is granted while your access is active, and removed when it lapses.'
+                  : 'Connect your Discord account to get the Members role automatically for as long as your access is active.'}
+              </span>
+              <a
+                className={`btn btn--sm ${discordLinked ? 'btn--outline' : 'btn--primary'}`}
+                href="/api/discord/connect"
+              >
+                {discordLinked ? 'Reconnect Discord' : 'Connect Discord'}
+              </a>
+            </div>
           </div>
         </div>
 
