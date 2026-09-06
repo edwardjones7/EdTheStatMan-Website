@@ -430,12 +430,12 @@ export default function TodaysBets({ rows, isAdmin, userTier, isMember, lockedCo
                       </td>
                       <td style={{ ...tdStyle, color: 'var(--accent-teal)', fontWeight: 600 }}>{t.sport ?? '—'}</td>
                       <td style={{ ...tdStyle, maxWidth: '200px' }}>
-                        <span className="bet-cell-redacted" aria-hidden="true" />
+                        <span className="bet-cell-locked" aria-hidden="true"><IconLock size={13} /></span>
                         <span className="sr-only">Elite-only Edge pick</span>
                       </td>
-                      <td style={tdStyle}><span className="bet-cell-redacted bet-cell-redacted--sm" aria-hidden="true" /></td>
-                      <td style={tdStyle}><span className="bet-cell-redacted bet-cell-redacted--sm" aria-hidden="true" /></td>
-                      <td style={tdStyle}><span className="bet-cell-redacted bet-cell-redacted--sm" aria-hidden="true" /></td>
+                      <td style={tdStyle}><span className="bet-cell-locked" aria-hidden="true"><IconLock size={13} /></span></td>
+                      <td style={tdStyle}><span className="bet-cell-locked" aria-hidden="true"><IconLock size={13} /></span></td>
+                      <td style={tdStyle}><span className="bet-cell-locked" aria-hidden="true"><IconLock size={13} /></span></td>
                       <td style={tdStyle}>
                         <span style={{
                           display: 'inline-block',
@@ -467,12 +467,12 @@ export default function TodaysBets({ rows, isAdmin, userTier, isMember, lockedCo
                       <td style={tdStyle}>{t.date ?? '—'}</td>
                       <td style={{ ...tdStyle, color: 'var(--accent-teal)', fontWeight: 600 }}>{t.sport ?? '—'}</td>
                       <td style={{ ...tdStyle, maxWidth: '200px' }}>
-                        <span className="bet-cell-redacted" aria-hidden="true" />
+                        <span className="bet-cell-locked" aria-hidden="true"><IconLock size={13} /></span>
                         <span className="sr-only">Members-only pick</span>
                       </td>
-                      <td style={tdStyle}><span className="bet-cell-redacted bet-cell-redacted--sm" aria-hidden="true" /></td>
-                      <td style={tdStyle}><span className="bet-cell-redacted bet-cell-redacted--sm" aria-hidden="true" /></td>
-                      <td style={tdStyle}><span className="bet-cell-redacted bet-cell-redacted--sm" aria-hidden="true" /></td>
+                      <td style={tdStyle}><span className="bet-cell-locked" aria-hidden="true"><IconLock size={13} /></span></td>
+                      <td style={tdStyle}><span className="bet-cell-locked" aria-hidden="true"><IconLock size={13} /></span></td>
+                      <td style={tdStyle}><span className="bet-cell-locked" aria-hidden="true"><IconLock size={13} /></span></td>
                       <td style={tdStyle}>
                         <span style={{
                           display: 'inline-block',
