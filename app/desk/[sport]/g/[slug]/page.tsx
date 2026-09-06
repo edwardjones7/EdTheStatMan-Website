@@ -132,10 +132,48 @@ export default async function NflGamePage({ params }: { params: { sport: string;
   // Admin-only: full NFL system/trend lists for the linking UI.
   let adminPanel: JSX.Element | null = null
   if (isAdmin) {
+    // Offer the sport THIS game is in. The list was pinned to nfl/nflpre, so a
+    // college game page handed the admin NFL systems to link against it -- wrong
+    // rows entirely, and /desk/cfb is live. Preseason and regular NFL share a
+    // library, so they stay paired.
+    const sportKey = params.sport.toLowerCase()
+    const linkSports = sportKey === 'nfl' || sportKey === 'nflpre'
+      ? ['nfl', 'nflpre']
+      : [sportKey]
+
     const [allSystems, allTrends] = await Promise.all([
-      (admin as any).from('betting_systems').select('id, description, sport, w, l, t').in('sport', ['nfl', 'nflpre']).order('date', { ascending: false, nullsFirst: false }),
-      (admin as any).from('betting_trends').select('id, description, sport, w, l, t').in('sport', ['nfl', 'nflpre']).order('created_at', { ascending: false }),
+      (admin as any).from('betting_systems').select('id, description, sport, team, w, l, t').in('sport', linkSports),
+      (admin as any).from('betting_trends').select('id, description, sport, team, w, l, t').in('sport', linkSports),
     ])
+
+    // Ordered for the person doing the linking, not by insert date.
+    //
+    // The number is inside the description ("NFL System #5 - ...", "Bills Trend
+    // #1 - ..."), not a column, so it is parsed rather than sorted in SQL. Every
+    // NFL row carries one (42 systems, 86 trends, none missing), but other
+    // sports may not, so anything unnumbered sorts last by description instead
+    // of silently landing at #0.
+    const linkNo = (d: string | null | undefined) => {
+      const m = /#s*(d+)/.exec(d ?? '')
+      return m ? parseInt(m[1], 10) : Number.MAX_SAFE_INTEGER
+    }
+    // Sport before number, because nfl and nflpre share this picker: without it
+    // "NFL Preseason System #1" and "NFL System #1" tie on the number and the two
+    // libraries interleave all the way down. Alphabetical puts nfl before nflpre.
+    const byNumber = (a: any, b: any) =>
+      (a.sport ?? '').localeCompare(b.sport ?? '') ||
+      linkNo(a.description) - linkNo(b.description) ||
+      (a.description ?? '').localeCompare(b.description ?? '')
+    // Team first, then number within the team. Teamless rows go last rather
+    // than sorting to the top on an empty string.
+    const byTeamThenNumber = (a: any, b: any) => {
+      const ta = (a.team ?? '').trim(), tb = (b.team ?? '').trim()
+      if (!ta !== !tb) return ta ? -1 : 1
+      return ta.localeCompare(tb) || byNumber(a, b)
+    }
+
+    const sortedSystems = [...(allSystems.data ?? [])].sort(byNumber)
+    const sortedTrends = [...(allTrends.data ?? [])].sort(byTeamThenNumber)
     adminPanel = (
       <NflGameAdminPanel
         game={{
@@ -144,8 +182,8 @@ export default async function NflGamePage({ params }: { params: { sport: string;
           writeup_html: game.writeup_html,
           is_published: game.is_published,
         }}
-        allSystems={allSystems.data ?? []}
-        allTrends={allTrends.data ?? []}
+        allSystems={sortedSystems}
+        allTrends={sortedTrends}
         linkedSystemIds={systemIds}
         linkedTrendIds={trendIds}
       />

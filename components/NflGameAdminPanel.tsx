@@ -10,6 +10,7 @@ interface LinkableRow {
   id: string
   description: string
   sport: string
+  team?: string | null
   w: number | null
   l: number | null
   t: number | null
