@@ -8434,5 +8434,5 @@ textarea.form-input {
 }
 
 @media (max-width: 480px) {
-  .perf-split__grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
+  .perf-split__grid { grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); }
 }
