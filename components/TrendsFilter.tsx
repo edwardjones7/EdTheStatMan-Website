@@ -7,7 +7,7 @@ import type { BettingTrend } from './AdminTrendsTab'
 import LockedTeaserCard from './LockedTeaserCard'
 import type { LockedTeaser } from '@/lib/teaser'
 import { isPaidTier, normalizeTier, accessBadge, TIER_SHORT_LABEL, VAULT_ACCESS_OPTIONS, type Tier } from '@/lib/access'
-import { nextCode, compareCode } from '@/lib/codes'
+import { nextCode, compareCode, codeKey } from '@/lib/codes'
 import { IconLock, IconPencil } from './Icons'
 import RecordStrip from './RecordStrip'
 
@@ -150,6 +150,7 @@ export default function TrendsFilter({ trends, lockedCounts = {}, lockedTeasers 
   const [clearBeforeImport, setClearBeforeImport] = useState(false)
   const [importError, setImportError] = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
+  const [query, setQuery] = useState('')
   const inlineFormRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -163,17 +164,34 @@ export default function TrendsFilter({ trends, lockedCounts = {}, lockedTeasers 
 
   // Locked rows only exist for non-members; `trends` already excludes them.
   const totalLocked = Object.values(lockedCounts).reduce((a, b) => a + b, 0)
-  const lockedForTab = isAdmin ? [] : lockedTeasers.filter(t => activeTab === 'all' || t.sport === activeTab)
+  // A locked teaser is a record and a sport, nothing else -- it carries no code
+  // and no description by design (lib/teaser.ts), so it can never match a
+  // search. While one is active the locked blocks are hidden rather than shown
+  // as results that ignored what was typed.
+  const searching = query.trim().length > 0
+  const lockedForTab = isAdmin || searching ? [] : lockedTeasers.filter(t => activeTab === 'all' || t.sport === activeTab)
   const lockedCount = activeTab === 'all' ? totalLocked : (lockedCounts[activeTab] ?? 0)
 
   // Elite-locked rows exist for everyone below elite, members included.
   const totalEliteLocked = Object.values(eliteLockedCounts).reduce((a, b) => a + b, 0)
-  const eliteLockedForTab = isAdmin ? [] : eliteTeasers.filter(t => activeTab === 'all' || t.sport === activeTab)
+  const eliteLockedForTab = isAdmin || searching ? [] : eliteTeasers.filter(t => activeTab === 'all' || t.sport === activeTab)
   const eliteLockedCount = activeTab === 'all' ? totalEliteLocked : (eliteLockedCounts[activeTab] ?? 0)
 
   const activeTabLabel = TABS.find(t => t.value === activeTab)!.label
 
-  const allVisible = trends.filter(r => activeTab === 'all' || r.sport === activeTab)
+  // Sport tab first, then the search box. Codes are compared as codeKey(),
+  // which collapses padding and punctuation, so "cfbs 1", "CFBS0001" and
+  // "cfbs-0001" all find the same row -- nobody types a padded key exactly.
+  const q = query.trim().toLowerCase()
+  const qCode = codeKey(query)
+  const allVisible = trends
+    .filter(r => activeTab === 'all' || r.sport === activeTab)
+    .filter(r => {
+      if (!q) return true
+      if (qCode && codeKey(r.code).includes(qCode)) return true
+      return [r.description, r.team, r.season]
+        .some(v => (v ?? '').toLowerCase().includes(q))
+    })
   const baseRows = editMode
     ? [...allVisible].sort((a, b) =>
         (Number(b.is_active) - Number(a.is_active)) || compareTrends(a, b)
@@ -604,9 +622,31 @@ export default function TrendsFilter({ trends, lockedCounts = {}, lockedTeasers 
       {/* Free rows sit above the paywall. Locked rows reach the client only as
           redacted teasers (sport + record + win%); the description -- the rule
           itself -- never leaves the server. See lib/teaser.ts. */}
-      {lockedCount > 0 && baseRows.length > 0 && (
+      {lockedCount > 0 && baseRows.length > 0 && !searching && (
         <div className="sys-free-heading">Free Trends</div>
       )}
+
+
+      {/* Search. The ID is the point of it -- someone comes here holding
+          CFBT0001, not a description -- but the same box matches the rule text
+          and the team so a half-remembered row is still findable. */}
+      <div className="vault-search">
+        <label className="vault-search__label" htmlFor="vault-search-trends">Search</label>
+        <input
+          id="vault-search-trends"
+          className="vault-search__input"
+          type="search"
+          value={query}
+          onChange={e => setQuery(e.target.value)}
+          placeholder="Search by ID (CFBT0001), team or keyword"
+          autoComplete="off"
+        />
+        {query.trim() && (
+          <span className="vault-search__count">
+            {baseRows.length} match{baseRows.length === 1 ? '' : 'es'}
+          </span>
+        )}
+      </div>
 
       {/* Card grid */}
       <div className="content-gate-wrap" style={{ marginTop: '24px' }}>
@@ -614,7 +654,7 @@ export default function TrendsFilter({ trends, lockedCounts = {}, lockedTeasers 
           {baseRows.length === 0 ? (
             lockedCount === 0 && (
               <div style={{ textAlign: 'center', padding: '48px 0', color: 'var(--text-muted)' }}>
-                No trends in this sport.
+                {searching ? 'Nothing matches that search.' : 'No trends in this sport.'}
               </div>
             )
           ) : (

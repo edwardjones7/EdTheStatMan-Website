@@ -68,3 +68,18 @@ export function compareCode(a: string | null | undefined, b: string | null | und
   if (!bCode) return -1
   return aCode.localeCompare(bCode, 'en', { numeric: true, sensitivity: 'base' })
 }
+
+/**
+ * A code reduced to what someone means when they type it.
+ *
+ * Lowercased, punctuation and spaces gone, and every run of digits collapsed to
+ * its number, so "CFBS0001", "cfbs 1", "cfbs-0001" and "CFBS01" are all the
+ * same key. Padding is a storage decision that makes the text sort work; it is
+ * not something anyone types into a search box.
+ */
+export function codeKey(value: string | null | undefined): string {
+  return (value ?? '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '')
+    .replace(/\d+/g, d => String(parseInt(d, 10)))
+}

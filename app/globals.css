@@ -2105,6 +2105,49 @@ html[data-navigating] .nav__progress-fill {
 }
 
 /* ---------- Sport Tabs ---------- */
+/* Find a row by its ID. Sits between the sport tabs and the card grid on both
+   Vault libraries; the count only appears once something is typed. */
+.vault-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 4px 0 8px;
+  flex-wrap: wrap;
+}
+
+.vault-search__label {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 1.4px;
+  color: var(--text-muted);
+}
+
+.vault-search__input {
+  flex: 1 1 260px;
+  max-width: 420px;
+  padding: 9px 13px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.85rem;
+}
+
+.vault-search__input::placeholder { color: var(--text-muted); }
+
+.vault-search__input:focus {
+  outline: none;
+  border-color: var(--accent-teal);
+}
+
+.vault-search__count {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
 .sport-tabs {
   display: inline-flex;
   gap: 0;
