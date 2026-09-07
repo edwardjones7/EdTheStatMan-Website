@@ -5,6 +5,17 @@ are in [`docs/RELEASING.md`](docs/RELEASING.md).
 
 This file starts at 3.0.0. Everything before it shipped untagged; see `git log`.
 
+## [3.5.0] — 2026-09-07
+
+### Added
+
+- **The Research Desk remembers where you were.** Leaving the board and coming
+  back returns you to the sport and week you were on, rather than the NFL's
+  first unplayed week. Remembered per sport, so college Week 3 and NFL Week 1
+  coexist; `/desk` opens whichever board you were last on. An explicit `?week=`
+  still wins, so shared links mean what they say, and the memory ages out after
+  seven days.
+
 ## [3.4.0] — 2026-09-07
 
 ### Added
