@@ -5,6 +5,15 @@ are in [`docs/RELEASING.md`](docs/RELEASING.md).
 
 This file starts at 3.0.0. Everything before it shipped untagged; see `git log`.
 
+## [3.7.1] — 2026-09-07
+
+### Fixed
+
+- Curated systems and trends on a game page were badged **NFL** regardless of
+  their actual sport — a leftover from when the Desk was NFL-only. A college
+  trend read `NFL` with a code of `RUTGT00002` beside it. Both the visible row
+  and the locked teaser now use the row's own sport.
+
 ## [3.7.0] — 2026-09-07
 
 ### Changed
