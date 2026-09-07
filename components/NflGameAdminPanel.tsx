@@ -23,6 +23,8 @@ interface Props {
     brief: string
     writeup_html: string
     is_published: boolean
+    /** When the Desk rung's in-context view was shut. null = still open. */
+    research_closed_at: string | null
   }
   sportLabel: string
   allSystems: LinkableRow[]
@@ -36,10 +38,15 @@ export default function NflGameAdminPanel({ game, sportLabel, allSystems, allTre
   const [open, setOpen] = useState(false)
   const [brief, setBrief] = useState(game.brief)
   const [isPublished, setIsPublished] = useState(game.is_published)
+  const [researchClosed, setResearchClosed] = useState(Boolean(game.research_closed_at))
   const [systemIds, setSystemIds] = useState<Set<string>>(new Set(linkedSystemIds))
   const [trendIds, setTrendIds] = useState<Set<string>>(new Set(linkedTrendIds))
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
+
+  const closedOn = game.research_closed_at
+    ? new Date(game.research_closed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    : null
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -65,6 +72,7 @@ export default function NflGameAdminPanel({ game, sportLabel, allSystems, allTre
           brief,
           writeup_html: editor?.getHTML() ?? game.writeup_html,
           is_published: isPublished,
+          research_closed: researchClosed,
         }),
       })
       if (!patchRes.ok) throw new Error((await patchRes.json()).error ?? 'Save failed')
@@ -137,10 +145,29 @@ export default function NflGameAdminPanel({ game, sportLabel, allSystems, allTre
         />
       </div>
 
-      <label className="admin-form-check" style={{ marginBottom: '14px' }}>
+      <label className="admin-form-check" style={{ marginBottom: '10px' }}>
         <input type="checkbox" checked={isPublished} onChange={e => setIsPublished(e.target.checked)} />
         <span>Published (visible on the public hub)</span>
       </label>
+
+      {/* The Desk rung reads these curated rows in this game's context, which it
+          could not do in the library. Fine while the game is ahead of you; on a
+          season of played games it is the Private library handed over one
+          matchup at a time. Shut it once the game is done. Private and
+          Institutional members are unaffected -- they hold the library. */}
+      <label className="admin-form-check" style={{ marginBottom: '6px' }}>
+        <input
+          type="checkbox"
+          checked={researchClosed}
+          onChange={e => setResearchClosed(e.target.checked)}
+        />
+        <span>Research closed — Desk members can no longer read the linked rows here</span>
+      </label>
+      <p className="admin-form-hint">
+        {researchClosed
+          ? `Closed${closedOn ? ` ${closedOn}` : ''}. Research Desk members see record-only teasers on this game; Private and above are unaffected.`
+          : 'Open. Research Desk members can read every linked system and trend on this page.'}
+      </p>
 
       <div className="admin-inline-form__actions">
         <button className="btn btn--primary btn--sm" onClick={save} disabled={saving}>

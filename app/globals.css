@@ -8986,3 +8986,12 @@ textarea.form-input {
 @media (prefers-reduced-motion: reduce) {
   .desk-live__dot { animation: none; }
 }
+
+/* Explains what the checkbox above it actually does to a reader's access.
+   Sits under the control, not beside it: this is a consequence, not a label. */
+.admin-form-hint {
+  margin: 0 0 14px 26px;
+  font-size: 0.76rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+}

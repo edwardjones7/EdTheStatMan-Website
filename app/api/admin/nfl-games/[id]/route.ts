@@ -25,6 +25,23 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     update.writeup_html = body.writeup_html
     update.writeup_updated_at = new Date().toISOString()
   }
+  // Open or shut the Desk rung's in-context view of this game's curated rows.
+  // Sent as a boolean and stamped here, so the moment recorded is the server's
+  // and an admin cannot accidentally backdate one. See
+  // supabase/migrations/desk_01_research_closed.sql.
+  //
+  // Probed rather than assumed, the same way the sync probes for the desk
+  // columns: the panel sends this field on every save, so on a deployment where
+  // the migration has not been run yet an unconditional write would fail the
+  // WHOLE save -- brief, writeup and published state with it -- for a column
+  // nobody has asked about. Better to drop this one field and still save the
+  // writing.
+  if (typeof body.research_closed === 'boolean') {
+    const { error: probe } = await admin.from('nfl_games').select('research_closed_at').limit(1)
+    if (!probe) {
+      update.research_closed_at = body.research_closed ? new Date().toISOString() : null
+    }
+  }
   if (Object.keys(update).length === 0) {
     return NextResponse.json({ error: 'No editable fields in request.' }, { status: 400 })
   }

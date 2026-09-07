@@ -112,6 +112,19 @@ export default async function NflGamePage({ params }: { params: { sport: string;
       : Promise.resolve({ data: [] }),
   ])
 
+  // Has the research on this game been shut?
+  //
+  // The Desk rung reads curated rows in a matchup's context that it could not
+  // read in the library. That is the product while the game is ahead of you; on
+  // a season's worth of played games it is the Private library handed over one
+  // matchup at a time. `research_closed_at` is how a played game stops being
+  // that door. NULL is open, which is what every game is until someone shuts it.
+  //
+  // Read defensively: the column arrives with desk_01_research_closed.sql, and
+  // until that is applied `game.research_closed_at` is simply undefined and
+  // every game reads as open. Nothing currently visible changes on deploy.
+  const researchClosed = Boolean((game as any).research_closed_at)
+
   // Linked rows follow the same tier rules as the systems/trends pages: paid
   // members see member rows, elite rows require elite, and everyone else gets
   // record-only teasers. Redaction happens here, before props cross the wire.
@@ -123,8 +136,11 @@ export default async function NflGamePage({ params }: { params: { sport: string;
       const required = rowMinTier(row, 'private')
       const canSee =
         isAdmin ||
+        // Private and Institutional members hold the library itself, so closing
+        // a game takes nothing from them -- this clause is untouched by it.
         atLeastTier(userTier, required) ||
-        (hasDesk && required !== 'institutional')
+        // The Desk's in-context window, and the only thing closing shuts.
+        (hasDesk && !researchClosed && required !== 'institutional')
       if (canSee) visible.push(row)
       else if (required === 'institutional') lockedElite.push(toTeaser(row))
       else locked.push(toTeaser(row))
@@ -201,6 +217,7 @@ export default async function NflGamePage({ params }: { params: { sport: string;
           brief: game.brief,
           writeup_html: game.writeup_html,
           is_published: game.is_published,
+          research_closed_at: (game as any).research_closed_at ?? null,
         }}
         sportLabel={deskSportLabel(sportKey)}
         allSystems={sortedSystems}
