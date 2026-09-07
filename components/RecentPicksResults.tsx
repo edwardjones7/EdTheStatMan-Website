@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, Fragment } from 'react'
 import { useRouter } from 'next/navigation'
 import type { TodaysBet } from './TodaysBets'
+import { PICKS_TABLE_STYLE, PicksTableCols, noteCellStyle } from './PicksTableLayout'
 
 interface Props {
   rows: TodaysBet[]
@@ -172,7 +173,8 @@ export default function RecentPicksResults({ rows, isAdmin = false, editMode = f
 
         {rows.length > 0 && (
           <div style={{ marginTop: '32px', overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '700px' }}>
+            <table style={PICKS_TABLE_STYLE}>
+              <PicksTableCols showActions={!!(isAdmin && editMode)} />
               <thead>
                 <tr style={{ borderBottom: '1px solid var(--border)' }}>
                   {['Date', 'Sport', 'Pick', 'Guide Line', 'Closing Line', 'Opponent', 'Result', 'Note'].map(col => (
@@ -189,7 +191,7 @@ export default function RecentPicksResults({ rows, isAdmin = false, editMode = f
                       <tr style={{ borderBottom: '1px solid var(--border)' }}>
                         <td style={tdStyle}>{row.date ?? '—'}</td>
                         <td style={{ ...tdStyle, color: 'var(--accent-teal)', fontWeight: 600 }}>{row.sport ?? '—'}</td>
-                        <td style={{ ...tdStyle, fontWeight: 600, maxWidth: '200px' }}>{row.bet ?? '—'}</td>
+                        <td style={{ ...tdStyle, fontWeight: 600 }}>{row.bet ?? '—'}</td>
                         <td style={{ ...tdStyle, fontFamily: 'var(--font-mono)' }}>{row.line ?? '—'}</td>
                         <td style={{ ...tdStyle, fontFamily: 'var(--font-mono)' }}>{row.vig ?? '—'}</td>
                         <td style={tdStyle}>{row.opponent ?? '—'}</td>
@@ -208,7 +210,7 @@ export default function RecentPicksResults({ rows, isAdmin = false, editMode = f
                             {rs.label}
                           </span>
                         </td>
-                        <td style={{ ...tdStyle, color: 'var(--text-muted)', fontSize: '0.85rem' }}>{row.note ?? '—'}</td>
+                        <td style={{ ...tdStyle, ...noteCellStyle }}>{row.note ?? '—'}</td>
                         {isAdmin && editMode && (
                           <td style={{ ...tdStyle, whiteSpace: 'nowrap' }}>
                             <button
@@ -370,7 +372,6 @@ const thStyle: React.CSSProperties = {
   letterSpacing: '0.06em',
   textTransform: 'uppercase',
   color: 'var(--text-muted)',
-  whiteSpace: 'nowrap',
 }
 
 const tdStyle: React.CSSProperties = {

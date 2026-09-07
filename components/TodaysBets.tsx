@@ -8,6 +8,7 @@ import type { LockedBetTeaser } from '@/lib/teaser'
 import { TIER_RANK, normalizeTier, PICK_ACCESS_OPTIONS, type Tier } from '@/lib/access'
 import EditableText from './EditableText'
 import { IconLock, IconBolt, IconChat, IconChartBar, IconTrendUp, IconInstagram } from './Icons'
+import { PICKS_TABLE_STYLE, PicksTableCols, noteCellStyle } from './PicksTableLayout'
 
 export interface TodaysBet {
   id: string
@@ -338,7 +339,8 @@ export default function TodaysBets({ rows, isAdmin, userTier, isMember, lockedCo
         {(visibleRows.length > 0 || lockedBets.length > 0 || eliteLockedBets.length > 0) && (
           <div className="content-gate-wrap" style={{ marginTop: '28px' }}>
             <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '700px' }}>
+              <table style={PICKS_TABLE_STYLE}>
+                <PicksTableCols showActions={!!(isAdmin && editMode)} />
                 <thead>
                   <tr style={{ borderBottom: '1px solid var(--border)' }}>
                     {['Date', 'Sport', 'Pick', 'Guide Line', 'Closing Line', 'Opponent', 'Result', 'Note'].map(col => (
@@ -374,7 +376,7 @@ export default function TodaysBets({ rows, isAdmin, userTier, isMember, lockedCo
                             </div>
                           </td>
                           <td style={{ ...tdStyle, color: 'var(--accent-teal)', fontWeight: 600 }}>{row.sport ?? '—'}</td>
-                          <td style={{ ...tdStyle, fontWeight: 600, maxWidth: '200px' }}>{row.bet ?? '—'}</td>
+                          <td style={{ ...tdStyle, fontWeight: 600 }}>{row.bet ?? '—'}</td>
                           <td style={{ ...tdStyle, fontFamily: 'var(--font-mono)' }}>{row.line ?? '—'}</td>
                           <td style={{ ...tdStyle, fontFamily: 'var(--font-mono)' }}>{row.vig ?? '—'}</td>
                           <td style={tdStyle}>{row.opponent ?? '—'}</td>
@@ -393,7 +395,7 @@ export default function TodaysBets({ rows, isAdmin, userTier, isMember, lockedCo
                               {rs(row.result).label}
                             </span>
                           </td>
-                          <td style={{ ...tdStyle, color: 'var(--text-muted)', fontSize: '0.85rem' }}>{row.note ?? '—'}</td>
+                          <td style={{ ...tdStyle, ...noteCellStyle }}>{row.note ?? '—'}</td>
                           {isAdmin && editMode && (
                             <td style={{ ...tdStyle, whiteSpace: 'nowrap' }}>
                               <button
@@ -446,7 +448,7 @@ export default function TodaysBets({ rows, isAdmin, userTier, isMember, lockedCo
                         </div>
                       </td>
                       <td style={{ ...tdStyle, color: 'var(--accent-teal)', fontWeight: 600 }}>{t.sport ?? '—'}</td>
-                      <td style={{ ...tdStyle, maxWidth: '200px' }}>
+                      <td style={tdStyle}>
                         <span className="bet-cell-locked" aria-hidden="true"><IconLock size={13} /></span>
                         <span className="sr-only">Edge pick — Private Intelligence only</span>
                       </td>
@@ -483,7 +485,7 @@ export default function TodaysBets({ rows, isAdmin, userTier, isMember, lockedCo
                     <tr key={t.id} className="bet-row--locked" style={{ borderBottom: '1px solid var(--border)' }}>
                       <td style={tdStyle}>{t.date ?? '—'}</td>
                       <td style={{ ...tdStyle, color: 'var(--accent-teal)', fontWeight: 600 }}>{t.sport ?? '—'}</td>
-                      <td style={{ ...tdStyle, maxWidth: '200px' }}>
+                      <td style={tdStyle}>
                         <span className="bet-cell-locked" aria-hidden="true"><IconLock size={13} /></span>
                         <span className="sr-only">Members-only pick</span>
                       </td>
@@ -680,7 +682,6 @@ const thStyle: React.CSSProperties = {
   letterSpacing: '0.06em',
   textTransform: 'uppercase',
   color: 'var(--text-muted)',
-  whiteSpace: 'nowrap',
 }
 
 const tdStyle: React.CSSProperties = {
