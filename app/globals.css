@@ -383,6 +383,152 @@ input, textarea, select {
   border-radius: 2px;
 }
 
+/* ---------- Nav dropdowns --------------------------------------------------
+   The parent stays a link to its own page; the caret opens the rest. Reaching
+   the second page of a product used to be two navigations with a server round
+   trip in between.
+   -------------------------------------------------------------------------- */
+
+.nav__item {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.nav__item--has-menu > .nav__link {
+  padding-right: 4px;
+}
+
+.nav__caret {
+  display: flex;
+  align-items: center;
+  padding: 8px 7px 8px 3px;
+  color: var(--text-muted);
+  background: none;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: color var(--transition-fast), transform var(--transition-fast);
+}
+
+.nav__item:hover .nav__caret,
+.nav__caret:hover,
+.nav__caret:focus-visible {
+  color: var(--text-heading);
+}
+
+.nav__item.is-open .nav__caret {
+  transform: rotate(180deg);
+}
+
+.nav__menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 1200;
+  min-width: 176px;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
+
+  /* Hidden with opacity rather than display:none so the panel keeps its box
+     while closed: `visibility` still takes it out of the hit-testing tree, and
+     a transition needs something to animate from. */
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  transition: opacity var(--transition-fast), transform var(--transition-fast), visibility var(--transition-fast);
+}
+
+/* The gap between the bar and the panel is dead ground for the pointer. This
+   bridges it so a diagonal move to the first item never leaves the group --
+   the 180ms close delay in NavClient covers the rest. */
+.nav__menu::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -8px;
+  height: 8px;
+}
+
+.nav__item.is-open .nav__menu {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.nav__menu-link {
+  padding: 8px 12px;
+  font-size: 0.84rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-decoration: none;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  transition: color var(--transition-fast), background var(--transition-fast);
+  position: relative;
+  overflow: hidden;
+}
+
+.nav__menu-link:hover {
+  color: var(--text-heading);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.nav__menu-link.active {
+  color: var(--accent-teal);
+  background: rgba(var(--teal-rgb), 0.10);
+}
+
+/* Same sweep the top-level links use, so a slow board answers the click here
+   too. .nav__menu-link is already positioned and clipped above. */
+.nav__menu-link.is-pending::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(var(--teal-rgb), 0.28) 50%,
+    transparent 100%);
+  animation: nav-link-sweep 1.05s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nav__menu { transition: none; }
+  .nav__caret { transition: color var(--transition-fast); }
+  .nav__menu-link.is-pending::before { animation: none; transform: none; background: rgba(var(--teal-rgb), 0.16); }
+}
+
+/* Mobile panel: children sit under their parent, indented, always visible. */
+.mobile-menu__group {
+  display: flex;
+  flex-direction: column;
+}
+
+.mobile-menu__link--child {
+  padding-left: 44px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.mobile-menu__link--child::before {
+  content: '';
+  width: 14px;
+  height: 1px;
+  margin-right: 10px;
+  background: var(--border-color);
+  flex: none;
+}
+
 .nav__actions {
   display: flex;
   align-items: center;
@@ -581,7 +727,10 @@ html[data-navigating] .nav__progress-fill {
   border-left: 3px solid transparent;
 }
 
-.mobile-menu__link:first-child {
+/* Only the very first row in the panel. The links are wrapped in
+   .mobile-menu__group now, so a bare :first-child matches the parent link of
+   EVERY group and doubles the rule against the previous row's border-bottom. */
+.mobile-menu__group:first-child .mobile-menu__link:first-child {
   border-top: 1px solid var(--border-color);
 }
 

@@ -20,10 +20,43 @@ interface NavClientProps {
   } | null
 }
 
+interface NavChild {
+  href: string
+  label: string
+  /**
+   * Light this child only on an exact path match. Needed wherever one child's
+   * href is a prefix of another's -- /portfolio is a prefix of
+   * /portfolio/performance, so on the Results page a startsWith test lights
+   * both rows and the menu stops saying where you are.
+   */
+  exact?: boolean
+}
+
+interface NavLink {
+  href: string
+  label: string
+  /** Path prefix that keeps the tab lit, when href is one page inside a set. */
+  match?: string
+  offer?: boolean
+  children?: NavChild[]
+}
+
 // Four products, not eight links. The bar was full; Contact moved to the
 // footer and the two EdTheStatBot entries collapsed into The Portfolio.
-const NAV_LINKS = [
-  { href: '/portfolio', label: 'The Portfolio' },
+//
+// The three products with more than one page carry a menu. The parent stays a
+// real link to its own default page -- nothing here is a menu you are forced
+// to open -- but the second page of each product used to cost two navigations
+// and a server round trip in between, which is the click this is removing.
+const NAV_LINKS: NavLink[] = [
+  {
+    href: '/portfolio',
+    label: 'The Portfolio',
+    children: [
+      { href: '/portfolio', label: 'Picks', exact: true },
+      { href: '/portfolio/performance', label: 'Results' },
+    ],
+  },
   // Straight to the board rather than to /desk, which is only a server
   // redirect. That hop is a round trip the router cannot cover: it holds the
   // old page up until the redirect resolves, and the skeleton in
@@ -31,8 +64,26 @@ const NAV_LINKS = [
   // [sport] segment. Measured at ~480ms of a click with no visible answer,
   // which reads as a missed click. `match` keeps the tab lit on every board,
   // /desk/cfb included, now that href names one of them.
-  { href: `/desk/${DESK_SPORTS[0]}`, match: '/desk', label: 'Research Desk' },
-  { href: '/vault', label: 'The Vault' },
+  //
+  // The children are the same two boards, reached in one click from anywhere
+  // instead of landing on NFL first and switching.
+  {
+    href: `/desk/${DESK_SPORTS[0]}`,
+    match: '/desk',
+    label: 'Research Desk',
+    children: [
+      { href: '/desk/nfl', label: 'NFL' },
+      { href: '/desk/cfb', label: 'College Football' },
+    ],
+  },
+  {
+    href: '/vault',
+    label: 'The Vault',
+    children: [
+      { href: '/vault/systems', label: 'Systems' },
+      { href: '/vault/trends', label: 'Trends' },
+    ],
+  },
   { href: '/blog', label: 'Blog' },
   { href: '/win', label: 'Membership', offer: true },
 ]
@@ -73,6 +124,12 @@ export default function NavClient({ user, membership = 'logged-out' }: NavClient
   // for the rest of the session is a worse lie than no bar at all.
   const failsafe = useRef<ReturnType<typeof setTimeout> | null>(null)
   const watcher = useRef<MutationObserver | null>(null)
+  /** href of the parent whose menu is open, or null. One at a time. */
+  const [openMenu, setOpenMenu] = useState<string | null>(null)
+  // Closing on mouseleave with no delay makes the menu unusable: the pointer
+  // has to cross the gap between the parent and the panel, and any diagonal
+  // path leaves both for a frame.
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const stopNavigating = useCallback(() => {
     if (failsafe.current) {
@@ -108,17 +165,42 @@ export default function NavClient({ user, membership = 'logged-out' }: NavClient
     return () => window.removeEventListener('keydown', onKey)
   }, [mobileOpen])
 
-  // Close mobile menu on route change
+  // Close both menus on route change
   useEffect(() => {
     setMobileOpen(false)
+    setOpenMenu(null)
     document.body.style.overflow = ''
   }, [pathname])
+
+  // Escape closes an open dropdown wherever focus is. Registered only while one
+  // is open so it cannot swallow Escape from anything else.
+  useEffect(() => {
+    if (!openMenu) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpenMenu(null)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [openMenu])
+
+  useEffect(() => () => {
+    if (closeTimer.current) clearTimeout(closeTimer.current)
+  }, [])
+
+  const openNow = (href: string) => {
+    if (closeTimer.current) clearTimeout(closeTimer.current)
+    setOpenMenu(href)
+  }
+  const closeSoon = () => {
+    if (closeTimer.current) clearTimeout(closeTimer.current)
+    closeTimer.current = setTimeout(() => setOpenMenu(null), 180)
+  }
 
   const cta = primaryCta(membership, user?.subscription_tier ?? null)
   const compactX = membership !== 'active' && membership !== 'admin'
 
-  const isActive = (href: string) =>
-    href === '/' ? pathname === '/' : pathname.startsWith(href)
+  const isActive = (href: string, exact = false) =>
+    href === '/' || exact ? pathname === href : pathname.startsWith(href)
 
   /**
    * Answer the click on the client, at once.
@@ -199,18 +281,74 @@ export default function NavClient({ user, membership = 'logged-out' }: NavClient
           </Link>
 
           <div className="nav__links">
-            {NAV_LINKS.map(link => (
-              <Link
-                key={link.href}
-                href={link.href}
-                onClick={e => onNavClick(e, link.href)}
-                className={`nav__link${link.offer ? ' nav__link--offer' : ''}${
-                  pending === link.href ? ' is-pending' : ''
-                } ${isActive(link.match ?? link.href) ? 'active' : ''}`}
-              >
-                {link.label}
-              </Link>
-            ))}
+            {NAV_LINKS.map(link => {
+              const linkEl = (
+                <Link
+                  href={link.href}
+                  onClick={e => onNavClick(e, link.href)}
+                  className={`nav__link${link.offer ? ' nav__link--offer' : ''}${
+                    pending === link.href ? ' is-pending' : ''
+                  } ${isActive(link.match ?? link.href) ? 'active' : ''}`}
+                >
+                  {link.label}
+                </Link>
+              )
+
+              if (!link.children) return <div key={link.href} className="nav__item">{linkEl}</div>
+
+              const open = openMenu === link.href
+              return (
+                <div
+                  key={link.href}
+                  className={`nav__item nav__item--has-menu${open ? ' is-open' : ''}`}
+                  onMouseEnter={() => openNow(link.href)}
+                  onMouseLeave={closeSoon}
+                  // Keyboard and screen readers walk into the group with Tab
+                  // rather than a pointer, so focus has to open it too. The
+                  // relatedTarget check keeps it open while focus moves BETWEEN
+                  // the parent, the caret and the items -- without it, tabbing
+                  // from the parent to the first item closes the thing you are
+                  // tabbing into.
+                  onFocus={() => openNow(link.href)}
+                  onBlur={e => {
+                    if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setOpenMenu(null)
+                  }}
+                >
+                  {linkEl}
+                  {/* A button, not a second link: hover is not available to a
+                      keyboard, and on a touch screen wide enough for this bar
+                      there is no hover at all, so the menu needs something that
+                      opens it without navigating. */}
+                  <button
+                    type="button"
+                    className="nav__caret"
+                    aria-expanded={open}
+                    aria-label={`${link.label} pages`}
+                    onClick={() => (open ? setOpenMenu(null) : openNow(link.href))}
+                  >
+                    <svg width="9" height="9" viewBox="0 0 12 12" aria-hidden="true">
+                      <path d="M2 4.5L6 8.5L10 4.5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </button>
+
+                  <div className="nav__menu" role="group" aria-label={link.label}>
+                    {link.children.map(child => (
+                      <Link
+                        key={child.href}
+                        href={child.href}
+                        onClick={e => { setOpenMenu(null); onNavClick(e, child.href) }}
+                        className={`nav__menu-link${pending === child.href ? ' is-pending' : ''}${
+                          isActive(child.href, child.exact) ? ' active' : ''
+                        }`}
+                        tabIndex={open ? 0 : -1}
+                      >
+                        {child.label}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )
+            })}
           </div>
 
           <div className="nav__actions">
@@ -262,16 +400,32 @@ export default function NavClient({ user, membership = 'logged-out' }: NavClient
       <div id="mobile-menu" className={`mobile-menu ${mobileOpen ? 'active' : ''}`}>
         <div className="mobile-menu__links">
           {NAV_LINKS.map(link => (
-            <Link
-              key={link.href}
-              href={link.href}
-              onClick={e => onNavClick(e, link.href)}
-              className={`mobile-menu__link${pending === link.href ? ' is-pending' : ''} ${
-                isActive(link.match ?? link.href) ? 'active' : ''
-              }`}
-            >
-              {link.label}
-            </Link>
+            // Children are listed inline, not behind an accordion. This panel
+            // exists on the smallest screens, where a disclosure to open before
+            // the link you want is the extra tap being removed, not a saving.
+            <div key={link.href} className="mobile-menu__group">
+              <Link
+                href={link.href}
+                onClick={e => onNavClick(e, link.href)}
+                className={`mobile-menu__link${pending === link.href ? ' is-pending' : ''} ${
+                  isActive(link.match ?? link.href) ? 'active' : ''
+                }`}
+              >
+                {link.label}
+              </Link>
+              {link.children?.map(child => (
+                <Link
+                  key={child.href}
+                  href={child.href}
+                  onClick={e => onNavClick(e, child.href)}
+                  className={`mobile-menu__link mobile-menu__link--child${
+                    pending === child.href ? ' is-pending' : ''
+                  } ${isActive(child.href, child.exact) ? 'active' : ''}`}
+                >
+                  {child.label}
+                </Link>
+              ))}
+            </div>
           ))}
         </div>
 
