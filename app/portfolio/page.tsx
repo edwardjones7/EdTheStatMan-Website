@@ -6,10 +6,7 @@ import type { ModelPicksContent } from '@/lib/site-content'
 import type { TodaysBet } from '@/components/TodaysBets'
 import ModelPicksPage from '@/components/ModelPicksPage'
 import ModelPicksEditor from '@/components/ModelPicksEditor'
-import RecentPicksResults from '@/components/RecentPicksResults'
 import NeverMissAPick from '@/components/NeverMissAPick'
-import ModelPerformance from '@/components/ModelPerformance'
-import type { SportRecord } from '@/components/ModelPerformance'
 import { getAccess } from '@/lib/access-server'
 import { atLeastTier } from '@/lib/access'
 import { rowMinTier } from '@/lib/gate'
@@ -17,12 +14,15 @@ import { toBetTeaser, BET_TEASER_LIMIT } from '@/lib/teaser'
 import type { LockedBetTeaser } from '@/lib/teaser'
 
 export const metadata: Metadata = {
-  title: 'The Portfolio — EdTheStatMan.com',
-  description: 'Every pick, graded. Active plays updated daily with full transparency and a complete record.',
+  // Just the page name: app/layout.tsx appends ' – EdTheStatMan.com' through
+  // its title template, so carrying the site name here rendered
+  // "The Portfolio — EdTheStatMan.com – EdTheStatMan.com" in the tab.
+  title: 'The Portfolio',
+  description: 'Every active play the model is on, updated daily, with the full line and number on each one.',
   alternates: { canonical: 'https://edthestatman.com/portfolio' },
   openGraph: {
     title: 'The Portfolio — EdTheStatMan.com',
-    description: 'Every pick, graded. Active plays updated daily with full transparency and a complete record.',
+    description: 'Every active play the model is on, updated daily, with the full line and number on each one.',
     url: 'https://edthestatman.com/portfolio',
     images: [{ url: '/og-cover.jpg', width: 1200, height: 630 }],
   },
@@ -87,50 +87,13 @@ export default async function Portfolio() {
     .slice(0, BET_TEASER_LIMIT)
     .map(toBetTeaser)
 
-  // ---- The graded record, under the open plays -------------------------------
-  // TodaysBets drops every show_on_results row (components/TodaysBets.tsx:209),
-  // so this page rendered only the handful of open picks and the 199 graded ones
-  // appeared nowhere on it. "Complete graded history" is a Portfolio bullet, so
-  // the record belongs on the product's own page, not only on /portfolio/performance.
+  // The graded record is NOT on this page. It lives on /portfolio/performance,
+  // which the nav now reaches in one click, and one number in two places is one
+  // number that can disagree with itself.
   //
-  // Same source, filter and arithmetic as that page, deliberately: two pages
-  // quoting different records is worse than either number alone. allBets is
-  // already ordered created_at desc, which is the order both components expect.
-  //
-  // NOT gated. The record is public on /portfolio/performance and in the homepage
-  // brief; hiding it here would make the paywall look like it covers the results
-  // rather than the picks.
-  const recentPicks: TodaysBet[] = allBets.filter(b => b.show_on_results)
-  const wins   = recentPicks.filter(p => p.result === 'win').length
-  const losses = recentPicks.filter(p => p.result === 'loss').length
-  const pushes = recentPicks.filter(p => p.result === 'push').length
-  const winPct = (wins + losses) > 0 ? (wins / (wins + losses)) * 100 : 0
-  const calcStats = { wins, losses, pushes, winPct }
-
-  // Per-sport split of the SAME graded picks the headline uses, so the two can
-  // never disagree.
-  //
-  // The floor still bites at this grain: College Football has exactly ONE graded
-  // pick, and a 1-0 sport rendering "100%" beside a 90-pick record is noise
-  // wearing the costume of a result.
-  const BREAKDOWN_MIN = 5
-  const sportAgg = new Map<string, SportRecord>()
-  for (const r of recentPicks) {
-    const sport = (r.sport ?? '').trim()
-    if (!sport) continue
-    const agg = sportAgg.get(sport) ?? { sport, wins: 0, losses: 0, pushes: 0 }
-    if (r.result === 'win') agg.wins++
-    else if (r.result === 'loss') agg.losses++
-    else if (r.result === 'push') agg.pushes++
-    sportAgg.set(sport, agg)
-  }
-  const breakdown: SportRecord[] = [...sportAgg.values()]
-    .filter(s => s.wins + s.losses >= BREAKDOWN_MIN)
-    .sort((x, y) => {
-      const px = x.wins / (x.wins + x.losses)
-      const py = y.wins / (y.wins + y.losses)
-      return py !== px ? py - px : (y.wins + y.losses) - (x.wins + x.losses)
-    })
+  // `allBets` still carries the graded rows because the gate above counts them:
+  // TodaysBets drops every show_on_results row when it renders
+  // (components/TodaysBets.tsx:224), so they never reach the list either way.
 
   return (
     <>
@@ -148,13 +111,6 @@ export default async function Portfolio() {
           headerContent={headerContent}
         />
       )}
-      <ModelPerformance
-        calcStats={calcStats}
-        picks={recentPicks}
-        breakdown={breakdown}
-        breakdownMin={BREAKDOWN_MIN}
-      />
-      <RecentPicksResults rows={recentPicks} />
       <NeverMissAPick userTier={userTier} />
     </>
   )

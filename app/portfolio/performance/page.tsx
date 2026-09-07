@@ -7,6 +7,7 @@ import ResultsPage from '@/components/ResultsPage'
 import ResultsEditor from '@/components/ResultsEditor'
 import RecentPicksResults from '@/components/RecentPicksResults'
 import ModelPerformance from '@/components/ModelPerformance'
+import type { SportRecord } from '@/components/ModelPerformance'
 import CTASection from '@/components/CTASection'
 import type { TodaysBet } from '@/components/TodaysBets'
 
@@ -48,6 +49,32 @@ export default async function Results() {
   const winPct = (wins + losses) > 0 ? (wins / (wins + losses)) * 100 : 0
   const calcStats = { wins, losses, pushes, winPct }
 
+  // Per-sport split of the SAME graded picks the headline uses, so the two can
+  // never disagree. Moved here from /portfolio when the picks page stopped
+  // carrying results: this is the results page, so this is where it belongs.
+  //
+  // The floor bites at this grain: College Football has exactly ONE graded pick,
+  // and a 1-0 sport rendering "100%" beside a 90-pick record is noise wearing
+  // the costume of a result.
+  const BREAKDOWN_MIN = 5
+  const sportAgg = new Map<string, SportRecord>()
+  for (const r of recentPicks) {
+    const sport = (r.sport ?? '').trim()
+    if (!sport) continue
+    const agg = sportAgg.get(sport) ?? { sport, wins: 0, losses: 0, pushes: 0 }
+    if (r.result === 'win') agg.wins++
+    else if (r.result === 'loss') agg.losses++
+    else if (r.result === 'push') agg.pushes++
+    sportAgg.set(sport, agg)
+  }
+  const breakdown: SportRecord[] = [...sportAgg.values()]
+    .filter(s => s.wins + s.losses >= BREAKDOWN_MIN)
+    .sort((x, y) => {
+      const px = x.wins / (x.wins + x.losses)
+      const py = y.wins / (y.wins + y.losses)
+      return py !== px ? py - px : (y.wins + y.losses) - (x.wins + x.losses)
+    })
+
   let isAdmin = false
   const { data: { user } } = await supabase.auth.getUser()
   if (user) {
@@ -67,7 +94,12 @@ export default async function Results() {
     <>
       <ResultsPage content={content} picks={recentPicks} />
       <RecentPicksResults rows={recentPicks} />
-      <ModelPerformance calcStats={calcStats} picks={recentPicks} />
+      <ModelPerformance
+        calcStats={calcStats}
+        picks={recentPicks}
+        breakdown={breakdown}
+        breakdownMin={BREAKDOWN_MIN}
+      />
       <CTASection />
     </>
   )
