@@ -5,6 +5,22 @@ are in [`docs/RELEASING.md`](docs/RELEASING.md).
 
 This file starts at 3.0.0. Everything before it shipped untagged; see `git log`.
 
+## [3.2.0] — 2026-09-07
+
+### Added
+
+- **Dropdown menus on the three multi-page products.** The Portfolio (Picks,
+  Results), Research Desk (NFL, College Football) and The Vault (Systems,
+  Trends). The parent stays a link to its own default page; the menu removes the
+  first of the two page loads it used to take to reach the second page. On
+  mobile the children are listed inline under their parent rather than behind an
+  accordion.
+
+### Fixed
+
+- Nav active state used a prefix match everywhere, so on `/portfolio/performance`
+  both Picks and Results read as the current page.
+
 ## [3.1.0] — 2026-09-06
 
 ### Added
