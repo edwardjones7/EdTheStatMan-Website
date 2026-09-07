@@ -5,6 +5,18 @@ are in [`docs/RELEASING.md`](docs/RELEASING.md).
 
 This file starts at 3.0.0. Everything before it shipped untagged; see `git log`.
 
+## [3.6.0] — 2026-09-07
+
+### Added
+
+- **Research can be closed on a game once it has been played.** A checkbox on
+  each game shuts the Research Desk rung's in-context view of that game's
+  curated systems and trends, so a season of played games stops adding up to the
+  Private library. Private, Institutional and admins are unaffected; a Desk
+  member on a closed game sees the same record-only teasers a free reader does.
+  Requires `supabase/migrations/desk_01_research_closed.sql`; until it is
+  applied every game reads as open and the field is skipped on save.
+
 ## [3.5.0] — 2026-09-07
 
 ### Added
