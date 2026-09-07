@@ -5,6 +5,22 @@ are in [`docs/RELEASING.md`](docs/RELEASING.md).
 
 This file starts at 3.0.0. Everything before it shipped untagged; see `git log`.
 
+## [3.3.0] — 2026-09-07
+
+### Changed
+
+- **The Portfolio is the picks; `/portfolio/performance` is the results.** The
+  graded record, the per-sport split and the full results table came off the
+  picks page — they were there because reaching the results page used to take
+  two navigations, which the nav menus fixed. The per-sport breakdown moved to
+  the results page rather than being dropped.
+
+### Fixed
+
+- `/portfolio` rendered its title twice: "The Portfolio — EdTheStatMan.com –
+  EdTheStatMan.com". The layout appends the site name through a title template,
+  so a page must not carry it as well.
+
 ## [3.2.0] — 2026-09-07
 
 ### Added
