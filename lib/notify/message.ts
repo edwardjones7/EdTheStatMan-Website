@@ -22,6 +22,8 @@ export interface RenderedMessage {
    */
   body: string
   url: string
+  /** Button label. Has to match what the page will actually give this reader. */
+  cta: string
 }
 
 /**
@@ -47,5 +49,39 @@ export function renderPick(pick: NotifiablePick, audience: PickAudience): Render
       ? `A new free ${sport} pick is live. View it on the site.`
       : `A new ${sport} pick is live. Log in to view it.`,
     url,
+    cta: 'View the pick',
+  }
+}
+
+/**
+ * The same announcement, for somebody who cannot open the pick.
+ *
+ * Sent to every account below the pick's rung, so a name that has been sitting
+ * in the database since February still hears that the model is working. It
+ * gives away no more than the entitled version does, because that one carries
+ * nothing either -- the difference is entirely in what it PROMISES.
+ *
+ * "Log in to view it" is the wrong sentence for this reader. They can log in,
+ * and the pick still will not be there. A mail that sends somebody to a page
+ * that does not contain what the button offered is worse for the list than no
+ * mail at all: it is the reader's one data point about whether we are honest,
+ * and it converts a dormant account into an unsubscribe. So this variant says
+ * what is true -- a pick exists, at a rung above yours -- and the button offers
+ * the board rather than the pick.
+ *
+ * It points at /portfolio, not at /win. The locked board shows how many plays
+ * are sitting there and carries its own upgrade path, which argues the case
+ * better than a price list does.
+ */
+export function renderPickLocked(pick: NotifiablePick, audience: PickAudience): RenderedMessage {
+  const sport = pick.sport ?? 'New'
+  const tier = TIER_SHORT_LABEL[audience]
+  const url = `${SITE_URL}/portfolio`
+
+  return {
+    title: `A new ${sport} pick just dropped`,
+    body: `The model is on a new ${sport} play. It is open to ${tier} members — see what is on the board today.`,
+    url,
+    cta: 'See the board',
   }
 }

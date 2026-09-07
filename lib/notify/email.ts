@@ -6,7 +6,7 @@
 
 import { Resend } from 'resend'
 import type { NotifiablePick, PickAudience, Recipient } from './audience'
-import { renderPick, SITE_URL } from './message'
+import { renderPick, renderPickLocked, SITE_URL } from './message'
 import { TIER_SHORT_LABEL } from '@/lib/access'
 
 const FROM = 'EdTheStatMan Picks <noreply@edthestatman.com>'
@@ -59,13 +59,19 @@ function html(
   body: string,
   url: string,
   unsub: string,
-  audience: PickAudience
+  audience: PickAudience,
+  cta: string,
+  locked: boolean
 ): string {
   // Teal for the open rung, gold for anything paid -- the same two-colour rule
   // the site uses for free versus locked.
   const isFree = audience === 'retail'
-  const badgeText = isFree ? 'FREE PICK' : TIER_SHORT_LABEL[audience].toUpperCase()
-  const badgeColor = isFree ? C.teal : C.gold
+  // For a reader who cannot open it, the badge names the rung it is BEHIND
+  // rather than implying they have it.
+  const badgeText = locked
+    ? `${TIER_SHORT_LABEL[audience].toUpperCase()} MEMBERS`
+    : isFree ? 'FREE PICK' : TIER_SHORT_LABEL[audience].toUpperCase()
+  const badgeColor = isFree && !locked ? C.teal : C.gold
 
   return `<!doctype html>
 <html lang="en">
@@ -110,7 +116,7 @@ function html(
             <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-top:30px;">
               <tr>
                 <td align="center" bgcolor="${C.teal}" style="border-radius:7px;">
-                  <a href="${url}" style="display:inline-block;padding:14px 32px;font-family:${FONT};font-size:15px;font-weight:700;color:${C.bg};text-decoration:none;border-radius:7px;">View the pick &rarr;</a>
+                  <a href="${url}" style="display:inline-block;padding:14px 32px;font-family:${FONT};font-size:15px;font-weight:700;color:${C.bg};text-decoration:none;border-radius:7px;">${cta} &rarr;</a>
                 </td>
               </tr>
             </table>
@@ -141,18 +147,24 @@ function html(
 </html>`
 }
 
-export async function sendEmail(
-  pick: NotifiablePick,
+/**
+ * One announcement to one list, in one voice.
+ *
+ * Split out so the entitled list and the locked list can be sent with different
+ * copy without duplicating the chunking, the rate-limit retry and the
+ * per-recipient unsubscribe token.
+ */
+async function sendTo(
+  resend: Resend,
+  recipients: Recipient[],
   audience: PickAudience,
-  recipients: Recipient[]
-): Promise<{ sent: number; failed: number; errors?: string[] }> {
-  if (!process.env.RESEND_API_KEY) return { sent: 0, failed: 0 }
+  message: { title: string; body: string; url: string; cta: string },
+  locked: boolean
+): Promise<{ sent: number; failed: number; errors: string[] }> {
+  const { title, body, url, cta } = message
 
   const optedIn = recipients.filter((r) => r.emailOptIn)
-  if (optedIn.length === 0) return { sent: 0, failed: 0 }
-
-  const resend = new Resend(process.env.RESEND_API_KEY)
-  const { title, body, url } = renderPick(pick, audience)
+  if (optedIn.length === 0) return { sent: 0, failed: 0, errors: [] }
 
   let sent = 0
   let failed = 0
@@ -174,8 +186,8 @@ export async function sendEmail(
           from: FROM,
           to: r.email,
           subject: title,
-          text: `${body}\n\nView it: ${url}\n\nUnsubscribe: ${unsubscribeUrl(r.notifyToken)}`,
-          html: html(title, body, url, unsubscribeUrl(r.notifyToken), audience),
+          text: `${body}\n\n${cta}: ${url}\n\nUnsubscribe: ${unsubscribeUrl(r.notifyToken)}`,
+          html: html(title, body, url, unsubscribeUrl(r.notifyToken), audience, cta, locked),
           headers: {
             // Lets Gmail/Apple Mail show a native unsubscribe control, which
             // keeps pick alerts out of the spam folder as the list grows.
@@ -211,5 +223,56 @@ export async function sendEmail(
     }
   }
 
-  return errors.length > 0 ? { sent, failed, errors } : { sent, failed }
+  return { sent, failed, errors }
+}
+
+/**
+ * Announce a pick by email.
+ *
+ * TWO LISTS, ONE PICK. `entitled` is who can open it. `locked` is every other
+ * account -- the free rung, a lapsed member, a name that has not been back since
+ * February -- and they get a different message that promises only what the page
+ * will actually give them.
+ *
+ * This is only safe because NO EMAIL EVER CARRIES THE PICK (see message.ts).
+ * Both variants are an announcement and a link; widening the audience gives
+ * away nothing, it just tells more people the model is working. If a pick ever
+ * does start reaching this file, this function is the first thing that has to
+ * change back.
+ *
+ * NOTIFY_ANNOUNCE_ALL=false switches the second list off and restores the old
+ * behaviour exactly, without touching the entitled send.
+ */
+export async function sendEmail(
+  pick: NotifiablePick,
+  audience: PickAudience,
+  recipients: Recipient[],
+  locked: Recipient[] = []
+): Promise<{ sent: number; failed: number; announced?: number; errors?: string[] }> {
+  if (!process.env.RESEND_API_KEY) return { sent: 0, failed: 0 }
+
+  const resend = new Resend(process.env.RESEND_API_KEY)
+
+  // PAYING MEMBERS GO FIRST, and this is sequential on purpose rather than a
+  // Promise.all. The announcement list is ~30x the entitled one, so it is the
+  // send that will hit a provider quota. Doing it second means the quota runs
+  // out on the advertisement, never on the alert somebody paid for.
+  const primary = await sendTo(resend, recipients, audience, renderPick(pick, audience), false)
+
+  const announceAll = process.env.NOTIFY_ANNOUNCE_ALL !== 'false'
+  const secondary = announceAll && locked.length > 0
+    ? await sendTo(resend, locked, audience, renderPickLocked(pick, audience), true)
+    : { sent: 0, failed: 0, errors: [] as string[] }
+
+  const errors = [
+    ...primary.errors,
+    ...secondary.errors.map((e) => `announce: ${e}`),
+  ]
+
+  const result = {
+    sent: primary.sent,
+    announced: secondary.sent,
+    failed: primary.failed + secondary.failed,
+  }
+  return errors.length > 0 ? { ...result, errors } : result
 }

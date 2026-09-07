@@ -55,13 +55,31 @@ export interface Recipient {
   emailOptIn: boolean
 }
 
+function toRecipient(row: Record<string, any>): Recipient {
+  return {
+    id: row.id,
+    email: row.email,
+    notifyToken: row.notify_token,
+    emailOptIn: row.notify_email !== false,
+  }
+}
+
 /**
- * Members eligible for `audience`, with expired access already filtered out by
- * resolveAccess (a lapsed premium profile still reads subscription_tier
- * 'premium', so filtering on the column alone would notify people who can no
- * longer open the pick).
+ * Every account, split by whether they can open this pick.
+ *
+ * `entitled` is the audience that has always been notified. `locked` is
+ * everybody else with an account -- the free rung, a lapsed member, somebody who
+ * signed up in February and never came back.
+ *
+ * Expired access is filtered by resolveAccess rather than by the column: a
+ * lapsed profile still reads subscription_tier 'private', so filtering on that
+ * alone would put somebody in `entitled` who can no longer open the pick. It
+ * also means a lapsed member lands in `locked` and hears that the model is
+ * still working, which is the whole point of mailing that list.
  */
-export async function recipientsFor(audience: PickAudience): Promise<Recipient[]> {
+export async function splitRecipients(
+  audience: PickAudience
+): Promise<{ entitled: Recipient[]; locked: Recipient[] }> {
   const admin = createAdminClient()
 
   const { data, error } = await (admin as any)
@@ -71,20 +89,28 @@ export async function recipientsFor(audience: PickAudience): Promise<Recipient[]
   if (error) throw new Error(`Failed to load recipients: ${error.message}`)
 
   const rows = (data ?? []) as Array<Record<string, any>>
+  const entitled: Recipient[] = []
+  const locked: Recipient[] = []
 
-  return rows
-    .filter((row) => {
-      if (!row.email) return false
-      // The ladder predicate, not a parallel rule: if they could open the pick
-      // on the site, they hear about it. Inclusive, so a Private member is
-      // atLeast('desk') and gets Desk picks without being listed anywhere.
-      // Every row here is a registered profile, so all of them clear 'retail'.
-      return resolveAccess(row, true).atLeast(audience)
-    })
-    .map((row) => ({
-      id: row.id,
-      email: row.email,
-      notifyToken: row.notify_token,
-      emailOptIn: row.notify_email !== false,
-    }))
+  for (const row of rows) {
+    if (!row.email) continue
+    // The ladder predicate, not a parallel rule: if they could open the pick
+    // on the site, they hear about it. Inclusive, so a Private member is
+    // atLeast('desk') and gets Desk picks without being listed anywhere.
+    // Every row here is a registered profile, so all of them clear 'retail'.
+    if (resolveAccess(row, true).atLeast(audience)) entitled.push(toRecipient(row))
+    else locked.push(toRecipient(row))
+  }
+
+  return { entitled, locked }
+}
+
+/**
+ * Members eligible for `audience`. Push and Discord still use this: a browser
+ * notification is a poor place to advertise, and the Discord post is one message
+ * to a channel rather than a thing with an audience.
+ */
+export async function recipientsFor(audience: PickAudience): Promise<Recipient[]> {
+  const { entitled } = await splitRecipients(audience)
+  return entitled
 }

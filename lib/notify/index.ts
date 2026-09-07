@@ -5,7 +5,7 @@
 // product, the notification is a courtesy. Channels are isolated from each
 // other for the same reason.
 
-import { audienceForPick, recipientsFor, type NotifiablePick } from './audience'
+import { audienceForPick, splitRecipients, type NotifiablePick } from './audience'
 import { sendDiscord } from './discord'
 import { sendEmail } from './email'
 import { sendPush } from './push'
@@ -16,7 +16,7 @@ export interface NotifyResult {
   skipped?: string
   audience?: string
   discord?: { sent: number; mentioned: string | null } | { error: string }
-  email?: { sent: number; failed: number; errors?: string[] } | { error: string }
+  email?: { sent: number; failed: number; announced?: number; errors?: string[] } | { error: string }
   push?: { sent: number; pruned: number } | { error: string }
 }
 
@@ -49,13 +49,20 @@ export async function notifyNewPick(pick: NotifiablePick): Promise<NotifyResult>
 
   // Recipients drive both email and push; Discord doesn't need them and still
   // fires if this lookup fails.
-  const recipients = await guard('recipients', () => recipientsFor(audience))
-  const list = Array.isArray(recipients) ? recipients : []
+  //
+  // `locked` is every other account -- the free rung, a lapsed member, a name
+  // that has not signed in since February. Email announces to them as well, in
+  // its own words; push does not, because a browser notification is a poor
+  // place to advertise, and Discord does not, because it is one post to a
+  // channel rather than a thing with an audience.
+  const split = await guard('recipients', () => splitRecipients(audience))
+  const entitled = 'entitled' in split ? split.entitled : []
+  const locked = 'locked' in split ? split.locked : []
 
   const [discord, email, push] = await Promise.all([
     guard('discord', () => sendDiscord(pick, audience)),
-    guard('email', () => sendEmail(pick, audience, list)),
-    guard('push', () => sendPush(pick, audience, list)),
+    guard('email', () => sendEmail(pick, audience, entitled, locked)),
+    guard('push', () => sendPush(pick, audience, entitled)),
   ])
 
   return { audience, discord, email, push }
