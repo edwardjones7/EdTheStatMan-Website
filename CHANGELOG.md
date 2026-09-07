@@ -5,6 +5,16 @@ are in [`docs/RELEASING.md`](docs/RELEASING.md).
 
 This file starts at 3.0.0. Everything before it shipped untagged; see `git log`.
 
+## [3.7.2] — 2026-09-07
+
+### Fixed
+
+- Nav bar spacing after the dropdowns landed. A menu entry's hover and active
+  highlight covered only the label, not its caret; the active underline was
+  centred on the label rather than the group; and the label's padding was
+  uneven, which made menu entries look further apart than Blog and Membership.
+  All three now apply to the whole entry.
+
 ## [3.7.1] — 2026-09-07
 
 ### Fixed
