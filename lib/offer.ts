@@ -69,8 +69,11 @@ export interface OfferPlan {
 //   - Desk curated trends  nfl_game_trends = 0 rows
 //   - the weekly desk note desk_notes = 0 rows
 //   - system-trigger alerts  no such code; lib/notify fires on pick inserts
-//   - all four Institutional tools  no export route, query builder, key issuing
-//                                   or backtester exists anywhere in the repo
+//   - every Institutional tool      no query builder, key issuing or backtester
+//                                   exists anywhere in the repo
+// Row-level CSV export was cut on purpose (2026-09-07): handing members the raw
+// rows lets them leave with the data instead of coming back to the site. Do not
+// re-add an export bullet, or a route behind it, without Eddie saying so.
 //
 // THE z SPLIT IS THE REAL PRIVATE/INSTITUTIONAL LINE: Private carries 2.5-2.99,
 // Institutional carries 3.0+. There is no `z` column -- it is computed from w
@@ -175,7 +178,6 @@ export const OFFER_PLANS: OfferPlan[] = [
     features: [
       'Everything in Private Intelligence',
       'The highest-conviction library: the signals that clear our strictest bar, at this tier only',
-      'Coming this season — full row-level export, every system and trend as CSV',
       'Coming this season — query builder across the entire Vault',
       'Coming this season — API key for programmatic access',
       'Coming this season — backtest your own systems against our data',
@@ -205,7 +207,7 @@ export const OFFER_FREE_FEATURES: { text: string; included: boolean }[] = [
   { text: 'The picks themselves', included: false },
   { text: 'The season schedule and curated matchup trends', included: false },
   { text: 'The full Vault library', included: false },
-  { text: 'Raw export, query builder and API', included: false },
+  { text: 'The query builder and API access', included: false },
 ]
 
 export const OFFER_DISCLAIMER =

@@ -291,7 +291,7 @@ Steps 01 and 02 drop the two `posts` RLS policies, because Postgres refuses `ALT
 
 - `tier: null` means logged out. Expired paid users collapse to `'retail'` — several client components branch on `userTier === null` to mean "logged out", so that shape must not change.
 - `isPaid` means "has any paid rung". Correct for nav, CTAs and the account page; **wrong for content gates**, because the Vault library is `private`, the schedule is `desk`, and the picks are `portfolio`. Gate content with `atLeast()`.
-- `hasElite` is a deprecated shim for the old `is_elite` flag. It maps to `'private'`, **not** `'institutional'`: the top two rungs differ on *depth* of access (export, query builder, API, backtester), not on which rows exist.
+- `hasElite` is a deprecated shim for the old `is_elite` flag. It maps to `'private'`, **not** `'institutional'`: the top two rungs differ on *depth* of access (query builder, API, backtester), not on which rows exist.
 - The billing fields are zeroed unless `BILLING_SELECT` was in the select. `BILLING_SELECT` is deliberately separate from `ACCESS_SELECT` — entitlement must stay a function of `access_expires_at` alone, and `lib/notify/audience.ts` selects `ACCESS_SELECT` across every profile on the site.
 
 ### The house rule
@@ -480,7 +480,8 @@ Existing members hold one-time passes, so there is no recurring price to freeze 
 - **`site_content` has no migration** and `add_vig_to_todays_bets.sql` is empty. The repo cannot rebuild the database.
 - **ESPN host migration is done in `lib/espn.ts` but the NFL section is mid-rewrite.** `site.api.espn.com` began returning 403 (probed 2026-08-31: `cdn.espn.com`, `sports.core.api.espn.com` and `example.com` all returned 200 from the same machine, so it is not connectivity). `cdn.espn.com` is now primary with `site.api` kept as fallback, and it returns *more* than the old host did: spread, moneyline and total with **both open and close** prices, which removes the need for a paid odds vendor. `/nfl` is being generalised to `/desk/[sport]`, backed by `tier_ladder_06_desk_games.sql` — which is independent of steps 01-05 and can be applied any time, since all its columns are nullable and read defensively.
 - **Four components have zero importers**: `AdminContentTab`, `AdminEditOverlay`, `SystemsOverview`, `ActionCard`. `AdminSystemsTab` and `AdminTrendsTab` are imported only for their types. (`StatBotPreview` is gone from this branch entirely, with the bot it previewed — §8b.)
-- **The Institutional card still oversells.** `lib/offer.ts` promises a backtester and an API key; neither exists, and with EdTheStatBot parked (§8b) the export and query-builder tools that did exist are not in this build either.
+- **The Institutional card still oversells.** `lib/offer.ts` promises a backtester and an API key; neither exists, and with EdTheStatBot parked (§8b) the query-builder tool that did exist is not in this build either.
+- **Row-level CSV export is deliberately not a feature** (decided 2026-09-07). There is no export route, button or download anywhere, and the copy no longer promises one: letting members walk off with the raw rows competes with the reason to come back to the site. Treat any future "add a CSV export" request as a product decision for Eddie, not a gap to fill.
 - **No tests, anywhere.** `npx tsc --noEmit` is the only automated check, and it currently passes on application code (the only errors are stale `.next/types/**` artifacts, which clear on the next build).
 - **A checked-in `.git-elenos-backup/` directory** is tracked in git and should not be.
 

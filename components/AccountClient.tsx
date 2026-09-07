@@ -34,7 +34,7 @@ const TIER_DESCRIPTION: Record<SubscriptionTier, string> = {
   portfolio: 'Every pick, unlocked, with the full line and unit sizing.',
   desk: 'The season schedule with curated trends attached to every matchup, plus everything in The Portfolio.',
   private: 'The complete systems and trends libraries, filterable, plus everything in The Research Desk.',
-  institutional: 'Raw row export, query builder, API key and backtester on top of everything in Private Intelligence.',
+  institutional: 'Query builder, API key and backtester on top of everything in Private Intelligence.',
 }
 
 function formatDate(dateStr: string) {

@@ -51,8 +51,8 @@ const LEVELS: {
     tier: 'institutional',
     name: 'Institutional Intelligence',
     price: '$399/mo · $1,499 season',
-    body: 'The raw material underneath the conclusions: full row export, a query builder across the whole Vault, an API key, and a backtester for your own systems.',
-    features: ['Full row export', 'Query builder across the whole Vault', 'API key', 'Backtester for your own systems'],
+    body: 'The raw material underneath the conclusions: a query builder across the whole Vault, an API key, and a backtester for your own systems.',
+    features: ['Query builder across the whole Vault', 'API key', 'Backtester for your own systems'],
   },
 ]
 

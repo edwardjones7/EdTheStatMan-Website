@@ -210,8 +210,8 @@ export interface Access {
   isPaid: boolean
   /**
    * @deprecated Shim for the pre-v3 `is_elite` content flag. Maps to 'private',
-   * NOT 'institutional': the top two rungs differ on DEPTH of access (export,
-   * query builder, API, backtester), not on which rows exist. Private is "the
+   * NOT 'institutional': the top two rungs differ on DEPTH of access (query
+   * builder, API, backtester), not on which rows exist. Private is "the
    * finished product" and therefore includes every row. Migrate call sites to
    * atLeast('private') and delete this.
    */
