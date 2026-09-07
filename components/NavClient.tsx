@@ -306,6 +306,13 @@ export default function NavClient({ user, membership = 'logged-out' }: NavClient
           <div className="nav__links">
             {NAV_LINKS.map(link => {
               const href = link.match === '/desk' ? deskHref : link.href
+              // Active lives on the GROUP as well as the link. The highlight and
+              // the underline are drawn on the wrapper so they cover the caret
+              // too; without this a menu item's underline sits under the label
+              // only and reads ~10px left of centre.
+              const active = isActive(link.match ?? link.href)
+              const itemClass =
+                `nav__item${link.offer ? ' nav__item--offer' : ''}${active ? ' is-active' : ''}`
               const linkEl = (
                 <Link
                   href={href}
@@ -318,13 +325,13 @@ export default function NavClient({ user, membership = 'logged-out' }: NavClient
                 </Link>
               )
 
-              if (!link.children) return <div key={link.href} className="nav__item">{linkEl}</div>
+              if (!link.children) return <div key={link.href} className={itemClass}>{linkEl}</div>
 
               const open = openMenu === link.href
               return (
                 <div
                   key={link.href}
-                  className={`nav__item nav__item--has-menu${open ? ' is-open' : ''}`}
+                  className={`${itemClass} nav__item--has-menu${open ? ' is-open' : ''}`}
                   onMouseEnter={() => openNow(link.href)}
                   onMouseLeave={closeSoon}
                   // Keyboard and screen readers walk into the group with Tab

@@ -366,21 +366,13 @@ input, textarea, select {
   white-space: nowrap;
 }
 
-.nav__link:hover,
+/* The highlight and the underline live on .nav__item, not here -- see the
+   Nav dropdowns block below. A menu entry is a link PLUS a caret, and styling
+   only the link left the hover box 19px narrower than the thing you are
+   pointing at, with the underline centred on the label instead of the group. */
+.nav__item:hover .nav__link,
 .nav__link.active {
   color: var(--text-heading);
-  background: rgba(255, 255, 255, 0.05);
-}
-
-.nav__link.active::after {
-  content: '';
-  position: absolute;
-  bottom: 2px;
-  left: 16px;
-  right: 16px;
-  height: 2px;
-  background: var(--accent-teal);
-  border-radius: 2px;
 }
 
 /* ---------- Nav dropdowns --------------------------------------------------
@@ -393,16 +385,43 @@ input, textarea, select {
   position: relative;
   display: flex;
   align-items: center;
+  border-radius: var(--radius-sm);
+  transition: background var(--transition-fast);
 }
 
+.nav__item:hover,
+.nav__item.is-active {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.nav__item.is-active::after {
+  content: '';
+  position: absolute;
+  bottom: 2px;
+  left: 16px;
+  right: 16px;
+  height: 2px;
+  background: var(--accent-teal);
+  border-radius: 2px;
+}
+
+/* Membership keeps its gradient rule now that the underline moved up a level. */
+.nav__item--offer.is-active::after {
+  background: var(--gradient-primary);
+}
+
+/* The label's right padding moves onto the caret, so the group is padded 11px
+   on both outer edges exactly like a plain link, with only 4px between the
+   label and its chevron. Before this the label sat 11px from one edge and 23px
+   from the other, which is the unevenness between menu and non-menu entries. */
 .nav__item--has-menu > .nav__link {
-  padding-right: 4px;
+  padding-right: 2px;
 }
 
 .nav__caret {
   display: flex;
   align-items: center;
-  padding: 8px 7px 8px 3px;
+  padding: 8px 11px 8px 2px;
   color: var(--text-muted);
   background: none;
   border: none;
@@ -412,7 +431,6 @@ input, textarea, select {
 }
 
 .nav__item:hover .nav__caret,
-.nav__caret:hover,
 .nav__caret:focus-visible {
   color: var(--text-heading);
 }
@@ -6267,9 +6285,9 @@ textarea.form-input {
   color: var(--accent-teal);
 }
 
-.nav__link--offer::after {
-  background: var(--gradient-primary);
-}
+/* Superseded: the underline is drawn on .nav__item--offer.is-active now, since
+   .nav__link no longer carries one. Left as a no-op would be a trap for the
+   next person, so it is gone rather than dead. */
 
 /* Icon-only X button, used when the offer CTA takes the primary slot */
 .nav__cta--icon {
