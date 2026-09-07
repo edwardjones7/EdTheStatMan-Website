@@ -5,6 +5,7 @@ import CTASection from '@/components/CTASection'
 import DeskWeekBoard from '@/components/DeskWeekBoard'
 import NflAdminBar from '@/components/NflAdminBar'
 import DeskNoteEditor from '@/components/DeskNoteEditor'
+import DeskLiveRefresh from '@/components/DeskLiveRefresh'
 import PricingCards from '@/components/PricingCards'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getAccess } from '@/lib/access-server'
@@ -172,6 +173,22 @@ export default async function DeskSport({
 
   const label = deskSportLabel(sport)
 
+  // Is this week worth watching? A game in progress, or one close enough to
+  // kickoff that it is about to be. Decided on the SERVER so the client never
+  // reaches for a clock during render and disagrees with the HTML it hydrates
+  // -- the same reason groupSlate() orders on `status` and never on Date.now().
+  //
+  // The kickoff window matters as much as the live check: a board loaded five
+  // minutes before the first game would otherwise sit there through kickoff,
+  // showing `pre`, because nothing was live at the moment it rendered.
+  const KICKOFF_SOON_MS = 30 * 60 * 1000
+  const nowMs = Date.now()
+  const weekIsLive = weekGames.some(g => {
+    if (g.status === 'in') return true
+    if (g.status !== 'pre' || !g.kickoff) return false
+    return new Date(g.kickoff).getTime() - nowMs <= KICKOFF_SOON_MS
+  })
+
   return (
     <main>
       <section className="section" style={{ paddingBottom: '40px' }}>
@@ -184,6 +201,11 @@ export default async function DeskSport({
               and the trends we have pulled for that specific matchup.
             </p>
           </div>
+
+          {/* Keeps this board current while it is open. Renders a status line
+              only when something is actually live; otherwise it does one
+              catch-up sync on arrival and shows nothing. */}
+          <DeskLiveRefresh sport={sport} live={weekIsLive} />
 
           {DESK_SPORTS.length > 1 && (
             <div className="desk-sports">

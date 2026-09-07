@@ -4,6 +4,10 @@
     {
       "path": "/api/cron/discord-sync",
       "schedule": "0 8 * * *"
+    },
+    {
+      "path": "/api/cron/desk-sync",
+      "schedule": "0 11 * * *"
     }
   ]
 }
