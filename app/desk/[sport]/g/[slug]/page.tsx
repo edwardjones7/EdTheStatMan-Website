@@ -10,7 +10,7 @@ import {
   gameBrief, gameBriefSentences, spreadLabel, moneylineLabel, lineMove,
 } from '@/lib/nfl'
 import type { NflGame } from '@/lib/nfl'
-import { deskSportLabel } from '@/lib/desk'
+import { deskSportLabel, SPORT_SHORT } from '@/lib/desk'
 import { toTeaser } from '@/lib/teaser'
 import type { LockedTeaser } from '@/lib/teaser'
 import NflGameAdminPanel from '@/components/NflGameAdminPanel'
@@ -415,6 +415,19 @@ export default async function NflGamePage({ params }: { params: { sport: string;
   )
 }
 
+/**
+ * Badge text for a curated row, from the row itself.
+ *
+ * SPORT_SHORT is the shared badge map (lib/desk.ts) and is what the Vault pages
+ * label these same rows with, so a trend reads CFB in both places. Falls back to
+ * the raw value uppercased rather than to a league name, because guessing wrong
+ * here is what produced the bug this replaces.
+ */
+function sportBadge(sport: string | null | undefined): string {
+  const key = (sport ?? '').trim()
+  return SPORT_SHORT[key as keyof typeof SPORT_SHORT] ?? key.toUpperCase() ?? ''
+}
+
 function LinkedSection({ title, visible, locked, lockedElite, href }: {
   title: string
   visible: any[]
@@ -430,7 +443,13 @@ function LinkedSection({ title, visible, locked, lockedElite, href }: {
           <div key={row.id} className={`sys-row-card sys-row-card--${row.sport}`}>
             <div className="sys-row-card__body">
               <div className="sys-row-card__sport-col">
-                <span className="sys-row-card__sport-badge">{row.sport === 'nflpre' ? 'NFL Pre' : 'NFL'}</span>
+                {/* The row's OWN sport. This said 'NFL' for anything that was
+                    not nflpre -- written when the Desk was NFL-only -- so a
+                    Rutgers trend curated onto a college game wore an NFL badge
+                    while its code right underneath it read RUTGT00002. The
+                    colour beside it was already sport-driven, which made the
+                    mismatch look like a rendering bug rather than a label. */}
+                <span className="sys-row-card__sport-badge">{sportBadge(row.sport)}</span>
               </div>
               <div className="sys-row-card__desc-col">
                 <div className="sys-row-card__desc">{row.description}</div>
@@ -456,10 +475,10 @@ function LinkedSection({ title, visible, locked, lockedElite, href }: {
           </div>
         ))}
         {lockedElite.map(t => (
-          <LockedTeaserCard key={t.id} teaser={t} sportLabel="NFL" sportClass={t.sport} variant="elite" />
+          <LockedTeaserCard key={t.id} teaser={t} sportLabel={sportBadge(t.sport)} sportClass={t.sport} variant="elite" />
         ))}
         {locked.map(t => (
-          <LockedTeaserCard key={t.id} teaser={t} sportLabel="NFL" sportClass={t.sport} />
+          <LockedTeaserCard key={t.id} teaser={t} sportLabel={sportBadge(t.sport)} sportClass={t.sport} />
         ))}
       </div>
       <p style={{ marginTop: '12px' }}>
