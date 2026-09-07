@@ -5,6 +5,26 @@ are in [`docs/RELEASING.md`](docs/RELEASING.md).
 
 This file starts at 3.0.0. Everything before it shipped untagged; see `git log`.
 
+## [3.4.0] — 2026-09-07
+
+### Added
+
+- **The Research Desk keeps itself current.** The board syncs the week it is
+  showing when you arrive, and again every 60 seconds while a game is live or
+  about to kick off, then re-renders — so it lands on the current week with real
+  scores and leads each day with what is in progress, without anyone pressing
+  Sync. A daily cron (`/api/cron/desk-sync`) covers this week and next for both
+  sports when nobody is on the page.
+- `lib/desk-sync.ts`: one sync implementation, shared by the admin button, the
+  board and the cron.
+
+### Fixed
+
+- A sync rewrote every row it read even when nothing had changed, because
+  `kickoff` compared unequal on every game — the parser writes `.000Z` and
+  PostgREST returns `+00:00` for the same instant. A college week went from 99
+  writes and 12.9s to 0 writes and 4.2s.
+
 ## [3.3.0] — 2026-09-07
 
 ### Changed
