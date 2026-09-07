@@ -8,6 +8,9 @@ import { spreadLabel, moneylineLabel, lineMove, groupSlate } from '@/lib/nfl'
 import { IconLock, IconArrowRight, IconChevronLeft, IconChevronRight } from './Icons'
 import { teamLogoUrl } from '@/lib/logos'
 import { CFB_SCHOOLS } from '@/lib/teams-cfb'
+import {
+  DESK_SPORT_COOKIE, deskWeekCookie, formatDeskPlace, DESK_PLACE_MAX_AGE,
+} from '@/lib/desk-place'
 
 interface WeekOption {
   season_type: number
@@ -17,6 +20,7 @@ interface WeekOption {
 
 interface Props {
   sport: string
+  season: number
   games: PublicNflGame[]
   weeks: WeekOption[]
   active: { season_type: number; week: number } | null
@@ -61,10 +65,25 @@ function teamName(sport: string, team: string, abbrev: string): string {
 }
 
 export default function DeskWeekBoard({
-  sport, games, weeks, active, linkedCounts, hasDesk, isAdmin,
+  sport, season, games, weeks, active, linkedCounts, hasDesk, isAdmin,
 }: Props) {
   const router = useRouter()
   const pathname = usePathname()
+
+  // Remember where the reader is, so leaving the Desk and coming back returns
+  // them here rather than to the first week with a game left in it. Written on
+  // whatever the SERVER settled on (`active`), not on what was clicked, so a
+  // navigation that failed or was superseded never records a week the board is
+  // not actually showing. See lib/desk-place.ts for why this is a cookie.
+  useEffect(() => {
+    if (!active) return
+    const base = `; path=/; max-age=${DESK_PLACE_MAX_AGE}; samesite=lax`
+    document.cookie = `${DESK_SPORT_COOKIE}=${sport}${base}`
+    document.cookie =
+      `${deskWeekCookie(sport)}=` +
+      formatDeskPlace({ season, seasonType: active.season_type, week: active.week }) +
+      base
+  }, [sport, season, active])
 
   // Switching weeks is a server round trip on a force-dynamic page, and React
   // holds the old screen while it runs. Without a pending state the board looks

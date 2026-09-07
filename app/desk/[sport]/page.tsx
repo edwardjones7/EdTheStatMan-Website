@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { cookies } from 'next/headers'
 import { notFound } from 'next/navigation'
 import CTASection from '@/components/CTASection'
 import DeskWeekBoard from '@/components/DeskWeekBoard'
@@ -13,6 +14,7 @@ import { atLeastTier, normalizeTier } from '@/lib/access'
 import { toPublicGame, currentWeekOf, weekLabel } from '@/lib/nfl'
 import type { NflGame, PublicNflGame } from '@/lib/nfl'
 import { DESK_SPORTS, deskSportLabel } from '@/lib/desk'
+import { deskWeekCookie, parseDeskPlace } from '@/lib/desk-place'
 
 export const dynamic = 'force-dynamic'
 
@@ -107,11 +109,29 @@ export default async function DeskSport({
 
   const requestedType = searchParams.type === 'post' ? 3 : searchParams.week ? 2 : null
   const requestedWeek = Number(searchParams.week) || null
+
+  // No week in the URL means the reader arrived from somewhere else -- the nav,
+  // a bookmark, the Portfolio and back. Before deciding for them, see whether
+  // they already have a place on this board.
+  //
+  // Validated three ways before it is trusted, because it is a cookie: the
+  // season has to be the one being shown (last season's Week 5 is not this
+  // season's), and the week has to exist in weekMap, which is built from rows
+  // this viewer is allowed to see. A stale or forged value falls through to the
+  // ordinary default rather than 404ing or showing an empty board.
+  const remembered = parseDeskPlace(cookies().get(deskWeekCookie(sport))?.value)
+  const rememberedWeek =
+    remembered &&
+    remembered.season === season &&
+    weekMap.has(`${remembered.seasonType}-${remembered.week}`)
+      ? { season_type: remembered.seasonType, week: remembered.week }
+      : null
+
   const fallback = currentWeekOf(visibleWeekRows, new Date())
   const active =
     requestedType && requestedWeek && weekMap.has(`${requestedType}-${requestedWeek}`)
       ? { season_type: requestedType, week: requestedWeek }
-      : fallback ?? null
+      : rememberedWeek ?? fallback ?? null
 
   const { data: gamesData } = active
     ? await (admin as any)
@@ -264,6 +284,7 @@ export default async function DeskSport({
           ) : (
             <DeskWeekBoard
               sport={sport}
+              season={season}
               games={weekGames}
               weeks={weeks}
               active={active}

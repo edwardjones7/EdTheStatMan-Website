@@ -9,6 +9,7 @@ import { IconUser, IconSettings, IconBolt } from './Icons'
 import type { Membership } from '@/lib/access'
 import type { SubscriptionTier } from '@/lib/supabase/types'
 import { DESK_SPORTS } from '@/lib/desk'
+import { DESK_SPORT_COOKIE } from '@/lib/desk-place'
 
 interface NavClientProps {
   membership: Membership
@@ -126,6 +127,28 @@ export default function NavClient({ user, membership = 'logged-out' }: NavClient
   const watcher = useRef<MutationObserver | null>(null)
   /** href of the parent whose menu is open, or null. One at a time. */
   const [openMenu, setOpenMenu] = useState<string | null>(null)
+  /**
+   * Research Desk points at the board the reader was last on.
+   *
+   * Read on the client rather than served in the markup, because this bar is
+   * rendered inside the root layout on every route -- making it depend on a
+   * cookie would make every page's HTML vary by it. The default is the same
+   * link it has always been, and the swap lands well before anyone can click.
+   *
+   * Deliberately NOT `/desk`, which would let the server pick the sport: that
+   * is a redirect, and a redirect is a round trip the router cannot paint
+   * through -- ~480ms of a click with no answer, which is the whole reason this
+   * link names a board directly.
+   */
+  const [deskHref, setDeskHref] = useState(`/desk/${DESK_SPORTS[0]}`)
+
+  useEffect(() => {
+    const match = document.cookie.match(new RegExp(`(?:^|; )${DESK_SPORT_COOKIE}=([^;]*)`))
+    const sport = match ? decodeURIComponent(match[1]) : null
+    if (sport && (DESK_SPORTS as readonly string[]).includes(sport)) {
+      setDeskHref(`/desk/${sport}`)
+    }
+  }, [pathname])
   // Closing on mouseleave with no delay makes the menu unusable: the pointer
   // has to cross the gap between the parent and the panel, and any diagonal
   // path leaves both for a frame.
@@ -282,12 +305,13 @@ export default function NavClient({ user, membership = 'logged-out' }: NavClient
 
           <div className="nav__links">
             {NAV_LINKS.map(link => {
+              const href = link.match === '/desk' ? deskHref : link.href
               const linkEl = (
                 <Link
-                  href={link.href}
-                  onClick={e => onNavClick(e, link.href)}
+                  href={href}
+                  onClick={e => onNavClick(e, href)}
                   className={`nav__link${link.offer ? ' nav__link--offer' : ''}${
-                    pending === link.href ? ' is-pending' : ''
+                    pending === href ? ' is-pending' : ''
                   } ${isActive(link.match ?? link.href) ? 'active' : ''}`}
                 >
                   {link.label}
@@ -405,11 +429,11 @@ export default function NavClient({ user, membership = 'logged-out' }: NavClient
             // the link you want is the extra tap being removed, not a saving.
             <div key={link.href} className="mobile-menu__group">
               <Link
-                href={link.href}
-                onClick={e => onNavClick(e, link.href)}
-                className={`mobile-menu__link${pending === link.href ? ' is-pending' : ''} ${
-                  isActive(link.match ?? link.href) ? 'active' : ''
-                }`}
+                href={link.match === '/desk' ? deskHref : link.href}
+                onClick={e => onNavClick(e, link.match === '/desk' ? deskHref : link.href)}
+                className={`mobile-menu__link${
+                  pending === (link.match === '/desk' ? deskHref : link.href) ? ' is-pending' : ''
+                } ${isActive(link.match ?? link.href) ? 'active' : ''}`}
               >
                 {link.label}
               </Link>
