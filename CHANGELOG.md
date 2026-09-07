@@ -5,6 +5,18 @@ are in [`docs/RELEASING.md`](docs/RELEASING.md).
 
 This file starts at 3.0.0. Everything before it shipped untagged; see `git log`.
 
+## [3.7.0] — 2026-09-07
+
+### Changed
+
+- **Pick emails now reach every account, not just entitled members.** Anyone who
+  cannot open the pick gets a different message — it names the rung the pick sits
+  behind and links to the board, rather than telling them to log in and view
+  something they will not find. Safe because no email has ever carried the pick
+  itself. Entitled members are sent first, so a provider quota runs out on the
+  announcement and never on a paid alert. `NOTIFY_ANNOUNCE_ALL=false` restores
+  the old behaviour. Push and Discord are unchanged.
+
 ## [3.6.0] — 2026-09-07
 
 ### Added
