@@ -90,16 +90,16 @@ Card `4242 4242 4242 4242`, any future expiry, any CVC.
 Buy each SKU from `/win` and assert after each. Reset with step 8's cleanup
 between rungs, or the anti-downgrade guard will legitimately block the next one.
 
-| # | SKU | Mode | Expect on `profiles` |
-|---|---|---|---|
-| 1 | Portfolio month $49 | payment | `pass_tier=portfolio`, `pass_expires_at` = +30d, `billing_mode=pass` |
-| 2 | Portfolio season $199 | payment | `pass_tier=portfolio`, `pass_expires_at=2027-02-15T12:00Z` |
-| 3 | Desk month $129 | **subscription** | `sub_tier=desk`, `sub_current_period_end` = +1mo, `billing_mode=subscription` |
-| 4 | Desk season $499 | payment | `pass_tier=desk`, `pass_expires_at=2027-02-15T12:00Z` |
-| 5 | Private month $199 | **subscription** | `sub_tier=private` |
-| 6 | Private season $799 | payment | `pass_tier=private` |
-| 7 | Institutional month $399 | **subscription** | `sub_tier=institutional` |
-| 8 | Institutional season $1,499 | payment | `pass_tier=institutional` |
+| # | SKU                         | Mode                   | Expect on `profiles`                                                               |
+| - | --------------------------- | ---------------------- | ----------------------------------------------------------------------------------- |
+| 1 | Portfolio month $49         | payment                | `pass_tier=portfolio`, `pass_expires_at` = +30d, `billing_mode=pass`          |
+| 2 | Portfolio season $199       | payment                | `pass_tier=portfolio`, `pass_expires_at=2027-02-15T12:00Z`                      |
+| 3 | Desk month $129             | **subscription** | `sub_tier=desk`, `sub_current_period_end` = +1mo, `billing_mode=subscription` |
+| 4 | Desk season $499            | payment                | `pass_tier=desk`, `pass_expires_at=2027-02-15T12:00Z`                           |
+| 5 | Private month $199          | **subscription** | `sub_tier=private`                                                                |
+| 6 | Private season $799         | payment                | `pass_tier=private`                                                               |
+| 7 | Institutional month $399    | **subscription** | `sub_tier=institutional`                                                          |
+| 8 | Institutional season $1,499 | payment                | `pass_tier=institutional`                                                         |
 
 After every one, `subscription_tier` and `access_expires_at` are **derived** --
 never written by a handler -- so check they match the highest active slot.
