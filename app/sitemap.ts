@@ -1,6 +1,7 @@
 import type { MetadataRoute } from 'next'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { DESK_SPORTS } from '@/lib/desk'
+import { gamePath } from '@/lib/nfl'
 
 const BASE = 'https://edthestatman.com'
 
@@ -51,7 +52,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // now that the table holds more than one league, filed college games under
   // the NFL.
   const gameRoutes: MetadataRoute.Sitemap = (games ?? []).map((game: any) => ({
-    url: `${BASE}/desk/${game.sport ?? 'nfl'}/g/${game.slug}`,
+    url: `${BASE}${gamePath(game.sport ?? 'nfl', game.slug)}`,
     lastModified: game.updated_at ? new Date(game.updated_at) : new Date(),
     changeFrequency: 'daily' as const,
     priority: 0.7,

@@ -8,6 +8,7 @@ import { rowMinTier } from '@/lib/gate'
 import {
   toPublicGame, weekLabel, writeupWordCount,
   gameBrief, gameBriefSentences, spreadLabel, moneylineLabel, lineMove,
+  decodeSlugParam, gamePath,
 } from '@/lib/nfl'
 import type { NflGame } from '@/lib/nfl'
 import { deskSportLabel, SPORT_SHORT } from '@/lib/desk'
@@ -22,11 +23,13 @@ export const dynamic = 'force-dynamic'
 
 export async function generateMetadata({ params }: { params: { sport: string; slug: string } }): Promise<Metadata> {
   const admin = createAdminClient()
+  // Page params arrive percent-encoded; the stored slug is not. See decodeSlugParam.
+  const slug = decodeSlugParam(params.slug)
   const { data: game } = await (admin as any)
     .from('nfl_games')
     .select('*')
     .eq('sport', params.sport.toLowerCase())
-    .eq('slug', params.slug)
+    .eq('slug', slug)
     .maybeSingle()
 
   if (!game || !game.is_published) return { title: 'Game Not Found' }
@@ -35,7 +38,7 @@ export async function generateMetadata({ params }: { params: { sport: string; sl
   // The generated brief is the fallback description: two sentences of it say
   // more about the matchup than the old boilerplate did, and it is never empty.
   const description = game.brief || gameBriefSentences(game).slice(0, 2).join(' ')
-  const url = `https://edthestatman.com/desk/${params.sport}/g/${params.slug}`
+  const url = `https://edthestatman.com${gamePath(params.sport, slug)}`
   return {
     title,
     description,
@@ -87,7 +90,8 @@ export default async function NflGamePage({ params }: { params: { sport: string;
     // Scoped by sport as well as slug: the slug is unique table-wide, but a
     // game should only ever answer under its own league's path.
     .eq('sport', params.sport.toLowerCase())
-    .eq('slug', params.slug)
+    // Decoded, or every slug carrying an `&` misses and 404s a live game.
+    .eq('slug', decodeSlugParam(params.slug))
     .maybeSingle()
 
   const game: NflGame | null = gameRow ?? null
@@ -246,7 +250,7 @@ export default async function NflGamePage({ params }: { params: { sport: string;
     systems.visible.length + systems.locked.length + systems.lockedElite.length +
     trends.visible.length + trends.locked.length + trends.lockedElite.length
   const hasResearch = publicGame.has_writeup || linkedCount > 0
-  const url = `https://edthestatman.com/desk/${params.sport}/g/${game.slug}`
+  const url = `https://edthestatman.com${gamePath(params.sport, game.slug)}`
 
   return (
     <main>

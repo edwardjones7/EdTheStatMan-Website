@@ -146,7 +146,55 @@ export function buildGameSlug(
 ): string {
   const stage = seasonType === 3 ? `post${week}` : `wk${week}`
   const prefix = sport === 'nfl' ? '' : `${sport}-`
-  return `${prefix}${season}-${stage}-${awayAbbrev}-at-${homeAbbrev}`.toLowerCase()
+  return `${prefix}${season}-${stage}-${slugPart(awayAbbrev)}-at-${slugPart(homeAbbrev)}`.toLowerCase()
+}
+
+/**
+ * An abbreviation reduced to what belongs in a URL path.
+ *
+ * ESPN's abbreviations are not all alphanumeric: Texas A&M is TA&M and William
+ * & Mary is W&M, and an `&` dropped straight into a path is what made those
+ * games unreachable (see `decodeSlugParam`). Hyphens survive because M-OH
+ * already ships slugs with one in them and there is no reason to churn those.
+ *
+ * Verified collision-free against every abbreviation in nfl_games, per sport,
+ * for both leagues.
+ */
+function slugPart(abbrev: string): string {
+  return (abbrev ?? '').toLowerCase().replace(/[^a-z0-9-]+/g, '')
+}
+
+/**
+ * A `[slug]` route param as the page can actually query with it.
+ *
+ * Next hands App Router PAGE params percent-encoded — Route Handlers get them
+ * already decoded, which is why an API probe of the same slug passes while the
+ * page 404s. A browser asking for `/desk/cfb/g/cfb-2026-wk3-uk-at-ta&m` reaches
+ * the page as `cfb-2026-wk3-uk-at-ta%26m`, which equals no row in the table, so
+ * a published game answers `notFound()`. That was every Texas A&M game plus
+ * W&M at Duke: thirteen live pages, all of them 404.
+ *
+ * Slugs are frozen at insert (SEO), so the thirteen `&` rows stay as they are
+ * and this is what lets them resolve. New rows no longer mint an `&` at all.
+ *
+ * A malformed escape (`%` not followed by two hex digits) throws out of
+ * decodeURIComponent; fall back to the raw value, which misses and 404s — the
+ * same answer as before, rather than a 500.
+ */
+export function decodeSlugParam(raw: string): string {
+  try {
+    return decodeURIComponent(raw)
+  } catch {
+    return raw
+  }
+}
+
+/**
+ * The one URL form for a game, safe to put in an href, a canonical tag or a
+ * sitemap. A no-op for every slug that is already plain.
+ */
+export function gamePath(sport: string, slug: string): string {
+  return `/desk/${encodeURIComponent(sport)}/g/${encodeURIComponent(slug)}`
 }
 
 const POSTSEASON_LABELS: Record<string, Record<number, string>> = {

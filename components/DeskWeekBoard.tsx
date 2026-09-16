@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback, useTransition } from 'react'
 import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
 import type { PublicNflGame } from '@/lib/nfl'
-import { spreadLabel, moneylineLabel, lineMove, groupSlate } from '@/lib/nfl'
+import { spreadLabel, moneylineLabel, lineMove, groupSlate, gamePath } from '@/lib/nfl'
 import { IconLock, IconArrowRight, IconChevronLeft, IconChevronRight } from './Icons'
 import { teamLogoUrl } from '@/lib/logos'
 import { CFB_SCHOOLS } from '@/lib/teams-cfb'
@@ -307,7 +307,7 @@ export default function DeskWeekBoard({
               return (
                 <Link
                   key={g.id}
-                  href={`/desk/${sport}/g/${g.slug}`}
+                  href={gamePath(sport, g.slug)}
                   className={`desk-card${final ? ' desk-card--final' : ''}${live ? ' desk-card--live' : ''}`}
                 >
                   <div className="desk-card__top">
