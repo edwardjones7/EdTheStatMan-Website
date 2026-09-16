@@ -9,7 +9,7 @@ import { IconLock, IconArrowRight, IconChevronLeft, IconChevronRight } from './I
 import { teamLogoUrl } from '@/lib/logos'
 import { CFB_SCHOOLS } from '@/lib/teams-cfb'
 import {
-  DESK_SPORT_COOKIE, deskWeekCookie, formatDeskPlace, DESK_PLACE_MAX_AGE,
+  DESK_SPORT_COOKIE, DESK_PLACE_MAX_AGE, retiredDeskWeekCookie,
 } from '@/lib/desk-place'
 
 interface WeekOption {
@@ -20,7 +20,6 @@ interface WeekOption {
 
 interface Props {
   sport: string
-  season: number
   games: PublicNflGame[]
   weeks: WeekOption[]
   active: { season_type: number; week: number } | null
@@ -65,25 +64,23 @@ function teamName(sport: string, team: string, abbrev: string): string {
 }
 
 export default function DeskWeekBoard({
-  sport, season, games, weeks, active, linkedCounts, hasDesk, isAdmin,
+  sport, games, weeks, active, linkedCounts, hasDesk, isAdmin,
 }: Props) {
   const router = useRouter()
   const pathname = usePathname()
 
-  // Remember where the reader is, so leaving the Desk and coming back returns
-  // them here rather than to the first week with a game left in it. Written on
-  // whatever the SERVER settled on (`active`), not on what was clicked, so a
-  // navigation that failed or was superseded never records a week the board is
-  // not actually showing. See lib/desk-place.ts for why this is a cookie.
+  // Remember the LEAGUE, so the nav and a bare /desk return you to the board you
+  // were on. The week is deliberately not remembered: it would beat the current
+  // week on every bare visit, which is the one thing the board must not do. See
+  // lib/desk-place.ts.
+  //
+  // The second line expires the week cookie this component used to write, so a
+  // reader already carrying one is not steered by a value nothing reads any more.
+  // Both it and `retiredDeskWeekCookie` can go once those have aged out.
   useEffect(() => {
-    if (!active) return
-    const base = `; path=/; max-age=${DESK_PLACE_MAX_AGE}; samesite=lax`
-    document.cookie = `${DESK_SPORT_COOKIE}=${sport}${base}`
-    document.cookie =
-      `${deskWeekCookie(sport)}=` +
-      formatDeskPlace({ season, seasonType: active.season_type, week: active.week }) +
-      base
-  }, [sport, season, active])
+    document.cookie = `${DESK_SPORT_COOKIE}=${sport}; path=/; max-age=${DESK_PLACE_MAX_AGE}; samesite=lax`
+    document.cookie = `${retiredDeskWeekCookie(sport)}=; path=/; max-age=0; samesite=lax`
+  }, [sport])
 
   // Switching weeks is a server round trip on a force-dynamic page, and React
   // holds the old screen while it runs. Without a pending state the board looks
@@ -145,6 +142,35 @@ export default function DeskWeekBoard({
       ro.disconnect()
     }
   }, [measure, weeks])
+
+  // Open with the active week actually on screen.
+  //
+  // The board opens on the current week, but the rail starts at Week 1 and the
+  // active pill is simply off to the right of it. By Week 11 there is nothing on
+  // screen to say which week you are looking at, and a board that is showing
+  // November reads like it opened on the first week of the season.
+  //
+  // Measured with rects and moved by setting `scrollLeft` on the rail itself,
+  // NOT with scrollIntoView and NOT with offsetLeft. `.desk-weeks` is not a
+  // positioned element, so a pill's offsetParent is an ancestor rather than the
+  // rail and its offsetLeft does not answer the question being asked here. And
+  // scrollIntoView scrolls every scrollable ancestor it needs to, including the
+  // page, which on arrival would drop the reader past the heading and onto the
+  // rail. Nothing outside the rail moves.
+  const activeKey = active ? `${active.season_type}-${active.week}` : null
+  useEffect(() => {
+    const el = rail.current
+    if (!el || !activeKey) return
+    const pill = el.querySelector<HTMLElement>('.desk-week-pill.is-active')
+    if (!pill) return
+    const pillBox = pill.getBoundingClientRect()
+    const railBox = el.getBoundingClientRect()
+    // Already fully visible: leave it alone, so a re-render never nudges a rail
+    // the reader has scrolled somewhere deliberately.
+    if (pillBox.left >= railBox.left && pillBox.right <= railBox.right) return
+    // Centre it, then let the browser clamp at either end of the rail.
+    el.scrollLeft += (pillBox.left - railBox.left) - (railBox.width - pillBox.width) / 2
+  }, [activeKey, weeks])
 
   // Just under a screenful, so the pill you were last looking at stays on
   // screen as an anchor instead of the rail jumping somewhere unrecognisable.
