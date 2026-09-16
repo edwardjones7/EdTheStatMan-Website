@@ -52,6 +52,47 @@ export function rowMinTier(row: GatedRow, paidDefault: Tier): Tier {
   return paidDefault
 }
 
+/**
+ * Is the Desk rung's in-context window shut on this game?
+ *
+ * THE RULE: research closes when the week it belongs to is over. The Desk rung
+ * buys curated Vault rows read IN THE CONTEXT of a matchup that is still ahead
+ * of you -- that is the product. On a season's worth of played games it stops
+ * being that and becomes the Private library, handed over one matchup at a time,
+ * which is precisely the thing the Desk rung does not buy. Closing a week is
+ * what stops the archive adding up to the library.
+ *
+ * WEEK, NOT GAME. A week closes as a unit once every game in it has been played,
+ * so the whole slate a member has been reading stays readable right through the
+ * Monday nighter and then shuts together. Closing each game at its own final
+ * whistle would take Thursday's research away on Friday, in the middle of the
+ * week they are paying for.
+ *
+ * WHO IT AFFECTS. Only the Desk rung. Admins see everything, and Private and
+ * Institutional members hold the library itself, so shutting the in-context
+ * window takes nothing from them -- `holdsLibrary` is what carries that. A Desk
+ * member on a closed week sees what a free reader sees: record-only teasers
+ * saying research exists, never what it is.
+ *
+ * `closedAt` is the manual override from nfl_games.research_closed_at, which
+ * still shuts a single game early and independently of its week.
+ */
+export function researchClosedFor(
+  { weekOver, closedAt }: { weekOver: boolean; closedAt?: string | null },
+  holdsLibrary: boolean
+): boolean {
+  if (holdsLibrary) return false
+  return weekOver || Boolean(closedAt)
+}
+
+/**
+ * Does this viewer hold the library outright, rather than borrowing it a
+ * matchup at a time? Admins, and Private and above.
+ */
+export function holdsLibrary(userTier: Tier | null, isAdmin: boolean): boolean {
+  return isAdmin || atLeastTier(userTier, 'private')
+}
+
 export interface Partitioned {
   /** Rows the member may actually see, in the order they were given. */
   visible: GatedRow[]

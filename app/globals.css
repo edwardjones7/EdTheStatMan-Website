@@ -6639,6 +6639,39 @@ textarea.form-input {
   margin-bottom: 16px;
 }
 
+/* Why these rows are shut. Sits between the section heading and the teasers,
+   because a Desk member who read them last week needs the reason before the
+   upgrade prompt, not after it. */
+.nfl-linked-section__closed {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  margin: -6px 0 16px;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  background: rgba(var(--gold-rgb), 0.06);
+  border: 1px solid rgba(var(--gold-rgb), 0.16);
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.nfl-linked-section__closed svg {
+  flex: none;
+  position: relative;
+  top: 2px;
+}
+
+.nfl-linked-section__closed a {
+  color: var(--accent-teal);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.nfl-linked-section__closed a:hover {
+  text-decoration: underline;
+}
+
 /* The posted market, on the detail page. Same chips as the week board so a
    game reads the same whether you are scanning the slate or standing on it. */
 .nfl-game-market {
@@ -7892,6 +7925,13 @@ textarea.form-input {
 .desk-tag--locked {
   background: rgba(var(--gold-rgb), 0.11);
   color: var(--accent-gold);
+}
+
+/* A played-out week. Deliberately not the gold of --locked: gold says "buy the
+   rung and this opens", and this one does not open at the Desk rung at all. */
+.desk-tag--closed {
+  background: rgba(var(--gold-rgb), 0.07);
+  color: var(--text-muted);
 }
 
 .desk-tag--empty {

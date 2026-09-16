@@ -249,6 +249,45 @@ const GAME_WINDOW_MS = 8 * 60 * 60 * 1000
  *
  * Read `status`, never the score: an unplayed game is 0-0, not null.
  */
+/** The two fields that decide whether a game is behind us. */
+type PlayedRef = Pick<NflGame, 'kickoff' | 'status'>
+
+/**
+ * Has this game been played?
+ *
+ * Status AND the clock, because neither is enough alone. Status by itself would
+ * call a game unplayed forever if the sync stopped running, since nothing would
+ * move it off `pre` -- there is a live example of that in the table right now, a
+ * Week 1 NFL game that kicked off on 14 Sep and is still `pre`. The clock by
+ * itself is a guess about when play ended, which runs early on a game that goes
+ * long. Either one saying "played" is enough.
+ *
+ * A game with no kickoff time is scheduled but unplaced (a bowl slot, a flexed
+ * window), so it counts as still to come.
+ *
+ * Read `status`, never the score: an unplayed game is 0-0, not null.
+ */
+export function gameIsPlayed(g: PlayedRef, now: Date): boolean {
+  if (g.status === 'post') return true
+  const kickoff = g.kickoff ? new Date(g.kickoff).getTime() : 0
+  return kickoff > 0 && kickoff + GAME_WINDOW_MS <= now.getTime()
+}
+
+/**
+ * Is this week finished -- every game in it played?
+ *
+ * Pass the whole week's rows; an empty list is not "over", it is a week nobody
+ * has loaded, and answering true there would close research on a week that has
+ * not happened.
+ *
+ * This is what shuts the Desk rung's window on a past week. See
+ * `researchClosedFor()` in lib/gate.ts for what closing actually means, and
+ * supabase/migrations/desk_01_research_closed.sql for why it exists.
+ */
+export function weekIsOver(weekGames: PlayedRef[], now: Date): boolean {
+  return weekGames.length > 0 && weekGames.every(g => gameIsPlayed(g, now))
+}
+
 export function currentWeekOf(
   games: Pick<NflGame, 'season_type' | 'week' | 'kickoff' | 'status'>[],
   now: Date
@@ -258,11 +297,7 @@ export function currentWeekOf(
   const byWeek = new Map<string, { ref: WeekRef; unplayed: boolean }>()
   for (const g of games) {
     const key = `${g.season_type}-${g.week}`
-    const kickoff = g.kickoff ? new Date(g.kickoff).getTime() : 0
-    // A game with no kickoff time is scheduled but unplaced (a bowl slot, a
-    // flexed window), so it counts as still to come.
-    const started = kickoff > 0 && kickoff + GAME_WINDOW_MS <= now.getTime()
-    const unplayed = g.status !== 'post' && !started
+    const unplayed = !gameIsPlayed(g, now)
 
     const entry = byWeek.get(key)
     if (!entry) byWeek.set(key, { ref: { season_type: g.season_type, week: g.week }, unplayed })

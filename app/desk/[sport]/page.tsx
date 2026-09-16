@@ -10,7 +10,8 @@ import PricingCards from '@/components/PricingCards'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getAccess } from '@/lib/access-server'
 import { atLeastTier, normalizeTier } from '@/lib/access'
-import { toPublicGame, currentWeekOf, weekLabel } from '@/lib/nfl'
+import { researchClosedFor, holdsLibrary } from '@/lib/gate'
+import { toPublicGame, currentWeekOf, weekLabel, weekIsOver } from '@/lib/nfl'
 import type { NflGame, PublicNflGame } from '@/lib/nfl'
 import { DESK_SPORTS, deskSportLabel } from '@/lib/desk'
 
@@ -182,6 +183,20 @@ export default async function DeskSport({
     ? isAdmin || atLeastTier(userTier, normalizeTier(note.min_tier))
     : false
 
+  // Is the week on screen already played out? If so the Desk rung's in-context
+  // window on it has shut, and the cards must say so rather than advertise a
+  // count the reader cannot open. Free here: visibleWeekRows is already loaded
+  // for the rail, so this is a filter, not a query. See researchClosedFor().
+  const activeWeekRows = active
+    ? visibleWeekRows.filter(
+        r => r.season_type === active.season_type && r.week === active.week
+      )
+    : []
+  const researchClosed = researchClosedFor(
+    { weekOver: weekIsOver(activeWeekRows, new Date()) },
+    holdsLibrary(userTier, isAdmin)
+  )
+
   const label = deskSportLabel(sport)
 
   // Is this week worth watching? A game in progress, or one close enough to
@@ -281,6 +296,7 @@ export default async function DeskSport({
               linkedCounts={linkedCounts}
               hasDesk={hasDesk}
               isAdmin={isAdmin}
+              researchClosed={researchClosed}
             />
           )}
         </div>

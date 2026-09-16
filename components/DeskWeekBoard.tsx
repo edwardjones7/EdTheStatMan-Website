@@ -28,6 +28,12 @@ interface Props {
   /** Whether this member holds the Research Desk rung or better. */
   hasDesk: boolean
   isAdmin: boolean
+  /**
+   * The week on screen has been played out, so the Desk rung's in-context
+   * window on it is shut. Already resolved for this viewer by the server:
+   * false for admins and for anyone who holds the library outright.
+   */
+  researchClosed: boolean
 }
 
 const STATUS_LABEL: Record<string, string> = { pre: '', in: 'LIVE', post: 'FINAL' }
@@ -64,7 +70,7 @@ function teamName(sport: string, team: string, abbrev: string): string {
 }
 
 export default function DeskWeekBoard({
-  sport, games, weeks, active, linkedCounts, hasDesk, isAdmin,
+  sport, games, weeks, active, linkedCounts, hasDesk, isAdmin, researchClosed,
 }: Props) {
   const router = useRouter()
   const pathname = usePathname()
@@ -429,7 +435,15 @@ export default function DeskWeekBoard({
                   <div className="desk-card__foot">
                     <span className="desk-card__tags">
                       {attached > 0 && (
-                        unlocked ? (
+                        // A closed week outranks the rung. "3 locked" would sell
+                        // a Desk membership that does not open it, and "3
+                        // attached" would promise a Desk member something they
+                        // will not find when they click through.
+                        researchClosed ? (
+                          <span className="desk-tag desk-tag--closed">
+                            <IconLock size={11} /> Research closed
+                          </span>
+                        ) : unlocked ? (
                           <span className="desk-tag desk-tag--open">{attached} attached</span>
                         ) : (
                           <span className="desk-tag desk-tag--locked">

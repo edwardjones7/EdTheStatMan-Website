@@ -4,11 +4,11 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { resolveAccess, ACCESS_SELECT, atLeastTier } from '@/lib/access'
-import { rowMinTier } from '@/lib/gate'
+import { rowMinTier, researchClosedFor, holdsLibrary } from '@/lib/gate'
 import {
   toPublicGame, weekLabel, writeupWordCount,
   gameBrief, gameBriefSentences, spreadLabel, moneylineLabel, lineMove,
-  decodeSlugParam, gamePath,
+  decodeSlugParam, gamePath, weekIsOver,
 } from '@/lib/nfl'
 import type { NflGame } from '@/lib/nfl'
 import { deskSportLabel, SPORT_SHORT } from '@/lib/desk'
@@ -99,10 +99,23 @@ export default async function NflGamePage({ params }: { params: { sport: string;
 
   const publicGame = toPublicGame(game)
 
-  // Curated systems/trends for this game.
-  const [sysLinks, trendLinks] = await Promise.all([
+  // Curated systems/trends for this game, and the week it belongs to.
+  //
+  // The week ride-along is two columns over one week of rows -- ~100 for a
+  // college Saturday, 16 for an NFL Sunday -- and it answers the only question
+  // this page cannot answer from the game alone: whether the week is over. It
+  // goes out with the link queries rather than after them, so it costs no extra
+  // round trip on the render path.
+  const [sysLinks, trendLinks, weekRows] = await Promise.all([
     (admin as any).from('nfl_game_systems').select('system_id').eq('game_id', game.id),
     (admin as any).from('nfl_game_trends').select('trend_id').eq('game_id', game.id),
+    (admin as any)
+      .from('nfl_games')
+      .select('kickoff, status')
+      .eq('sport', params.sport.toLowerCase())
+      .eq('season', game.season)
+      .eq('season_type', game.season_type)
+      .eq('week', game.week),
   ])
   const systemIds = (sysLinks.data ?? []).map((r: any) => r.system_id)
   const trendIds = (trendLinks.data ?? []).map((r: any) => r.trend_id)
@@ -118,16 +131,21 @@ export default async function NflGamePage({ params }: { params: { sport: string;
 
   // Has the research on this game been shut?
   //
-  // The Desk rung reads curated rows in a matchup's context that it could not
-  // read in the library. That is the product while the game is ahead of you; on
-  // a season's worth of played games it is the Private library handed over one
-  // matchup at a time. `research_closed_at` is how a played game stops being
-  // that door. NULL is open, which is what every game is until someone shuts it.
+  // Automatic once the week is over, plus the manual per-game override. See
+  // researchClosedFor() in lib/gate.ts for the rule and why it is week-shaped.
   //
-  // Read defensively: the column arrives with desk_01_research_closed.sql, and
-  // until that is applied `game.research_closed_at` is simply undefined and
-  // every game reads as open. Nothing currently visible changes on deploy.
-  const researchClosed = Boolean((game as any).research_closed_at)
+  // A viewer who holds the library outright is never closed out, so this is
+  // false for admins and for Private and above no matter how old the game is.
+  //
+  // Read `research_closed_at` defensively: the column arrives with
+  // desk_01_research_closed.sql, and until that is applied it is simply
+  // undefined and only the week rule applies.
+  const weekOver = weekIsOver((weekRows as any).data ?? [], new Date())
+  const viewerHoldsLibrary = holdsLibrary(userTier, isAdmin)
+  const researchClosed = researchClosedFor(
+    { weekOver, closedAt: (game as any).research_closed_at },
+    viewerHoldsLibrary
+  )
 
   // Linked rows follow the same tier rules as the systems/trends pages: paid
   // members see member rows, elite rows require elite, and everyone else gets
@@ -386,6 +404,7 @@ export default async function NflGamePage({ params }: { params: { sport: string;
               locked={systems.locked}
               lockedElite={systems.lockedElite}
               href="/vault/systems"
+              closed={researchClosed}
             />
           )}
           {(trends.visible.length + trends.locked.length + trends.lockedElite.length > 0) && (
@@ -395,6 +414,7 @@ export default async function NflGamePage({ params }: { params: { sport: string;
               locked={trends.locked}
               lockedElite={trends.lockedElite}
               href="/vault/trends"
+              closed={researchClosed}
             />
           )}
 
@@ -432,16 +452,34 @@ function sportBadge(sport: string | null | undefined): string {
   return SPORT_SHORT[key as keyof typeof SPORT_SHORT] ?? key.toUpperCase() ?? ''
 }
 
-function LinkedSection({ title, visible, locked, lockedElite, href }: {
+function LinkedSection({ title, visible, locked, lockedElite, href, closed }: {
   title: string
   visible: any[]
   locked: LockedTeaser[]
   lockedElite: LockedTeaser[]
   href: string
+  /** The week is over, so the Desk rung's in-context window has shut. */
+  closed: boolean
 }) {
   return (
     <div className="nfl-linked-section reveal">
       <h2 className="nfl-linked-section__title">{title}</h2>
+      {/* Say why, or a Desk member who could read this last week reads a
+          generic upgrade prompt on research they already paid for and
+          reasonably concludes something is broken. */}
+      {closed && (
+        <p className="nfl-linked-section__closed">
+          <IconLock size={12} />
+          {/* One span, not loose text: the parent is a flex row, so every bare
+              text node and the link would each become their own flex item and
+              the link would be flung to the far edge. */}
+          <span>
+            This week has been played, so its research is closed. The records stay
+            on the board; the systems and trends behind them live in{' '}
+            <Link href="/vault">the Vault</Link>.
+          </span>
+        </p>
+      )}
       <div className="sys-card-grid">
         {visible.map(row => (
           <div key={row.id} className={`sys-row-card sys-row-card--${row.sport}`}>
