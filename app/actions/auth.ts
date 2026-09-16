@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { safeNext } from '@/lib/safe-redirect'
 import { siteUrl } from '@/lib/site-url'
+import { checkBotId } from 'botid/server'
 
 export async function login(formData: FormData) {
   const supabase = await createClient()
@@ -24,6 +25,31 @@ export async function login(formData: FormData) {
 }
 
 export async function signup(formData: FormData) {
+  // Before anything reaches Supabase, because the abuse this stops is Supabase
+  // SENDING MAIL. A bot that gets past here has already made us email whatever
+  // address it supplied, and those addresses belong to other people -- see
+  // lib/botid-routes.ts for what was actually happening.
+  //
+  // Fails open by design. checkBotId() is a network call to Vercel, and an
+  // outage of it must not take signup down; `isBot` is only ever true on a
+  // definite classification. Locally it always returns false.
+  //
+  // Sent back with the same generic message a bad password gets, deliberately:
+  // an operator tuning a bot should not be able to tell detection from
+  // validation by reading the response.
+  let isBot = false
+  try {
+    isBot = (await checkBotId()).isBot
+  } catch {
+    // Explicit, not incidental: if the check itself is unreachable we let the
+    // signup through. Never let bot detection be the thing that takes account
+    // creation offline.
+    isBot = false
+  }
+  if (isBot) {
+    redirect(`/signup?error=auth&next=${encodeURIComponent(safeNext(formData.get('next') as string, '/'))}`)
+  }
+
   const supabase = await createClient()
   const next = safeNext(formData.get('next') as string, '/')
 

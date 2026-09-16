@@ -1,4 +1,8 @@
 const { version } = require('./package.json')
+// BotID proxies its challenge through our own origin so an ad-blocker or a
+// third-party script blocker cannot quietly disable it. withBotId() adds the
+// rewrites that do that; see middleware.ts, which has to let those paths past.
+const { withBotId } = require('botid/next/config')
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -29,4 +33,4 @@ const nextConfig = {
   },
 }
 
-module.exports = nextConfig
+module.exports = withBotId(nextConfig)

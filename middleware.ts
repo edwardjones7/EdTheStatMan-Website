@@ -101,6 +101,11 @@ export const config = {
   matcher: [
     // The Stripe webhook authenticates by signature and uses the admin client;
     // it has no session to refresh and must not depend on Supabase Auth.
-    '/((?!api/stripe/webhook|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    //
+    // 149e9513-... is BotID's challenge proxy, rewritten onto our own origin by
+    // withBotId() in next.config.js. It is fetched on every page load of a
+    // protected route and carries no session, so running the Supabase round
+    // trip on it would be pure latency on the challenge itself.
+    '/((?!api/stripe/webhook|149e9513-01fa-4fb0-aad4-566afd725d1b|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }

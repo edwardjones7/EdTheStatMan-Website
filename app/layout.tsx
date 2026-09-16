@@ -10,6 +10,8 @@ import PageViewTracker from '@/components/PageViewTracker'
 import GlobalTicker from '@/components/GlobalTicker'
 import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from '@vercel/speed-insights/next'
+import { BotIdClient } from 'botid/client'
+import { BOTID_PROTECTED } from '@/lib/botid-routes'
 import { createClient } from '@/lib/supabase/server'
 import { DEFAULT_TICKER } from '@/lib/site-content'
 import type { TickerContent } from '@/lib/site-content'
@@ -89,6 +91,14 @@ export default async function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${outfit.variable} ${jetbrainsMono.variable}`}>
       <head>
+        {/* BotID's invisible challenge. Must be mounted for every route listed
+            in BOTID_PROTECTED, because this is what tells the browser to attach
+            the classification headers -- checkBotId() on a route that is not
+            listed here fails every request, including real people's.
+
+            Next 15.3+ would put this in instrumentation-client.ts instead; we
+            are on 14.2, so it is a component in <head>. */}
+        <BotIdClient protect={BOTID_PROTECTED} />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
