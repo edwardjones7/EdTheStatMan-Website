@@ -11,7 +11,7 @@ import {
   decodeSlugParam, gamePath, weekIsOver,
 } from '@/lib/nfl'
 import type { NflGame } from '@/lib/nfl'
-import { deskSportLabel, SPORT_SHORT } from '@/lib/desk'
+import { deskSportLabel, deskSeasonLabel, SPORT_SHORT, startWord, weeksFromDates } from '@/lib/desk'
 import { toTeaser } from '@/lib/teaser'
 import type { LockedTeaser } from '@/lib/teaser'
 import NflGameAdminPanel from '@/components/NflGameAdminPanel'
@@ -34,7 +34,7 @@ export async function generateMetadata({ params }: { params: { sport: string; sl
 
   if (!game || !game.is_published) return { title: 'Game Not Found' }
 
-  const title = `${game.away_team} at ${game.home_team} — ${weekLabel(game.season_type, game.week, params.sport)} Prediction, Odds & Betting Analysis`
+  const title = `${game.away_team} at ${game.home_team} — ${gameWhen(game, params.sport)} Prediction, Odds & Betting Analysis`
   // The generated brief is the fallback description: two sentences of it say
   // more about the matchup than the old boilerplate did, and it is never empty.
   const description = game.brief || gameBriefSentences(game).slice(0, 2).join(' ')
@@ -56,8 +56,22 @@ export async function generateMetadata({ params }: { params: { sport: string; sl
 
 const STATUS_LABEL: Record<string, string> = { pre: 'Upcoming', in: 'Live', post: 'Final' }
 
-function kickoffDisplay(kickoff: string | null): string {
-  if (!kickoff) return 'Kickoff TBD'
+/**
+ * Which game this is, for the title. A football week names it; a basketball
+ * "week" is our own bookkeeping, and the same teams can meet twice in one, so
+ * the date does the naming there.
+ */
+function gameWhen(game: Pick<NflGame, 'season_type' | 'week' | 'season' | 'kickoff'>, sport: string): string {
+  if (weeksFromDates(sport) && game.kickoff) {
+    return new Date(game.kickoff).toLocaleDateString('en-US', {
+      month: 'short', day: 'numeric', year: 'numeric', timeZone: 'America/New_York',
+    })
+  }
+  return weekLabel(game.season_type, game.week, sport, game.season)
+}
+
+function kickoffDisplay(kickoff: string | null, sport: string): string {
+  if (!kickoff) return weeksFromDates(sport) ? 'Tip-off TBD' : 'Kickoff TBD'
   return new Date(kickoff).toLocaleString('en-US', {
     weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
     hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York', timeZoneName: 'short',
@@ -283,7 +297,7 @@ export default async function NflGamePage({ params }: { params: { sport: string;
             eventStatus: game.status === 'post' ? 'https://schema.org/EventScheduled' : 'https://schema.org/EventScheduled',
             homeTeam: { '@type': 'SportsTeam', name: game.home_team },
             awayTeam: { '@type': 'SportsTeam', name: game.away_team },
-            sport: 'American Football',
+            sport: weeksFromDates(params.sport) ? 'Basketball' : 'American Football',
             url,
           }),
         }}
@@ -296,7 +310,7 @@ export default async function NflGamePage({ params }: { params: { sport: string;
           <header className="nfl-game-header reveal">
             <div className="nfl-game-header__meta">
               <span className="section-label" style={{ margin: 0 }}>
-                {game.season} · {weekLabel(game.season_type, game.week, params.sport)}
+                {deskSeasonLabel(params.sport, game.season)} · {weekLabel(game.season_type, game.week, params.sport, game.season)}
               </span>
               <span className={`nfl-game-card__status nfl-game-card__status--${game.status}`}>
                 {STATUS_LABEL[game.status] ?? game.status}
@@ -306,7 +320,7 @@ export default async function NflGamePage({ params }: { params: { sport: string;
             <h1 className="nfl-game-header__title">
               {game.away_team} <span className="nfl-game-header__at">at</span> {game.home_team}
             </h1>
-            <p className="nfl-game-header__kickoff">{kickoffDisplay(game.kickoff)}</p>
+            <p className="nfl-game-header__kickoff">{kickoffDisplay(game.kickoff, params.sport)}</p>
             {showScore && (
               <div className="nfl-game-header__score">
                 <span>{game.away_abbrev} {game.away_score}</span>
@@ -426,7 +440,7 @@ export default async function NflGamePage({ params }: { params: { sport: string;
               <p className="nfl-game-empty__text">
                 Nothing has been attached to this matchup yet. The systems and trends
                 that qualify, and the full breakdown once it is written, land here as
-                the week fills in — check back closer to kickoff.
+                the week fills in — check back closer to {startWord(params.sport)}.
               </p>
               <Link href={`/desk/${params.sport}`} className="nfl-game-empty__link">
                 See the rest of the week &rarr;

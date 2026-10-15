@@ -5,6 +5,8 @@
 // as PublicNflGame shapes built by toPublicGame(), which copies fields
 // explicitly (never spread) so the writeup can never ride along.
 
+import { weeksFromDates, easternDate, dateWeekStart, deskSeasonLabel } from './desk'
+
 /** Lines and context added by tier_ladder_06_desk_games.sql. All optional:
  *  the Research Desk renders correctly before that migration is applied, it
  *  simply shows no line. */
@@ -135,6 +137,11 @@ export function toPublicGame(row: NflGame): PublicNflGame {
  * sync inserts a season as one batch, so a collision does not just lose that
  * row, it takes the batch with it. NFL slugs are left bare because they are
  * already published and indexed.
+ *
+ * Basketball slugs carry the DATE instead of the week. The same two teams meet
+ * up to four times in one week of a playoff series, and a week-keyed slug would
+ * give all four the same address. Nobody plays twice in a day, so the date is
+ * unique where the week is not -- and it reads better in a URL besides.
  */
 export function buildGameSlug(
   sport: string,
@@ -142,9 +149,12 @@ export function buildGameSlug(
   seasonType: number,
   week: number,
   awayAbbrev: string,
-  homeAbbrev: string
+  homeAbbrev: string,
+  kickoff?: string | null
 ): string {
-  const stage = seasonType === 3 ? `post${week}` : `wk${week}`
+  const stage = weeksFromDates(sport) && kickoff
+    ? easternDate(kickoff).replace(/-/g, '')
+    : seasonType === 3 ? `post${week}` : `wk${week}`
   const prefix = sport === 'nfl' ? '' : `${sport}-`
   return `${prefix}${season}-${stage}-${slugPart(awayAbbrev)}-at-${slugPart(homeAbbrev)}`.toLowerCase()
 }
@@ -212,7 +222,26 @@ const POSTSEASON_LABELS: Record<string, Record<number, string>> = {
   },
 }
 
-export function weekLabel(seasonType: number, week: number, sport = 'nfl'): string {
+/** The name a basketball postseason goes by on the rail. */
+const POSTSEASON_NAME: Record<string, string> = {
+  nba: 'Playoffs',
+  cbb: 'Postseason',
+}
+
+/**
+ * What a week is called. Football weeks are numbered; a derived basketball week
+ * is named for its Monday ("Week of Oct 19"), which needs the season to work
+ * out -- without one it falls back to the bare number rather than guessing.
+ */
+export function weekLabel(seasonType: number, week: number, sport = 'nfl', season?: number): string {
+  if (weeksFromDates(sport) && season) {
+    const monday = dateWeekStart(season, week).toLocaleDateString('en-US', {
+      month: 'short', day: 'numeric', timeZone: 'UTC',
+    })
+    return seasonType === 3
+      ? `${POSTSEASON_NAME[sport] ?? 'Postseason'} · Week of ${monday}`
+      : `Week of ${monday}`
+  }
   if (seasonType === 3) {
     const labels = POSTSEASON_LABELS[sport] ?? POSTSEASON_LABELS.nfl
     return labels[week] ?? `Postseason Week ${week}`
@@ -431,17 +460,38 @@ export type BriefGame = Pick<
  * without cutting one in half. Every clause is dropped when its column is
  * null, so a row that predates the odds migration still gets a real paragraph.
  */
+const LEAGUE_NAME: Record<string, string> = {
+  nfl: 'NFL',
+  cfb: 'college football',
+  nba: 'NBA',
+  cbb: 'college basketball',
+}
+
 export function gameBriefSentences(g: BriefGame): string[] {
   const sport = g.sport ?? 'nfl'
-  const league = sport === 'cfb' ? 'college football' : 'NFL'
+  const league = LEAGUE_NAME[sport] ?? 'NFL'
   // A played game reads wrong in the present tense, and every clause below
   // is written for a game that has already happened once status flips.
   const played = g.status === 'post'
   const out: string[] = []
 
-  out.push(
-    `${g.away_team} ${played ? 'visited' : 'visit'} ${g.home_team} in ${weekLabel(g.season_type, g.week, sport)} of the ${g.season} ${league} season.`
-  )
+  if (weeksFromDates(sport)) {
+    // A basketball week is our own bookkeeping, not something a fan says. The
+    // date is what identifies the game.
+    const day = g.kickoff
+      ? ` on ${new Date(g.kickoff).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'America/New_York' })}`
+      : ''
+    const stage = g.season_type === 3
+      ? (sport === 'nba' ? 'playoffs' : 'postseason')
+      : 'season'
+    out.push(
+      `${g.away_team} ${played ? 'visited' : 'visit'} ${g.home_team}${day}, in the ${deskSeasonLabel(sport, g.season)} ${league} ${stage}.`
+    )
+  } else {
+    out.push(
+      `${g.away_team} ${played ? 'visited' : 'visit'} ${g.home_team} in ${weekLabel(g.season_type, g.week, sport)} of the ${g.season} ${league} season.`
+    )
+  }
 
   // Where and on what. "indoors at" is worth the word on a totals page.
   const place = [g.venue_city, g.venue_state].filter(Boolean).join(', ')

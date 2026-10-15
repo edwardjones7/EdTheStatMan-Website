@@ -13,7 +13,7 @@ import { atLeastTier, normalizeTier } from '@/lib/access'
 import { researchClosedFor, holdsLibrary } from '@/lib/gate'
 import { toPublicGame, currentWeekOf, weekLabel, weekIsOver } from '@/lib/nfl'
 import type { NflGame, PublicNflGame } from '@/lib/nfl'
-import { DESK_SPORTS, deskSportLabel } from '@/lib/desk'
+import { DESK_SPORTS, deskSportLabel, deskSeasonLabel, defaultDeskSeason, startWord } from '@/lib/desk'
 
 export const dynamic = 'force-dynamic'
 
@@ -74,7 +74,7 @@ export default async function DeskSport({
   const season: number =
     (isAdmin ? anySeason?.data?.season : publishedSeason?.data?.season)
     ?? publishedSeason?.data?.season
-    ?? new Date().getFullYear()
+    ?? defaultDeskSeason(sport)
 
   // The schedule itself is the public shell — a visitor should be able to see
   // that the board exists and how much is on it. The curated research attached
@@ -104,7 +104,7 @@ export default async function DeskSport({
   }
   const weeks = [...weekMap.values()]
     .sort((a, b) => a.season_type - b.season_type || a.week - b.week)
-    .map(w => ({ ...w, label: weekLabel(w.season_type, w.week, sport) }))
+    .map(w => ({ ...w, label: weekLabel(w.season_type, w.week, sport, season) }))
 
   const requestedType = searchParams.type === 'post' ? 3 : searchParams.week ? 2 : null
   const requestedWeek = Number(searchParams.week) || null
@@ -198,6 +198,7 @@ export default async function DeskSport({
   )
 
   const label = deskSportLabel(sport)
+  const seasonLabel = deskSeasonLabel(sport, season)
 
   // Is this week worth watching? A game in progress, or one close enough to
   // kickoff that it is about to be. Decided on the SERVER so the client never
@@ -221,7 +222,7 @@ export default async function DeskSport({
         <div className="container">
           <div className="reveal" style={{ textAlign: 'center' }}>
             <span className="section-label">The Research Desk</span>
-            <h1 className="section-title">{label} {season}</h1>
+            <h1 className="section-title">{label} {seasonLabel}</h1>
             <p className="section-subtitle" style={{ margin: '0 auto' }}>
               The whole season on one board. Every game, the line and how it has moved,
               and the trends we have pulled for that specific matchup.
@@ -249,14 +250,14 @@ export default async function DeskSport({
 
           {isAdmin && (
             <>
-              <NflAdminBar sport={sport} season={season} seasonType={active?.season_type} week={active?.week} />
+              <NflAdminBar sport={sport} season={season} seasonLabel={seasonLabel} seasonType={active?.season_type} week={active?.week} />
               {active && (
                 <DeskNoteEditor
                   sport={sport}
                   season={season}
                   seasonType={active.season_type}
                   week={active.week}
-                  weekLabel={weekLabel(active.season_type, active.week, sport)}
+                  weekLabel={weekLabel(active.season_type, active.week, sport, season)}
                   existing={rawNote}
                 />
               )}
@@ -285,7 +286,7 @@ export default async function DeskSport({
 
           {weeks.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '64px 0', color: 'var(--text-muted)' }}>
-              The {season} {label} schedule lands here soon — check back before kickoff.
+              The {seasonLabel} {label} schedule lands here soon — check back before {startWord(sport)}.
             </div>
           ) : (
             <DeskWeekBoard

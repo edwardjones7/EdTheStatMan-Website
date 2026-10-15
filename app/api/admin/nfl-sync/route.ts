@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { syncTargets, type SyncTarget } from '@/lib/desk-sync'
-import { deskSweep } from '@/lib/desk'
+import { deskSeasonTargets, defaultDeskSeason } from '@/lib/desk'
 
 async function assertAdmin() {
   const supabase = await createClient()
@@ -28,23 +28,19 @@ export async function POST(req: Request) {
   try { body = await req.json() } catch { /* empty body = full-season sync */ }
 
   const sport: string = String(body.sport || 'nfl')
-  const season: number = Number(body.season) || new Date().getFullYear()
+  const season: number = Number(body.season) || defaultDeskSeason(sport)
   // Stage new games unpublished so a sync can be run against production before
   // the Desk is deployed, without the schedule appearing on the live site.
   // Only ever applied on INSERT -- is_published is admin-owned on existing rows.
   const publishNew: boolean = body.publish !== false
 
   // Default sweep: the league's own season shape, since college is 16 weeks
-  // and one bowl slate where the NFL is 18 and five rounds. Empty weeks
-  // (playoffs not yet scheduled) simply return no events.
-  const sweep = deskSweep(sport)
-  const targets: SyncTarget[] = []
-  if (body.seasonType && body.week) {
-    targets.push({ seasonType: Number(body.seasonType), week: Number(body.week) })
-  } else {
-    for (let w = 1; w <= sweep.regular; w++) targets.push({ seasonType: 2, week: w })
-    for (let w = 1; w <= sweep.post; w++) targets.push({ seasonType: 3, week: w })
-  }
+  // and one bowl slate where the NFL is 18 and five rounds, and basketball is
+  // a span of derived weeks. Empty weeks (playoffs not yet scheduled) simply
+  // return no events.
+  const targets: SyncTarget[] = body.seasonType && body.week
+    ? [{ seasonType: Number(body.seasonType), week: Number(body.week) }]
+    : deskSeasonTargets(sport)
 
   const result = await syncTargets(admin, { sport, season, targets, publishNew })
   const { httpStatus, ...payload } = result

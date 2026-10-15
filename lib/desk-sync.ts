@@ -72,6 +72,9 @@ function pick(game: ParsedGame, cols: readonly string[], extra: Record<string, u
   return { ...out, ...extra }
 }
 
+/** Rows per read or insert round trip. See the existing-row read below. */
+const DB_CHUNK = 300
+
 export interface SyncTarget {
   seasonType: number
   week: number
@@ -134,17 +137,26 @@ export async function syncTargets(admin: any, opts: SyncOptions): Promise<SyncRe
   // rather than `*`: writeup_html is on this table and can be thousands of words
   // per row, and reading a college Saturday's worth of them to compare a score
   // would cost more than the writes this saves.
+  //
+  // Read in chunks. The ids ride in the query string, and a college basketball
+  // season is ~6,000 games: one `in()` over all of them is a URL far past what
+  // the gateway accepts, where a football season (~1,400) only just fit.
   const readCols = ['espn_event_id', 'status', ...writeCols, ...ODDS_COLS]
-  const { data: existingRows, error: readError } = await admin
-    .from('nfl_games')
-    .select([...new Set(readCols)].join(', '))
-    .in('espn_event_id', parsed.map(g => g.espn_event_id))
-  if (readError) {
-    return { inserted: 0, updated: 0, failed, error: readError.message, httpStatus: 500 }
+  const existingRows: any[] = []
+  const allIds = parsed.map(g => g.espn_event_id)
+  for (let i = 0; i < allIds.length; i += DB_CHUNK) {
+    const { data, error: readError } = await admin
+      .from('nfl_games')
+      .select([...new Set(readCols)].join(', '))
+      .in('espn_event_id', allIds.slice(i, i + DB_CHUNK))
+    if (readError) {
+      return { inserted: 0, updated: 0, failed, error: readError.message, httpStatus: 500 }
+    }
+    existingRows.push(...(data ?? []))
   }
 
   const existing = new Map<string, any>(
-    (existingRows ?? []).map((r: any) => [r.espn_event_id, r])
+    existingRows.map((r: any) => [r.espn_event_id, r])
   )
 
   // ---- Fill in prices the schedule feed will not give us -------------------
@@ -205,7 +217,7 @@ export async function syncTargets(admin: any, opts: SyncOptions): Promise<SyncRe
     .filter(g => !existing.has(g.espn_event_id))
     .map(g => pick(g, writeCols, {
       espn_event_id: g.espn_event_id,
-      slug: buildGameSlug(g.sport, g.season, g.season_type, g.week, g.away_abbrev, g.home_abbrev),
+      slug: buildGameSlug(g.sport, g.season, g.season_type, g.week, g.away_abbrev, g.home_abbrev, g.kickoff),
       is_published: publishNew,
       ...(withDesk ? { odds_updated_at: now } : {}),
     }))
@@ -223,10 +235,11 @@ export async function syncTargets(admin: any, opts: SyncOptions): Promise<SyncRe
     })
 
   let inserted = 0
-  if (toInsert.length > 0) {
-    const { error } = await admin.from('nfl_games').insert(toInsert)
+  for (let i = 0; i < toInsert.length; i += DB_CHUNK) {
+    const batch = toInsert.slice(i, i + DB_CHUNK)
+    const { error } = await admin.from('nfl_games').insert(batch)
     if (error) return { inserted, updated: 0, failed, error: error.message, httpStatus: 500 }
-    inserted = toInsert.length
+    inserted += batch.length
   }
 
   let updated = 0

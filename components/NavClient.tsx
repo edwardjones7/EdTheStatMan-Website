@@ -66,7 +66,7 @@ const NAV_LINKS: NavLink[] = [
   // which reads as a missed click. `match` keeps the tab lit on every board,
   // /desk/cfb included, now that href names one of them.
   //
-  // The children are the same two boards, reached in one click from anywhere
+  // The children are the boards themselves, reached in one click from anywhere
   // instead of landing on NFL first and switching.
   {
     href: `/desk/${DESK_SPORTS[0]}`,
@@ -75,6 +75,8 @@ const NAV_LINKS: NavLink[] = [
     children: [
       { href: '/desk/nfl', label: 'NFL' },
       { href: '/desk/cfb', label: 'College Football' },
+      { href: '/desk/nba', label: 'NBA' },
+      { href: '/desk/cbb', label: 'College Basketball' },
     ],
   },
   {

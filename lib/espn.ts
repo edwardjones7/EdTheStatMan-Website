@@ -14,6 +14,9 @@
 // ESPN's API is unofficial and unversioned. Parse defensively and skip a
 // malformed event rather than failing the whole run.
 
+import { weeksFromDates, dateWeekOf, dateWeekStart } from './desk'
+import { NBA_ABBREVS } from './logos'
+
 export interface ParsedOdds {
   spread_open: number | null
   spread_current: number | null
@@ -337,6 +340,8 @@ export async function fetchWeek(
   seasonType: number,
   week: number
 ): Promise<WeekResult> {
+  if (weeksFromDates(sport)) return fetchDateWeek(sport, season, week)
+
   const league = LEAGUE_PATH[sport] ?? LEAGUE_PATH.nfl
   const leagueSlug = league.split('/')[1]
   // A browser-ish UA: ESPN rejects some default server agents outright.
@@ -366,6 +371,93 @@ export async function fetchWeek(
       for (const event of events) {
         const parsed = parseEvent(event, sport, season, seasonType, week)
         if (parsed) games.push(parsed)
+      }
+      return { games, source: attempt.source }
+    } catch (e: any) {
+      lastError = `${attempt.source}: ${e?.message ?? 'error'}`
+    }
+  }
+
+  return { games: [], source: 'none', error: lastError }
+}
+
+/** yyyymmdd, the date form both ESPN hosts take. */
+function ymd(d: Date): string {
+  return d.toISOString().slice(0, 10).replace(/-/g, '')
+}
+
+/**
+ * ESPN's season type for one event, or null for a game the Desk does not
+ * carry. 2 is the regular season and 3 the postseason; the NBA play-in arrives
+ * as 5 and is filed with the playoffs, which is how anyone betting it thinks of
+ * it. Preseason (1) and anything else are dropped.
+ */
+function deskSeasonType(event: any): number | null {
+  const type = Number(event?.season?.type)
+  if (type === 2 || type === 3) return type
+  if (type === 5) return 3
+  return null
+}
+
+/**
+ * One derived basketball week (see weeksFromDates in lib/desk.ts).
+ *
+ * The two leagues answer differently for the same request. Probed 2026-10-08:
+ * cdn's NBA schedule given `date=` returns that day and the six after it --
+ * exactly one Desk week from its Monday -- while the college schedule returns
+ * that one day only, so a college week is seven requests. College needs no
+ * `groups` filter on cdn: its default is all of Division I (82 games on
+ * 2025-11-15, the same count site.api gives with groups=50).
+ *
+ * Every event is re-filed by its own date rather than trusted to the window,
+ * so an edge-of-window game (ESPN's day is Eastern, the request is not) lands
+ * in the week the board will look for it in.
+ */
+async function fetchDateWeek(sport: string, season: number, week: number): Promise<WeekResult> {
+  const league = LEAGUE_PATH[sport]
+  const leagueSlug = league.split('/')[1]
+  const headers = { 'User-Agent': 'Mozilla/5.0 (compatible; EdTheStatMan/1.0)', Accept: 'application/json' }
+  const start = dateWeekStart(season, week)
+  const days = Array.from({ length: 7 }, (_, i) => new Date(start.getTime() + i * 24 * 60 * 60 * 1000))
+  const end = days[6]
+
+  const cdnUrls = sport === 'nba'
+    ? [`${CDN}/${leagueSlug}/schedule?xhr=1&date=${ymd(start)}`]
+    : days.map(d => `${CDN}/${leagueSlug}/schedule?xhr=1&date=${ymd(d)}`)
+  const groups = sport === 'cbb' ? '&groups=50' : ''
+  const siteUrl = `${SITE_API}/${league}/scoreboard?dates=${ymd(start)}-${ymd(end)}&limit=1000${groups}`
+
+  const attempts: { urls: string[]; source: 'cdn' | 'site-api'; extract: (j: any) => any[] }[] = [
+    { urls: cdnUrls, source: 'cdn', extract: eventsFromCdn },
+    { urls: [siteUrl], source: 'site-api', extract: eventsFromSiteApi },
+  ]
+
+  let lastError = ''
+  for (const attempt of attempts) {
+    try {
+      const responses = await Promise.all(
+        attempt.urls.map(url => fetch(url, { cache: 'no-store', headers }))
+      )
+      const bad = responses.find(r => !r.ok)
+      if (bad) { lastError = `${attempt.source}: HTTP ${bad.status}`; continue }
+      const events = (await Promise.all(responses.map(r => r.json()))).flatMap(attempt.extract)
+
+      const games: ParsedGame[] = []
+      const seen = new Set<string>()
+      for (const event of events) {
+        const type = deskSeasonType(event)
+        if (type === null || !event?.date) continue
+        if (dateWeekOf(season, event.date) !== week) continue
+        const parsed = parseEvent(event, sport, season, type, week)
+        if (!parsed || seen.has(parsed.espn_event_id)) continue
+        // The feed carries exhibitions and the All-Star game alongside real
+        // games. Only a game between two NBA franchises is a betting board row.
+        if (sport === 'nba' && !(NBA_ABBREVS.has(parsed.home_abbrev) && NBA_ABBREVS.has(parsed.away_abbrev))) continue
+        // parseEvent prefers ESPN's own week number, which basketball does not
+        // have in a form we use; the derived week is the only one that counts.
+        parsed.week = week
+        seen.add(parsed.espn_event_id)
+        games.push(parsed)
       }
       return { games, source: attempt.source }
     } catch (e: any) {

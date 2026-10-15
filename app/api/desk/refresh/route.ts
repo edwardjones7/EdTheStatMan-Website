@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { syncTargets } from '@/lib/desk-sync'
 import { currentWeekOf } from '@/lib/nfl'
-import { DESK_SPORTS } from '@/lib/desk'
+import { DESK_SPORTS, defaultDeskSeason } from '@/lib/desk'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
@@ -89,7 +89,7 @@ export async function POST(req: Request) {
     .limit(1)
     .maybeSingle()
 
-  const season: number = seasonRow?.season ?? new Date().getFullYear()
+  const season: number = seasonRow?.season ?? defaultDeskSeason(sport)
 
   const { data: weekRows } = await admin
     .from('nfl_games')

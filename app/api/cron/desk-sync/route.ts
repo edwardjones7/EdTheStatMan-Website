@@ -2,10 +2,10 @@ import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { syncTargets } from '@/lib/desk-sync'
 import { currentWeekOf } from '@/lib/nfl'
-import { DESK_SPORTS, deskSweep } from '@/lib/desk'
+import { DESK_SPORTS, deskSweep, nextDeskWeek, weeksFromDates, defaultDeskSeason, dateWeekOf } from '@/lib/desk'
 
 export const dynamic = 'force-dynamic'
-// Two sports, two weeks each, plus the odds backfill on anything new.
+// Four sports, two weeks each, plus the odds backfill on anything new.
 export const maxDuration = 300
 
 /**
@@ -47,6 +47,29 @@ export async function GET(req: Request) {
   const report: Record<string, unknown> = {}
 
   for (const sport of DESK_SPORTS) {
+    // Basketball needs no database read to know where it is: its weeks are
+    // the calendar, so this week is today's week. That also lets the cron
+    // pick up a new season on its own -- the football branch can only follow
+    // a season an admin has already synced.
+    if (weeksFromDates(sport)) {
+      const season = defaultDeskSeason(sport)
+      const week = dateWeekOf(season, new Date())
+      const { regular, from = 1 } = deskSweep(sport)
+      if (week < from - 1 || week > regular) {
+        report[sport] = { skipped: 'out of season', season, week }
+        continue
+      }
+      const result = await syncTargets(admin, {
+        sport,
+        season,
+        targets: [{ seasonType: 2, week }, { seasonType: 2, week: week + 1 }],
+        publishNew: true,
+      })
+      const { httpStatus, ...payload } = result
+      report[sport] = { season, week, ...payload }
+      continue
+    }
+
     const { data: seasonRow } = await admin
       .from('nfl_games')
       .select('season')
@@ -68,15 +91,7 @@ export async function GET(req: Request) {
       continue
     }
 
-    // The week after this one, rolling into the postseason at the end of the
-    // regular one rather than asking for a regular week that does not exist.
-    const sweep = deskSweep(sport)
-    const next =
-      active.season_type === 2 && active.week < sweep.regular
-        ? { season_type: 2, week: active.week + 1 }
-        : active.season_type === 2
-          ? { season_type: 3, week: 1 }
-          : { season_type: 3, week: active.week + 1 }
+    const next = nextDeskWeek(sport, active)
 
     const targets = [
       { seasonType: active.season_type, week: active.week },

@@ -8,6 +8,7 @@ import { spreadLabel, moneylineLabel, lineMove, groupSlate, gamePath } from '@/l
 import { IconLock, IconArrowRight, IconChevronLeft, IconChevronRight } from './Icons'
 import { teamLogoUrl } from '@/lib/logos'
 import { CFB_SCHOOLS } from '@/lib/teams-cfb'
+import { CBB_SCHOOLS } from '@/lib/teams-cbb'
 import {
   DESK_SPORT_COOKIE, DESK_PLACE_MAX_AGE, retiredDeskWeekCookie,
 } from '@/lib/desk-place'
@@ -65,6 +66,7 @@ function kickoffDisplay(kickoff: string | null): string {
  */
 function teamName(sport: string, team: string, abbrev: string): string {
   if (sport === 'cfb') return CFB_SCHOOLS[abbrev] ?? team
+  if (sport === 'cbb') return CBB_SCHOOLS[abbrev] ?? team
   const parts = team.trim().split(/\s+/)
   return parts.length > 1 ? parts[parts.length - 1] : team
 }

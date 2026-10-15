@@ -7,12 +7,14 @@ interface Props {
   /** Which league to sync. The route sweeps that league's own season shape. */
   sport: string
   season: number
+  /** How the season reads: "2026-27" for basketball, where `season` is 2027. */
+  seasonLabel?: string
   /** Currently viewed week, used for the "Sync this week" button. */
   seasonType?: number
   week?: number
 }
 
-export default function NflAdminBar({ sport, season, seasonType, week }: Props) {
+export default function NflAdminBar({ sport, season, seasonLabel = String(season), seasonType, week }: Props) {
   const router = useRouter()
   const [syncing, setSyncing] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
@@ -63,7 +65,7 @@ export default function NflAdminBar({ sport, season, seasonType, week }: Props) 
         onClick={() => runSync({ season })}
         disabled={syncing}
       >
-        {syncing ? 'Syncing…' : `Sync full ${season} season`}
+        {syncing ? 'Syncing…' : `Sync full ${seasonLabel} season`}
       </button>
       {/* Stages the season without it appearing on the live site: new rows land
           is_published=false, which the public pages filter out but admins see. */}
@@ -72,7 +74,7 @@ export default function NflAdminBar({ sport, season, seasonType, week }: Props) 
         onClick={() => runSync({ season, publish: false })}
         disabled={syncing}
       >
-        Sync {season} (staged)
+        Sync {seasonLabel} (staged)
       </button>
       {seasonType !== undefined && week !== undefined && (
         <button

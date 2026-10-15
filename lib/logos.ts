@@ -19,14 +19,18 @@
 // generated abbrev->id table. It is safe to key that table on the abbreviation
 // because a full-season sweep found zero collisions across 243 programs.
 //
+// NBA works like the NFL (abbreviation in the path; all 30 verified 2026-10-08).
+// CBB works like CFB: numeric ids, from the generated table in lib/logos-cbb.ts.
+//
 // NOT SUPPORTED, deliberately:
-//   - CFL / WNBA / CBB. Not on this CDN path at all.
+//   - CFL / WNBA. Not wired up; nothing on the Desk needs them yet.
 //   - todays_bets. That table has no team column; the pick is free text in
 //     `bet` with `opponent` alongside, so there is nothing reliable to key on.
 // Each of those renders the typographic mark instead, which is why the fallback
 // is the common path rather than an error case.
 
 import { CFB_TEAM_IDS } from './logos-cfb'
+import { CBB_TEAM_IDS } from './logos-cbb'
 
 /** ESPN's NFL abbreviations. The sync writes these verbatim. */
 const NFL_ABBREVS = new Set([
@@ -36,17 +40,33 @@ const NFL_ABBREVS = new Set([
   'NYJ', 'PHI', 'PIT', 'SEA', 'SF', 'TB', 'TEN', 'WSH',
 ])
 
+/**
+ * ESPN's NBA abbreviations. Also the sync's filter for what counts as an NBA
+ * game: the same feed carries exhibitions against overseas clubs (HAPOEL, MEL)
+ * and the All-Star teams (STARS, STRIPES, WORLD), none of which belong on a
+ * betting board.
+ */
+export const NBA_ABBREVS = new Set([
+  'ATL', 'BKN', 'BOS', 'CHA', 'CHI', 'CLE', 'DAL', 'DEN', 'DET', 'GS',
+  'HOU', 'IND', 'LAC', 'LAL', 'MEM', 'MIA', 'MIL', 'MIN', 'NO', 'NY',
+  'OKC', 'ORL', 'PHI', 'PHX', 'POR', 'SA', 'SAC', 'TOR', 'UTAH', 'WSH',
+])
+
 /** Sports whose abbreviations resolve on the ESPN CDN. See header. */
 const LOGO_SPORTS: Record<string, Set<string>> = {
   nfl: NFL_ABBREVS,
   // nflpre reuses the same franchises and therefore the same logos.
   nflpre: NFL_ABBREVS,
+  nba: NBA_ABBREVS,
 }
+
+/** The CDN folder each abbreviation-keyed league lives in. */
+const LOGO_PATH: Record<string, string> = { nfl: 'nfl', nflpre: 'nfl', nba: 'nba' }
 
 /**
  * A logo URL for this team, or null when we cannot resolve one honestly.
  *
- * Returning null is the normal path for every sport but NFL — callers must
+ * Returning null is the normal path for an unsupported sport — callers must
  * render a typographic fallback rather than treating null as an error.
  */
 export function teamLogoUrl(sport: string, abbrev: string | null | undefined): string | null {
@@ -56,15 +76,15 @@ export function teamLogoUrl(sport: string, abbrev: string | null | undefined): s
 
   // 500px is the smallest square ESPN publishes that still looks right on a
   // 2x display at the ~28-40px we render it.
-  if (league === 'cfb') {
-    const id = CFB_TEAM_IDS[key]
+  if (league === 'cfb' || league === 'cbb') {
+    const id = (league === 'cfb' ? CFB_TEAM_IDS : CBB_TEAM_IDS)[key]
     return id ? `https://a.espncdn.com/i/teamlogos/ncaa/500/${id}.png` : null
   }
 
   // Every other supported league puts the abbreviation straight in the path.
   const known = LOGO_SPORTS[league]
   if (!known || !known.has(key)) return null
-  return `https://a.espncdn.com/i/teamlogos/nfl/500/${key.toLowerCase()}.png`
+  return `https://a.espncdn.com/i/teamlogos/${LOGO_PATH[league]}/500/${key.toLowerCase()}.png`
 }
 
 /** True when this team will render as a logo rather than as type. */
