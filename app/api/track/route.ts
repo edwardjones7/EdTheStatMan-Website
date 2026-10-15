@@ -3,7 +3,9 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 import { getClientIp, hashVisitor, isBotUA } from '@/lib/analytics'
 
-const ALLOWED_EVENTS = ['checkout_click']
+import { FUNNEL_EVENTS } from '@/lib/funnel-events'
+
+const ALLOWED_EVENTS: readonly string[] = FUNNEL_EVENTS
 
 function getDeviceType(ua: string): 'mobile' | 'tablet' | 'desktop' {
   if (/tablet|ipad|playbook|silk/i.test(ua)) return 'tablet'
