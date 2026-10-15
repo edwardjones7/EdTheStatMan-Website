@@ -39,6 +39,12 @@ async function hasDeskColumns(admin: any): Promise<boolean> {
   return !error
 }
 
+/** desk_01_kickoff_tbd.sql -- same probe-and-degrade rule as DESK_COLS. */
+async function hasKickoffTbd(admin: any): Promise<boolean> {
+  const { error } = await admin.from('nfl_games').select('kickoff_tbd').limit(1)
+  return !error
+}
+
 /**
  * Is this column unchanged?
  *
@@ -129,8 +135,9 @@ export async function syncTargets(admin: any, opts: SyncOptions): Promise<SyncRe
     return { inserted: 0, updated: 0, failed, error: 'No games parsed from ESPN.', httpStatus: 502 }
   }
 
-  const withDesk = await hasDeskColumns(admin)
-  const writeCols = withDesk ? [...BASE_COLS, ...DESK_COLS] : [...BASE_COLS]
+  const [withDesk, withTbd] = await Promise.all([hasDeskColumns(admin), hasKickoffTbd(admin)])
+  const writeCols: string[] = withDesk ? [...BASE_COLS, ...DESK_COLS] : [...BASE_COLS]
+  if (withTbd) writeCols.push('kickoff_tbd')
 
   // Every column the sync can write, not just the odds ones, so the update loop
   // below can tell a row that changed from a row that did not. Named explicitly

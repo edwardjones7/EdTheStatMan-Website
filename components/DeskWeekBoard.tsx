@@ -39,8 +39,12 @@ interface Props {
 
 const STATUS_LABEL: Record<string, string> = { pre: '', in: 'LIVE', post: 'FINAL' }
 
-function kickoffDisplay(kickoff: string | null): string {
+function kickoffDisplay(kickoff: string | null, tbd?: boolean | null): string {
   if (!kickoff) return 'TBD'
+  // ESPN has the date but not the time: the clock part is a midnight placeholder.
+  if (tbd) {
+    return `${new Date(kickoff).toLocaleDateString('en-US', { weekday: 'short', timeZone: 'America/New_York' })} TBD`
+  }
   return new Date(kickoff).toLocaleString('en-US', {
     weekday: 'short', hour: 'numeric', minute: '2-digit',
     timeZone: 'America/New_York',
@@ -345,7 +349,7 @@ export default function DeskWeekBoard({
                   className={`desk-card${final ? ' desk-card--final' : ''}${live ? ' desk-card--live' : ''}`}
                 >
                   <div className="desk-card__top">
-                    <span className="desk-card__time">{kickoffDisplay(g.kickoff)}</span>
+                    <span className="desk-card__time">{kickoffDisplay(g.kickoff, g.kickoff_tbd)}</span>
                     {status && (
                       <span className="desk-card__status">
                         {live && <span className="desk-card__pulse" aria-hidden="true" />}

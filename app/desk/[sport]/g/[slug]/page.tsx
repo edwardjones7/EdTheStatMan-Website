@@ -70,8 +70,14 @@ function gameWhen(game: Pick<NflGame, 'season_type' | 'week' | 'season' | 'kicko
   return weekLabel(game.season_type, game.week, sport, game.season)
 }
 
-function kickoffDisplay(kickoff: string | null, sport: string): string {
+function kickoffDisplay(kickoff: string | null, sport: string, tbd?: boolean | null): string {
   if (!kickoff) return weeksFromDates(sport) ? 'Tip-off TBD' : 'Kickoff TBD'
+  if (tbd) {
+    const day = new Date(kickoff).toLocaleDateString('en-US', {
+      weekday: 'long', month: 'long', day: 'numeric', year: 'numeric', timeZone: 'America/New_York',
+    })
+    return `${day} · ${weeksFromDates(sport) ? 'Tip-off' : 'Kickoff'} time TBD`
+  }
   return new Date(kickoff).toLocaleString('en-US', {
     weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
     hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York', timeZoneName: 'short',
@@ -294,7 +300,22 @@ export default async function NflGamePage({ params }: { params: { sport: string;
             '@type': 'SportsEvent',
             name: `${game.away_team} at ${game.home_team}`,
             startDate: game.kickoff ?? undefined,
-            eventStatus: game.status === 'post' ? 'https://schema.org/EventScheduled' : 'https://schema.org/EventScheduled',
+            // schema.org has no "completed" status: a game that went ahead as
+            // planned stays EventScheduled after it is played.
+            eventStatus: 'https://schema.org/EventScheduled',
+            ...(game.venue_name
+              ? {
+                  location: {
+                    '@type': 'Place',
+                    name: game.venue_name,
+                    address: {
+                      '@type': 'PostalAddress',
+                      addressLocality: game.venue_city ?? undefined,
+                      addressRegion: game.venue_state ?? undefined,
+                    },
+                  },
+                }
+              : {}),
             homeTeam: { '@type': 'SportsTeam', name: game.home_team },
             awayTeam: { '@type': 'SportsTeam', name: game.away_team },
             sport: weeksFromDates(params.sport) ? 'Basketball' : 'American Football',
@@ -320,7 +341,7 @@ export default async function NflGamePage({ params }: { params: { sport: string;
             <h1 className="nfl-game-header__title">
               {game.away_team} <span className="nfl-game-header__at">at</span> {game.home_team}
             </h1>
-            <p className="nfl-game-header__kickoff">{kickoffDisplay(game.kickoff, params.sport)}</p>
+            <p className="nfl-game-header__kickoff">{kickoffDisplay(game.kickoff, params.sport, game.kickoff_tbd)}</p>
             {showScore && (
               <div className="nfl-game-header__score">
                 <span>{game.away_abbrev} {game.away_score}</span>

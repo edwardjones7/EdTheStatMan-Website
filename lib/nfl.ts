@@ -38,6 +38,8 @@ export interface NflGame extends GameOdds {
   season_type: number // ESPN: 2 = regular season, 3 = postseason
   week: number
   kickoff: string | null
+  /** Start time not set yet (desk_01_kickoff_tbd.sql); `kickoff` holds only the date. */
+  kickoff_tbd?: boolean | null
   status: string // pre | in | post
   home_team: string
   home_abbrev: string
@@ -61,6 +63,7 @@ export interface PublicNflGame extends GameOdds {
   season_type: number
   week: number
   kickoff: string | null
+  kickoff_tbd?: boolean | null
   status: string
   home_team: string
   home_abbrev: string
@@ -112,6 +115,7 @@ export function toPublicGame(row: NflGame): PublicNflGame {
     season_type: row.season_type,
     week: row.week,
     kickoff: row.kickoff,
+    kickoff_tbd: row.kickoff_tbd ?? null,
     status: row.status,
     home_team: row.home_team,
     home_abbrev: row.home_abbrev,

@@ -37,6 +37,8 @@ export interface ParsedGame extends ParsedOdds {
   season_type: number
   week: number
   kickoff: string | null
+  /** ESPN has not set a start time; `kickoff` is a midnight-Eastern placeholder. */
+  kickoff_tbd: boolean
   status: string
   home_team: string
   home_abbrev: string
@@ -165,6 +167,7 @@ function parseEvent(
     season_type: seasonType,
     week: Number(event?.week?.number ?? week),
     kickoff: event?.date ? new Date(event.date).toISOString() : null,
+    kickoff_tbd: comp?.timeValid === false,
     status: String(event?.status?.type?.state ?? comp?.status?.type?.state ?? 'pre'),
     home_team: String(home.team.displayName ?? homeAbbrev),
     home_abbrev: homeAbbrev,

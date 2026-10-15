@@ -14,6 +14,7 @@ import { researchClosedFor, holdsLibrary } from '@/lib/gate'
 import { toPublicGame, currentWeekOf, weekLabel, weekIsOver } from '@/lib/nfl'
 import type { NflGame, PublicNflGame } from '@/lib/nfl'
 import { DESK_SPORTS, deskSportLabel, deskSeasonLabel, defaultDeskSeason, startWord } from '@/lib/desk'
+import { selectAll } from '@/lib/supabase/select-all'
 
 export const dynamic = 'force-dynamic'
 
@@ -86,11 +87,12 @@ export default async function DeskSport({
   // roughly 1,400 games against the NFL's 272: pulling all of them with `*` to
   // render a single week of cards is the shape that stops working the moment a
   // second league lands.
-  const { data: weekRows } = await (admin as any)
+  const { data: weekRows } = await selectAll(() => (admin as any)
     .from('nfl_games')
     .select('season_type, week, kickoff, status, is_published')
     .eq('sport', sport)
     .eq('season', season)
+    .order('id'))
 
   type WeekRow = Pick<NflGame, 'season_type' | 'week' | 'kickoff' | 'status' | 'is_published'>
   const visibleWeekRows: WeekRow[] = (weekRows ?? []).filter(
