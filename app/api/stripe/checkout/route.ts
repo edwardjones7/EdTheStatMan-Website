@@ -152,6 +152,16 @@ export async function POST(req: Request) {
     cancel_url: `${siteUrl()}/win?canceled=1`,
     metadata: { userId: user.id, priceId, tier: sku.tier, period: sku.period, ...attr },
     allow_promotion_codes: true,
+    // The no-refund policy, on the page where they pay. Shown beside the pay
+    // button, it is the strongest evidence in a dispute that the terms were
+    // seen before purchase. Plain text: no markup is relied on here.
+    custom_text: {
+      submit: {
+        message:
+          'All sales are final; no refunds. Picks and research are information and entertainment ' +
+          'only, with no outcome guaranteed. 21+. Terms: edthestatman.com/terms',
+      },
+    },
   }
 
   // A STORED CUSTOMER ID CAN BE STALE, and trusting it absolutely is a dead end

@@ -6,6 +6,10 @@ import { selectAll } from '@/lib/supabase/select-all'
 
 const BASE = 'https://edthestatman.com'
 
+// Without this the sitemap was prerendered once at build, so every game
+// published after a deploy stayed out of it until the next one.
+export const revalidate = 3600
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const admin = createAdminClient()
 
@@ -53,6 +57,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE}/blog`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
     { url: `${BASE}/win`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.7 },
     { url: `${BASE}/contact`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.5 },
+    { url: `${BASE}/responsible-gaming`, lastModified: new Date(), changeFrequency: 'yearly', priority: 0.3 },
+    { url: `${BASE}/terms`, lastModified: new Date(), changeFrequency: 'yearly', priority: 0.2 },
+    { url: `${BASE}/privacy`, lastModified: new Date(), changeFrequency: 'yearly', priority: 0.2 },
   ]
 
   const blogRoutes: MetadataRoute.Sitemap = (posts ?? []).map((post: any) => ({

@@ -8,6 +8,7 @@ import { Resend } from 'resend'
 import type { NotifiablePick, PickAudience, Recipient } from './audience'
 import { renderPick, renderPickLocked, SITE_URL } from './message'
 import { TIER_SHORT_LABEL } from '@/lib/access'
+import { BUSINESS_NAME, BUSINESS_POSTAL_ADDRESS, PROBLEM_GAMBLING_LINE } from '@/lib/business'
 
 const FROM = 'EdTheStatMan Picks <noreply@edthestatman.com>'
 /**
@@ -134,8 +135,11 @@ function html(
               <a href="${url}" style="color:${C.secondary};text-decoration:underline;">edthestatman.com</a>
             </p>
             <p style="margin:14px 0 0;font-family:${FONT};font-size:11px;line-height:1.5;color:${C.muted};">
-              21+. Please wager responsibly. Nothing here is financial advice.
-            </p>
+              21+. ${PROBLEM_GAMBLING_LINE} Nothing here is financial advice.
+            </p>${BUSINESS_POSTAL_ADDRESS ? `
+            <p style="margin:8px 0 0;font-family:${FONT};font-size:11px;line-height:1.5;color:${C.muted};">
+              ${BUSINESS_NAME} &middot; ${BUSINESS_POSTAL_ADDRESS}
+            </p>` : ''}
           </td>
         </tr>
 
@@ -186,7 +190,7 @@ async function sendTo(
           from: FROM,
           to: r.email,
           subject: title,
-          text: `${body}\n\n${cta}: ${url}\n\nUnsubscribe: ${unsubscribeUrl(r.notifyToken)}`,
+          text: `${body}\n\n${cta}: ${url}\n\nUnsubscribe: ${unsubscribeUrl(r.notifyToken)}\n\n21+. ${PROBLEM_GAMBLING_LINE}${BUSINESS_POSTAL_ADDRESS ? `\n${BUSINESS_NAME}, ${BUSINESS_POSTAL_ADDRESS}` : ''}`,
           html: html(title, body, url, unsubscribeUrl(r.notifyToken), audience, cta, locked),
           headers: {
             // Lets Gmail/Apple Mail show a native unsubscribe control, which

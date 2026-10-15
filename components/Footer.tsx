@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { IconInstagram } from './Icons'
+import { PROBLEM_GAMBLING_LINE } from '@/lib/business'
 
 export default function Footer() {
   return (
@@ -46,18 +47,19 @@ export default function Footer() {
             <h4 className="footer__heading">Resources</h4>
             <div className="footer__links">
               <Link href="/portfolio/performance" className="footer__link">Model Results</Link>
-              <Link href="/win" className="footer__link">Pricing</Link>
+              <Link href="/win" className="footer__link">Membership</Link>
               <Link href="/contact" className="footer__link">Contact</Link>
             </div>
           </div>
 
           <div>
-            <h4 className="footer__heading">Sportsbooks</h4>
+            {/* Was four sportsbook names linking to "#". */}
+            <h4 className="footer__heading">Research Desk</h4>
             <div className="footer__links">
-              <a href="#" className="footer__link">DraftKings</a>
-              <a href="#" className="footer__link">FanDuel</a>
-              <a href="#" className="footer__link">BetMGM</a>
-              <a href="#" className="footer__link">Caesars</a>
+              <Link href="/desk/nfl" className="footer__link">NFL</Link>
+              <Link href="/desk/cfb" className="footer__link">College Football</Link>
+              <Link href="/desk/nba" className="footer__link">NBA</Link>
+              <Link href="/desk/cbb" className="footer__link">College Basketball</Link>
             </div>
           </div>
         </div>
@@ -68,10 +70,17 @@ export default function Footer() {
             Powered by Elenos
           </a>
           <div className="footer__legal">
-            <a href="#">Privacy Policy</a>
-            <a href="#">Terms of Service</a>
+            <Link href="/privacy">Privacy Policy</Link>
+            <Link href="/terms">Terms of Service</Link>
+            <Link href="/responsible-gaming">Responsible Gaming</Link>
           </div>
         </div>
+
+        <p className="footer__rg">
+          21+ only. For information and entertainment; no outcome is guaranteed. We are not a
+          sportsbook and do not accept bets. {PROBLEM_GAMBLING_LINE}{' '}
+          <Link href="/responsible-gaming">Get help</Link>.
+        </p>
       </div>
     </footer>
   )

@@ -142,6 +142,8 @@ export default async function Pricing({
           <div className="reveal" style={{ maxWidth: '640px', margin: '56px auto 0', textAlign: 'center' }}>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.8 }}>
               {OFFER_DISCLAIMER}{' '}
+              <strong style={{ color: 'var(--text-secondary)' }}>All sales are final; we do not offer refunds.</strong>{' '}
+              See the <Link href="/terms" style={{ color: 'var(--accent-teal)' }}>Terms of Service</Link>.{' '}
               Questions? <Link href="/contact" style={{ color: 'var(--accent-teal)' }}>Contact us</Link>.
             </p>
           </div>

@@ -4,6 +4,9 @@ import { IconMail } from '@/components/Icons'
 
 export const metadata: Metadata = {
   title: 'Verify Your Email – EdTheStatMan.com',
+  // Without this it inherited the root layout's canonical and told crawlers
+  // it was a copy of the homepage.
+  robots: { index: false, follow: false },
 }
 
 export default function VerifyEmailPage({

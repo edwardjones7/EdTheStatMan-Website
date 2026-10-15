@@ -3480,8 +3480,23 @@ textarea.form-input {
   color: var(--text-secondary);
 }
 
+/* Responsible-gambling line under the footer bar. New Jersey requires the
+   helpline on gambling advertising, and this footer is on every page. */
+.footer__rg {
+  margin: 20px 0 0;
+  font-size: 0.78rem;
+  line-height: 1.6;
+  color: var(--text-muted);
+  text-align: center;
+}
+.footer__rg a { color: var(--text-secondary); text-decoration: underline; }
+
+/* Legal pages: plain reading text, first paint, no reveal. */
+.legal-page h2 { margin-top: 2em; }
+
 .footer__legal {
   display: flex;
+  flex-wrap: wrap;
   gap: 24px;
 }
 
