@@ -3,7 +3,7 @@
 import { useState, type CSSProperties } from 'react'
 import Link from 'next/link'
 import CheckoutButton from './CheckoutButton'
-import { OFFER_PLANS, OFFER_FREE_FEATURES } from '@/lib/offer'
+import { OFFER_PLANS, OFFER_FREE_FEATURES, SEASON_ENDS_AT } from '@/lib/offer'
 import type { OfferPlan, OfferTierKey, BillingPeriod } from '@/lib/offer'
 import { TIER_RANK, normalizeTier, type Membership, type Tier } from '@/lib/access'
 
@@ -13,6 +13,16 @@ interface Props {
   /** Include the free (Public Intelligence) comparison column (offer page only). */
   showFree?: boolean
   highlight?: OfferTierKey
+  /** When their access runs out (ISO). Tells a season holder from a monthly one. */
+  expiresAt?: string | null
+}
+
+const DAY_MS = 24 * 60 * 60 * 1000
+
+/** Access that already runs to the end of the season: they hold the season pass. */
+function holdsSeason(expiresAt: string | null | undefined): boolean {
+  if (!expiresAt) return false
+  return Date.parse(expiresAt) >= Date.parse(SEASON_ENDS_AT) - DAY_MS
 }
 
 /**
@@ -32,7 +42,7 @@ function cardState(
   isPaid: boolean,
   plan: OfferPlan,
   period: BillingPeriod,
-  billingMode: 'monthly' | 'season' | null
+  heldSeason: boolean
 ): 'current' | 'buy' | 'hide' {
   if (!isPaid || !currentTier) return 'buy'
   const held = TIER_RANK[normalizeTier(currentTier)]
@@ -40,7 +50,7 @@ function cardState(
   if (offered > held) return 'buy'
   if (offered < held) return 'hide'
   // Same rung: the season pass is still an upgrade from monthly.
-  if (period === 'season' && billingMode !== 'season') return 'buy'
+  if (period === 'season' && !heldSeason) return 'buy'
   return 'current'
 }
 
@@ -49,7 +59,9 @@ export default function PricingCards({
   currentTier,
   showFree = false,
   highlight = 'desk',
+  expiresAt = null,
 }: Props) {
+  const heldSeason = holdsSeason(expiresAt)
   const [period, setPeriod] = useState<BillingPeriod>('season')
 
   const isPaid = membership === 'active' || membership === 'admin'
@@ -58,14 +70,14 @@ export default function PricingCards({
   const isAdmin = membership === 'admin'
 
   const offered = OFFER_PLANS.filter(
-    plan => cardState(currentTier, isPaid, plan, period, null) !== 'hide'
+    plan => cardState(currentTier, isPaid, plan, period, heldSeason) !== 'hide'
   )
   // A member already at the top rung, or an admin, has nothing to be sold. The
   // anti-downgrade rule would otherwise leave one card stretched across the
   // full grid width, which reads like a broken layout rather than a good place
   // to be.
   const nothingToSell = isAdmin || offered.every(
-    plan => cardState(currentTier, isPaid, plan, period, null) === 'current'
+    plan => cardState(currentTier, isPaid, plan, period, heldSeason) === 'current'
   )
 
   // The grid used to be auto-fit/minmax, which fit only three 300px columns
@@ -85,7 +97,7 @@ export default function PricingCards({
         <p>
           {isAdmin
             ? 'Admin accounts hold every rung of the ladder. Nothing to buy here.'
-            : 'You hold the top rung. Every system, every trend, the raw rows underneath them, and the whole schedule.'}
+            : 'You hold the top rung. Every system, every trend, the highest-conviction library, and the whole schedule.'}
         </p>
         <Link href="/vault" className="btn btn--outline">Open the Vault</Link>
       </div>
@@ -122,7 +134,7 @@ export default function PricingCards({
       >
         {offered.map(plan => {
           const sku = period === 'month' ? plan.month : plan.season
-          const state = cardState(currentTier, isPaid, plan, period, null)
+          const state = cardState(currentTier, isPaid, plan, period, heldSeason)
 
           const featured = plan.key === highlight
           const vault = plan.key === 'private' || plan.key === 'institutional'
@@ -170,6 +182,7 @@ export default function PricingCards({
                 <CheckoutButton
                   priceId={sku.priceId}
                   tierKey={plan.key}
+                  period={sku.period}
                   label={isExpired ? `Renew — ${sku.price}` : sku.ctaLabel}
                   variant={featured ? 'primary' : 'outline'}
                 />

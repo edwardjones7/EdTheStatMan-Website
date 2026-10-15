@@ -317,7 +317,7 @@ export default async function DeskSport({
               </p>
             </div>
             <div style={{ marginTop: '60px' }}>
-              <PricingCards membership={membership} currentTier={userTier} highlight="desk" />
+              <PricingCards membership={membership} currentTier={userTier} expiresAt={access.expiresAt?.toISOString() ?? null} highlight="desk" />
             </div>
           </div>
         </section>

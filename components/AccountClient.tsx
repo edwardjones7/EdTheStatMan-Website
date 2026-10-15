@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useTransition } from 'react'
 import Link from 'next/link'
-import { useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { logout } from '@/app/actions/auth'
 import { updateProfile, updatePassword, updateNotifyEmail } from '@/app/account/actions'
 import PushOptIn from './PushOptIn'
@@ -31,10 +31,10 @@ interface AccountClientProps {
 // duplicated across four files and drifted. Only the descriptions live here.
 const TIER_DESCRIPTION: Record<SubscriptionTier, string> = {
   retail: 'A curated set of free systems, trends and picks. Records visible on everything else.',
-  portfolio: 'Every pick, unlocked, with the full line and unit sizing.',
-  desk: 'The season schedule with curated trends attached to every matchup, plus everything in The Portfolio.',
+  portfolio: 'Every pick, unlocked, with the full line and number.',
+  desk: 'The full schedule for all four leagues with live lines, every game on its own page, plus everything in The Portfolio.',
   private: 'The complete systems and trends libraries, filterable, plus everything in The Research Desk.',
-  institutional: 'Query builder, API key and backtester on top of everything in Private Intelligence.',
+  institutional: 'The highest-conviction library, at this tier only, on top of everything in Private Intelligence.',
 }
 
 function formatDate(dateStr: string) {
@@ -48,6 +48,29 @@ type Msg = { type: 'success' | 'error'; text: string }
 export default function AccountClient({ profile, provider, discordLinked = false }: AccountClientProps) {
   const searchParams = useSearchParams()
   const subscribeSuccess = searchParams.get('success') === '1'
+  const router = useRouter()
+
+  // Stripe sends the buyer back here the moment payment clears, which can be
+  // before its webhook has reached us and raised the tier. Reading the tier
+  // then said "Welcome to Free access" to someone who had just paid. Until the
+  // new tier lands, say so honestly and re-read the profile a few times.
+  const activating = subscribeSuccess && !profile.is_admin &&
+    normalizeTier(profile.subscription_tier) === 'retail'
+  const [activationTimedOut, setActivationTimedOut] = useState(false)
+  useEffect(() => {
+    if (!activating) return
+    let tries = 0
+    const timer = setInterval(() => {
+      tries++
+      if (tries > 10) {
+        clearInterval(timer)
+        setActivationTimedOut(true)
+        return
+      }
+      router.refresh()
+    }, 3000)
+    return () => clearInterval(timer)
+  }, [activating, router])
 
   // The OAuth callback redirects back with ?discord=<status>. Every outcome gets
   // words, including the ones that are nobody's fault -- a silent return to the
@@ -169,9 +192,21 @@ export default function AccountClient({ profile, provider, discordLinked = false
     <main className="account-page">
       <div className="account-container">
 
-        {subscribeSuccess && (
+        {subscribeSuccess && !activating && (
           <div className="account-success-banner">
             &#10003; Payment successful! Welcome to {tierConfig.label} access.
+          </div>
+        )}
+        {activating && (
+          <div className="account-success-banner" role="status" aria-live="polite">
+            {activationTimedOut ? (
+              <>
+                &#10003; Payment received. Your access is taking longer than usual to switch on.
+                Refresh in a minute, or <Link href="/contact">contact us</Link> and we&apos;ll sort it.
+              </>
+            ) : (
+              <>&#10003; Payment received. Switching on your access…</>
+            )}
           </div>
         )}
 

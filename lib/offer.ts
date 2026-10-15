@@ -126,7 +126,7 @@ export const OFFER_PLANS: OfferPlan[] = [
       'Everything in The Portfolio',
       'The full season schedule, live as it moves',
       'Opening and current lines: spread, total and moneyline',
-      'Every game on its own page, NFL and college football',
+      'Every game on its own page: NFL, college football, NBA and college basketball',
       'Coming this season — curated trends attached to each matchup',
       'Coming this season — the weekly desk note',
     ],
@@ -154,7 +154,6 @@ export const OFFER_PLANS: OfferPlan[] = [
       'The complete team trends library, unlocked',
       'Every system and trend that clears our significance bar',
       'Filter and sort across the whole Vault',
-      'Coming this season — alerts the moment a system triggers',
     ],
     month: {
       tier: 'private', period: 'month', mode: 'subscription', price: '$199',
@@ -173,14 +172,11 @@ export const OFFER_PLANS: OfferPlan[] = [
     key: 'institutional',
     name: 'Vault — Institutional Intelligence',
     shortName: 'Institutional',
-    tagline: 'The strongest signals we have, and first access to what we build next.',
+    tagline: 'The strongest signals we have, held back from every other rung.',
     badge: 'Institutional',
     features: [
       'Everything in Private Intelligence',
       'The highest-conviction library: the signals that clear our strictest bar, at this tier only',
-      'Coming this season — query builder across the entire Vault',
-      'Coming this season — API key for programmatic access',
-      'Coming this season — backtest your own systems against our data',
     ],
     month: {
       tier: 'institutional', period: 'month', mode: 'subscription', price: '$399',
@@ -207,7 +203,6 @@ export const OFFER_FREE_FEATURES: { text: string; included: boolean }[] = [
   { text: 'The picks themselves', included: false },
   { text: 'The season schedule and curated matchup trends', included: false },
   { text: 'The full Vault library', included: false },
-  { text: 'The query builder and API access', included: false },
 ]
 
 export const OFFER_DISCLAIMER =

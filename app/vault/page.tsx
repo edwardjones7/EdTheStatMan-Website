@@ -44,15 +44,15 @@ const LEVELS: {
     tier: 'private',
     name: 'Private Intelligence',
     price: '$199/mo · $799 season',
-    body: 'The complete libraries, unlocked and filterable. Every system, every team trend, with alerts the moment one triggers.',
-    features: ['Every system and trend, unlocked', 'Filter by sport, team and situation', 'Alerts the moment one triggers'],
+    body: 'The complete libraries, unlocked and filterable. Every system and every team trend that clears our significance bar.',
+    features: ['Every system and trend, unlocked', 'Filter by sport, team and situation', 'Sort across the whole Vault'],
   },
   {
     tier: 'institutional',
     name: 'Institutional Intelligence',
     price: '$399/mo · $1,499 season',
-    body: 'The raw material underneath the conclusions: a query builder across the whole Vault, an API key, and a backtester for your own systems.',
-    features: ['Query builder across the whole Vault', 'API key', 'Backtester for your own systems'],
+    body: 'The highest-conviction library: the signals that clear our strictest bar, held back from every other rung.',
+    features: ['Everything in Private Intelligence', 'The highest-conviction systems and trends', 'Available at this tier only'],
   },
 ]
 
@@ -292,6 +292,7 @@ export default async function VaultLanding() {
               <PricingCards
                 membership={membership}
                 currentTier={userTier}
+                expiresAt={access.expiresAt?.toISOString() ?? null}
                 highlight="private"
               />
             </div>

@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { getFirstTouch } from '@/lib/attribution'
 
 interface Props {
   priceId: string
@@ -28,7 +29,10 @@ export default function CheckoutAutoStart({ priceId, planName }: Props) {
         const res = await fetch('/api/stripe/checkout', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ priceId }),
+          // First touch rides along exactly as it does from CheckoutButton.
+          // Without it the most common new-buyer path -- click Buy, sign up,
+          // resume here -- wrote purchases with no attribution at all.
+          body: JSON.stringify({ priceId, attribution: getFirstTouch() }),
         })
         const data = await res.json()
         if (cancelled) return

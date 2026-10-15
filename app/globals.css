@@ -6248,6 +6248,16 @@ textarea.form-input {
 }
 
 /* ---------- Checkout resume overlay ---------- */
+/* Inline checkout failure, under the button that caused it. Replaced a raw
+   window.alert(). */
+.checkout-error {
+  margin: 10px 0 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--accent-red);
+  text-align: center;
+}
+
 .checkout-resume {
   position: fixed;
   inset: 0;

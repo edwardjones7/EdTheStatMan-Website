@@ -90,11 +90,11 @@ export default async function VaultSystems() {
               <h2 className="section-title">Open the <span className="text-gradient">Vault</span></h2>
               <p className="section-subtitle" style={{ margin: '0 auto' }}>
                 Private Intelligence unlocks the complete systems and trends libraries.
-                Institutional adds the raw rows underneath them.
+                Institutional adds the highest-conviction library on top.
               </p>
             </div>
             <div style={{ marginTop: '60px' }}>
-              <PricingCards membership={membership} currentTier={userTier} highlight="private" />
+              <PricingCards membership={membership} currentTier={userTier} expiresAt={access.expiresAt?.toISOString() ?? null} highlight="private" />
             </div>
           </div>
         </section>

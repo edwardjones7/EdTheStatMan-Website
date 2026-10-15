@@ -32,7 +32,7 @@ export const metadata: Metadata = {
 export default async function Pricing({
   searchParams,
 }: {
-  searchParams: { checkout?: string; canceled?: string }
+  searchParams: { checkout?: string; period?: string; canceled?: string }
 }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -50,10 +50,15 @@ export default async function Pricing({
 
 
   const resumePlan = user && !isPaid ? planByKey(searchParams.checkout ?? '') : undefined
+  // Resume on the period they picked. This always used the season SKU, so a
+  // visitor who chose $49 monthly and signed up landed on a $199-$1,499 checkout.
+  const resumeSku = resumePlan
+    ? (searchParams.period === 'month' ? resumePlan.month : resumePlan.season)
+    : undefined
 
   return (
     <main>
-      {resumePlan && <CheckoutAutoStart priceId={resumePlan.season.priceId} planName={resumePlan.name} />}
+      {resumePlan && resumeSku && <CheckoutAutoStart priceId={resumeSku.priceId} planName={resumePlan.name} />}
       {/* Header */}
       <header className="page-header">
         <div className="container">
@@ -127,7 +132,12 @@ export default async function Pricing({
             </div>
           )}
 
-          <PricingCards membership={membership} currentTier={userTier} showFree />
+          <PricingCards
+            membership={membership}
+            currentTier={userTier}
+            expiresAt={expiresAt ? expiresAt.toISOString() : null}
+            showFree
+          />
 
           <div className="reveal" style={{ maxWidth: '640px', margin: '56px auto 0', textAlign: 'center' }}>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.8 }}>
