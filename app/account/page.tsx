@@ -1,7 +1,9 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import AccountClient from '@/components/AccountClient'
+import { isPaidTier } from '@/lib/access'
 
 export const metadata: Metadata = {
   title: 'My Account – EdTheStatMan.com',
@@ -35,6 +37,35 @@ export default async function AccountPage() {
     .maybeSingle()
   const discordLinked = !!link?.discord_user_id
 
+  // Onboarding checklist state, read only for paying members (nobody else
+  // sees the checklist) and in parallel, since this page's latency is round
+  // trips. Both reads are best-effort and default to "not done" on any error,
+  // which at worst shows a step that is already done.
+  let pushSubscribed = false
+  let productVisited = false
+  if (isPaidTier(profile?.subscription_tier) && !profile?.is_admin) {
+    const [push, views] = await Promise.all([
+      // push_subscriptions has a select-own policy, so the member's own
+      // client can answer "any device subscribed?" without the service role.
+      (supabase as any)
+        .from('push_subscriptions')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .then((r: any) => r, () => null),
+      // page_views has no select policy, so this needs the service role.
+      // Indexed on user_id, and limit(1) stops at the first hit.
+      (createAdminClient() as any)
+        .from('page_views')
+        .select('id')
+        .eq('user_id', user.id)
+        .or('path.like./portfolio%,path.like./desk%,path.like./vault%')
+        .limit(1)
+        .then((r: any) => r, () => null),
+    ])
+    pushSubscribed = (push?.count ?? 0) > 0
+    productVisited = (views?.data?.length ?? 0) > 0
+  }
+
   const provider = user.app_metadata?.provider ?? 'email'
 
   return (
@@ -56,6 +87,8 @@ export default async function AccountPage() {
       }}
       provider={provider}
       discordLinked={discordLinked}
+      pushSubscribed={pushSubscribed}
+      productVisited={productVisited}
     />
   )
 }

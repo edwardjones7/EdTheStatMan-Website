@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { logout } from '@/app/actions/auth'
 import { updateProfile, updatePassword, updateNotifyEmail } from '@/app/account/actions'
 import PushOptIn from './PushOptIn'
+import OnboardingChecklist from './OnboardingChecklist'
 import { IconUser, IconLock, IconBolt, IconBell, IconChat } from './Icons'
 import type { SubscriptionTier } from '@/lib/supabase/types'
 import { normalizeTier, TIER_SHORT_LABEL } from '@/lib/access'
@@ -25,6 +26,10 @@ interface AccountClientProps {
   provider: string
   /** Whether this member has already linked a Discord account. */
   discordLinked?: boolean
+  /** Any push subscription stored for this member, on any device. */
+  pushSubscribed?: boolean
+  /** Has this member ever loaded /portfolio, /desk or /vault? */
+  productVisited?: boolean
 }
 
 // Labels come from TIER_SHORT_LABEL in lib/access.ts -- tier copy used to be
@@ -45,7 +50,9 @@ function formatDate(dateStr: string) {
 
 type Msg = { type: 'success' | 'error'; text: string }
 
-export default function AccountClient({ profile, provider, discordLinked = false }: AccountClientProps) {
+export default function AccountClient({
+  profile, provider, discordLinked = false, pushSubscribed = false, productVisited = false,
+}: AccountClientProps) {
   const searchParams = useSearchParams()
   const subscribeSuccess = searchParams.get('success') === '1'
   const router = useRouter()
@@ -210,6 +217,21 @@ export default function AccountClient({ profile, provider, discordLinked = false
           </div>
         )}
 
+        {/* Paying members only, and only while access is live: an expired
+            member's next step is renewing, not linking Discord. */}
+        {normalized !== 'retail' && !profile.is_admin && isActive && (
+          <OnboardingChecklist
+            tier={normalized}
+            emailOn={notifyEmail}
+            onEnableEmail={() => handleNotifyToggle(true)}
+            emailBusy={isPending}
+            pushSubscribed={pushSubscribed}
+            discordLinked={discordLinked}
+            productVisited={productVisited}
+            justPurchased={subscribeSuccess}
+          />
+        )}
+
         {/* Hero */}
         <div className="account-hero">
           <div className={avatarClass}>{initial}</div>
@@ -365,8 +387,8 @@ export default function AccountClient({ profile, provider, discordLinked = false
             </div>
           )}
 
-          {/* Pick alerts */}
-          <div className="account-card">
+          {/* Pick alerts. id is the checklist's "Set up push" target. */}
+          <div className="account-card" id="alerts">
             <div className="account-card__header">
               <div className="account-card__icon"><IconBell size={18} /></div>
               <h2 className="account-card__title">Pick Alerts</h2>
