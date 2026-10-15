@@ -4,7 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { IconLock } from '@/components/Icons'
 import { coverForPost } from '@/lib/blog-images'
-import { OFFER_ENTRY_PRICE } from '@/lib/offer'
+import { planByKey } from '@/lib/offer'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 import { resolveAccess, ACCESS_SELECT, atLeastTier, normalizeTier } from '@/lib/access'
@@ -89,7 +89,19 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
   }
   const { tier: userTier, isAdmin, isPaid, membership, expiresAt } = access
 
-  const canRead = isAdmin || atLeastTier(userTier, normalizeTier(post.access_level))
+  // A free post is public: no account needed, and it is what search engines
+  // index. It used to need a login, so every "Free ... Pick" post showed
+  // Google a 300-character teaser and a lock.
+  const required = normalizeTier(post.access_level)
+  const canRead = isAdmin || required === 'retail' || atLeastTier(userTier, required)
+
+  // Name the rung that actually opens this post. The gate used to promise
+  // "every post ... from $49, no subscription", but posts sit at the Desk and
+  // $49 buys the Portfolio, which opens none of them.
+  const unlockPlan = required === 'retail' ? undefined : planByKey(required)
+  const unlockLine = unlockPlan
+    ? `This post is part of ${unlockPlan.name}: ${unlockPlan.month.price}${unlockPlan.month.mode === 'subscription' ? '/mo' : ''} or ${unlockPlan.season.price} for the season, and every rung above it.`
+    : 'Unlock it with a membership.'
 
   const plainText = stripHtml(post.content)
   const teaser = plainText.slice(0, 320) + '…'
@@ -160,13 +172,10 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
                   <>
                     <span className="blog-post__gate-eyebrow">Members Only</span>
                     <h2 className="blog-post__gate-title">Members Only Content</h2>
-                    <p className="blog-post__gate-desc">
-                      Full access unlocks every post, the complete systems library, and all
-                      betting trends — a one-time payment from {OFFER_ENTRY_PRICE}, no subscription.
-                    </p>
+                    <p className="blog-post__gate-desc">{unlockLine}</p>
                     <div className="blog-post__gate-actions">
                       <Link href="/win" className="btn btn--primary">
-                        Unlock Full Access — {OFFER_ENTRY_PRICE} →
+                        See Membership →
                       </Link>
                       <Link href={`/signup?next=${encodeURIComponent(`/blog/${post.slug}`)}`} className="btn btn--outline">
                         Create Free Account
@@ -187,7 +196,7 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
                     <p className="blog-post__gate-desc">
                       {membership === 'expired'
                         ? 'Renew to pick up where you left off — every post, system, and trend.'
-                        : `Unlock every post, the full systems library, and all betting trends from ${OFFER_ENTRY_PRICE}.`}
+                        : unlockLine}
                     </p>
                     <div className="blog-post__gate-actions">
                       <Link href="/win" className="btn btn--primary">

@@ -423,10 +423,10 @@ export default async function NflGamePage({ params }: { params: { sport: string;
                 The full {game.away_abbrev}–{game.home_abbrev} breakdown is inside
               </div>
               <p className="content-gate-card__desc">
-                {publicGame.writeup_words} words of matchup analysis, angles, and the systems behind them — Institutional members only.
+                {publicGame.writeup_words} words of matchup analysis, angles, and the systems behind them, for Private Intelligence members and above.
               </p>
               <div className="content-gate-card__actions">
-                <Link href="/win" className="btn btn--primary">Go Institutional &rarr;</Link>
+                <Link href="/win" className="btn btn--primary">See Private Intelligence &rarr;</Link>
               </div>
             </div>
           )}

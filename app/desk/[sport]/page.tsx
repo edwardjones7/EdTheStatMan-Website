@@ -298,6 +298,7 @@ export default async function DeskSport({
               active={active}
               linkedCounts={linkedCounts}
               hasDesk={hasDesk}
+              hasWriteups={access.hasElite}
               isAdmin={isAdmin}
               researchClosed={researchClosed}
             />

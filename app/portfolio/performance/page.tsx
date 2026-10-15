@@ -13,18 +13,18 @@ import type { TodaysBet } from '@/components/TodaysBets'
 
 export const metadata: Metadata = {
   title: 'Model Results',
-  description: 'Historical performance of betting systems. Full transparency with year-by-year results, bankroll ROI, and sport-by-sport records.',
+  description: 'Graded picks, win or lose, with records by sport.',
   alternates: { canonical: 'https://edthestatman.com/portfolio/performance' },
   openGraph: {
     title: 'Model Results – EdTheStatMan.com',
-    description: 'Historical performance of betting systems. Full transparency with year-by-year results, bankroll ROI, and sport-by-sport records.',
+    description: 'Graded picks, win or lose, with records by sport.',
     url: 'https://edthestatman.com/portfolio/performance',
     images: [{ url: '/og-cover.jpg', width: 1200, height: 630 }],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Model Results – EdTheStatMan.com',
-    description: 'Historical performance of betting systems. Full transparency with year-by-year results, bankroll ROI, and sport-by-sport records.',
+    description: 'Graded picks, win or lose, with records by sport.',
     images: ['/og-cover.jpg'],
   },
 }

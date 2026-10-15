@@ -28,6 +28,8 @@ interface Props {
   linkedCounts: Record<string, { systems: number; trends: number }>
   /** Whether this member holds the Research Desk rung or better. */
   hasDesk: boolean
+  /** Game write-ups open at Private Intelligence, not at the Desk. */
+  hasWriteups: boolean
   isAdmin: boolean
   /**
    * The week on screen has been played out, so the Desk rung's in-context
@@ -76,7 +78,7 @@ function teamName(sport: string, team: string, abbrev: string): string {
 }
 
 export default function DeskWeekBoard({
-  sport, games, weeks, active, linkedCounts, hasDesk, isAdmin, researchClosed,
+  sport, games, weeks, active, linkedCounts, hasDesk, hasWriteups, isAdmin, researchClosed,
 }: Props) {
   const router = useRouter()
   const pathname = usePathname()
@@ -458,8 +460,11 @@ export default function DeskWeekBoard({
                         )
                       )}
                       {g.has_writeup && (
-                        <span className={`desk-tag ${unlocked ? 'desk-tag--open' : 'desk-tag--locked'}`}>
-                          {!unlocked && <IconLock size={11} />} Desk note
+                        // Its own lock, not the Desk's: this tag used to read
+                        // "Desk note" and show open to Desk members, who then
+                        // hit a paywall on the game page.
+                        <span className={`desk-tag ${hasWriteups || isAdmin ? 'desk-tag--open' : 'desk-tag--locked'}`}>
+                          {!(hasWriteups || isAdmin) && <IconLock size={11} />} Write-up
                         </span>
                       )}
                       {attached === 0 && !g.has_writeup && (

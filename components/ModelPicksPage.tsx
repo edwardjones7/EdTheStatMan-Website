@@ -73,7 +73,7 @@ export default function ModelPicksPage({
             <InfoCard
               icon={IconNews}
               title="Full Transparency"
-              text="Every play is tracked and posted to results. Check our historical performance with year-by-year records and bankroll ROI."
+              text="Every play is tracked and posted to results. Graded picks, win or lose, are on the results page."
               href="/portfolio/performance"
               linkText="View Results"
             />

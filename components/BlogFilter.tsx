@@ -84,7 +84,9 @@ export default function BlogFilter({ posts, userTier }: Props) {
       ) : (
         <div className="blog-grid stagger-children" style={{ marginTop: '40px' }}>
           {visible.map(post => {
-            const locked = !atLeastTier(userTier, normalizeTier(post.access_level))
+            // Free posts are public, logged in or not (app/blog/[slug]/page.tsx).
+            const required = normalizeTier(post.access_level)
+            const locked = required !== 'retail' && !atLeastTier(userTier, required)
             return (
               <Link
                 key={post.id}
