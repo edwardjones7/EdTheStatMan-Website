@@ -97,13 +97,14 @@ export async function notifySignup(input: {
   })
 }
 
-export type PaymentKind = 'payment' | 'subscription_started' | 'renewal' | 'cancelled'
+export type PaymentKind = 'payment' | 'subscription_started' | 'renewal' | 'cancelled' | 'payment_failed'
 
 const PAYMENT_TITLE: Record<PaymentKind, string> = {
   payment: 'New payment',
   subscription_started: 'Subscription started',
   renewal: 'Renewal paid',
   cancelled: 'Subscription cancelled',
+  payment_failed: 'Payment failed',
 }
 
 export async function notifyPayment(input: {
@@ -125,7 +126,9 @@ export async function notifyPayment(input: {
 
   return post('payments', {
     title: PAYMENT_TITLE[input.kind],
-    color: input.kind === 'cancelled' ? CHURN_COLOR : MONEY_COLOR,
+    // A failed charge is money at risk, not money in: same red as churn, so
+    // the channel reads at a glance.
+    color: input.kind === 'cancelled' || input.kind === 'payment_failed' ? CHURN_COLOR : MONEY_COLOR,
     fields,
     timestamp: new Date().toISOString(),
   })

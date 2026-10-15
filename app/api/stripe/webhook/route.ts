@@ -9,6 +9,8 @@ import {
 } from '@/lib/stripe'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { notifyPayment } from '@/lib/notify/admin'
+import { welcomeMessage, paymentFailedMessage, sendLifecycleEmail } from '@/lib/notify/lifecycle'
+import { claimEmail, recordPurchaseEvent } from '@/lib/notify/lifecycle-log'
 import { syncDiscordRole } from '@/lib/discord/roles'
 import type { AccessGrant } from '@/lib/offer'
 import type { Tier } from '@/lib/access'
@@ -133,6 +135,60 @@ async function recordPurchase(admin: any, row: Record<string, unknown>, conflict
   }
 }
 
+/**
+ * Everything that runs AFTER a grant has been written: the welcome email and
+ * the funnel event. Wrapped so that no failure in here -- Resend down, events
+ * table renamed, a template bug -- can reach the response. Stripe retries a
+ * non-2xx, and the retry would be deduped by stripe_events anyway, so a throw
+ * here would buy nothing but a red event in the dashboard.
+ */
+async function afterGrant(label: string, fn: () => Promise<void>) {
+  try {
+    await fn()
+  } catch (e: any) {
+    console.error(`[stripe-webhook] ${label} failed (grant unaffected): ${e?.message ?? e}`)
+  }
+}
+
+/**
+ * ONE welcome per purchase, from exactly one hook per billing mode:
+ *   pass          checkout.session.completed (mode 'payment')
+ *   subscription  invoice.payment_succeeded with billing_reason
+ *                 'subscription_create' -- the first paid invoice.
+ * Not customer.subscription.created: it fires before payment can still fail
+ * (status 'incomplete') and carries no amount. Not checkout.session.completed
+ * in subscription mode either, which deliberately grants nothing. stripe_events
+ * already guarantees each event is handled once, so no extra guard is needed.
+ */
+async function welcome(admin: any, input: {
+  userId: string
+  email: string | null
+  tier: Tier
+  mode: 'pass' | 'subscription'
+  period: 'month' | 'season' | null
+  accessEndsAt: string | null
+  amountCents: number | null | undefined
+  currency: string | null | undefined
+}) {
+  await afterGrant('purchase event', () => recordPurchaseEvent(admin, {
+    userId: input.userId,
+    tier: input.tier,
+    period: input.period,
+    amountCents: input.amountCents,
+    currency: input.currency,
+  }))
+  await afterGrant('welcome email', async () => {
+    const result = await sendLifecycleEmail(input.email, welcomeMessage({
+      tier: input.tier,
+      mode: input.mode,
+      accessEndsAt: input.accessEndsAt,
+      amountCents: input.amountCents,
+      currency: input.currency,
+    }))
+    if (!result.sent) console.error(`[stripe-webhook] welcome email not sent to ${input.userId}: ${result.error}`)
+  })
+}
+
 export async function POST(req: Request) {
   const body = await req.text()
   const sig = req.headers.get('stripe-signature')
@@ -245,6 +301,17 @@ export async function POST(req: Request) {
         kind: 'payment',
         email: existing?.email ?? session.customer_details?.email ?? null,
         tier: resolved.tier,
+        amountCents: session.amount_total,
+        currency: session.currency,
+      })
+      await welcome(admin, {
+        userId,
+        email: existing?.email ?? session.customer_details?.email ?? null,
+        tier: resolved.tier,
+        mode: 'pass',
+        // 'until' is a season pass, 'days' the 30-day Portfolio.
+        period: resolved.grant.kind === 'until' ? 'season' : resolved.grant.kind === 'days' ? 'month' : null,
+        accessEndsAt: passExpiresAt,
         amountCents: session.amount_total,
         currency: session.currency,
       })
@@ -375,6 +442,22 @@ export async function POST(req: Request) {
       })
 
       await recompute(admin, profile.id)
+
+      // The first paid invoice of a new subscription. Renewals carry
+      // 'subscription_cycle' and get no welcome; see welcome() for why this is
+      // the one hook.
+      if (tier && invoice.billing_reason === 'subscription_create') {
+        await welcome(admin, {
+          userId: profile.id,
+          email: profile.email ?? invoice.customer_email ?? null,
+          tier,
+          mode: 'subscription',
+          period: 'month',
+          accessEndsAt: periodEnd ? new Date(periodEnd).toISOString() : null,
+          amountCents: invoice.amount_paid,
+          currency: invoice.currency,
+        })
+      }
       break
     }
 
@@ -390,6 +473,47 @@ export async function POST(req: Request) {
       console.warn(`[stripe-webhook] payment failed for customer ${invoice.customer} on invoice ${invoice.id}`)
       await admin.from('profiles').update({ subscription_status: 'past_due' }).eq('id', profile.id)
       await recompute(admin, profile.id)
+
+      // Ed hears about every attempt; the member hears once per invoice.
+      // Stripe fires this event on each smart retry, and four "your card was
+      // declined" emails in two weeks reads as harassment, not help.
+      await afterGrant('payment-failed alert', async () => {
+        await notifyPayment({
+          kind: 'payment_failed',
+          email: profile.email ?? invoice.customer_email ?? null,
+          amountCents: invoice.amount_due,
+          currency: invoice.currency,
+          detail: `Invoice ${invoice.id}, attempt ${invoice.attempt_count ?? '?'}. Access left on; Stripe is retrying.`,
+        })
+      })
+      await afterGrant('payment-failed email', async () => {
+        // A declined FIRST invoice is a checkout the buyer watched fail on
+        // Stripe's own page. They never had access, so "your access is still
+        // on" would be false; Checkout already told them.
+        if (invoice.billing_reason === 'subscription_create') return
+        const claim = await claimEmail(admin, profile.id, 'payment_failed', invoice.id ?? 'unknown')
+        if (claim === 'already-sent') return
+        // Without email_log (migration not applied yet) fall back to the first
+        // attempt only, which is the same "once per invoice" by another route.
+        if (claim === 'unavailable' && (invoice.attempt_count ?? 1) > 1) return
+
+        let tier: Tier | null = null
+        const subId = invoiceSubscriptionId(invoice)
+        if (subId) {
+          try {
+            const sub = await getStripe().subscriptions.retrieve(subId)
+            const priceId = subscriptionPriceId(sub)
+            tier = priceId ? (resolvePrice(priceId)?.tier ?? null) : null
+          } catch {
+            // The tier only names the plan in the copy; the email works without it.
+          }
+        }
+        const result = await sendLifecycleEmail(
+          profile.email ?? invoice.customer_email ?? null,
+          paymentFailedMessage({ tier, amountCents: invoice.amount_due, currency: invoice.currency })
+        )
+        if (!result.sent) console.error(`[stripe-webhook] payment-failed email not sent to ${profile.id}: ${result.error}`)
+      })
       break
     }
 
