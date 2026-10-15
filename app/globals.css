@@ -43,7 +43,9 @@
 
   --text-primary: #dbe7ec;
   --text-secondary: #93a8b3;
-  --text-muted: #5f7783;
+  /* 4.9:1 or better on every surface, hovered cards included. Was #5f7783,
+     which fell to 3.4:1 on a hovered card behind 10px labels. */
+  --text-muted: #7a929e;
   --text-heading: #f4fafc;
 
   --border-color: rgba(148, 190, 200, 0.1);
@@ -53,8 +55,12 @@
   --texture-candles: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='420' height='140' viewBox='0 0 420 140'%3E%3Cg opacity='0.08'%3E%3Cline x1='15' y1='20' x2='15' y2='110' stroke='%232DD4BF'/%3E%3Crect x='11' y='45' width='8' height='40' fill='%232DD4BF'/%3E%3Cline x1='45' y1='30' x2='45' y2='115' stroke='%23F8717A'/%3E%3Crect x='41' y='55' width='8' height='35' fill='%23F8717A'/%3E%3Cline x1='75' y1='15' x2='75' y2='100' stroke='%232DD4BF'/%3E%3Crect x='71' y='35' width='8' height='30' fill='%232DD4BF'/%3E%3Cline x1='105' y1='25' x2='105' y2='120' stroke='%232DD4BF'/%3E%3Crect x='101' y='50' width='8' height='45' fill='%232DD4BF'/%3E%3Cline x1='135' y1='35' x2='135' y2='110' stroke='%23F8717A'/%3E%3Crect x='131' y='60' width='8' height='30' fill='%23F8717A'/%3E%3Cline x1='165' y1='10' x2='165' y2='95' stroke='%232DD4BF'/%3E%3Crect x='161' y='30' width='8' height='35' fill='%232DD4BF'/%3E%3Cline x1='195' y1='20' x2='195' y2='105' stroke='%232DD4BF'/%3E%3Crect x='191' y='40' width='8' height='40' fill='%232DD4BF'/%3E%3Cline x1='225' y1='40' x2='225' y2='125' stroke='%23F8717A'/%3E%3Crect x='221' y='65' width='8' height='35' fill='%23F8717A'/%3E%3Cline x1='255' y1='15' x2='255' y2='90' stroke='%232DD4BF'/%3E%3Crect x='251' y='28' width='8' height='32' fill='%232DD4BF'/%3E%3Cline x1='285' y1='25' x2='285' y2='100' stroke='%232DD4BF'/%3E%3Crect x='281' y='38' width='8' height='36' fill='%232DD4BF'/%3E%3Cline x1='315' y1='30' x2='315' y2='118' stroke='%23F8717A'/%3E%3Crect x='311' y='58' width='8' height='38' fill='%23F8717A'/%3E%3Cline x1='345' y1='12' x2='345' y2='92' stroke='%232DD4BF'/%3E%3Crect x='341' y='26' width='8' height='34' fill='%232DD4BF'/%3E%3Cline x1='375' y1='22' x2='375' y2='108' stroke='%232DD4BF'/%3E%3Crect x='371' y='42' width='8' height='38' fill='%232DD4BF'/%3E%3Cline x1='405' y1='32' x2='405' y2='112' stroke='%23F8717A'/%3E%3Crect x='401' y='55' width='8' height='30' fill='%23F8717A'/%3E%3C/g%3E%3C/svg%3E");
 
   /* Typography */
-  --font-heading: 'Outfit', 'Inter', system-ui, sans-serif;
-  --font-body: 'Inter', system-ui, sans-serif;
+  /* next/font registers the faces under hashed family names and exposes them
+     as --font-outfit / --font-inter (app/layout.tsx). Naming 'Outfit' and
+     'Inter' directly matched nothing, so the whole site rendered in the
+     system fallback. */
+  --font-heading: var(--font-outfit), var(--font-inter), system-ui, sans-serif;
+  --font-body: var(--font-inter), system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
 
   /* Spacing */
@@ -145,13 +151,21 @@ button {
   cursor: pointer;
   font-family: var(--font-body);
   border: none;
-  outline: none;
 }
 
 input, textarea, select {
   font-family: var(--font-body);
-  outline: none;
   border: none;
+}
+
+/* One focus ring for the whole site. The resets above used to strip outlines
+   from every button and field, which left keyboard users with no idea where
+   they were. !important because a dozen component :focus rules still set
+   outline: none at higher specificity; :focus-visible only fires for keyboard
+   focus on buttons and links, so mouse users see no change there. */
+:focus-visible {
+  outline: 2px solid var(--accent-teal) !important;
+  outline-offset: 2px;
 }
 
 ::selection {
@@ -1216,6 +1230,14 @@ html[data-navigating] .nav__progress-fill {
 @keyframes ticker-scroll {
   0% { transform: translateX(0); }
   100% { transform: translateX(-50%); }
+}
+
+/* WCAG 2.2.2: moving content has to be pausable. Hover or focus holds it, and
+   reduced motion stops it outright. */
+.ticker:hover .ticker__track,
+.ticker:focus-within .ticker__track { animation-play-state: paused; }
+@media (prefers-reduced-motion: reduce) {
+  .ticker__track { animation: none; }
 }
 
 /* ---------- Cards ---------- */
@@ -3816,12 +3838,27 @@ textarea.form-input {
   transition: all 0.6s var(--ease-out-expo);
 }
 
-.stagger-children.visible > *:nth-child(1) { transition-delay: 0ms; opacity: 1; transform: translateY(0); }
-.stagger-children.visible > *:nth-child(2) { transition-delay: 100ms; opacity: 1; transform: translateY(0); }
-.stagger-children.visible > *:nth-child(3) { transition-delay: 200ms; opacity: 1; transform: translateY(0); }
-.stagger-children.visible > *:nth-child(4) { transition-delay: 300ms; opacity: 1; transform: translateY(0); }
-.stagger-children.visible > *:nth-child(5) { transition-delay: 400ms; opacity: 1; transform: translateY(0); }
-.stagger-children.visible > *:nth-child(6) { transition-delay: 500ms; opacity: 1; transform: translateY(0); }
+/* Every child becomes visible; only the first six get their own delay. The
+   rules used to exist for children 1-6 alone, so the seventh card of any grid
+   (homepage card 07, blog posts 7-12) stayed at opacity 0 forever. */
+.stagger-children.visible > * { opacity: 1; transform: translateY(0); transition-delay: 600ms; }
+.stagger-children.visible > *:nth-child(1) { transition-delay: 0ms; }
+.stagger-children.visible > *:nth-child(2) { transition-delay: 100ms; }
+.stagger-children.visible > *:nth-child(3) { transition-delay: 200ms; }
+.stagger-children.visible > *:nth-child(4) { transition-delay: 300ms; }
+.stagger-children.visible > *:nth-child(5) { transition-delay: 400ms; }
+.stagger-children.visible > *:nth-child(6) { transition-delay: 500ms; }
+
+/* Reduced motion: nothing fades or slides in, so nothing waits on JavaScript
+   to appear, and the ticker holds still. */
+@media (prefers-reduced-motion: reduce) {
+  .reveal, .reveal-left, .reveal-right, .reveal-scale,
+  .stagger-children > * {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+}
 
 @keyframes fadeInUp {
   from { opacity: 0; transform: translateY(30px); }
