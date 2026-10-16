@@ -301,7 +301,7 @@ export default function NavClient({ user, membership = 'logged-out' }: NavClient
       >
         <div className="nav__inner">
           <Link href="/" className="nav__logo">
-            <div className="nav__logo-icon"><Image src="/logo.png" alt="EdTheStatMan logo" width={36} height={36} /></div>
+            <div className="nav__logo-icon"><Image src="/logo.png" alt="EdTheStatMan logo" width={36} height={36} priority /></div>
             <span>EdTheStatMan</span>
           </Link>
 

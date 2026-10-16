@@ -9115,3 +9115,86 @@ textarea.form-input {
   line-height: 1.45;
   color: var(--text-muted);
 }
+
+/* ---------- Shell accessibility (lifecycle/polish branch) ----------
+   One block on purpose, so it is easy to find and easy to reconcile.
+   Hit areas grow through invisible pseudo-elements or coarse-pointer-only
+   sizing, so nothing moves on a desktop with a mouse. */
+:root {
+  /* The site is dark-only: native scrollbars, form controls and the
+     overscroll background should match instead of flashing light. */
+  color-scheme: dark;
+}
+
+/* "Skip to content": off-screen until a keyboard user tabs to it. */
+.skip-link {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  z-index: 3000;
+  padding: 12px 18px;
+  min-height: 44px;
+  border-radius: var(--radius-sm);
+  background: var(--accent-teal);
+  color: var(--bg-primary);
+  font-weight: 700;
+  text-decoration: none;
+  transform: translateY(-200%);
+}
+.skip-link:focus,
+.skip-link:focus-visible {
+  transform: none;
+}
+/* The skip target is a wrapper, focused only programmatically; no ring. */
+#main:focus {
+  outline: none;
+}
+
+/* Dropdown caret and account button: 44px tall targets. Not widened -- the
+   next nav item sits 2px away, so a wider target would steal its clicks. */
+.nav__caret,
+.nav__hamburger,
+.nav__user-btn {
+  position: relative;
+}
+.nav__caret::after,
+.nav__user-btn::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 44px;
+  transform: translateY(-50%);
+}
+.nav__hamburger::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 44px;
+  height: 44px;
+  transform: translate(-50%, -50%);
+}
+
+/* Touch screens only: footer and feature links get a 44px row. On a mouse the
+   spacing is exactly as designed. */
+@media (pointer: coarse) {
+  .footer__links {
+    gap: 0;
+  }
+  .footer__link,
+  .footer__legal a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+  }
+  .footer__legal {
+    row-gap: 0;
+  }
+  .feature-card__link {
+    min-height: 44px;
+    /* Keeps the label where the 24px margin put it. */
+    margin-top: 13px;
+  }
+}
