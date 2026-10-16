@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { logout } from '@/app/actions/auth'
 import { updateProfile, updatePassword, updateNotifyEmail } from '@/app/account/actions'
 import PushOptIn from './PushOptIn'
+import { trackEvent } from '@/lib/track-client'
 import { IconUser, IconLock, IconBolt, IconBell, IconChat } from './Icons'
 import type { SubscriptionTier } from '@/lib/supabase/types'
 import { normalizeTier, TIER_SHORT_LABEL } from '@/lib/access'
@@ -91,6 +92,12 @@ export default function AccountClient({ profile, provider, discordLinked = false
   // not replay a stale "connected" that may no longer be true.
   useEffect(() => {
     if (!discordStatus) return
+    // Recorded on the way BACK from Discord, not on the button click: only a
+    // completed link is a connection. The parameter is stripped just below, so
+    // a refresh cannot record it twice.
+    if (discordStatus === 'connected' || discordStatus === 'join-server') {
+      trackEvent('discord_connect', { status: discordStatus })
+    }
     const url = new URL(window.location.href)
     url.searchParams.delete('discord')
     window.history.replaceState({}, '', url.toString())
@@ -392,7 +399,7 @@ export default function AccountClient({ profile, provider, discordLinked = false
               <span className="account-field-hint" style={{ display: 'block', marginBottom: '8px' }}>
                 Browser notifications on this device:
               </span>
-              <PushOptIn />
+              <PushOptIn context="account" />
             </div>
             {notifyMsg && (
               <div className={notifyMsg.type === 'error' ? 'auth-error' : 'auth-success'}>

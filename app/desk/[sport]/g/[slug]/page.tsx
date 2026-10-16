@@ -16,6 +16,7 @@ import { toTeaser } from '@/lib/teaser'
 import type { LockedTeaser } from '@/lib/teaser'
 import NflGameAdminPanel from '@/components/NflGameAdminPanel'
 import LockedTeaserCard from '@/components/LockedTeaserCard'
+import SignupPrompt from '@/components/SignupPrompt'
 import RecordStrip from '@/components/RecordStrip'
 import { IconLock } from '@/components/Icons'
 
@@ -467,6 +468,17 @@ export default async function NflGamePage({ params }: { params: { sport: string;
                 See the rest of the week &rarr;
               </Link>
             </div>
+          )}
+
+          {/* Front door: a light free-account ask for logged-out readers. */}
+          {!user && (
+            <SignupPrompt
+              context="desk_game"
+              className="fd-desk-prompt"
+              variant="banner"
+              title="Follow this week free."
+              body="A free account gets you the free picks and an alert when one drops."
+            />
           )}
         </div>
       </section>

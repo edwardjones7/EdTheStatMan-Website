@@ -10,6 +10,7 @@ import { isPaidTier, normalizeTier, accessBadge, TIER_SHORT_LABEL, VAULT_ACCESS_
 import { nextCode, compareCode, codeKey } from '@/lib/codes'
 import { IconLock, IconPencil } from './Icons'
 import RecordStrip from './RecordStrip'
+import { unlockHref } from '@/lib/unlock'
 
 type Sport = 'all' | 'nfl' | 'nflpre' | 'cfl' | 'cfb' | 'nba' | 'wnba' | 'cbb'
 
@@ -23,6 +24,11 @@ interface Props {
   eliteTeasers?: LockedTeaser[]
   userTier: string | null
   isAdmin?: boolean
+  /** The rung each locked teaser needs, for its /win deep link. */
+  teaserTiers?: Record<string, Tier>
+  /** Logged-out only: free rows per sport, which open with a free account. */
+  freeLockedCounts?: Record<string, number>
+  freeTeasers?: LockedTeaser[]
 }
 
 const TABS: { label: string; value: Sport }[] = [
@@ -112,7 +118,7 @@ function parseStr(val: unknown): string {
   return String(val).trim()
 }
 
-export default function SportTabsSystem({ systems, lockedCounts = {}, lockedTeasers = [], eliteLockedCounts = {}, eliteTeasers = [], userTier, isAdmin = false }: Props) {
+export default function SportTabsSystem({ systems, lockedCounts = {}, lockedTeasers = [], eliteLockedCounts = {}, eliteTeasers = [], userTier, isAdmin = false, teaserTiers = {}, freeLockedCounts = {}, freeTeasers = [] }: Props) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -173,6 +179,12 @@ export default function SportTabsSystem({ systems, lockedCounts = {}, lockedTeas
   const totalEliteLocked = Object.values(eliteLockedCounts).reduce((a, b) => a + b, 0)
   const eliteLockedForTab = isAdmin || searching ? [] : eliteTeasers.filter(t => activeTab === 'all' || t.sport === activeTab)
   const eliteLockedCount = activeTab === 'all' ? totalEliteLocked : (eliteLockedCounts[activeTab] ?? 0)
+
+  // Free rows a logged-out visitor cannot open yet. Kept apart from the paid
+  // locks so they are counted as free and their locks go to signup, not /win.
+  const totalFreeLocked = Object.values(freeLockedCounts).reduce((a, b) => a + b, 0)
+  const freeLockedCount = activeTab === 'all' ? totalFreeLocked : (freeLockedCounts[activeTab] ?? 0)
+  const freeLockedForTab = isAdmin || searching ? [] : freeTeasers.filter(t => activeTab === 'all' || t.sport === activeTab)
 
   const activeTabLabel = TABS.find(t => t.value === activeTab)!.label
 
@@ -392,10 +404,10 @@ export default function SportTabsSystem({ systems, lockedCounts = {}, lockedTeas
   // Stats bar computed values — counts follow the selected sport tab. Members
   // see their rows directly; non-members only ever have the locked count.
   const activeSystems = allVisible.filter(s => s.is_active)
-  const freeCount = activeSystems.filter(s => normalizeTier(s.min_tier) === 'retail').length
+  const freeCount = activeSystems.filter(s => normalizeTier(s.min_tier) === 'retail').length + freeLockedCount
   const eliteVisibleCount = activeSystems.filter(s => normalizeTier(s.min_tier) === 'institutional').length
   const eliteCount = eliteVisibleCount + eliteLockedCount
-  const memberCount = activeSystems.length - freeCount - eliteVisibleCount + lockedCount
+  const memberCount = activeSystems.length - (freeCount - freeLockedCount) - eliteVisibleCount + lockedCount
   const totalCount = freeCount + memberCount + eliteCount
 
   return (
@@ -650,7 +662,7 @@ export default function SportTabsSystem({ systems, lockedCounts = {}, lockedTeas
       <div className="content-gate-wrap" style={{ marginTop: '24px' }}>
         <div>
           {baseRows.length === 0 ? (
-            lockedCount === 0 && (
+            lockedCount === 0 && (searching || freeLockedCount === 0) && (
               <div style={{ textAlign: 'center', padding: '48px 0', color: 'var(--text-muted)' }}>
                 {searching ? 'Nothing matches that search.' : 'No systems in this sport.'}
               </div>
@@ -832,6 +844,32 @@ export default function SportTabsSystem({ systems, lockedCounts = {}, lockedTeas
 
       </div>
 
+      {/* Logged out: the free rows, locked only by the missing account. */}
+      {freeLockedForTab.length > 0 && (
+        <div className="fd-vault-free">
+          <div className="sys-free-heading">
+            Free Systems{freeLockedCount > 0 ? ` (${freeLockedCount})` : ''} — free with an account
+          </div>
+          <div className="sys-card-grid">
+            {freeLockedForTab.map(t => (
+              <LockedTeaserCard
+                key={t.id}
+                teaser={t}
+                sportLabel={SPORT_STYLE[t.sport]?.label ?? t.sport.toUpperCase()}
+                sportClass={t.sport}
+                freeWithAccount
+                signupNext={pathname ?? '/vault/systems'}
+              />
+            ))}
+          </div>
+          {freeLockedCount > freeLockedForTab.length && (
+            <p className="fd-vault-free__more">
+              Showing {freeLockedForTab.length} of {freeLockedCount}. All of them open with a free account.
+            </p>
+          )}
+        </div>
+      )}
+
       {!isAdmin && eliteLockedForTab.length > 0 && (
         <>
           <div className="sys-locked-heading sys-locked-heading--elite">
@@ -845,6 +883,7 @@ export default function SportTabsSystem({ systems, lockedCounts = {}, lockedTeas
                 sportLabel={SPORT_STYLE[t.sport]?.label ?? t.sport.toUpperCase()}
                 sportClass={t.sport}
                 variant="elite"
+                requiredTier={teaserTiers[t.id] ?? 'institutional'}
               />
             ))}
           </div>
@@ -862,7 +901,7 @@ export default function SportTabsSystem({ systems, lockedCounts = {}, lockedTeas
             Our highest-conviction, curated edges — Institutional members only.
           </p>
           <div className="content-gate-card__actions">
-            <Link href="/win" className="btn btn--primary">Go Institutional &rarr;</Link>
+            <Link href={unlockHref('institutional')} className="btn btn--primary">Go Institutional &rarr;</Link>
           </div>
         </div>
       )}
@@ -879,6 +918,7 @@ export default function SportTabsSystem({ systems, lockedCounts = {}, lockedTeas
                 teaser={t}
                 sportLabel={SPORT_STYLE[t.sport]?.label ?? t.sport.toUpperCase()}
                 sportClass={t.sport}
+                requiredTier={teaserTiers[t.id]}
               />
             ))}
           </div>
@@ -896,8 +936,8 @@ export default function SportTabsSystem({ systems, lockedCounts = {}, lockedTeas
             Full records, win percentages, and season data — Private Intelligence and above.
           </p>
           <div className="content-gate-card__actions">
-            <Link href="/win" className="btn btn--primary">Open the Vault &rarr;</Link>
-            {isLoggedOut && <Link href="/login" className="btn btn--outline">Sign in</Link>}
+            <Link href={unlockHref('private')} className="btn btn--primary">Open the Vault &rarr;</Link>
+            {isLoggedOut && <Link href={`/login?next=${encodeURIComponent(pathname ?? '/vault/systems')}`} className="btn btn--outline">Sign in</Link>}
           </div>
         </div>
       )}
