@@ -2,6 +2,8 @@ import Link from 'next/link'
 import type { Brief } from '@/lib/brief'
 import { formatCardDate, relativeLabel } from '@/lib/brief'
 import { IconLock, IconArrowRight } from './Icons'
+import ProofStrip from './ProofStrip'
+import type { ProofData } from '@/lib/proof'
 
 /**
  * The daily card, on the homepage.
@@ -15,10 +17,10 @@ import { IconLock, IconArrowRight } from './Icons'
  * count, never a redacted row, because a card of four grey bars reads worse
  * than an honest "2 more on this card".
  */
-export default function TodaysBrief({ brief }: { brief: Brief }) {
+export default function TodaysBrief({ brief, proof }: { brief: Brief; proof?: ProofData }) {
   // Nothing scheduled and nothing graded — render nothing rather than an empty
   // shell. A blank section is worse than no section.
-  if (!brief.date && !brief.record) return null
+  if (!brief.date && !brief.record && !proof) return null
 
   const { date, visible, lockedCount, sportCounts, total, record } = brief
 
@@ -89,8 +91,15 @@ export default function TodaysBrief({ brief }: { brief: Brief }) {
             </Link>
           )}
 
+          {/* The proof replaces the blended "Published record". That number mixed
+              the free and members' books into ~51%, under break-even, and was
+              the first figure a visitor read. ProofStrip leads with the
+              members' best in-season sport and keeps both books and the full
+              ledger beside it (lib/proof.ts). */}
+          {proof && <ProofStrip proof={proof} variant="compact" className="brief__proof" />}
+
           <footer className="brief__foot">
-            {record && (
+            {!proof && record && (
               <span className="brief__record">
                 Published record{' '}
                 <strong>{record.w}&ndash;{record.l}{record.p > 0 ? `–${record.p}` : ''}</strong>
