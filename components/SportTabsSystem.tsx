@@ -704,7 +704,9 @@ export default function SportTabsSystem({ systems, lockedCounts = {}, lockedTeas
                         {/* System ID */}
                         <div className="sys-row-card__field">
                           <span className="sys-row-card__field-label">ID</span>
-                          <span className="sys-row-card__field-value">{row.code || '—'}</span>
+                          <span className="sys-row-card__field-value">
+                            {row.code ? <Link href={`/vault/systems/${encodeURIComponent(row.code)}`}>{row.code}</Link> : '—'}
+                          </span>
                         </div>
 
                         {/* Description */}

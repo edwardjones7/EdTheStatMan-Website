@@ -1,0 +1,546 @@
+/* SEO page families and Desk value: ATS/OU result tags, the basketball day
+   strip and line filter, the game page's internal links, team pages and Vault
+   row pages. Tokens only, from app/globals.css. Mobile first: every row here
+   wraps or stacks at 375px, and the one thing allowed to scroll sideways (the
+   day strip) scrolls inside itself. */
+
+/* ---- ATS / O/U result tags ------------------------------------------------ */
+
+.ats-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0 16px 10px;
+}
+
+.ats-tags--header {
+  padding: 0;
+  margin: 0 0 14px;
+}
+
+.ats-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 9px;
+  border-radius: var(--radius-full);
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+
+/* A cover is the headline result, so it takes the accent. Totals stay
+   neutral-but-legible: over and under are directions, not good or bad news. */
+.ats-tag--cover {
+  background: rgba(var(--teal-rgb), 0.12);
+  border-color: rgba(var(--teal-rgb), 0.3);
+  color: var(--accent-teal);
+}
+
+.ats-tag--over,
+.ats-tag--under {
+  background: rgba(var(--sky-rgb), 0.08);
+  border-color: rgba(var(--sky-rgb), 0.22);
+  color: var(--accent-sky);
+}
+
+.ats-tag--push {
+  background: rgba(var(--gold-rgb), 0.08);
+  border-color: rgba(var(--gold-rgb), 0.22);
+  color: var(--accent-gold);
+}
+
+/* ---- Basketball day strip ------------------------------------------------- */
+
+.desk-days-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 12px;
+  margin-top: 16px;
+}
+
+.desk-days-wrap {
+  position: relative;
+  flex: 1 1 100%;
+  min-width: 0;
+}
+
+/* Fades say "there is more this way" without a scrollbar, same as the rail. */
+.desk-days-wrap::before,
+.desk-days-wrap::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 24px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.desk-days-wrap::before {
+  left: 0;
+  background: linear-gradient(90deg, var(--bg-primary), transparent);
+}
+
+.desk-days-wrap::after {
+  right: 0;
+  background: linear-gradient(270deg, var(--bg-primary), transparent);
+}
+
+.desk-days {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 2px 16px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  scroll-padding: 0 24px;
+}
+
+.desk-days::-webkit-scrollbar { display: none; }
+
+.desk-day-pill {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 72px;
+  padding: 7px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  cursor: pointer;
+  transition: border-color var(--transition-fast), color var(--transition-fast), background var(--transition-fast);
+}
+
+.desk-day-pill:hover { color: var(--text-primary); border-color: rgba(var(--teal-rgb), 0.35); }
+
+.desk-day-pill:focus-visible {
+  outline: 2px solid var(--accent-teal);
+  outline-offset: 2px;
+}
+
+.desk-day-pill.is-active {
+  background: rgba(var(--teal-rgb), 0.12);
+  border-color: var(--accent-teal);
+  color: var(--accent-teal);
+}
+
+/* A day with nothing on it stays clickable (it is still a real date) but
+   recedes, so the eye goes to the nights that have games. */
+.desk-day-pill.is-empty:not(.is-active) { opacity: 0.55; }
+
+.desk-day-pill__main {
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.desk-day-pill__sub {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.64rem;
+  color: var(--text-muted);
+}
+
+.desk-day-pill.is-active .desk-day-pill__sub { color: inherit; }
+
+.desk-day-pill__count {
+  padding: 0 6px;
+  border-radius: var(--radius-full);
+  background: rgba(var(--teal-rgb), 0.1);
+  color: var(--accent-teal);
+  font-weight: 700;
+}
+
+.desk-line-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 14px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-full);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  cursor: pointer;
+}
+
+.desk-line-toggle:focus-visible {
+  outline: 2px solid var(--accent-teal);
+  outline-offset: 2px;
+}
+
+.desk-line-toggle__box {
+  width: 12px;
+  height: 12px;
+  border: 1px solid var(--text-muted);
+  border-radius: 3px;
+}
+
+.desk-line-toggle.is-on {
+  color: var(--accent-teal);
+  border-color: rgba(var(--teal-rgb), 0.45);
+}
+
+.desk-line-toggle.is-on .desk-line-toggle__box {
+  border-color: var(--accent-teal);
+  background: var(--accent-teal);
+  box-shadow: inset 0 0 0 2px var(--bg-card);
+}
+
+@media (min-width: 641px) {
+  .desk-days-wrap { flex: 1 1 auto; }
+  .desk-days { padding: 2px 4px; }
+}
+
+/* One quiet line in place of a stack of identical empty-state tags. */
+.desk-quiet {
+  margin: 14px 0 0;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.desk-quiet__link {
+  padding: 0;
+  background: none;
+  border: none;
+  color: var(--accent-teal);
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+/* ---- Game page: where to go next ------------------------------------------ */
+
+.game-nav-section { padding-top: 0; }
+
+.game-nav {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+@media (min-width: 700px) {
+  .game-nav { grid-template-columns: 1fr 1fr; }
+}
+
+.game-nav__team,
+.game-day {
+  padding: 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  min-width: 0;
+}
+
+.game-day { margin-top: 16px; }
+
+.game-nav__title {
+  margin: 0 0 6px;
+  font-size: 1.05rem;
+}
+
+.game-nav__title a { color: var(--text-heading); }
+.game-nav__title a:hover { color: var(--accent-teal); }
+
+.game-nav__more {
+  display: inline-block;
+  margin-top: 4px;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.game-nav__steps {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.game-nav__step {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  color: var(--text-primary);
+}
+
+a.game-nav__step:hover { border-color: rgba(var(--teal-rgb), 0.4); }
+
+.game-nav__step--next { text-align: right; }
+
+.game-nav__step--none {
+  justify-content: center;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  border-style: dashed;
+}
+
+.game-nav__step-key {
+  font-family: var(--font-mono);
+  font-size: 0.64rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+}
+
+.game-nav__step-val {
+  font-size: 0.85rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.game-day__list {
+  list-style: none;
+  margin: 8px 0 10px;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 6px;
+}
+
+@media (min-width: 640px) {
+  .game-day__list { grid-template-columns: 1fr 1fr; }
+}
+
+.game-day__link {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 10px;
+  padding: 9px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+}
+
+.game-day__link:hover { border-color: rgba(var(--teal-rgb), 0.4); }
+
+.game-day__meta { color: var(--text-muted); }
+
+/* ---- Team pages ------------------------------------------------------------ */
+
+.team-head {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 20px 0 24px;
+}
+
+.team-head__tile {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-xl);
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--text-heading);
+  overflow: hidden;
+}
+
+.team-head__logo {
+  width: 52px;
+  height: 52px;
+  object-fit: contain;
+}
+
+.team-head__text { min-width: 0; }
+
+.team-head__title {
+  margin: 4px 0 6px;
+  font-size: clamp(1.5rem, 5vw, 2.3rem);
+  overflow-wrap: anywhere;
+}
+
+.team-head__sub {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.92rem;
+  line-height: 1.6;
+}
+
+.team-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px;
+  background: var(--border-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+}
+
+.team-stats__cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 12px;
+  background: var(--bg-card);
+  min-width: 0;
+}
+
+.team-stats__value {
+  font-family: var(--font-mono);
+  font-size: clamp(1.05rem, 4vw, 1.5rem);
+  font-weight: 700;
+  color: var(--text-heading);
+  line-height: 1.1;
+}
+
+.team-stats__value.is-win { color: var(--accent-teal); }
+
+.team-stats__label {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: var(--text-muted);
+}
+
+.team-note {
+  margin: 10px 0 0;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.team-section-title {
+  margin: 36px 0 12px;
+  font-size: 1.15rem;
+}
+
+.team-sched {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Stacked on a phone (date, opponent, then line and total, with the result
+   down the right), one row from tablet up. Never a table: five columns do not fit 375px. */
+.team-sched__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'when res'
+    'opp  res'
+    'line total';
+  gap: 4px 12px;
+  padding: 12px 14px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  color: var(--text-primary);
+  font-size: 0.86rem;
+}
+
+.team-sched__row:hover { border-color: rgba(var(--teal-rgb), 0.4); }
+
+.team-sched__when { grid-area: when; font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-muted); }
+.team-sched__wk { margin-left: 8px; opacity: 0.8; }
+.team-sched__opp { grid-area: opp; font-weight: 600; min-width: 0; overflow-wrap: anywhere; }
+.team-sched__at { color: var(--text-muted); font-weight: 400; }
+.team-sched__res { grid-area: res; align-self: center; text-align: right; font-family: var(--font-mono); white-space: nowrap; }
+.team-sched__cell { display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: 0.8rem; white-space: nowrap; }
+.team-sched__cell--line { grid-area: line; }
+.team-sched__cell--total { grid-area: total; justify-self: end; }
+.team-sched__key { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); }
+
+@media (min-width: 700px) {
+  .team-sched__row {
+    grid-template-columns: 130px minmax(0, 1fr) 110px 120px 120px;
+    grid-template-areas: 'when opp res line total';
+    align-items: center;
+  }
+  .team-sched__cell--total { justify-self: start; }
+}
+
+.team-res {
+  display: inline-block;
+  min-width: 18px;
+  padding: 1px 5px;
+  border-radius: var(--radius-sm);
+  font-size: 0.68rem;
+  text-align: center;
+  background: rgba(148, 190, 200, 0.1);
+  color: var(--text-secondary);
+}
+
+.team-res--W { background: rgba(var(--teal-rgb), 0.14); color: var(--accent-teal); }
+.team-res--L { background: rgba(var(--red-rgb), 0.12); color: var(--accent-red); }
+.team-res--T,
+.team-res--P,
+.team-res--ou-push { background: rgba(var(--gold-rgb), 0.12); color: var(--accent-gold); }
+.team-res--ou-over,
+.team-res--ou-under { background: rgba(var(--sky-rgb), 0.1); color: var(--accent-sky); }
+
+/* ---- Vault row pages -------------------------------------------------------- */
+
+.vault-row-head { margin: 20px 0 24px; }
+
+.vault-row-head__title {
+  margin: 6px 0 0;
+  font-family: var(--font-mono);
+  font-size: clamp(1.6rem, 6vw, 2.4rem);
+  overflow-wrap: anywhere;
+}
+
+.vault-row-head__team { color: var(--text-secondary); font-family: var(--font-heading); }
+
+.vault-row-strip { margin: 12px 0 0; }
+
+.vault-row-rule {
+  margin-top: 28px;
+  padding: 24px;
+  background: var(--bg-card);
+  border: 1px solid rgba(var(--teal-rgb), 0.25);
+  border-radius: var(--radius-xl);
+}
+
+.vault-row-rule__title {
+  margin: 0 0 10px;
+  font-size: 0.75rem;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 1.6px;
+  color: var(--accent-teal);
+}
+
+.vault-row-rule__text {
+  margin: 0;
+  font-size: 1.05rem;
+  line-height: 1.7;
+  color: var(--text-primary);
+  white-space: pre-wrap;
+}
+
+.vault-row-rule__meta {
+  margin: 12px 0 0;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}

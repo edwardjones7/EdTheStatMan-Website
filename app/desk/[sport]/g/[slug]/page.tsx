@@ -11,7 +11,10 @@ import {
   decodeSlugParam, gamePath, weekIsOver,
 } from '@/lib/nfl'
 import type { NflGame } from '@/lib/nfl'
-import { deskSportLabel, deskSeasonLabel, SPORT_SHORT, startWord, weeksFromDates } from '@/lib/desk'
+import { deskSportLabel, deskSeasonLabel, SPORT_SHORT, startWord, weeksFromDates, easternDate, addDays } from '@/lib/desk'
+import { atsTag, ouTag } from '@/lib/ats'
+import { teamPath, teamSeasonGames, teamShortName, byKickoff } from '@/lib/desk-teams'
+import '@/styles/seo-desk.css'
 import { toTeaser } from '@/lib/teaser'
 import type { LockedTeaser } from '@/lib/teaser'
 import NflGameAdminPanel from '@/components/NflGameAdminPanel'
@@ -126,16 +129,35 @@ export default async function NflGamePage({ params }: { params: { sport: string;
   // this page cannot answer from the game alone: whether the week is over. It
   // goes out with the link queries rather than after them, so it costs no extra
   // round trip on the render path.
-  const [sysLinks, trendLinks, weekRows] = await Promise.all([
+  // The internal links ride the same round trip: both teams' seasons (for
+  // prev/next) and the rest of this game's Eastern calendar day. The day window
+  // is padded past both UTC offsets Eastern time can have and then trimmed to
+  // the exact date, so DST never drops a late tip or adds tomorrow's first one.
+  const sportKey = params.sport.toLowerCase()
+  const gameDay = game.kickoff ? easternDate(game.kickoff) : null
+  const [sysLinks, trendLinks, weekRows, homeSeason, awaySeason, dayRows] = await Promise.all([
     (admin as any).from('nfl_game_systems').select('system_id').eq('game_id', game.id),
     (admin as any).from('nfl_game_trends').select('trend_id').eq('game_id', game.id),
     (admin as any)
       .from('nfl_games')
       .select('kickoff, status')
-      .eq('sport', params.sport.toLowerCase())
+      .eq('sport', sportKey)
       .eq('season', game.season)
       .eq('season_type', game.season_type)
       .eq('week', game.week),
+    teamSeasonGames(admin, sportKey, game.season, game.home_abbrev),
+    teamSeasonGames(admin, sportKey, game.season, game.away_abbrev),
+    gameDay
+      ? (admin as any)
+          .from('nfl_games')
+          .select('id, slug, kickoff, status, home_abbrev, away_abbrev, home_score, away_score, spread_current, total_current')
+          .eq('sport', sportKey)
+          .eq('season', game.season)
+          .eq('is_published', true)
+          .gte('kickoff', `${gameDay}T03:00:00Z`)
+          .lt('kickoff', `${addDays(gameDay, 1)}T06:00:00Z`)
+          .order('kickoff', { ascending: true })
+      : Promise.resolve({ data: [] }),
   ])
   const systemIds = (sysLinks.data ?? []).map((r: any) => r.system_id)
   const trendIds = (trendLinks.data ?? []).map((r: any) => r.trend_id)
@@ -290,6 +312,40 @@ export default async function NflGamePage({ params }: { params: { sport: string;
   const hasResearch = publicGame.has_writeup || linkedCount > 0
   const url = `https://edthestatman.com${gamePath(params.sport, game.slug)}`
 
+  // Graded against the closing line; null until the game is final and priced.
+  const ats = atsTag(publicGame)
+  const ou = ouTag(publicGame)
+
+  // Prev/next for each side, from that team's own published season. A draft
+  // game (admin view) is not in the list, so it simply gets no neighbours.
+  const neighbours = (rows: NflGame[]) => {
+    const i = rows.findIndex(r => r.id === game.id)
+    return i < 0 ? { prev: null, next: null } : { prev: rows[i - 1] ?? null, next: rows[i + 1] ?? null }
+  }
+  const teamNav = [
+    { abbrev: game.away_abbrev, name: teamShortName(sportKey, game.away_abbrev, game.away_team), ...neighbours(awaySeason) },
+    { abbrev: game.home_abbrev, name: teamShortName(sportKey, game.home_abbrev, game.home_team), ...neighbours(homeSeason) },
+  ]
+
+  // Other games that day. A college Saturday is 60-plus games and a basketball
+  // night can be 150, so the list is capped and leads with priced games -- the
+  // ones with something on the page -- and the board link carries the rest.
+  type DayRow = Pick<NflGame, 'id' | 'slug' | 'kickoff' | 'status' | 'home_abbrev' | 'away_abbrev' | 'home_score' | 'away_score' | 'spread_current' | 'total_current'>
+  const sameDay: DayRow[] = (((dayRows as any).data ?? []) as DayRow[])
+    .filter(r => r.id !== game.id && r.kickoff && easternDate(r.kickoff) === gameDay)
+  const DAY_LINKS = 12
+  const priced = (r: DayRow) => r.spread_current != null || r.total_current != null
+  const dayLinks = [...sameDay]
+    .sort((a, b) => Number(priced(b)) - Number(priced(a)) || byKickoff(a, b))
+    .slice(0, DAY_LINKS)
+    .sort(byKickoff)
+  const dayBoardHref = weeksFromDates(sportKey) && gameDay
+    ? `/desk/${sportKey}?day=${gameDay}`
+    : `/desk/${sportKey}?week=${game.week}${game.season_type === 3 ? '&type=post' : ''}`
+  const dayName = game.kickoff
+    ? new Date(game.kickoff).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', timeZone: 'America/New_York' })
+    : null
+
   return (
     <main>
       <script
@@ -323,6 +379,20 @@ export default async function NflGamePage({ params }: { params: { sport: string;
           }),
         }}
       />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'BreadcrumbList',
+            itemListElement: [
+              { '@type': 'ListItem', position: 1, name: 'Research Desk', item: 'https://edthestatman.com/desk' },
+              { '@type': 'ListItem', position: 2, name: deskSportLabel(sportKey), item: `https://edthestatman.com/desk/${sportKey}` },
+              { '@type': 'ListItem', position: 3, name: `${game.away_team} at ${game.home_team}`, item: url },
+            ],
+          }),
+        }}
+      />
 
       <section className="section" style={{ paddingBottom: '48px' }}>
         <div className="container" style={{ maxWidth: '900px' }}>
@@ -347,6 +417,12 @@ export default async function NflGamePage({ params }: { params: { sport: string;
                 <span>{game.away_abbrev} {game.away_score}</span>
                 <span className="nfl-game-header__score-sep">—</span>
                 <span>{game.home_abbrev} {game.home_score}</span>
+              </div>
+            )}
+            {(ats || ou) && (
+              <div className="ats-tags ats-tags--header" aria-label="Result against the closing line">
+                {ats && <span className={`ats-tag ats-tag--${ats.side === 'push' ? 'push' : 'cover'}`}>{ats.label}</span>}
+                {ou && <span className={`ats-tag ats-tag--${ou.result}`}>{ou.label}</span>}
               </div>
             )}
             <p className="nfl-game-header__brief">{game.brief || brief}</p>
@@ -470,8 +546,79 @@ export default async function NflGamePage({ params }: { params: { sport: string;
           )}
         </div>
       </section>
+
+      {/* Where to go next. Its own section, after the main one, so it reads as
+          navigation rather than as part of the matchup's research. */}
+      <section className="section game-nav-section" aria-label="More from the Desk">
+        <div className="container" style={{ maxWidth: '900px' }}>
+          <div className="game-nav">
+            {teamNav.map(t => (
+              <div className="game-nav__team" key={t.abbrev}>
+                <h2 className="game-nav__title">
+                  <Link href={teamPath(sportKey, t.abbrev)}>{t.name}</Link>
+                </h2>
+                <Link href={teamPath(sportKey, t.abbrev)} className="game-nav__more">
+                  {t.abbrev} schedule &amp; ATS record &rarr;
+                </Link>
+                <div className="game-nav__steps">
+                  {t.prev ? (
+                    <Link href={gamePath(sportKey, t.prev.slug)} className="game-nav__step">
+                      <span className="game-nav__step-key">&larr; Previous</span>
+                      <span className="game-nav__step-val">{matchupFor(t.prev, t.abbrev)}</span>
+                    </Link>
+                  ) : <span className="game-nav__step game-nav__step--none">First game of the season</span>}
+                  {t.next ? (
+                    <Link href={gamePath(sportKey, t.next.slug)} className="game-nav__step game-nav__step--next">
+                      <span className="game-nav__step-key">Next &rarr;</span>
+                      <span className="game-nav__step-val">{matchupFor(t.next, t.abbrev)}</span>
+                    </Link>
+                  ) : <span className="game-nav__step game-nav__step--none game-nav__step--next">No later game posted</span>}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {dayName && sameDay.length > 0 && (
+            <div className="game-day">
+              <h2 className="game-nav__title">Other games {dayName}</h2>
+              <ul className="game-day__list">
+                {dayLinks.map(r => {
+                  const tag = atsTag(r)
+                  return (
+                    <li key={r.id}>
+                      <Link href={gamePath(sportKey, r.slug)} className="game-day__link">
+                        <span>{r.away_abbrev} at {r.home_abbrev}</span>
+                        {r.status === 'post' && r.home_score !== null && r.away_score !== null ? (
+                          <span className="game-day__meta">{r.away_score}-{r.home_score}{tag ? ` · ${tag.label}` : ''}</span>
+                        ) : r.spread_current != null ? (
+                          <span className="game-day__meta">{spreadLabel(r.spread_current, r.home_abbrev, r.away_abbrev)}</span>
+                        ) : null}
+                      </Link>
+                    </li>
+                  )
+                })}
+              </ul>
+              <Link href={dayBoardHref} className="game-nav__more">
+                {sameDay.length > dayLinks.length
+                  ? `All ${sameDay.length + 1} games that day on the board →`
+                  : 'See the board →'}
+              </Link>
+            </div>
+          )}
+        </div>
+      </section>
     </main>
   )
+}
+
+/** "vs MIA · Oct 12" or "@ MIA · Oct 12", from one team's side of a game. */
+function matchupFor(g: Pick<NflGame, 'home_abbrev' | 'away_abbrev' | 'kickoff'>, abbrev: string): string {
+  const home = g.home_abbrev === abbrev
+  const opp = home ? g.away_abbrev : g.home_abbrev
+  const day = g.kickoff
+    ? new Date(g.kickoff).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'America/New_York' })
+    : 'TBD'
+  return `${home ? 'vs' : '@'} ${opp} · ${day}`
 }
 
 /**

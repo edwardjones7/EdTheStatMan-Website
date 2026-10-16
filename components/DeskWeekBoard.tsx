@@ -7,6 +7,8 @@ import type { PublicNflGame } from '@/lib/nfl'
 import { spreadLabel, moneylineLabel, lineMove, groupSlate, gamePath } from '@/lib/nfl'
 import { IconLock, IconArrowRight, IconChevronLeft, IconChevronRight } from './Icons'
 import { teamLogoUrl } from '@/lib/logos'
+import { atsTag, ouTag } from '@/lib/ats'
+import '@/styles/seo-desk.css'
 import { CFB_SCHOOLS } from '@/lib/teams-cfb'
 import { CBB_SCHOOLS } from '@/lib/teams-cbb'
 import {
@@ -37,6 +39,24 @@ interface Props {
    * false for admins and for anyone who holds the library outright.
    */
   researchClosed: boolean
+  /**
+   * Basketball's day strip: the days of the active week and which one the board
+   * is filtered to (null = the whole week). Labels arrive from the server,
+   * "Today" included, so nothing here reads a clock. Null for football.
+   */
+  days?: { options: DayOption[]; active: string | null } | null
+  /**
+   * College basketball's "Has a line" filter. `hidden` is how many games on the
+   * current day (or week) it is holding back. Null where the filter is not offered.
+   */
+  lineFilter?: { on: boolean; hidden: number } | null
+}
+
+interface DayOption {
+  date: string
+  label: string
+  sub: string
+  count: number
 }
 
 const STATUS_LABEL: Record<string, string> = { pre: '', in: 'LIVE', post: 'FINAL' }
@@ -79,6 +99,7 @@ function teamName(sport: string, team: string, abbrev: string): string {
 
 export default function DeskWeekBoard({
   sport, games, weeks, active, linkedCounts, hasDesk, hasWriteups, isAdmin, researchClosed,
+  days = null, lineFilter = null,
 }: Props) {
   const router = useRouter()
   const pathname = usePathname()
@@ -110,14 +131,56 @@ export default function DeskWeekBoard({
 
   // Selected week lives in the URL so it survives refresh and sharing — the
   // same pattern the sport tabs use on the Vault pages.
+  //
+  // A new week drops the day, so it opens on its own default (today if today is
+  // in it, the whole week otherwise), and keeps the line filter as it was.
   function selectWeek(w: WeekOption) {
     if (shown && shown.season_type === w.season_type && shown.week === w.week) return
     setRequested({ season_type: w.season_type, week: w.week })
     const params = new URLSearchParams()
     params.set('week', String(w.week))
     if (w.season_type === 3) params.set('type', 'post')
+    if (lineFilter && !lineFilter.on) params.set('all', '1')
     startTransition(() => {
       router.replace(`${pathname}?${params.toString()}`, { scroll: false })
+    })
+  }
+
+  // Day and line filter: same URL-driven, optimistic pattern as the week rail.
+  // `undefined` means "nothing requested", which is distinct from null (the
+  // whole week).
+  const [requestedDay, setRequestedDay] = useState<string | null | undefined>(undefined)
+  const [requestedLines, setRequestedLines] = useState<boolean | undefined>(undefined)
+  const shownDay = isPending && requestedDay !== undefined ? requestedDay : days?.active ?? null
+  const linesOn = isPending && requestedLines !== undefined ? requestedLines : Boolean(lineFilter?.on)
+
+  function boardHref(day: string | null, lines: boolean): string {
+    const params = new URLSearchParams()
+    if (active) {
+      params.set('week', String(active.week))
+      if (active.season_type === 3) params.set('type', 'post')
+    }
+    // "week" rather than no param: no param means "today if it is in this week".
+    params.set('day', day ?? 'week')
+    if (lineFilter && !lines) params.set('all', '1')
+    return `${pathname}?${params.toString()}`
+  }
+
+  function selectDay(day: string | null) {
+    if (day === shownDay) return
+    setRequestedDay(day)
+    setRequestedLines(undefined)
+    startTransition(() => {
+      router.replace(boardHref(day, linesOn), { scroll: false })
+    })
+  }
+
+  function toggleLines() {
+    const next = !linesOn
+    setRequestedLines(next)
+    setRequestedDay(undefined)
+    startTransition(() => {
+      router.replace(boardHref(shownDay, next), { scroll: false })
     })
   }
 
@@ -204,7 +267,7 @@ export default function DeskWeekBoard({
 
   const scrollable = reach.back || reach.on
 
-  const days = groupSlate(games)
+  const slate = groupSlate(games)
 
   // Week header numbers. These are the honest advertisement for the rung: how
   // much research is actually sitting on this week's board.
@@ -214,12 +277,21 @@ export default function DeskWeekBoard({
   }).length
   const writeups = games.filter(g => g.has_writeup).length
   const moved = games.filter(g => lineMove(g.spread_open, g.spread_current)).length
+  // A zero is dropped rather than printed. "0 With research / 0 Write-ups / 0
+  // Lines moved" is three cells of nothing on most boards most days, and it
+  // reads as a broken product rather than an early week. The game count stays:
+  // it is the one number that is never noise.
   const summary = [
     { value: games.length, label: games.length === 1 ? 'Game' : 'Games' },
     { value: researched, label: 'With research', accent: researched > 0 },
     { value: writeups, label: writeups === 1 ? 'Write-up' : 'Write-ups', accent: writeups > 0 },
-    { value: moved, label: 'Lines moved' },
-  ]
+    { value: moved, label: moved === 1 ? 'Line moved' : 'Lines moved' },
+  ].filter((s, i) => i === 0 || s.value > 0)
+
+  // When nothing on the board carries research, one quiet line says so instead
+  // of the same "No research yet" tag on every card. When some games do, the
+  // per-card tag stays, because then the contrast is the information.
+  const anyResearch = games.some(g => g.has_writeup || (linkedCounts[g.id]?.systems ?? 0) + (linkedCounts[g.id]?.trends ?? 0) > 0)
 
   return (
     <div className={`desk-board${isPending ? ' is-switching' : ''}`} aria-busy={isPending}>
@@ -274,6 +346,54 @@ export default function DeskWeekBoard({
         <span className="desk-board__bar-fill" />
       </div>
 
+      {days && days.options.length > 0 && (
+        <div className="desk-days-bar">
+          {/* Scrolls inside itself at phone width, with the same edge fades as
+              the week rail, so the page itself never scrolls sideways. */}
+          <div className="desk-days-wrap">
+            <div className="desk-days" role="tablist" aria-label="Day">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={shownDay === null}
+                className={`desk-day-pill${shownDay === null ? ' is-active' : ''}`}
+                onClick={() => selectDay(null)}
+              >
+                <span className="desk-day-pill__main">Week</span>
+                <span className="desk-day-pill__sub">All days</span>
+              </button>
+              {days.options.map(d => (
+                <button
+                  type="button"
+                  role="tab"
+                  key={d.date}
+                  aria-selected={shownDay === d.date}
+                  className={`desk-day-pill${shownDay === d.date ? ' is-active' : ''}${d.count === 0 ? ' is-empty' : ''}`}
+                  onClick={() => selectDay(d.date)}
+                >
+                  <span className="desk-day-pill__main">{d.label}</span>
+                  <span className="desk-day-pill__sub">
+                    {d.sub}
+                    <span className="desk-day-pill__count" aria-label={`${d.count} games`}>{d.count}</span>
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+          {lineFilter && (
+            <button
+              type="button"
+              className={`desk-line-toggle${linesOn ? ' is-on' : ''}`}
+              aria-pressed={linesOn}
+              onClick={toggleLines}
+            >
+              <span className="desk-line-toggle__box" aria-hidden="true" />
+              Has a line
+            </button>
+          )}
+        </div>
+      )}
+
       {games.length > 0 && (
         <div className="desk-summary">
           {summary.map(s => (
@@ -285,16 +405,36 @@ export default function DeskWeekBoard({
         </div>
       )}
 
-      {days.length === 0 && (
-        <div className="desk-empty">No games scheduled for this week yet.</div>
+      {lineFilter && lineFilter.on && lineFilter.hidden > 0 && (
+        <p className="desk-quiet">
+          {lineFilter.hidden} game{lineFilter.hidden === 1 ? '' : 's'} without a line hidden.{' '}
+          <button type="button" className="desk-quiet__link" onClick={toggleLines}>Show all</button>
+        </p>
       )}
 
-      {days.map(day => (
+      {games.length > 0 && !anyResearch && (
+        <p className="desk-quiet">No research attached to {days?.active ? 'this day' : 'this week'} yet.</p>
+      )}
+
+      {slate.length === 0 && (
+        <div className="desk-empty">
+          {lineFilter?.on && lineFilter.hidden > 0
+            ? 'No lines posted for these games yet.'
+            : days?.active
+              ? 'No games scheduled for this day.'
+              : 'No games scheduled for this week yet.'}
+        </div>
+      )}
+
+      {slate.map(day => (
         <section className={`desk-day${day.done ? ' is-done' : ''}`} key={day.label}>
           {/* The marker earns its place by explaining the order: a finished day
               sits below an unfinished one, which only reads as deliberate if
-              the header says the day is over. */}
-          <h3 className="desk-day__label">
+              the header says the day is over.
+
+              h2, not h3: the page goes h1 (league) straight to these, and a
+              skipped level breaks heading navigation for screen readers. */}
+          <h2 className="desk-day__label">
             {day.label}
             <span className="desk-day__count">{day.games.length}</span>
             {day.games.some(g => g.status === 'in') && (
@@ -304,7 +444,7 @@ export default function DeskWeekBoard({
               </span>
             )}
             {day.done && <span className="desk-day__done">Final</span>}
-          </h3>
+          </h2>
 
           <div className="desk-day__grid">
             {day.games.map(g => {
@@ -317,6 +457,9 @@ export default function DeskWeekBoard({
               const final = g.status === 'post'
               const live = g.status === 'in'
               const unlocked = hasDesk || isAdmin
+              // Graded against the closing line; both null until final and priced.
+              const ats = atsTag(g)
+              const ou = ouTag(g)
 
               // Home-relative spread: negative means the home side is laying it.
               const homeFav = g.spread_current !== null && g.spread_current !== undefined && g.spread_current < 0
@@ -399,6 +542,13 @@ export default function DeskWeekBoard({
                     ))}
                   </div>
 
+                  {(ats || ou) && (
+                    <div className="ats-tags">
+                      {ats && <span className={`ats-tag ats-tag--${ats.side === 'push' ? 'push' : 'cover'}`}>{ats.label}</span>}
+                      {ou && <span className={`ats-tag ats-tag--${ou.result}`}>{ou.label}</span>}
+                    </div>
+                  )}
+
                   <div className="desk-card__market">
                     <span className="desk-chip">
                       <span className="desk-chip__key">Spread</span>
@@ -467,7 +617,7 @@ export default function DeskWeekBoard({
                           {!(hasWriteups || isAdmin) && <IconLock size={11} />} Write-up
                         </span>
                       )}
-                      {attached === 0 && !g.has_writeup && (
+                      {anyResearch && attached === 0 && !g.has_writeup && (
                         <span className="desk-tag desk-tag--empty">No research yet</span>
                       )}
                     </span>
