@@ -184,5 +184,21 @@ export async function POST(req: Request) {
     checkoutSession = await getStripe().checkout.sessions.create(sessionParams)
   }
 
+  // Funnel event, recorded server side because only here do we know a Stripe
+  // session really exists: checkout_click fires on the button even when the
+  // request then 401s, 409s or errors. Awaited but never allowed to fail the
+  // purchase -- the buyer already has a session to go to.
+  try {
+    const { error } = await (admin as any).from('events').insert({
+      event_type: 'checkout_started',
+      path: '/api/stripe/checkout',
+      user_id: user.id,
+      meta: { tier: sku.tier, period: sku.period },
+    })
+    if (error) console.error(`[checkout] could not record checkout_started: ${error.message}`)
+  } catch (e: any) {
+    console.error(`[checkout] could not record checkout_started: ${e?.message}`)
+  }
+
   return NextResponse.json({ url: checkoutSession.url })
 }

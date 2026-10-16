@@ -12,6 +12,7 @@ import TodaysBrief from '@/components/TodaysBrief'
 import { resolveAccess, ACCESS_SELECT } from '@/lib/access'
 import { buildBrief } from '@/lib/brief'
 import type { BriefSource } from '@/lib/brief'
+import { loadProof } from '@/lib/proof'
 
 export const metadata: Metadata = {
   title: 'EdTheStatMan.com – Winning Sports Betting Picks, Systems & Trends',
@@ -34,6 +35,9 @@ export const metadata: Metadata = {
 export const dynamic = 'force-dynamic'
 
 export default async function Home() {
+  // Started first and awaited late: it is an independent read, so it should not
+  // add a round trip to the page.
+  const proofPromise = loadProof()
   const supabase = await createClient()
 
   const { data: contentRows } = await (supabase as any).from('site_content').select('key, value')
@@ -87,7 +91,10 @@ export default async function Home() {
     .from('todays_bets')
     .select('id, date, sport, bet, line, opponent, result, is_active, is_free, is_elite, show_on_results')
   const brief = buildBrief((briefRows ?? []) as BriefSource[], userTier, isAdmin)
-  const briefNode = <TodaysBrief brief={brief} />
+  // The record shown under the brief comes from lib/proof.ts, not brief.record,
+  // so it splits the two books the way every other surface does.
+  const proof = await proofPromise
+  const briefNode = <TodaysBrief brief={brief} proof={proof} />
 
   return (
     <>

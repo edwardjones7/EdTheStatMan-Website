@@ -20,7 +20,7 @@ interface Props {
 const DAY_MS = 24 * 60 * 60 * 1000
 
 /** Access that already runs to the end of the season: they hold the season pass. */
-function holdsSeason(expiresAt: string | null | undefined): boolean {
+export function holdsSeason(expiresAt: string | null | undefined): boolean {
   if (!expiresAt) return false
   return Date.parse(expiresAt) >= Date.parse(SEASON_ENDS_AT) - DAY_MS
 }
@@ -37,7 +37,7 @@ function holdsSeason(expiresAt: string | null | undefined): boolean {
  * implementation returned false for equal rank and rendered no button at all,
  * which silently blocked the most valuable conversion on the page.
  */
-function cardState(
+export function cardState(
   currentTier: Tier | null,
   isPaid: boolean,
   plan: OfferPlan,
