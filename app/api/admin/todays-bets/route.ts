@@ -1,8 +1,12 @@
 import { NextResponse } from 'next/server'
+import { revalidatePublicPicks } from '@/lib/picks/revalidate'
 import { TIER_RANK, normalizeTier, type Tier } from '@/lib/access'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { notifyNewPick } from '@/lib/notify'
+import { hasPickEngineColumns } from '@/lib/picks/columns'
+import { engineColumnsFromBody } from '@/lib/picks/admin-columns'
+import { pickSlug } from '@/lib/picks/slug'
 
 async function assertAdmin() {
   const supabase = await createClient()
@@ -46,7 +50,24 @@ export async function POST(req: Request) {
   const access = accessColumns(body)
   if ('error' in access) return NextResponse.json({ error: access.error }, { status: 400 })
 
+  // picks_01_engine.sql columns, when they exist: a stable slug (minted now,
+  // never recomputed -- lib/picks/slug.ts), the save time, the source, and the
+  // price and market if the editor sent them. Before the migration the insert
+  // carries none of them and the pick simply has no slug, exactly as today.
+  const engine = await hasPickEngineColumns(admin)
+  const id = crypto.randomUUID()
+  const engineCols = engine
+    ? {
+        id,
+        slug: pickSlug({ id, date: body.date || null, sport: body.sport || null, bet: body.bet || null, isFree: access.is_free }),
+        posted_at: new Date().toISOString(),
+        source: 'admin',
+        ...engineColumnsFromBody(body),
+      }
+    : {}
+
   const { data, error } = await admin.from('todays_bets').insert({
+    ...engineCols,
     date:            body.date            || null,
     sport:           body.sport           || null,
     risk:            body.risk            || null,
@@ -63,6 +84,7 @@ export async function POST(req: Request) {
   }).select().single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  revalidatePublicPicks()
 
   // Announce the pick. Awaited rather than fire-and-forget: on Vercel the
   // function can be frozen once the response is returned, which would drop

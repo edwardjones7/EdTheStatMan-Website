@@ -10,6 +10,10 @@
       "schedule": "0 11 * * *"
     },
     {
+      "path": "/api/cron/x-ingest",
+      "schedule": "0 13 * * *"
+    },
+    {
       "path": "/api/cron/lifecycle",
       "schedule": "0 14 * * *"
     }
