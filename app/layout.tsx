@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Inter, Outfit, JetBrains_Mono } from 'next/font/google'
 import './globals.css'
 import Navigation from '@/components/Navigation'
@@ -58,6 +58,13 @@ export const metadata: Metadata = {
   alternates: {
     canonical: 'https://edthestatman.com',
   },
+}
+
+// Matches --bg-primary, so mobile browser chrome blends into the page instead
+// of a white bar above a dark site.
+export const viewport: Viewport = {
+  themeColor: '#071219',
+  colorScheme: 'dark',
 }
 
 export default async function RootLayout({
@@ -151,6 +158,8 @@ export default async function RootLayout({
         />
       </head>
       <body>
+        {/* First focusable element on every page. */}
+        <a href="#main" className="skip-link">Skip to content</a>
         <BackgroundEffects />
         <Suspense>
           <Navigation />
@@ -158,7 +167,12 @@ export default async function RootLayout({
         <GlobalTicker content={ticker} isAdmin={isAdmin} />
         {/* Reserve flow space for the fixed ticker so page content clears it. */}
         <div className="ticker-spacer" aria-hidden />
-        {children}
+        {/* A div, not <main>: pages already render their own <main>, and
+            nesting two would give screen readers two main landmarks.
+            tabIndex -1 lets the skip link move focus here, not just scroll. */}
+        <div id="main" tabIndex={-1}>
+          {children}
+        </div>
         <Footer />
         <BackToTop />
         <ClientScripts />
