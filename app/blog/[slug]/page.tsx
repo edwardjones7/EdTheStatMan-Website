@@ -8,6 +8,9 @@ import { planByKey } from '@/lib/offer'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 import { resolveAccess, ACCESS_SELECT, atLeastTier, normalizeTier } from '@/lib/access'
+import { unlockHref } from '@/lib/unlock'
+import PaywallView from '@/components/PaywallView'
+import SignupPrompt, { SignupLink } from '@/components/SignupPrompt'
 
 function stripHtml(html: string) {
   return html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
@@ -155,10 +158,20 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
           </div>
 
           {canRead ? (
-            <div
-              className="blog-post__content"
-              dangerouslySetInnerHTML={{ __html: post.content }}
-            />
+            <>
+              <div
+                className="blog-post__content"
+                dangerouslySetInnerHTML={{ __html: post.content }}
+              />
+              {/* The free-account ask, after the reader has had the post. Free
+                  posts are public, so this is the one place a reader who came
+                  from search meets it. */}
+              {!user && (
+                <div className="fd-blog-prompt">
+                  <SignupPrompt context="blog_post" next={`/blog/${post.slug}`} />
+                </div>
+              )}
+            </>
           ) : (
             <>
               <div className="blog-post__teaser-wrap">
@@ -167,6 +180,7 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
               </div>
 
               <div className="blog-post__gate">
+                <PaywallView gate="blog_post" tier={required} />
                 <div className="blog-post__gate-icon"><IconLock size={28} /></div>
                 {!user ? (
                   <>
@@ -174,12 +188,12 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
                     <h2 className="blog-post__gate-title">Members Only Content</h2>
                     <p className="blog-post__gate-desc">{unlockLine}</p>
                     <div className="blog-post__gate-actions">
-                      <Link href="/win" className="btn btn--primary">
+                      <Link href={unlockHref(required)} className="btn btn--primary">
                         See Membership →
                       </Link>
-                      <Link href={`/signup?next=${encodeURIComponent(`/blog/${post.slug}`)}`} className="btn btn--outline">
+                      <SignupLink context="blog_gate" next={`/blog/${post.slug}`} className="btn btn--outline">
                         Create Free Account
-                      </Link>
+                      </SignupLink>
                       <Link href={`/login?next=${encodeURIComponent(`/blog/${post.slug}`)}`} className="btn btn--secondary">
                         Sign In
                       </Link>
@@ -199,7 +213,7 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
                         : unlockLine}
                     </p>
                     <div className="blog-post__gate-actions">
-                      <Link href="/win" className="btn btn--primary">
+                      <Link href={unlockHref(required)} className="btn btn--primary">
                         {membership === 'expired' ? 'Renew Access →' : 'View Plans →'}
                       </Link>
                     </div>

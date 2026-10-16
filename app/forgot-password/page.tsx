@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { forgotPassword } from '@/app/actions/auth'
+import { authErrorMessage } from '@/lib/auth-errors'
 
 export const metadata: Metadata = {
   title: 'Forgot Password – EdTheStatMan.com',
@@ -20,8 +21,10 @@ export default function ForgotPasswordPage({
           <p className="auth-card__subtitle">Enter your email and we'll send you a reset link</p>
         </div>
 
+        {/* Codes only; the page used to print Supabase's text, or anything a
+            crafted link put in ?error=. */}
         {searchParams.error && (
-          <div className="auth-error">{searchParams.error}</div>
+          <div className="auth-error">{authErrorMessage(searchParams.error)}</div>
         )}
 
         {searchParams.sent ? (
@@ -49,7 +52,8 @@ export default function ForgotPasswordPage({
         )}
 
         <p className="auth-card__footer">
-          <a href="/login" className="auth-link">Back to sign in</a>
+          Rather skip the password?{' '}
+          <a href="/login" className="auth-link">Get a sign-in link instead</a>
         </p>
       </div>
     </main>

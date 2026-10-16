@@ -1,0 +1,330 @@
+/* ==========================================================================
+   Front door: signup, sign-in, the free-account prompts.
+
+   Its own file so the front-door work does not collide with the other
+   sub-projects editing app/globals.css. Builds on the existing auth-* classes
+   and tokens there; nothing here redefines them. Mobile first; every tappable
+   thing is at least 44px tall.
+   ========================================================================== */
+
+/* ---------- Auth pages ---------- */
+
+.fd-page {
+  align-items: flex-start;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+.fd-layout {
+  width: 100%;
+  max-width: 980px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+/* On a phone the form comes first: the visitor came here to sign up, and the
+   value list is reassurance, not a gate in front of the button. */
+.fd-layout > .fd-card { order: -1; }
+
+.fd-card {
+  margin: 0 auto;
+  padding: 28px 20px;
+}
+
+.fd-card__header { margin-bottom: 24px; }
+
+.fd-panel { gap: 0; }
+
+.fd-google,
+.fd-btn-full {
+  width: 100%;
+  min-height: 48px;
+  justify-content: center;
+}
+
+.fd-google { font-weight: 600; }
+
+.fd-input {
+  width: 100%;
+  min-height: 48px;
+  font-size: 1rem; /* 16px stops iOS zooming into the field on focus */
+}
+
+.fd-status:empty { display: none; }
+
+.fd-fineprint {
+  margin: 10px 0 0;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-align: center;
+  line-height: 1.5;
+}
+
+.fd-disclosure,
+.fd-textbtn {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  margin-top: 16px;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--border-color);
+}
+
+.fd-disclosure:hover,
+.fd-textbtn:hover { color: var(--accent-teal); }
+
+.fd-password {
+  margin-top: 8px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border-color);
+}
+
+.fd-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.fd-small { font-size: 0.8rem; }
+
+/* The eye toggle: a 44px target without growing the input. */
+.fd-reveal {
+  right: 2px;
+  width: 44px;
+  height: 44px;
+  justify-content: center;
+}
+
+.fd-legal {
+  margin: 16px 0 0;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-align: center;
+  line-height: 1.5;
+}
+
+/* ---------- "Check your inbox" ---------- */
+
+.fd-sent {
+  text-align: center;
+  outline: none;
+}
+
+.fd-sent__title {
+  font-family: var(--font-heading);
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--text-heading);
+  margin: 0 0 10px;
+}
+
+.fd-sent__text {
+  color: var(--text-secondary);
+  font-size: 0.925rem;
+  line-height: 1.6;
+  margin: 0 0 8px;
+}
+
+.fd-sent__text strong { color: var(--text-primary); word-break: break-all; }
+
+.fd-sent__hint {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  margin: 0 0 20px;
+}
+
+.fd-resend { margin-top: 8px; }
+
+/* ---------- Value proposition ---------- */
+
+.fd-value { padding: 0 4px; }
+
+.fd-value__title {
+  font-family: var(--font-heading);
+  font-size: clamp(1.6rem, 6vw, 2.4rem);
+  line-height: 1.15;
+  font-weight: 700;
+  color: var(--text-heading);
+  margin: 10px 0 20px;
+}
+
+.fd-perks {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.fd-perk {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.fd-perk__icon {
+  color: var(--accent-teal);
+  flex-shrink: 0;
+  margin-top: 2px;
+  line-height: 0;
+}
+
+.fd-perk__title {
+  display: block;
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: 0.975rem;
+}
+
+.fd-perk__text {
+  display: block;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  margin-top: 2px;
+}
+
+.fd-value__note {
+  margin: 24px 0 0;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+@media (min-width: 900px) {
+  .fd-page { align-items: center; }
+  .fd-layout {
+    flex-direction: row;
+    align-items: center;
+    gap: 56px;
+  }
+  .fd-layout > .fd-card { order: 0; flex: 0 0 420px; }
+  .fd-value { flex: 1; }
+  .fd-card { padding: 40px; }
+}
+
+/* ---------- SignupPrompt ---------- */
+
+.signup-prompt {
+  background: linear-gradient(135deg, rgba(var(--teal-rgb), 0.08), rgba(var(--sky-rgb), 0.04));
+  border: 1px solid rgba(var(--teal-rgb), 0.22);
+  border-radius: 14px;
+}
+
+.signup-prompt--card {
+  padding: 24px 20px;
+  text-align: center;
+}
+
+.signup-prompt__eyebrow {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent-teal);
+  margin-bottom: 8px;
+}
+
+.signup-prompt__title {
+  font-family: var(--font-heading);
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--text-heading);
+  margin: 0 0 8px;
+}
+
+.signup-prompt__body {
+  color: var(--text-secondary);
+  font-size: 0.925rem;
+  line-height: 1.6;
+  margin: 0 auto 18px;
+  max-width: 520px;
+}
+
+.signup-prompt__actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.signup-prompt__cta {
+  min-height: 48px;
+  justify-content: center;
+  width: 100%;
+  max-width: 320px;
+}
+
+.signup-prompt__signin {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  text-decoration: none;
+}
+
+.signup-prompt__signin:hover { color: var(--accent-teal); }
+
+.signup-prompt--banner {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px 16px;
+}
+
+.signup-prompt__banner-text {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.signup-prompt__banner-text strong { color: var(--text-primary); }
+
+.signup-prompt--banner .signup-prompt__cta {
+  min-height: 44px;
+  max-width: none;
+}
+
+@media (min-width: 640px) {
+  .signup-prompt--card { padding: 32px; }
+  .signup-prompt__actions { flex-direction: row; justify-content: center; gap: 16px; }
+  .signup-prompt__cta { width: auto; }
+  .signup-prompt--banner {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 14px 20px;
+  }
+  .signup-prompt--banner .signup-prompt__cta { width: auto; flex-shrink: 0; }
+}
+
+/* ---------- Placements ---------- */
+
+.fd-blog-prompt { margin: 48px auto 0; max-width: 760px; }
+
+.fd-vault-free { margin-top: 24px; }
+
+.fd-vault-free__more {
+  margin: 12px 0 0;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+/* A free row's lock reads as "yours for an account", not as a price. */
+.sys-row-card--free-teaser .sys-row-card__teaser-hint { color: var(--accent-teal); }
+
+.fd-desk-prompt { margin-top: 32px; }

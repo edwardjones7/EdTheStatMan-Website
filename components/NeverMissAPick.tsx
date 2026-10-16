@@ -1,5 +1,5 @@
-import Link from 'next/link'
 import PushOptIn from './PushOptIn'
+import { SignupLink } from './SignupPrompt'
 import { IconBolt, IconChat, IconInstagram } from './Icons'
 
 /**
@@ -50,10 +50,12 @@ export default function NeverMissAPick({ userTier }: { userTier: string | null }
             <a href="https://discord.gg/rXBZkSPcJb" className="btn btn--secondary btn--sm" target="_blank" rel="noopener">
               <IconChat size={14} /> Join Discord
             </a>
+            {/* Carries this page as `next` and records the click; it used
+                to drop the visitor on the homepage after signing up. */}
             {userTier === null && (
-              <Link href="/signup" className="btn btn--outline btn--sm">
+              <SignupLink context="never_miss" className="btn btn--outline btn--sm">
                 Sign Up Free
-              </Link>
+              </SignupLink>
             )}
           </div>
         </div>
