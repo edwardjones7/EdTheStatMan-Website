@@ -3,6 +3,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { DESK_SPORTS } from '@/lib/desk'
 import { gamePath } from '@/lib/nfl'
 import { selectAll } from '@/lib/supabase/select-all'
+import { seoSitemapEntries } from '@/lib/seo-sitemap'
 
 const BASE = 'https://edthestatman.com'
 
@@ -80,5 +81,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }))
 
-  return [...staticRoutes, ...blogRoutes, ...gameRoutes]
+  // Team pages and Vault row pages (lib/seo-sitemap.ts).
+  const seoRoutes = await seoSitemapEntries()
+
+  return [...staticRoutes, ...blogRoutes, ...gameRoutes, ...seoRoutes]
 }
