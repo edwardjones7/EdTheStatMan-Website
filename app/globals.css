@@ -7491,6 +7491,9 @@ textarea.form-input {
 
 .desk-sports {
   display: flex;
+  /* Wraps since basketball made it four leagues: on one line "College
+     Football" and "College Basketball" pushed a 390px phone 43px sideways. */
+  flex-wrap: wrap;
   justify-content: center;
   gap: 8px;
   margin-top: 28px;
