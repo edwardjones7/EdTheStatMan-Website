@@ -5,7 +5,7 @@ import type { TodaysBet } from './TodaysBets'
 import type { LockedBetTeaser } from '@/lib/teaser'
 import TodaysBets from './TodaysBets'
 import Link from 'next/link'
-import type { ComponentType } from 'react'
+import type { ComponentType, ReactNode } from 'react'
 import { IconChartBar, IconTrendUp, IconNews } from './Icons'
 
 interface Props {
@@ -23,10 +23,12 @@ interface Props {
   headerContent: ModelPicksContent
   onHeaderEdit?: (updates: Partial<ModelPicksContent>) => void
   resetKey?: number
+  /** Shown when there are no open plays; see TodaysBets. */
+  emptyState?: ReactNode
 }
 
 export default function ModelPicksPage({
-  rows, isAdmin, userTier, isMember, lockedCount = 0, lockedBets = [], eliteLockedBets = [], editMode = false, headerContent, onHeaderEdit, resetKey = 0,
+  rows, isAdmin, userTier, isMember, lockedCount = 0, lockedBets = [], eliteLockedBets = [], editMode = false, headerContent, onHeaderEdit, resetKey = 0, emptyState,
 }: Props) {
   return (
     <>
@@ -43,6 +45,7 @@ export default function ModelPicksPage({
         headerContent={headerContent}
         onHeaderEdit={onHeaderEdit}
         resetKey={resetKey}
+        emptyState={emptyState}
       />
 
       {/* Below-table content. The CTA that used to close this section now

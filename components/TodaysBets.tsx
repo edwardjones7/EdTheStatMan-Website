@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect, Fragment } from 'react'
+import { useState, useRef, useEffect, Fragment, type ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import type { ModelPicksContent } from '@/lib/site-content'
@@ -48,6 +48,9 @@ interface Props {
   headerContent?: ModelPicksContent
   onHeaderEdit?: (updates: Partial<ModelPicksContent>) => void
   resetKey?: number
+  /** Rendered in place of the bare "No picks posted yet" line when there are
+   *  no open plays. Built server side (the proof strip), passed as a node. */
+  emptyState?: ReactNode
 }
 
 const RESULT_STYLE: Record<string, { bg: string; color: string; label: string }> = {
@@ -105,7 +108,7 @@ const EMPTY_FORM = {
   is_active: true, min_tier: 'retail' as Tier, show_on_results: false,
 }
 
-export default function TodaysBets({ rows, isAdmin, userTier, isMember, lockedCount = 0, lockedBets = [], eliteLockedBets = [], editMode = false, headerContent, onHeaderEdit, resetKey = 0 }: Props) {
+export default function TodaysBets({ rows, isAdmin, userTier, isMember, lockedCount = 0, lockedBets = [], eliteLockedBets = [], editMode = false, headerContent, onHeaderEdit, resetKey = 0, emptyState }: Props) {
   const router = useRouter()
   const [formMode, setFormMode]   = useState<'hidden' | 'add' | 'edit'>('hidden')
   const [editId, setEditId]       = useState<string | null>(null)
@@ -321,7 +324,8 @@ export default function TodaysBets({ rows, isAdmin, userTier, isMember, lockedCo
         )}
 
         {/* No rows yet — suppressed when a paywall follows, which speaks for itself */}
-        {visibleRows.length === 0 && !isAdmin && lockedCount === 0 && eliteLockedBets.length === 0 && (
+        {visibleRows.length === 0 && !isAdmin && lockedCount === 0 && eliteLockedBets.length === 0 && emptyState}
+        {visibleRows.length === 0 && !isAdmin && lockedCount === 0 && eliteLockedBets.length === 0 && !emptyState && (
           <div style={{
             background: 'var(--bg-card)',
             border: '1px solid var(--border)',
