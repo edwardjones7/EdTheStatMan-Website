@@ -90,9 +90,13 @@ function productLinks(tier: Tier): Link[] {
   return links
 }
 
-/** The renew link for a pass. /win reads `checkout` + `period` to resume a plan. */
+/**
+ * The renew link for a pass. `plan` + `period` preselect and highlight the
+ * plan on /win; `checkout` would open a Stripe session the moment an expired
+ * member clicked, which is too much for a link in an email.
+ */
 function renewHref(tier: Tier): string {
-  return url(`/win?checkout=${encodeURIComponent(tier)}&period=season`)
+  return url(`/win?plan=${encodeURIComponent(tier)}&period=season`)
 }
 
 // ------------------------------------------------------------------ templates
