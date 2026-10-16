@@ -4,6 +4,7 @@ import { DESK_SPORTS } from '@/lib/desk'
 import { gamePath } from '@/lib/nfl'
 import { selectAll } from '@/lib/supabase/select-all'
 import { seoSitemapEntries } from '@/lib/seo-sitemap'
+import { pickSitemapEntries } from '@/lib/picks/sitemap'
 
 const BASE = 'https://edthestatman.com'
 
@@ -83,6 +84,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // Team pages and Vault row pages (lib/seo-sitemap.ts).
   const seoRoutes = await seoSitemapEntries()
+  // /picks and every public pick page (lib/picks/sitemap.ts).
+  const pickRoutes = await pickSitemapEntries(BASE)
 
-  return [...staticRoutes, ...blogRoutes, ...gameRoutes, ...seoRoutes]
+  return [...staticRoutes, ...blogRoutes, ...gameRoutes, ...seoRoutes, ...pickRoutes]
 }

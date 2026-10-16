@@ -87,6 +87,9 @@ const NAV_LINKS: NavLink[] = [
       { href: '/vault/trends', label: 'Trends' },
     ],
   },
+  // Top level, not under The Portfolio: free picks are the front door for
+  // visitors arriving from X, and the Portfolio is the paid product.
+  { href: '/picks', label: 'Free Picks' },
   { href: '/blog', label: 'Blog' },
   { href: '/win', label: 'Membership', offer: true },
 ]
