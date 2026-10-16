@@ -68,7 +68,11 @@ export async function generateMetadata(
   { params }: { params: { sport: string; abbrev: string } }
 ): Promise<Metadata> {
   const t = await loadTeam(params.sport, params.abbrev)
-  if (!t) return { title: 'Team Not Found' }
+  // notFound() HERE, not only in the page: app/desk/[sport]/loading.tsx makes
+  // the page stream, and once streaming has started a notFound() from the page
+  // can only render the not-found UI under a 200. Metadata resolves before the
+  // stream opens, so this is what gets an unknown team a real 404.
+  if (!t) notFound()
 
   const seasonLabel = deskSeasonLabel(t.sport, t.season)
   // `absolute` so the root template does not append its own brand a second time.

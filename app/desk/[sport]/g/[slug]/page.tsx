@@ -36,7 +36,11 @@ export async function generateMetadata({ params }: { params: { sport: string; sl
     .eq('slug', slug)
     .maybeSingle()
 
-  if (!game || !game.is_published) return { title: 'Game Not Found' }
+  // A slug that matches nothing 404s from here, before loading.tsx starts the
+  // stream; from the page it could only render the not-found UI under a 200.
+  // An unpublished game is left to the page, which lets admins through.
+  if (!game) notFound()
+  if (!game.is_published) return { title: 'Game Not Found', robots: { index: false } }
 
   const title = `${game.away_team} at ${game.home_team} — ${gameWhen(game, params.sport)} Prediction, Odds & Betting Analysis`
   // The generated brief is the fallback description: two sentences of it say
