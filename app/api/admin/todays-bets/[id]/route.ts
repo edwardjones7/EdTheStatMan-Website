@@ -1,7 +1,10 @@
 import { NextResponse } from 'next/server'
+import { revalidatePublicPicks } from '@/lib/picks/revalidate'
 import { TIER_RANK, normalizeTier, type Tier } from '@/lib/access'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { hasPickEngineColumns } from '@/lib/picks/columns'
+import { engineColumnsFromBody } from '@/lib/picks/admin-columns'
 
 async function assertAdmin() {
   const supabase = await createClient()
@@ -46,7 +49,14 @@ export async function PUT(req: Request, context: { params: Promise<{ id: string 
   const access = accessColumns(body)
   if ('error' in access) return NextResponse.json({ error: access.error }, { status: 400 })
 
+  // odds / market only when the body carries them: the current editor sends
+  // neither, and writing null for "not sent" would wipe the price an approved
+  // X pick came in with the first time anyone fixed a typo in its note. The
+  // slug is never touched here -- it is the pick's permanent URL.
+  const engineCols = (await hasPickEngineColumns(admin)) ? engineColumnsFromBody(body) : {}
+
   const { data, error } = await admin.from('todays_bets').update({
+    ...engineCols,
     date:            body.date            || null,
     sport:           body.sport           || null,
     risk:            body.risk            || null,
@@ -64,6 +74,7 @@ export async function PUT(req: Request, context: { params: Promise<{ id: string 
   }).eq('id', id).select().single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  revalidatePublicPicks()
   return NextResponse.json(data)
 }
 
@@ -74,5 +85,6 @@ export async function DELETE(_req: Request, context: { params: Promise<{ id: str
   const { id } = await Promise.resolve(context.params)
   const { error } = await admin.from('todays_bets').delete().eq('id', id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  revalidatePublicPicks()
   return NextResponse.json({ ok: true })
 }
