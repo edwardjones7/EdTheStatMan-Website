@@ -37,4 +37,11 @@ export interface BotIdRoute {
 
 export const BOTID_PROTECTED: BotIdRoute[] = [
   { path: '/signup', method: 'POST' },
+  // Added with the magic link (2026-10-15). Each of these pages invokes a
+  // Server Action that makes Supabase send mail to a typed address:
+  // sendMagicLink from /login and from /signup/verify's resend, and
+  // forgotPassword from /forgot-password. Same abuse, same guard.
+  { path: '/login', method: 'POST' },
+  { path: '/signup/verify', method: 'POST' },
+  { path: '/forgot-password', method: 'POST' },
 ]
