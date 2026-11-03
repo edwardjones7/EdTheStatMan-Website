@@ -567,6 +567,8 @@
 .home-free__sent { margin: 6px 0 0; color: var(--text-primary); }
 .home-free__sent strong { color: var(--text-heading); }
 .home-free__error { margin: 0; color: var(--down); font-size: 0.9rem; }
+.home-free__legal { margin: 0; font-size: 0.8rem; color: var(--text-muted); }
+.home-free__legal a { color: var(--text-secondary); text-decoration: underline; }
 .home-free__alt { margin: 4px 0 0; font-size: 0.9rem; color: var(--text-muted); }
 .home-free__discord {
   display: inline-flex;

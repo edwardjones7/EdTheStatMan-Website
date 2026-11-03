@@ -168,7 +168,7 @@ export default async function RootLayout({
         <div id="main" tabIndex={-1}>
           {children}
         </div>
-        <Footer />
+        <Footer signedIn={!!user} />
         <BackToTop />
         <ClientScripts />
         <Suspense><PageViewTracker /></Suspense>

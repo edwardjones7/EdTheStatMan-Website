@@ -3363,6 +3363,41 @@ textarea.form-input {
   position: relative;
 }
 
+/* Free picks opt-in, above the link columns. Signed-out visitors only. */
+.footer-free {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px 48px;
+  padding-bottom: 40px;
+  margin-bottom: 48px;
+  border-bottom: 1px solid var(--border-color);
+}
+.footer-free__copy { flex: 1 1 320px; }
+.footer-free__title { margin: 0 0 6px; font-size: 1.5rem; }
+.footer-free__sub { margin: 0; color: var(--text-secondary); font-size: 0.95rem; }
+.footer-free__action { flex: 1 1 400px; max-width: 520px; }
+.footer-free__form { display: flex; flex-wrap: wrap; gap: 10px; }
+.footer-free__input {
+  flex: 1 1 220px;
+  min-height: 48px;
+  padding: 0 16px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  color: var(--text-heading);
+  font: inherit;
+  font-size: 1rem;
+}
+.footer-free__input::placeholder { color: var(--text-muted); }
+.footer-free__input:focus { outline: 2px solid var(--brand); outline-offset: 1px; border-color: transparent; }
+.footer-free__sent { margin: 0; color: var(--text-primary); }
+.footer-free__sent strong { color: var(--text-heading); }
+.footer-free__error { margin: 8px 0 0; color: var(--down); font-size: 0.9rem; }
+.footer-free__legal { margin: 8px 0 0; font-size: 0.8rem; color: var(--text-muted); }
+.footer-free__legal a { color: var(--text-secondary); text-decoration: underline; }
+
 .footer__grid {
   display: grid;
   grid-template-columns: 2fr 1fr 1fr 1fr;

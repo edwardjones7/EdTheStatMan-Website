@@ -1,10 +1,9 @@
 'use client'
 
-import { useState } from 'react'
-import { sendMagicLink } from '@/app/actions/auth'
-import { authErrorMessage } from '@/lib/auth-errors'
+import Link from 'next/link'
 import { trackEvent } from '@/lib/track-client'
 import { IconChat } from './Icons'
+import { useFreePicksSignup } from './useFreePicksSignup'
 
 const DISCORD = 'https://discord.gg/rXBZkSPcJb'
 
@@ -19,39 +18,13 @@ const DISCORD = 'https://discord.gg/rXBZkSPcJb'
  * both confirms the address and signs them in, which matters because the
  * notifier never mails an unconfirmed address (the September signup bot).
  *
- * sendMagicLink is BotID-checked and the homepage is listed in
- * lib/botid-routes.ts for exactly that reason; without the listing every
- * visitor here would classify as a bot.
+ * The footer carries a smaller version (FooterFreePicks.tsx); both go through
+ * useFreePicksSignup and /api/free-picks, which is what BotID guards.
  *
  * Logged-out visitors only; the page decides that.
  */
 export default function HomeFreePicks() {
-  const [state, setState] = useState<'idle' | 'sending' | 'sent'>('idle')
-  const [error, setError] = useState<string | null>(null)
-  const [email, setEmail] = useState('')
-
-  async function submit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault()
-    setState('sending')
-    setError(null)
-    trackEvent('signup_start', { method: 'magic_link', from: 'home_free_picks' })
-    const fd = new FormData()
-    fd.set('email', email)
-    fd.set('next', '/portfolio')
-    try {
-      const result = await sendMagicLink(fd)
-      if (result.ok) {
-        trackEvent('magic_link_sent', { from: 'home_free_picks' })
-        setState('sent')
-      } else {
-        setError(authErrorMessage(result.error))
-        setState('idle')
-      }
-    } catch {
-      setError(authErrorMessage('auth'))
-      setState('idle')
-    }
-  }
+  const { state, error, email, setEmail, submit } = useFreePicksSignup('home_free_picks')
 
   return (
     <section className="home-free" aria-labelledby="home-free-title">
@@ -86,6 +59,12 @@ export default function HomeFreePicks() {
           </form>
         )}
         {error && <p className="home-free__error" role="alert">{error}</p>}
+        {state !== 'sent' && (
+          <p className="home-free__legal">
+            By continuing you agree to the <Link href="/terms">Terms</Link> and{' '}
+            <Link href="/privacy">Privacy Policy</Link>.
+          </p>
+        )}
 
         <p className="home-free__alt">
           Or{' '}

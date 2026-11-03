@@ -44,7 +44,8 @@ export const BOTID_PROTECTED: BotIdRoute[] = [
   { path: '/login', method: 'POST' },
   { path: '/signup/verify', method: 'POST' },
   { path: '/forgot-password', method: 'POST' },
-  // The homepage's "free picks by email" box (components/HomeFreePicks.tsx)
-  // calls sendMagicLink, so a POST to / sends mail too. Added 2026-11-03.
-  { path: '/', method: 'POST' },
+  // The free-picks email boxes (homepage band and the footer on every page)
+  // both POST here, and it calls sendMagicLink. An API path, not a page path,
+  // because the footer has no single page to list. Added 2026-11-03.
+  { path: '/api/free-picks', method: 'POST' },
 ]

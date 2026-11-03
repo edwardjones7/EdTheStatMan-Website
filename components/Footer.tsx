@@ -2,11 +2,13 @@ import Link from 'next/link'
 import { IconInstagram } from './Icons'
 import { PROBLEM_GAMBLING_LINE } from '@/lib/business'
 import BrandMark from '@/components/BrandMark'
+import FooterFreePicks from './FooterFreePicks'
 
-export default function Footer() {
+export default function Footer({ signedIn }: { signedIn: boolean }) {
   return (
     <footer className="footer">
       <div className="container">
+        {!signedIn && <FooterFreePicks />}
         <div className="footer__grid">
           <div className="footer__brand">
             <Link href="/" className="nav__logo">
