@@ -1,5 +1,7 @@
 /**
- * Create the eight v3 ladder SKUs in Stripe.
+ * Create the six Nov 2026 SKUs in Stripe (three products x 30 / 365 days, all
+ * one-time). The live ones already exist (created 2026-11-02) and carry these
+ * lookup keys, so a --live run reports them rather than duplicating.
  *
  *   node scripts/create-stripe-prices.mjs                 # dry run, test mode
  *   node scripts/create-stripe-prices.mjs --write         # create, test mode
@@ -62,21 +64,17 @@ const stripe = new Stripe(key)
 // Mirrors OFFER_PLANS in lib/offer.ts. `envVar` is the variable the catalogue
 // reads, and is what you paste into Vercel afterwards.
 //
-// Only the three monthly Desk/Private/Institutional SKUs recur. The Portfolio
-// month is a one-time 30-day purchase and every season pass is one-time, which
-// is the whole reason `mode` is per-SKU rather than per-plan.
+// Nothing recurs since Nov 2026: every SKU is a one-time 30- or 365-day pass.
 const CATALOGUE = [
-  { product: 'The Portfolio',                    tier: 'portfolio',     period: 'month',  amount: 4900,   recurring: false, envVar: 'NEXT_PUBLIC_STRIPE_PORTFOLIO_MONTH_PRICE_ID' },
-  { product: 'The Portfolio',                    tier: 'portfolio',     period: 'season', amount: 19900,  recurring: false, envVar: 'NEXT_PUBLIC_STRIPE_PORTFOLIO_SEASON_PRICE_ID' },
-  { product: 'The Research Desk',                tier: 'desk',          period: 'month',  amount: 12900,  recurring: true,  envVar: 'NEXT_PUBLIC_STRIPE_DESK_MONTH_PRICE_ID' },
-  { product: 'The Research Desk',                tier: 'desk',          period: 'season', amount: 49900,  recurring: false, envVar: 'NEXT_PUBLIC_STRIPE_DESK_SEASON_PRICE_ID' },
-  { product: 'Vault — Private Intelligence',     tier: 'private',       period: 'month',  amount: 19900,  recurring: true,  envVar: 'NEXT_PUBLIC_STRIPE_PRIVATE_MONTH_PRICE_ID' },
-  { product: 'Vault — Private Intelligence',     tier: 'private',       period: 'season', amount: 79900,  recurring: false, envVar: 'NEXT_PUBLIC_STRIPE_PRIVATE_SEASON_PRICE_ID' },
-  { product: 'Vault — Institutional Intelligence', tier: 'institutional', period: 'month',  amount: 39900,  recurring: true,  envVar: 'NEXT_PUBLIC_STRIPE_INSTITUTIONAL_MONTH_PRICE_ID' },
-  { product: 'Vault — Institutional Intelligence', tier: 'institutional', period: 'season', amount: 149900, recurring: false, envVar: 'NEXT_PUBLIC_STRIPE_INSTITUTIONAL_SEASON_PRICE_ID' },
+  { product: 'The Research Desk',      tier: 'desk',      period: 'month', amount: 7900,  recurring: false, envVar: 'NEXT_PUBLIC_STRIPE_DESK_30D_PRICE_ID' },
+  { product: 'The Research Desk',      tier: 'desk',      period: 'year',  amount: 69900, recurring: false, envVar: 'NEXT_PUBLIC_STRIPE_DESK_365D_PRICE_ID' },
+  { product: 'Handicapping Vault',     tier: 'private',   period: 'month', amount: 3900,  recurring: false, envVar: 'NEXT_PUBLIC_STRIPE_VAULT_30D_PRICE_ID' },
+  { product: 'Handicapping Vault',     tier: 'private',   period: 'year',  amount: 34900, recurring: false, envVar: 'NEXT_PUBLIC_STRIPE_VAULT_365D_PRICE_ID' },
+  { product: 'EdTheStatBot Portfolio', tier: 'portfolio', period: 'month', amount: 2900,  recurring: false, envVar: 'NEXT_PUBLIC_STRIPE_PORTFOLIO_30D_PRICE_ID' },
+  { product: 'EdTheStatBot Portfolio', tier: 'portfolio', period: 'year',  amount: 24900, recurring: false, envVar: 'NEXT_PUBLIC_STRIPE_PORTFOLIO_365D_PRICE_ID' },
 ]
 
-const lookupKey = s => `edtsm_v3_${s.tier}_${s.period}`
+const lookupKey = s => `edtsm_nov26_${s.tier}_${s.period}`
 const money = c => `$${(c / 100).toFixed(2)}`
 
 // ----------------------------------------------------------------------- main
@@ -95,7 +93,7 @@ async function findOrCreateProduct(name) {
     if (!WRITE) {
       product = { id: '(would create)', name }
     } else {
-      product = await stripe.products.create({ name, metadata: { ladder: 'v3' } })
+      product = await stripe.products.create({ name, metadata: { catalogue: 'nov26' } })
       console.log(`  + product ${product.id}  ${name}`)
     }
   }
@@ -140,7 +138,7 @@ for (const sku of CATALOGUE) {
     currency: 'usd',
     lookup_key: lk,
     ...(sku.recurring ? { recurring: { interval: 'month' } } : {}),
-    metadata: { tier: sku.tier, period: sku.period, ladder: 'v3' },
+    metadata: { tier: sku.tier, period: sku.period, catalogue: 'nov26' },
   })
   created++
   results.push({ sku, id: price.id, status: 'created' })
