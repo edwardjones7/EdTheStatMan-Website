@@ -281,13 +281,13 @@ export default function DeskWeekBoard({
   // is attaching the free and Portfolio picks to each game. "Lines moved" went
   // the same day -- a count of moved lines told nobody anything.
   const bets = games.reduce((n, g) => n + (betCounts[g.id] ?? 0), 0)
-  // A zero is dropped rather than printed. "0 With research / 0 Bets" is cells
+  // A zero is dropped rather than printed. "0 With Systems/Trends / 0 Bets" is cells
   // of nothing on most boards most days, and it reads as a broken product
   // rather than an early week. The game count stays: it is the one number
   // that is never noise.
   const summary = [
     { value: games.length, label: games.length === 1 ? 'Game' : 'Games' },
-    { value: researched, label: 'With research', accent: researched > 0 },
+    { value: researched, label: 'With Systems/Trends', accent: researched > 0 },
     { value: bets, label: bets === 1 ? 'Bet' : 'Bets', accent: bets > 0 },
   ].filter((s, i) => i === 0 || s.value > 0)
 

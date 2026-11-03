@@ -166,6 +166,54 @@ export async function syncTargets(admin: any, opts: SyncOptions): Promise<SyncRe
     existingRows.map((r: any) => [r.espn_event_id, r])
   )
 
+  // ---- ESPN re-issued an event id -------------------------------------------
+  // ESPN sometimes replaces a game's event id outright -- seen 2026-11-03 when a
+  // college game listed with no tip time (401925923, Bethesda at Pepperdine) was
+  // re-listed under a new id (401931195) once the time was set. The new id looks
+  // like a new game, builds the same slug, and the insert hits the UNIQUE slug
+  // constraint. Because inserts are one batch, that single collision used to
+  // abort the whole sync, and every odds update for the week with it: the
+  // college board sat with no lines for days.
+  //
+  // When the row holding the slug has an id ESPN no longer sends, it is the same
+  // game: move that row onto the new id. Its id, slug, picks and admin columns
+  // all survive, and the update loop below refreshes it like any other row. When
+  // the old id IS still in the feed, these are two real games and only the
+  // newcomer is dropped (reported in `failed`).
+  const parsedIds = new Set(parsed.map(g => g.espn_event_id))
+  const slugOf = (g: ParsedGame) =>
+    buildGameSlug(g.sport, g.season, g.season_type, g.week, g.away_abbrev, g.home_abbrev, g.kickoff)
+  const newGames = parsed.filter(g => !existing.has(g.espn_event_id))
+  const newSlugs = newGames.map(slugOf)
+  const slugHolders = new Map<string, any>()
+  for (let i = 0; i < newSlugs.length; i += DB_CHUNK) {
+    const { data } = await admin
+      .from('nfl_games')
+      .select([...new Set([...readCols, 'slug'])].join(', '))
+      .in('slug', newSlugs.slice(i, i + DB_CHUNK))
+    for (const r of data ?? []) slugHolders.set(r.slug, r)
+  }
+  const blockedIds = new Set<string>()
+  for (const g of newGames) {
+    const holder = slugHolders.get(slugOf(g))
+    if (!holder) continue
+    if (parsedIds.has(holder.espn_event_id)) {
+      failed.push(`duplicate slug ${holder.slug} (${g.espn_event_id} vs ${holder.espn_event_id})`)
+      blockedIds.add(g.espn_event_id)
+      continue
+    }
+    const { error } = await admin
+      .from('nfl_games')
+      .update({ espn_event_id: g.espn_event_id })
+      .eq('espn_event_id', holder.espn_event_id)
+    if (error) {
+      failed.push(`re-key ${holder.espn_event_id} -> ${g.espn_event_id}: ${error.message}`)
+      blockedIds.add(g.espn_event_id)
+      continue
+    }
+    existing.set(g.espn_event_id, { ...holder, espn_event_id: g.espn_event_id })
+  }
+
   // ---- Fill in prices the schedule feed will not give us -------------------
   // The week sweep returns no odds at all for a game that has kicked off, so
   // without this a live or finished game shows no line and its close is never
@@ -221,7 +269,7 @@ export async function syncTargets(admin: any, opts: SyncOptions): Promise<SyncRe
   const seenIds = new Set<string>()
   const seenSlugs = new Set<string>()
   const toInsert = parsed
-    .filter(g => !existing.has(g.espn_event_id))
+    .filter(g => !existing.has(g.espn_event_id) && !blockedIds.has(g.espn_event_id))
     .map(g => pick(g, writeCols, {
       espn_event_id: g.espn_event_id,
       slug: buildGameSlug(g.sport, g.season, g.season_type, g.week, g.away_abbrev, g.home_abbrev, g.kickoff),
@@ -245,8 +293,15 @@ export async function syncTargets(admin: any, opts: SyncOptions): Promise<SyncRe
   for (let i = 0; i < toInsert.length; i += DB_CHUNK) {
     const batch = toInsert.slice(i, i + DB_CHUNK)
     const { error } = await admin.from('nfl_games').insert(batch)
-    if (error) return { inserted, updated: 0, failed, error: error.message, httpStatus: 500 }
-    inserted += batch.length
+    if (!error) { inserted += batch.length; continue }
+    // A batch is all-or-nothing. Retry its rows one at a time so one bad game
+    // costs one row, and never let a failed insert stop the updates below --
+    // those carry the lines for every game already on the board.
+    for (const row of batch) {
+      const { error: rowError } = await admin.from('nfl_games').insert(row)
+      if (rowError) failed.push(`insert ${(row as any).espn_event_id}: ${rowError.message}`)
+      else inserted++
+    }
   }
 
   let updated = 0
