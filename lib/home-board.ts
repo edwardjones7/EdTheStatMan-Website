@@ -29,8 +29,14 @@ export interface BoardRow {
   when: string
   spread: string | null
   spreadMove: { label: string; tone: MoveTone } | null
+  /** "BAL −4.5" when the spread has moved since it opened, else null. A
+   *  signed delta is home-relative and reads as nonsense beside an away
+   *  favourite ("JAX −9.5, +14"); the opening number is how bettors read it. */
+  spreadOpen: string | null
   total: string | null
   totalMove: { label: string; tone: MoveTone } | null
+  /** The opening total when it has moved, else null. */
+  totalOpen: string | null
   research: number
 }
 
@@ -85,6 +91,16 @@ function move(open: number | null, current: number | null) {
   const m = lineMove(open, current)
   if (!m) return { label: 'no move', tone: 'flat' as const }
   return { label: minus(m.label), tone: (m.delta > 0 ? 'up' : 'down') as MoveTone }
+}
+
+/** The opening number, formatted, but only when the line has since moved. */
+function opened(
+  open: number | null,
+  current: number | null,
+  fmt: (v: number) => string | null
+): string | null {
+  if (open == null || current == null || open === current) return null
+  return fmt(open)
 }
 
 function when(g: Row): string {
@@ -161,8 +177,13 @@ export async function loadHomeBoard(now: Date = new Date()): Promise<HomeBoard |
         when: when(g),
         spread: spread ? minus(spread) : null,
         spreadMove: move(g.spread_open, g.spread_current),
+        spreadOpen: opened(g.spread_open, g.spread_current, v => {
+          const l = spreadLabel(v, g.home_abbrev, g.away_abbrev)
+          return l ? minus(l) : null
+        }),
         total: total != null ? String(total) : null,
         totalMove: move(g.total_open, g.total_current),
+        totalOpen: opened(g.total_open, g.total_current, v => String(v)),
         research: research[g.id] ?? 0,
       }
     })

@@ -44,4 +44,7 @@ export const BOTID_PROTECTED: BotIdRoute[] = [
   { path: '/login', method: 'POST' },
   { path: '/signup/verify', method: 'POST' },
   { path: '/forgot-password', method: 'POST' },
+  // The homepage's "free picks by email" box (components/HomeFreePicks.tsx)
+  // calls sendMagicLink, so a POST to / sends mail too. Added 2026-11-03.
+  { path: '/', method: 'POST' },
 ]

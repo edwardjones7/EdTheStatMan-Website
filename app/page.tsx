@@ -3,8 +3,10 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { SITE_CONTENT_DEFAULTS } from '@/lib/site-content'
 import type { AllSiteContent } from '@/lib/site-content'
-import HomeHero, { type HeroCta } from '@/components/HomeHero'
-import HomeRecord from '@/components/HomeRecord'
+import HomeHero, { type HeroCta, type HeroCard, type HeroProof } from '@/components/HomeHero'
+import HomeFreePicks from '@/components/HomeFreePicks'
+import { BOOK_LABEL } from '@/lib/proof'
+import { minus } from '@/lib/home-board'
 import Features from '@/components/Features'
 import CTASection from '@/components/CTASection'
 import SportsBand from '@/components/SportsBand'
@@ -112,8 +114,8 @@ export default async function Home() {
     .from('todays_bets')
     .select('id, date, sport, bet, line, opponent, result, is_active, is_free, is_elite, show_on_results')
   const brief = buildBrief((briefRows ?? []) as BriefSource[], userTier, isAdmin)
-  // The record strip under the hero comes from lib/proof.ts, not brief.record,
-  // so it splits the two books the way every other surface does.
+  // The record in the hero comes from lib/proof.ts, not brief.record, so it
+  // splits the two books the way every other surface does.
   const [proof, board, trial] = await Promise.all([proofPromise, boardPromise, trialPromise])
   const cta: HeroCta =
     !user || !trial ? { kind: 'signup' }
@@ -121,6 +123,45 @@ export default async function Home() {
     : trial.available ? { kind: 'trial' }
     : { kind: 'plans', expired: membership === 'expired' }
   const briefNode = <TodaysBrief brief={brief} />
+
+  // The hook above the slogan: what is on the card right now.
+  const card: HeroCard | null = brief.date && brief.total > 0
+    ? {
+        isToday: brief.isToday,
+        total: brief.total,
+        locked: brief.lockedCount,
+        sports: brief.sportCounts.map(c => c.sport),
+      }
+    : null
+
+  // The proof line under the buttons: the best sport beside every whole book,
+  // so a good stretch in one sport never stands in for the whole record.
+  const tone = (v: number) => (v > 0 ? 'up' : v < 0 ? 'down' : 'flat') as HeroProof['tone']
+  const heroProof: HeroProof[] = []
+  if (proof.headline) {
+    heroProof.push({
+      label: `${proof.headline.sport}${proof.headlineInSeason ? ' this season' : ''}`,
+      record: proof.headline.record,
+      units: minus(proof.headline.units),
+      tone: tone(proof.headline.unitsValue),
+    })
+  }
+  if (proof.books.members) {
+    heroProof.push({
+      label: `${BOOK_LABEL.members}, all sports`,
+      record: proof.books.members.record,
+      units: minus(proof.books.members.units),
+      tone: tone(proof.books.members.unitsValue),
+    })
+  }
+  if (proof.books.free) {
+    heroProof.push({
+      label: `${BOOK_LABEL.free}, all sports`,
+      record: proof.books.free.record,
+      units: minus(proof.books.free.units),
+      tone: tone(proof.books.free.unitsValue),
+    })
+  }
   const heroNode = (
     <>
       <HomeHero
@@ -129,8 +170,10 @@ export default async function Home() {
         title={content.hero.title}
         accent={content.hero.titleAccent}
         description={content.hero.description}
+        card={card}
+        proof={heroProof}
       />
-      <HomeRecord proof={proof} />
+      {!user && <HomeFreePicks />}
     </>
   )
 

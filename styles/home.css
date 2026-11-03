@@ -433,3 +433,155 @@
 .home .home-record__quote { align-items: center; }
 .home .home-record__note { flex: 0 0 100%; max-width: none; margin: 4px 0 0; }
 .home .home-record__link { flex: 0 0 100%; justify-content: center; min-height: 32px; }
+
+/* ---------- Conversion pass (2026-11-03) ---------------------------------- */
+
+/* The old stadium photo, back behind the hero: greyscale and pushed almost to
+   the ground colour, fading into the page so the board below sits on flat ink. */
+.home-hero { position: relative; overflow: hidden; isolation: isolate; }
+.home-hero__media {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+}
+/* On the photo only: a filter on the wrapper would also darken the fade
+   below and leave the hero's bottom edge blacker than the page under it. */
+.home-hero__media img { filter: grayscale(1) brightness(0.55) contrast(1.05); }
+.home-hero__media::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(15, 21, 27, 0.72) 0%, rgba(15, 21, 27, 0.82) 45%, #0F151B 78%);
+}
+.home-hero__inner { position: relative; }
+
+/* The hook: what is on the card right now. */
+.home-hook {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  padding: 8px 16px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background: rgba(15, 21, 27, 0.7);
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  text-decoration: none;
+}
+.home-hook strong { color: var(--text-heading); font-weight: 700; }
+.home-hook:hover { border-color: var(--brand); color: var(--text-heading); }
+.home-hook__dot {
+  width: 8px;
+  height: 8px;
+  background: var(--brand);
+  animation: home-hook-blink 1.6s steps(1) infinite;
+}
+@keyframes home-hook-blink { 50% { opacity: 0.25; } }
+@media (prefers-reduced-motion: reduce) { .home-hook__dot { animation: none; } }
+
+/* The proof line: the record, before the scroll. */
+.home-proof {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: baseline;
+  gap: 6px 28px;
+  margin-top: 6px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border-color);
+  text-decoration: none;
+  color: inherit;
+}
+.home-proof:hover .home-proof__label:last-child { color: var(--brand); }
+.home-proof__item { white-space: nowrap; }
+.home-proof__label { font-size: 0.875rem; color: var(--text-secondary); }
+.home-proof__fig {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-heading);
+}
+.home-proof__fig.is-up { color: var(--up); }
+.home-proof__fig.is-down { color: var(--down); }
+
+/* Board: the opening number under the current one, and locked research. */
+.home-board__open {
+  display: block;
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.home-board__research a { color: var(--text-primary); text-decoration: none; }
+.home-board__research a:hover { color: var(--brand); }
+.home-board__locked {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+.home-board__locked svg { color: var(--brand); }
+
+/* Free picks by email, or Discord. */
+.home-free {
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
+}
+.home-free__inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 14px;
+  padding-top: 48px;
+  padding-bottom: 48px;
+}
+.home-free__title { margin: 0; font-size: clamp(1.6rem, 3.4vw, 2.2rem); }
+.home-free__sub { margin: 0; max-width: 560px; color: var(--text-secondary); }
+.home-free__form {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  max-width: 520px;
+  margin-top: 6px;
+}
+.home-free__input {
+  flex: 1 1 260px;
+  min-height: 48px;
+  padding: 0 16px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  color: var(--text-heading);
+  font: inherit;
+  font-size: 1rem;
+}
+.home-free__input::placeholder { color: var(--text-muted); }
+.home-free__input:focus { outline: 2px solid var(--brand); outline-offset: 1px; border-color: transparent; }
+.home-free__sent { margin: 6px 0 0; color: var(--text-primary); }
+.home-free__sent strong { color: var(--text-heading); }
+.home-free__error { margin: 0; color: var(--down); font-size: 0.9rem; }
+.home-free__alt { margin: 4px 0 0; font-size: 0.9rem; color: var(--text-muted); }
+.home-free__discord {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  color: var(--text-heading);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--border-color);
+}
+.home-free__discord:hover { color: var(--brand); text-decoration-color: var(--brand); }
+
+@media (max-width: 640px) {
+  .home-proof { gap: 4px 18px; }
+  .home-free__form .home-btn { flex: 1 1 100%; }
+}
