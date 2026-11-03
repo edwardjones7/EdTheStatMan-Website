@@ -107,8 +107,8 @@ export const OFFER_PLANS: OfferPlan[] = [
       'Complete Handicapping Vault',
       'All EdTheStatBot Portfolio picks',
     ],
-    month: sku('desk', 'month', 79, process.env.NEXT_PUBLIC_STRIPE_DESK_MONTH_PRICE_ID ?? '', 'Get 30 Days'),
-    year: sku('desk', 'year', 699, process.env.NEXT_PUBLIC_STRIPE_DESK_YEAR_PRICE_ID ?? '', 'Get 365 Days'),
+    month: sku('desk', 'month', 79, process.env.NEXT_PUBLIC_STRIPE_DESK_30D_PRICE_ID ?? '', 'Get 30 Days'),
+    year: sku('desk', 'year', 699, process.env.NEXT_PUBLIC_STRIPE_DESK_365D_PRICE_ID ?? '', 'Get 365 Days'),
   },
   {
     key: 'private',
@@ -120,8 +120,8 @@ export const OFFER_PLANS: OfferPlan[] = [
       'The complete team trends library, unlocked',
       'Filter and sort across the whole Vault',
     ],
-    month: sku('private', 'month', 39, process.env.NEXT_PUBLIC_STRIPE_VAULT_MONTH_PRICE_ID ?? '', 'Get 30 Days'),
-    year: sku('private', 'year', 349, process.env.NEXT_PUBLIC_STRIPE_VAULT_YEAR_PRICE_ID ?? '', 'Get 365 Days'),
+    month: sku('private', 'month', 39, process.env.NEXT_PUBLIC_STRIPE_VAULT_30D_PRICE_ID ?? '', 'Get 30 Days'),
+    year: sku('private', 'year', 349, process.env.NEXT_PUBLIC_STRIPE_VAULT_365D_PRICE_ID ?? '', 'Get 365 Days'),
   },
   {
     key: 'portfolio',
@@ -134,8 +134,8 @@ export const OFFER_PLANS: OfferPlan[] = [
       'Instant alerts by email, push and Discord',
       'Complete graded history',
     ],
-    month: sku('portfolio', 'month', 29, process.env.NEXT_PUBLIC_STRIPE_PORTFOLIO_MONTH_PRICE_ID ?? '', 'Get 30 Days'),
-    year: sku('portfolio', 'year', 249, process.env.NEXT_PUBLIC_STRIPE_PORTFOLIO_YEAR_PRICE_ID ?? '', 'Get 365 Days'),
+    month: sku('portfolio', 'month', 29, process.env.NEXT_PUBLIC_STRIPE_PORTFOLIO_30D_PRICE_ID ?? '', 'Get 30 Days'),
+    year: sku('portfolio', 'year', 249, process.env.NEXT_PUBLIC_STRIPE_PORTFOLIO_365D_PRICE_ID ?? '', 'Get 365 Days'),
   },
 ]
 
