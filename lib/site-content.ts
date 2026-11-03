@@ -199,13 +199,16 @@ export const DEFAULT_FEATURES: FeaturesContent = {
       linkText: 'See Results',
       iconColor: 'gold',
     },
+    // Was the Expert Blog until Nov 2026, when Ed stopped writing it and it
+    // left the nav. The Research Desk took the slot (and stopped being a
+    // seventh card); production's saved card 05 was rewritten to match.
     {
       number: '05',
-      title: 'Expert Blog',
-      text: 'In-depth articles explaining key systems, trend breakdowns, and educational content to sharpen your handicapping skills.',
-      href: '/blog',
-      linkText: 'Read Blog',
-      iconColor: 'cyan',
+      title: 'Research Desk',
+      text: 'Every NFL, college football, NBA and college basketball game on its own page, with the systems, trends and bets attached.',
+      href: '/desk/nfl',
+      linkText: 'Open the Desk',
+      iconColor: 'gold',
     },
     {
       number: '06',
@@ -218,17 +221,7 @@ export const DEFAULT_FEATURES: FeaturesContent = {
     },
     // Keep new cards at the END of this array — the home page merges DB
     // overrides onto defaults by index, so inserting mid-array would mis-apply
-    // saved edits. Production stores six cards, so this one always renders
-    // from here. It sold the Elite NFL Hub and Season Pass until the v3 ladder
-    // retired both.
-    {
-      number: '07',
-      title: 'Research Desk',
-      text: 'Every NFL, college football, NBA and college basketball game on its own page, with opening and current lines as they move.',
-      href: '/desk/nfl',
-      linkText: 'Open the Desk',
-      iconColor: 'gold',
-    },
+    // saved edits.
   ],
 }
 

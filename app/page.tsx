@@ -51,13 +51,23 @@ export default async function Home() {
   const rawFeatures = raw.features as any ?? {}
   const mergedFeatures = { ...SITE_CONTENT_DEFAULTS.features, ...rawFeatures }
   if (rawFeatures.cards && Array.isArray(rawFeatures.cards)) {
-    mergedFeatures.cards = SITE_CONTENT_DEFAULTS.features.cards.map((defaults, i) => ({
-      ...defaults,
-      ...(rawFeatures.cards[i] ?? {}),
-      href: defaults.href,
-      linkText: defaults.linkText,
-      isExternal: defaults.isExternal,
-    }))
+    mergedFeatures.cards = SITE_CONTENT_DEFAULTS.features.cards.map((defaults, i) => {
+      const saved = rawFeatures.cards[i] ?? {}
+      // A saved card that is still the retired Expert Blog (the slot became
+      // the Research Desk in Nov 2026) is ignored rather than rendered with
+      // the Desk's link under the blog's words. Saving the card in the admin
+      // editor replaces it and this stops mattering.
+      const override = saved.title === 'Expert Blog' ? {} : saved
+      return {
+        ...defaults,
+        ...override,
+        // "Â " is a mis-decoded non-breaking space in production's saved text.
+        text: String(override.text ?? defaults.text).replace(/Â? /g, ' ').trim(),
+        href: defaults.href,
+        linkText: defaults.linkText,
+        isExternal: defaults.isExternal,
+      }
+    })
   }
 
   const content: AllSiteContent = {
