@@ -8,6 +8,7 @@ import HomeFreePicks from '@/components/HomeFreePicks'
 import { BOOK_LABEL } from '@/lib/proof'
 import { minus } from '@/lib/home-board'
 import Features from '@/components/Features'
+import SportsBand from '@/components/SportsBand'
 import CTASection from '@/components/CTASection'
 import HomeEditor from '@/components/HomeEditor'
 import TodaysBrief from '@/components/TodaysBrief'
@@ -186,6 +187,7 @@ export default async function Home() {
           {heroNode}
           {briefNode}
           <Features        content={content.features} />
+          <SportsBand />
           <CTASection      content={content.cta_section} membership={membership} trial={cta.kind === 'signup' || cta.kind === 'trial'} />
           {/* Last on purpose: it is the fallback for whoever passed on the trial. */}
           {!user && <HomeFreePicks />}

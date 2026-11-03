@@ -3,6 +3,7 @@
 import { useState, type ReactNode } from 'react'
 import type { AllSiteContent } from '@/lib/site-content'
 import Features from './Features'
+import SportsBand from './SportsBand'
 import CTASection from './CTASection'
 import { IconPencil } from './Icons'
 
@@ -90,6 +91,7 @@ export default function HomeEditor({ content, brief, hero }: Props) {
       {hero}
       {brief}
       <Features        content={draft.features}          {...ep('features')} />
+      <SportsBand />
       <CTASection      content={draft.cta_section}       {...ep('cta_section')} />
 
       {/* ── Single global FAB ── */}
