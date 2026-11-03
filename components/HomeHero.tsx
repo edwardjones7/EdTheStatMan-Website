@@ -4,7 +4,10 @@ import { TRIAL_DAYS } from '@/lib/offer'
 import HomeTrialButton from './HomeTrialButton'
 
 /**
- * The homepage hero: the promise on the left, the actual board on the right.
+ * The homepage hero: the slogan centred on top, the actual board under it.
+ *
+ * The slogan and description are the admin-editable site_content.hero fields
+ * (title, titleAccent, description), the same copy the old photo hero showed.
  *
  * Server component. The board is lib/home-board.ts, already shaped into
  * display strings; nothing here computes a number.
@@ -94,17 +97,24 @@ function Board({ board }: { board: HomeBoard }) {
   )
 }
 
-export default function HomeHero({ board, cta }: { board: HomeBoard | null; cta: HeroCta }) {
+export default function HomeHero({
+  board, cta, title, accent, description,
+}: {
+  board: HomeBoard | null
+  cta: HeroCta
+  title: string
+  accent: string
+  description: string
+}) {
   return (
     <section className="home-hero">
       <div className="container home-hero__inner">
         <div className="home-hero__copy">
-          <h1 className="home-hero__title">Tonight&rsquo;s board, already researched.</h1>
-          <p className="home-hero__sub">
-            Every NFL, college football, NBA and college basketball game with its line,
-            the systems and trends that fit it, and the bets Ed is making. Every pick
-            graded in public.
-          </p>
+          <h1 className="home-hero__title">
+            {title}{' '}
+            <span className="home-hero__accent">{accent}</span>
+          </h1>
+          <p className="home-hero__sub">{description}</p>
           <div className="home-hero__actions">
             {cta.kind === 'desk' && (
               <Link href="/desk" className="home-btn home-btn--primary">Open tonight&rsquo;s board</Link>

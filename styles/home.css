@@ -58,26 +58,31 @@
 
 .home-hero__inner {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
+  align-items: center;
   gap: 56px;
-  align-items: flex-start;
 }
 
+/* Centred stack: slogan, one line of who it is for, the two buttons. */
 .home-hero__copy {
-  flex: 1 1 420px;
+  width: 100%;
+  max-width: 820px;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 24px;
-  padding-top: 12px;
+  align-items: center;
+  text-align: center;
+  gap: 22px;
 }
+
+.home-hero__accent { display: block; color: var(--brand); }
 
 .home-hero__title {
   margin: 0;
-  font-size: clamp(2.75rem, 6vw, 4.5rem);
+  font-size: clamp(3rem, 8vw, 6rem);
   font-weight: 800;
-  font-stretch: 70%;
-  font-variation-settings: 'wdth' 70;
+  font-stretch: 72%;
+  font-variation-settings: 'wdth' 72;
   line-height: 0.95;
   letter-spacing: -0.01em;
   color: var(--text-heading);
@@ -85,7 +90,7 @@
 
 .home-hero__sub {
   margin: 0;
-  max-width: 520px;
+  max-width: 600px;
   font-size: 1.18rem;
   line-height: 1.55;
   color: var(--text-primary);
@@ -94,7 +99,9 @@
 .home-hero__actions {
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
   gap: 12px;
+  margin-top: 6px;
 }
 
 .home-hero__note,
@@ -108,7 +115,8 @@
 /* ---------- Board panel ---------- */
 
 .home-board {
-  flex: 1 1 560px;
+  width: 100%;
+  max-width: 980px;
   min-width: 0;
   background: var(--bg-card);
   border: 1px solid var(--border-color);
@@ -418,3 +426,10 @@
   .home-record__inner { gap: 16px 28px; }
   .home .brief__card { padding: 22px 18px 16px; }
 }
+
+/* Centred to match the hero above it: the quotes side by side, then the
+   one-unit note and the link on their own line underneath. */
+.home .home-record__inner { justify-content: center; text-align: center; gap: 12px 56px; }
+.home .home-record__quote { align-items: center; }
+.home .home-record__note { flex: 0 0 100%; max-width: none; margin: 4px 0 0; }
+.home .home-record__link { flex: 0 0 100%; justify-content: center; min-height: 32px; }

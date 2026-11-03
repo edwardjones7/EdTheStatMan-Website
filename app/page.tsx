@@ -123,7 +123,13 @@ export default async function Home() {
   const briefNode = <TodaysBrief brief={brief} />
   const heroNode = (
     <>
-      <HomeHero board={board} cta={cta} />
+      <HomeHero
+        board={board}
+        cta={cta}
+        title={content.hero.title}
+        accent={content.hero.titleAccent}
+        description={content.hero.description}
+      />
       <HomeRecord proof={proof} />
     </>
   )
