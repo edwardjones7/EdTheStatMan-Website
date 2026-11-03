@@ -9,7 +9,6 @@ import { BOOK_LABEL } from '@/lib/proof'
 import { minus } from '@/lib/home-board'
 import Features from '@/components/Features'
 import CTASection from '@/components/CTASection'
-import SportsBand from '@/components/SportsBand'
 import HomeEditor from '@/components/HomeEditor'
 import TodaysBrief from '@/components/TodaysBrief'
 import { resolveAccess, ACCESS_SELECT } from '@/lib/access'
@@ -118,7 +117,9 @@ export default async function Home() {
     : hasDesk ? { kind: 'desk', trialEndsAt: trial.onTrial ? trial.endsAt : null }
     : trial.available ? { kind: 'trial' }
     : { kind: 'plans', expired: membership === 'expired' }
-  const briefNode = <TodaysBrief brief={brief} />
+  // Only for someone who can read the card. All padlocks tells a visitor nothing
+  // the hero's "4 plays" line has not already said.
+  const briefNode = brief.total > 0 && brief.lockedCount === 0 ? <TodaysBrief brief={brief} /> : null
 
   // The hook above the slogan: what is on the card right now.
   const card: HeroCard | null = brief.date && brief.total > 0
@@ -169,7 +170,6 @@ export default async function Home() {
         proof={heroProof}
       />
       <HomeBoardSection board={board} hasDesk={cta.kind === 'desk'} />
-      {!user && <HomeFreePicks />}
     </>
   )
 
@@ -186,8 +186,9 @@ export default async function Home() {
           {heroNode}
           {briefNode}
           <Features        content={content.features} />
-          <SportsBand />
           <CTASection      content={content.cta_section} membership={membership} trial={cta.kind === 'signup' || cta.kind === 'trial'} />
+          {/* Last on purpose: it is the fallback for whoever passed on the trial. */}
+          {!user && <HomeFreePicks />}
         </>
       )}
     </div>
