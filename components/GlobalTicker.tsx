@@ -7,7 +7,10 @@ import type { TickerContent } from '@/lib/site-content'
 import { IconPencil } from './Icons'
 
 interface Props {
+  /** What is saved: the editor works on this. */
   content: TickerContent
+  /** What visitors see (lib/ticker-live.ts). */
+  live: TickerContent
   isAdmin: boolean
 }
 
@@ -17,7 +20,7 @@ interface Props {
  * `ticker` site_content key and the page re-renders via router.refresh()
  * (no full reload, so scroll position and React state are preserved).
  */
-export default function GlobalTicker({ content, isAdmin }: Props) {
+export default function GlobalTicker({ content, live, isAdmin }: Props) {
   const router = useRouter()
   const [editMode, setEditMode] = useState(false)
   const [draft, setDraft] = useState<TickerContent>(content)
@@ -36,7 +39,7 @@ export default function GlobalTicker({ content, isAdmin }: Props) {
   }, [content, editMode])
 
   if (!isAdmin) {
-    return <LiveTicker content={content} />
+    return <LiveTicker content={live} />
   }
 
   function patch(updates: Partial<TickerContent>) {
@@ -91,7 +94,7 @@ export default function GlobalTicker({ content, isAdmin }: Props) {
 
   return (
     <>
-      <LiveTicker content={content} />
+      <LiveTicker content={live} />
       <button
         onClick={() => { setDraft(content); setDirty(false); setError(null); setEditMode(true) }}
         title="Edit ticker"

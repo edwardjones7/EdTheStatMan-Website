@@ -57,25 +57,21 @@ export default async function Home() {
   // Merge DB overrides with defaults; for features cards, always use correct hrefs/linkTexts from defaults
   const rawFeatures = raw.features as any ?? {}
   const mergedFeatures = { ...SITE_CONTENT_DEFAULTS.features, ...rawFeatures }
-  if (rawFeatures.cards && Array.isArray(rawFeatures.cards)) {
-    mergedFeatures.cards = SITE_CONTENT_DEFAULTS.features.cards.map((defaults, i) => {
-      const saved = rawFeatures.cards[i] ?? {}
-      // A saved card that is still the retired Expert Blog (the slot became
-      // the Research Desk in Nov 2026) is ignored rather than rendered with
-      // the Desk's link under the blog's words. Saving the card in the admin
-      // editor replaces it and this stops mattering.
-      const override = saved.title === 'Expert Blog' ? {} : saved
-      return {
-        ...defaults,
-        ...override,
-        // "Â " is a mis-decoded non-breaking space in production's saved text.
-        text: String(override.text ?? defaults.text).replace(/Â? /g, ' ').trim(),
-        href: defaults.href,
-        linkText: defaults.linkText,
-        isExternal: defaults.isExternal,
-      }
-    })
-  }
+  // Saved cards attach by id. The six cards saved before Nov 2026 have none, so
+  // they fall away rather than putting Model Picks' words on the Desk's link.
+  const savedCards: any[] = Array.isArray(rawFeatures.cards) ? rawFeatures.cards : []
+  mergedFeatures.cards = SITE_CONTENT_DEFAULTS.features.cards.map(defaults => {
+    const override = savedCards.find(c => c?.id === defaults.id) ?? {}
+    return {
+      ...defaults,
+      ...override,
+      // "Â " is a mis-decoded non-breaking space in production's saved text.
+      text: String(override.text ?? defaults.text).replace(/Â? /g, ' ').trim(),
+      href: defaults.href,
+      linkText: defaults.linkText,
+      isExternal: defaults.isExternal,
+    }
+  })
 
   const content: AllSiteContent = {
     hero:             { ...SITE_CONTENT_DEFAULTS.hero,             ...(raw.hero             as object ?? {}) },
@@ -191,7 +187,7 @@ export default async function Home() {
           {briefNode}
           <Features        content={content.features} />
           <SportsBand />
-          <CTASection      content={content.cta_section} membership={membership} />
+          <CTASection      content={content.cta_section} membership={membership} trial={cta.kind === 'signup' || cta.kind === 'trial'} />
         </>
       )}
     </div>

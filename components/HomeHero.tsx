@@ -90,7 +90,7 @@ function Board({ board, hasDesk }: { board: HomeBoard; hasDesk: boolean }) {
           {plural(board.games, 'game', 'games')}
           {showResearch
             ? `, ${board.withResearch} with systems and trends attached`
-            : '. Systems and trends go up before kickoff.'}
+            : '. Systems and trends go up before game time.'}
         </span>
       </header>
       <div className="home-board__scroll" role="region" aria-label={`${board.title} lines`} tabIndex={0}>
@@ -107,6 +107,7 @@ function Board({ board, hasDesk }: { board: HomeBoard; hasDesk: boolean }) {
             {board.rows.map(r => (
               <tr key={r.id}>
                 <td>
+                  {r.sportTag && <span className="home-board__sport">{r.sportTag}</span>}
                   <Link href={r.href} className="home-board__game">{r.matchup}</Link>
                   <span className="home-board__when">{r.when}</span>
                 </td>
@@ -138,10 +139,10 @@ function Board({ board, hasDesk }: { board: HomeBoard; hasDesk: boolean }) {
       </div>
       <footer className="home-board__foot">
         <Link href={board.href} className="home-board__all">
-          The full {board.sportLabel} board
+          {board.allLabel}
         </Link>
         <span className="home-board__others">
-          College football, NBA and college basketball are on the Desk too.
+          {board.others}
         </span>
       </footer>
     </section>
