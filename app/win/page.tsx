@@ -171,12 +171,6 @@ export default async function Pricing({
         </div>
       </header>
 
-      <section className="win-proof" aria-label="The record">
-        <div className="container">
-          <ProofStrip proof={proof} />
-        </div>
-      </section>
-
       <section className="section win-section" id="plans">
         <div className="container">
 
@@ -225,6 +219,14 @@ export default async function Pricing({
             </p>
           </div>
 
+        </div>
+      </section>
+
+      {/* The record, under the plans rather than above them (Eddie, Nov 2026):
+          the page opens on what is for sale, then shows the proof. */}
+      <section className="win-proof" aria-label="The record">
+        <div className="container">
+          <ProofStrip proof={proof} />
         </div>
       </section>
 
