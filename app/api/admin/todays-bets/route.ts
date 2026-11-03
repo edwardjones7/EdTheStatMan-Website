@@ -7,6 +7,7 @@ import { notifyNewPick } from '@/lib/notify'
 import { hasPickEngineColumns } from '@/lib/picks/columns'
 import { engineColumnsFromBody } from '@/lib/picks/admin-columns'
 import { pickSlug } from '@/lib/picks/slug'
+import { gameIdPatch } from '@/lib/picks/game-match'
 
 async function assertAdmin() {
   const supabase = await createClient()
@@ -66,8 +67,12 @@ export async function POST(req: Request) {
       }
     : {}
 
+  // Which Desk game this is on: auto-matched, or the admin's choice.
+  const gameCol = await gameIdPatch(admin, body, { sport: body.sport || null, date: body.date || null, bet: body.bet || null, opponent: body.opponent || null })
+
   const { data, error } = await admin.from('todays_bets').insert({
     ...engineCols,
+    ...gameCol,
     date:            body.date            || null,
     sport:           body.sport           || null,
     risk:            body.risk            || null,

@@ -15,9 +15,8 @@ const PAID_TIERS: Tier[] = TIERS.filter(t => t !== 'retail')
 const TIER_ROW_COLOR: Record<Tier, string> = {
   retail: 'var(--text-muted)',
   portfolio: 'var(--accent-teal)',
-  desk: 'var(--accent-teal)',
-  private: 'var(--accent-gold)',
-  institutional: 'var(--accent-gold)',
+  private: 'var(--accent-teal)',
+  desk: 'var(--accent-gold)',
 }
 
 /**
@@ -33,7 +32,7 @@ const TIER_ROW_COLOR: Record<Tier, string> = {
  */
 function liveTier(u: User): Tier {
   // Deliberately NOT special-cased for admins, even though resolveAccess()
-  // hands them institutional on the site. Admin is an overlay on this screen,
+  // hands them the Research Desk on the site. Admin is an overlay on this screen,
   // not a rung: it has its own row, and the two are counted separately so the
   // breakdown still sums to the total. Returning 'institutional' here put both
   // admins into the Institutional row AND the Admins row, and inflated Paid

@@ -4,7 +4,7 @@ import { selectAll } from '@/lib/supabase/select-all'
 import { toPublicPick } from './public'
 
 /**
- * Sitemap entries for /picks and every pick page worth indexing.
+ * Sitemap entries for every pick page worth indexing.
  *
  * Wired into app/sitemap.ts by spreading `...(await pickSitemapEntries(BASE))`.
  *
@@ -16,9 +16,7 @@ import { toPublicPick } from './public'
  * Never throws: a sitemap that fails takes every other URL down with it.
  */
 export async function pickSitemapEntries(base = 'https://edthestatman.com'): Promise<MetadataRoute.Sitemap> {
-  const entries: MetadataRoute.Sitemap = [
-    { url: `${base}/picks`, lastModified: new Date(), changeFrequency: 'hourly', priority: 0.9 },
-  ]
+  const entries: MetadataRoute.Sitemap = []
   try {
     const admin = createAdminClient() as any
     const { data } = await selectAll(() => admin.from('todays_bets').select('*').order('id'))

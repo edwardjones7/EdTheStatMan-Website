@@ -110,8 +110,8 @@ export default async function VaultSystems() {
               <span className="section-label">Membership</span>
               <h2 className="section-title">Open the <span className="text-gradient">Vault</span></h2>
               <p className="section-subtitle" style={{ margin: '0 auto' }}>
-                Private Intelligence unlocks the complete systems and trends libraries.
-                Institutional adds the highest-conviction library on top.
+                The Handicapping Vault unlocks the complete systems and trends libraries.
+                The Research Desk includes the whole Vault, plus every game and every pick.
               </p>
             </div>
             <div style={{ marginTop: '60px' }}>

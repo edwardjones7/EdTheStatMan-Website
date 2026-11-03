@@ -75,18 +75,20 @@ function url(path: string): string {
 }
 
 /**
- * Where this rung's product lives. Highest first, because the first link is
- * what a new member most likely paid for.
+ * Where this product lives. The Research Desk first, because it holds the
+ * other two; the Vault and the Portfolio are separate products.
  */
 function productLinks(tier: Tier): Link[] {
   const links: Link[] = []
-  if (tier === 'private' || tier === 'institutional') {
-    links.push({ label: 'The Vault: every system and trend', href: url('/vault') })
-  }
-  if (tier === 'desk' || tier === 'private' || tier === 'institutional') {
+  if (tier === 'desk') {
     links.push({ label: 'The Research Desk: this week in the NFL', href: url('/desk/nfl') })
   }
-  links.push({ label: 'The Portfolio: today\'s picks and the graded record', href: url('/portfolio') })
+  if (tier === 'desk' || tier === 'private') {
+    links.push({ label: 'The Vault: every system and trend', href: url('/vault') })
+  }
+  if (tier === 'desk' || tier === 'portfolio') {
+    links.push({ label: 'The Portfolio: today\'s picks and the graded record', href: url('/portfolio') })
+  }
   return links
 }
 
@@ -96,7 +98,7 @@ function productLinks(tier: Tier): Link[] {
  * member clicked, which is too much for a link in an email.
  */
 function renewHref(tier: Tier): string {
-  return url(`/win?plan=${encodeURIComponent(tier)}&period=season`)
+  return url(`/win?plan=${encodeURIComponent(tier)}&period=year`)
 }
 
 // ------------------------------------------------------------------ templates
@@ -124,7 +126,9 @@ export function welcomeMessage(input: {
     paragraphs: [
       `Thanks for your purchase${paid}. Your access is on now.`,
       term,
-      'New picks are announced the moment they are posted, by email, browser push and Discord. Email is on by default. Push and the Discord Members role are one click each on your account page.',
+      tier === 'private'
+        ? 'Everything is on the Vault pages now: filter by sport, team and situation, and sort across the whole library.'
+        : 'New picks are announced the moment they are posted, by email, browser push and Discord. Email is on by default. Push and the Discord Members role are one click each on your account page.',
     ],
     links: [
       ...productLinks(tier),
@@ -169,10 +173,27 @@ export function passExpiringMessage(input: {
    * a 30-day fallback -- so the note says so instead of pitching one.
    */
   seasonOver?: boolean
+  /** The access ending is the free Research Desk trial, not a purchase. */
+  trial?: boolean
 }): LifecycleMessage {
   const tier = normalizeTier(input.tier)
   const name = TIER_LABEL[tier]
   const when = input.daysLeft === 1 ? 'tomorrow' : 'in a week'
+  if (input.trial) {
+    return {
+      subject: `Your free ${name} trial ends ${when}`,
+      preview: `Your trial runs through ${formatDay(input.expiresAt)}. Nothing will be charged.`,
+      heading: `Your free trial ends ${when}`,
+      paragraphs: [
+        `Your free ${name} trial runs through ${formatDay(input.expiresAt)}. We never took a card, so nothing will be charged. It simply stops.`,
+        'To keep going, the Research Desk is one payment for 30 or 365 days. If you only want part of it, the Handicapping Vault and the EdTheStatBot Portfolio are sold on their own. Nothing renews.',
+      ],
+      links: productLinks(tier),
+      cta: { label: 'See the plans', href: url('/win?plan=desk&period=month') },
+      badge: 'FREE TRIAL',
+      tone: 'paid',
+    }
+  }
   const ends = `Your ${name} pass runs through ${formatDay(input.expiresAt)}. It was a one-time payment, so it simply stops then. Nothing will be charged.`
   if (input.seasonOver) {
     return {
@@ -192,12 +213,12 @@ export function passExpiringMessage(input: {
     heading: `Your access ends ${when}`,
     paragraphs: [
       ends,
-      // Season grants take max(current expiry, season end), so this is true:
-      // buying early never shortens what is left.
-      'If you want to keep going, the season pass runs through the Super Bowl. Buying it before then extends your access to that date, so you do not lose the days you have left.',
+      // Day grants stack on a live pass (passExpiryFrom in the webhook), so
+      // this is true: buying early never shortens what is left.
+      'If you want to keep going, buy another 30 or 365 days. Buying before then adds the new days on top, so you do not lose the days you have left. Nothing renews.',
     ],
     links: productLinks(tier),
-    cta: { label: 'See the season pass', href: renewHref(tier) },
+    cta: { label: 'See the plans', href: renewHref(tier) },
     badge: name.toUpperCase(),
     tone: 'paid',
   }
@@ -215,11 +236,11 @@ export function passExpiredMessage(input: {
     preview: 'Your account and history are still here.',
     heading: 'Your access has ended',
     paragraphs: [
-      `Your ${name} pass ended on ${formatDay(input.expiredAt)}. Your account is still here, along with the free picks, the free systems and trends, and the record on everything else.`,
-      'If you want back in, the season pass runs through the Super Bowl and is a single payment. This is the only note we will send about it.',
+      `Your ${name} access ended on ${formatDay(input.expiredAt)}. Your account is still here, along with the free picks, the free systems and trends, and the record on everything else.`,
+      'If you want back in, every plan is a single payment for 30 or 365 days, and nothing renews. This is the only note we will send about it.',
     ],
     links: [{ label: 'The graded record', href: url('/portfolio/performance') }],
-    cta: { label: 'See the season pass', href: renewHref(tier) },
+    cta: { label: 'See the plans', href: renewHref(tier) },
     badge: 'MEMBERSHIP',
     tone: 'paid',
     unsubscribeToken: input.unsubscribeToken ?? null,

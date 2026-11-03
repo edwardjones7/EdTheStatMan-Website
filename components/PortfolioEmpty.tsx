@@ -24,7 +24,6 @@ export default function PortfolioEmpty({ proof, isMember }: { proof: ProofData; 
           <Link href="/win" className="btn btn--primary">
             See Plans — from {OFFER_ENTRY_PRICE} <IconArrowRight size={16} />
           </Link>
-          <Link href="/picks" className="btn btn--secondary">Get Free Picks</Link>
         </div>
       )}
     </div>

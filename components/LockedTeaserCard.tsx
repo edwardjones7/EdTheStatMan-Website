@@ -42,18 +42,18 @@ function pctDisplay(pct: number | null) {
 export default function LockedTeaserCard({ teaser, sportLabel, sportClass, variant = 'members', requiredTier, freeWithAccount = false, signupNext = '/' }: Props) {
   const winning = teaser.w > teaser.l
   const elite = variant === 'elite' && !freeWithAccount
-  const tier: Tier | undefined = freeWithAccount ? 'retail' : requiredTier ?? (elite ? 'institutional' : undefined)
+  const tier: Tier | undefined = freeWithAccount ? 'retail' : requiredTier ?? (elite ? 'private' : undefined)
   const href = freeWithAccount ? `/signup?next=${encodeURIComponent(signupNext)}` : unlockHref(tier)
   const hint = freeWithAccount
     ? 'Free with an account — sign up to see it'
-    : elite ? 'Institutional only — upgrade to unlock' : 'Unlock to see the system'
+    : elite ? 'Highest-conviction — unlock with the Vault' : 'Unlock to see the system'
 
   return (
     <Link
       href={href}
       onClick={freeWithAccount ? () => trackEvent('signup_prompt_click', { context: 'vault_free_row', variant: 'lock' }) : undefined}
       className={`sys-row-card sys-row-card--${sportClass} sys-row-card--teaser${elite ? ' sys-row-card--elite-teaser' : ''}${freeWithAccount ? ' sys-row-card--free-teaser' : ''}`}
-      aria-label={`Locked ${elite ? 'Institutional ' : freeWithAccount ? 'free ' : ''}system — ${sportLabel}, record ${teaser.w}-${teaser.l}-${teaser.t}. ${freeWithAccount ? 'Create a free account to see it.' : 'Unlock to see the system.'}`}
+      aria-label={`Locked ${elite ? 'highest-conviction ' : freeWithAccount ? 'free ' : ''}system — ${sportLabel}, record ${teaser.w}-${teaser.l}-${teaser.t}. ${freeWithAccount ? 'Create a free account to see it.' : 'Unlock to see the system.'}`}
     >
       {/* Once per page per gate kind, however many cards render (PaywallView). */}
       <PaywallView gate={freeWithAccount ? 'vault_free_row' : 'vault_row'} tier={tier ?? null} />

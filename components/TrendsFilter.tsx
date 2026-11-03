@@ -403,7 +403,8 @@ export default function TrendsFilter({ trends, lockedCounts = {}, lockedTeasers 
   // see their rows directly; non-members only ever have the locked count.
   const activeTrends = allVisible.filter(r => r.is_active)
   const freeCount = activeTrends.filter(r => normalizeTier(r.min_tier) === 'retail').length + freeLockedCount
-  const eliteVisibleCount = activeTrends.filter(r => normalizeTier(r.min_tier) === 'institutional').length
+  // Institutional folded into the Vault (Nov 2026): no row is held above it.
+  const eliteVisibleCount = 0
   const eliteCount = eliteVisibleCount + eliteLockedCount
   const memberCount = activeTrends.length - (freeCount - freeLockedCount) - eliteVisibleCount + lockedCount
   const totalCount = freeCount + memberCount + eliteCount
@@ -422,7 +423,7 @@ export default function TrendsFilter({ trends, lockedCounts = {}, lockedTeasers 
         </div>
         {eliteCount > 0 && (
           <div className="sys-stats-chip sys-stats-chip--elite">
-            <span className="sys-stats-chip__label">{TIER_SHORT_LABEL.institutional} Trends</span>
+            <span className="sys-stats-chip__label">Highest-conviction Trends</span>
             <span className="sys-stats-chip__value">{eliteCount}</span>
           </div>
         )}
@@ -886,7 +887,7 @@ export default function TrendsFilter({ trends, lockedCounts = {}, lockedTeasers 
       {!isAdmin && eliteLockedForTab.length > 0 && (
         <>
           <div className="sys-locked-heading sys-locked-heading--elite">
-            <IconLock size={13} /> Institutional Intelligence — records shown, rows hidden
+            <IconLock size={13} /> Highest-conviction library — records shown, rows hidden
           </div>
           <div className="sys-card-grid">
             {eliteLockedForTab.map(t => (
@@ -896,7 +897,7 @@ export default function TrendsFilter({ trends, lockedCounts = {}, lockedTeasers 
                 sportLabel={SPORT_STYLE[t.sport]?.label ?? t.sport.toUpperCase()}
                 sportClass={t.sport}
                 variant="elite"
-                requiredTier={teaserTiers[t.id] ?? 'institutional'}
+                requiredTier={teaserTiers[t.id] ?? 'private'}
               />
             ))}
           </div>
@@ -911,10 +912,10 @@ export default function TrendsFilter({ trends, lockedCounts = {}, lockedTeasers 
             {activeTab !== 'all' && ` in ${activeTabLabel}`}
           </div>
           <p className="content-gate-card__desc">
-            Our highest-conviction, curated edges — Institutional members only.
+            Our highest-conviction, curated edges — Vault and Research Desk members.
           </p>
           <div className="content-gate-card__actions">
-            <Link href={unlockHref('institutional')} className="btn btn--primary">Go Institutional &rarr;</Link>
+            <Link href={unlockHref('private')} className="btn btn--primary">Open the Vault &rarr;</Link>
           </div>
         </div>
       )}
@@ -922,7 +923,7 @@ export default function TrendsFilter({ trends, lockedCounts = {}, lockedTeasers 
       {!isAdmin && lockedForTab.length > 0 && (
         <>
           <div className="sys-locked-heading">
-            <IconLock size={13} /> Private Intelligence — records shown, trends hidden
+            <IconLock size={13} /> Handicapping Vault — records shown, trends hidden
           </div>
           <div className="sys-card-grid">
             {lockedForTab.map(t => (
@@ -946,7 +947,7 @@ export default function TrendsFilter({ trends, lockedCounts = {}, lockedTeasers 
             {activeTab !== 'all' && ` in ${activeTabLabel}`}
           </div>
           <p className="content-gate-card__desc">
-            Full records, win percentages, and season data — Private Intelligence and above.
+            Full records, win percentages, and season data — Vault and Research Desk members.
           </p>
           <div className="content-gate-card__actions">
             <Link href={unlockHref('private')} className="btn btn--primary">Open the Vault &rarr;</Link>

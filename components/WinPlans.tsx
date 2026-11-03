@@ -4,108 +4,88 @@ import { useEffect, useState, type CSSProperties } from 'react'
 import Link from 'next/link'
 import '@/styles/proof-win.css'
 import CheckoutButton from './CheckoutButton'
-import { cardState, holdsSeason } from './PricingCards'
-import { OFFER_PLANS, OFFER_FREE_FEATURES } from '@/lib/offer'
+import TrialButton from './TrialButton'
+import { cardState } from './PricingCards'
+import { IconCheckCircle } from './Icons'
+import {
+  OFFER_PLANS, OFFER_FREE_FEATURES, OFFER_COMPARE_ROWS, TRIAL_DAYS, annualSavingsPct,
+} from '@/lib/offer'
 import type { OfferPlan, OfferTierKey, BillingPeriod } from '@/lib/offer'
 import type { Membership, Tier } from '@/lib/access'
 import { trackEvent } from '@/lib/track-client'
 
 /**
- * The plans on /win, and only there. PricingCards still renders the full
- * ladder on /desk/[sport] and the Vault pages; this is the same ladder at the
- * same prices, shown as three headline cards plus a table that holds all five
- * rungs. Five cards side by side made the buyer do the comparison themselves.
+ * The plans on /win. Three products in the order Ed sells them -- Research
+ * Desk, Vault, Portfolio -- on a 30-day / 365-day toggle, every one a one-time
+ * payment. PricingCards renders the same cards on the Desk and Vault pages;
+ * the purchase rules are its cardState(), imported, so the two surfaces cannot
+ * disagree about what someone may buy.
  *
- * Purchase rules (what a member is offered, the season upgrade from monthly)
- * are PricingCards' cardState(), imported, so the two surfaces cannot disagree
- * about what someone may buy.
+ * The comparison table is explicit per product (OFFER_COMPARE_ROWS) rather
+ * than derived "each rung includes the one below": the Vault does not include
+ * the picks, so the products are not a ladder.
  */
 
-/** The three rungs that get a card. Institutional lives in the table. */
-const HEADLINE_KEYS: OfferTierKey[] = ['portfolio', 'desk', 'private']
-
-/**
- * What each card IS, in two or three words. "Everything" was the first idea
- * for Private and is false: Institutional sits above it.
- */
+/** What each card IS, in two or three words. */
 const HEADLINE_LABEL: Record<OfferTierKey, string> = {
+  desk: 'Everything',
+  private: 'Systems + Trends',
   portfolio: 'Picks',
-  desk: 'Picks + Research',
-  private: 'Picks + Research + Vault',
-  institutional: 'The strongest signals',
 }
 
-const COMING = /^Coming this season\s*[—–-]\s*/
-
 type Col = 'retail' | OfferTierKey
-const COLS: Col[] = ['retail', ...OFFER_PLANS.map(p => p.key)]
 
 interface Row {
   text: string
-  soon: boolean
   has: Record<Col, boolean>
 }
 
-/**
- * Comparison rows, derived from lib/offer.ts so the table can never claim more
- * than the cards do. A rung's own bullets are true for it and every rung above
- * ("Everything in ..." bullets are the table's columns, so they are dropped).
- * The free rung's included bullets are true for every column; its excluded
- * ones are the paid rows restated, so they are dropped too.
- */
 function buildRows(): Row[] {
-  const rows: Row[] = OFFER_FREE_FEATURES.filter(f => f.included).map(f => ({
+  const cols: Col[] = ['retail', ...OFFER_PLANS.map(p => p.key)]
+  const free: Row[] = OFFER_FREE_FEATURES.filter(f => f.included).map(f => ({
     text: f.text,
-    soon: false,
-    has: Object.fromEntries(COLS.map(c => [c, true])) as Record<Col, boolean>,
+    has: Object.fromEntries(cols.map(c => [c, true])) as Record<Col, boolean>,
   }))
-  OFFER_PLANS.forEach((plan, i) => {
-    for (const f of plan.features) {
-      if (/^Everything in /.test(f)) continue
-      const has = Object.fromEntries(COLS.map(c => [c, false])) as Record<Col, boolean>
-      OFFER_PLANS.slice(i).forEach(p => { has[p.key] = true })
-      rows.push({ text: f.replace(COMING, ''), soon: COMING.test(f), has })
-    }
-  })
-  return rows
+  const paid: Row[] = OFFER_COMPARE_ROWS.map(r => ({
+    text: r.text,
+    has: Object.fromEntries(cols.map(c => [c, c !== 'retail' && r.has.includes(c)])) as Record<Col, boolean>,
+  }))
+  return [...paid, ...free]
 }
 
 const ROWS = buildRows()
+const COLS: Col[] = ['retail', ...OFFER_PLANS.map(p => p.key)]
 
 interface Props {
   membership: Membership
   currentTier: Tier | null
-  expiresAt: string | null
   /** From ?period= (another surface links here with a period chosen). */
   initialPeriod: BillingPeriod
   /** From ?plan=: highlighted, and scrolled to on arrival. */
   selectedPlan: OfferTierKey | null
+  /** Logged in, never trialled, and holding nothing paid. */
+  trialAvailable: boolean
+  /** Their Desk access right now IS the free trial. */
+  onTrial: boolean
 }
 
-export default function WinPlans({ membership, currentTier, expiresAt, initialPeriod, selectedPlan }: Props) {
+export default function WinPlans({ membership, currentTier, initialPeriod, selectedPlan, trialAvailable, onTrial }: Props) {
   const [period, setPeriod] = useState<BillingPeriod>(initialPeriod)
-  const heldSeason = holdsSeason(expiresAt)
 
   const isPaid = membership === 'active' || membership === 'admin'
   const isAdmin = membership === 'admin'
   const isLoggedIn = membership !== 'logged-out'
   const isExpired = membership === 'expired'
 
-  const state = (plan: OfferPlan) => cardState(currentTier, isPaid, plan, period, heldSeason)
-  const offered = OFFER_PLANS.filter(p => state(p) !== 'hide')
-  const nothingToSell = isAdmin || offered.every(p => state(p) === 'current')
-
-  // Cards: the three headline rungs this visitor can still buy, plus the plan
-  // a link asked for if it is not one of them. A member above the headline
-  // rungs falls back to whatever is left so the row is never empty.
-  let cards = offered.filter(p => HEADLINE_KEYS.includes(p.key) || p.key === selectedPlan)
-  if (cards.length === 0) cards = offered
+  const state = (plan: OfferPlan) => cardState(currentTier, isPaid, plan, period, onTrial)
+  const cards = OFFER_PLANS.filter(p => state(p) !== 'hide')
+  const nothingToSell = isAdmin || cards.every(p => state(p) === 'current')
   const featuredKey: OfferTierKey = selectedPlan && cards.some(c => c.key === selectedPlan)
     ? selectedPlan
     : 'desk'
 
   const cols = cards.length
-  const colsMd = cols <= 2 ? cols : cols % 2 === 0 ? 2 : 1
+  const colsMd = cols <= 2 ? cols : 1
 
   useEffect(() => {
     if (!selectedPlan) return
@@ -122,7 +102,7 @@ export default function WinPlans({ membership, currentTier, expiresAt, initialPe
   }
 
   function cta(plan: OfferPlan, featured: boolean, small = false) {
-    const sku = period === 'month' ? plan.month : plan.season
+    const sku = period === 'month' ? plan.month : plan.year
     const s = state(plan)
     if (s === 'current') {
       return (
@@ -131,13 +111,13 @@ export default function WinPlans({ membership, currentTier, expiresAt, initialPe
         </button>
       )
     }
-    if (s === 'hide') return <span className="win-compare__incl">Included</span>
+    if (s === 'hide') return <span className="win-compare__incl">{plan.key === 'desk' ? 'Yours' : '—'}</span>
     return (
       <CheckoutButton
         priceId={sku.priceId}
         tierKey={plan.key}
         period={sku.period}
-        label={isExpired ? `Renew — ${sku.price}` : sku.ctaLabel}
+        label={s === 'extend' ? 'Add 365 Days' : isExpired ? `Renew — ${sku.price}` : sku.ctaLabel}
         variant={featured ? 'primary' : 'outline'}
         className={small ? 'btn--sm' : undefined}
       />
@@ -146,35 +126,35 @@ export default function WinPlans({ membership, currentTier, expiresAt, initialPe
 
   return (
     <div className="win-plans">
-      <div className="billing-toggle" role="group" aria-label="Billing period">
+      <div className="billing-toggle" role="group" aria-label="Access period">
         <button
           type="button"
           className={`billing-toggle__opt${period === 'month' ? ' is-active' : ''}`}
           onClick={() => choose('month')}
           aria-pressed={period === 'month'}
         >
-          Monthly
+          30-Day Access
         </button>
         <button
           type="button"
-          className={`billing-toggle__opt${period === 'season' ? ' is-active' : ''}`}
-          onClick={() => choose('season')}
-          aria-pressed={period === 'season'}
+          className={`billing-toggle__opt${period === 'year' ? ' is-active' : ''}`}
+          onClick={() => choose('year')}
+          aria-pressed={period === 'year'}
         >
-          Season Pass
+          365-Day Access
           <span className="billing-toggle__hint">best value</span>
         </button>
       </div>
 
       {nothingToSell ? (
         <div className="pricing-topped-out">
-          <span className="pricing-topped-out__badge">{isAdmin ? 'Admin' : 'Institutional Intelligence'}</span>
+          <span className="pricing-topped-out__badge">{isAdmin ? 'Admin' : 'The Research Desk'}</span>
           <p>
             {isAdmin
-              ? 'Admin accounts hold every rung of the ladder. Nothing to buy here.'
-              : 'You hold the top rung. Every system, every trend, the highest-conviction library, and the whole schedule.'}
+              ? 'Admin accounts hold everything. Nothing to buy here.'
+              : 'You hold the Research Desk: every game, the whole Vault and every pick.'}
           </p>
-          <Link href="/vault" className="btn btn--outline">Open the Vault</Link>
+          <Link href="/desk/nfl" className="btn btn--outline">Open the Desk</Link>
         </div>
       ) : (
         <div
@@ -182,7 +162,7 @@ export default function WinPlans({ membership, currentTier, expiresAt, initialPe
           style={{ '--pricing-cols': cols, '--pricing-cols-md': colsMd } as CSSProperties}
         >
           {cards.map(plan => {
-            const sku = period === 'month' ? plan.month : plan.season
+            const sku = period === 'month' ? plan.month : plan.year
             const featured = plan.key === featuredKey
             return (
               <div
@@ -194,36 +174,47 @@ export default function WinPlans({ membership, currentTier, expiresAt, initialPe
                 className={[
                   'pricing-card win-card',
                   featured ? 'pricing-card--featured' : '',
-                  plan.key === 'private' || plan.key === 'institutional' ? 'pricing-card--vault' : '',
+                  plan.key === 'private' ? 'pricing-card--vault' : '',
                 ].filter(Boolean).join(' ')}
               >
                 <span className="win-card__label">{HEADLINE_LABEL[plan.key]}</span>
                 <div className="pricing-card__name">{plan.name}</div>
-                <div className="pricing-card__price">
-                  {sku.price}
-                  {sku.mode === 'subscription' && <span className="pricing-card__per">/mo</span>}
-                </div>
+                <div className="pricing-card__price">{sku.price}</div>
+                <div className="pricing-card__term">{sku.note}</div>
+                {period === 'year' && (
+                  <div className="pricing-card__save">Save {annualSavingsPct(plan)}% versus 30-day pricing</div>
+                )}
                 <div className="pricing-card__desc">{plan.tagline}</div>
-                <ul className="pricing-card__features">
+                <ul className="pricing-card__features pricing-card__features--icons">
                   {plan.features.map(f => (
                     <li key={f} className="pricing-card__feature">
-                      <span className="check">{'✓'}</span> {f}
+                      <IconCheckCircle size={15} /> {f}
                     </li>
                   ))}
                 </ul>
                 {cta(plan, featured)}
-                <div className="pricing-card__note">{sku.note}</div>
+                {plan.key === 'desk' && !isPaid && (
+                  <TrialButton available={trialAvailable} loggedIn={isLoggedIn} />
+                )}
+                {plan.key === 'desk' && onTrial && (
+                  <div className="pricing-card__trial-note">You are on the free trial. Buying ends it and starts your paid days.</div>
+                )}
               </div>
             )
           })}
         </div>
       )}
 
+      <p className="pricing-terms">
+        No automatic renewal. No recurring charges. Access expires at the end of the purchased period.
+        {' '}The {TRIAL_DAYS}-day Research Desk trial needs no card and ends on its own.
+      </p>
+
       <section className="win-compare" aria-labelledby="compare-heading">
-        <h2 id="compare-heading" className="win-compare__title">Compare all plans</h2>
+        <h2 id="compare-heading" className="win-compare__title">Compare the plans</h2>
         <p className="win-compare__sub">
-          Every rung includes everything below it.{' '}
-          {period === 'season' ? 'Season prices shown, one-time.' : 'Monthly prices shown.'}
+          The Research Desk holds everything. The Vault and the Portfolio are separate.{' '}
+          {period === 'year' ? '365-day prices shown.' : '30-day prices shown.'}
         </p>
         {/* Scrolls inside its own box at phone width; the page itself never
             scrolls sideways. The feature column stays pinned. */}
@@ -233,11 +224,11 @@ export default function WinPlans({ membership, currentTier, expiresAt, initialPe
               <tr>
                 <th scope="col" className="win-compare__feat">Feature</th>
                 <th scope="col" id="compare-retail">
-                  <span className="win-compare__name">Public</span>
-                  <span className="win-compare__price">Free</span>
+                  <span className="win-compare__name">Free</span>
+                  <span className="win-compare__price">$0</span>
                 </th>
                 {OFFER_PLANS.map(plan => {
-                  const sku = period === 'month' ? plan.month : plan.season
+                  const sku = period === 'month' ? plan.month : plan.year
                   return (
                     <th
                       key={plan.key}
@@ -246,9 +237,7 @@ export default function WinPlans({ membership, currentTier, expiresAt, initialPe
                       className={plan.key === featuredKey ? 'is-featured' : undefined}
                     >
                       <span className="win-compare__name">{plan.shortName}</span>
-                      <span className="win-compare__price">
-                        {sku.price}{sku.mode === 'subscription' ? '/mo' : ''}
-                      </span>
+                      <span className="win-compare__price">{sku.price}</span>
                     </th>
                   )
                 })}
@@ -257,14 +246,11 @@ export default function WinPlans({ membership, currentTier, expiresAt, initialPe
             <tbody>
               {ROWS.map(row => (
                 <tr key={row.text}>
-                  <th scope="row" className="win-compare__feat">
-                    {row.text}
-                    {row.soon && <span className="win-compare__soon">Coming this season</span>}
-                  </th>
+                  <th scope="row" className="win-compare__feat">{row.text}</th>
                   {COLS.map(c => (
                     <td key={c} className={c === featuredKey ? 'is-featured' : undefined}>
                       {row.has[c]
-                        ? <span className="check" aria-label={row.soon ? 'Coming this season' : 'Included'}>{row.soon ? '…' : '✓'}</span>
+                        ? <span className="check" aria-label="Included">{'✓'}</span>
                         : <span className="win-compare__no" aria-label="Not included">&ndash;</span>}
                     </td>
                   ))}
@@ -274,7 +260,7 @@ export default function WinPlans({ membership, currentTier, expiresAt, initialPe
             <tfoot>
               <tr>
                 <th scope="row" className="win-compare__feat">
-                  {period === 'season' ? 'Season pass' : 'Monthly'}
+                  {period === 'year' ? '365 days' : '30 days'}
                 </th>
                 <td>
                   {isPaid

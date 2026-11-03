@@ -3,6 +3,7 @@ import { assertAdmin } from '@/lib/picks/admin-auth'
 import { cleanPicks, draftToRows, pickAccessColumns, type DraftParsed } from '@/lib/picks/drafts'
 import { hasPickEngineColumns, MIGRATION_MISSING } from '@/lib/picks/columns'
 import { notifyNewPick } from '@/lib/notify'
+import { gameIdPatch } from '@/lib/picks/game-match'
 import { revalidatePublicPicks } from '@/lib/picks/revalidate'
 
 export const dynamic = 'force-dynamic'
@@ -59,7 +60,13 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   if (claimError) return NextResponse.json({ error: claimError.message }, { status: 500 })
   if (!claimed) return NextResponse.json({ error: 'Already handled in another tab.' }, { status: 409 })
 
-  const rows = draftToRows(draft, picks, { access, note })
+  // Each pick onto its Desk game, when one fits (lib/picks/game-match.ts).
+  const rows = await Promise.all(
+    draftToRows(draft, picks, { access, note }).map(async (row: any) => ({
+      ...row,
+      ...(await gameIdPatch(admin, {}, { sport: row.sport ?? null, date: row.date ?? null, bet: row.bet ?? null, opponent: row.opponent ?? null })),
+    })),
+  )
   const { data: inserted, error: insertError } = await admin.from('todays_bets').insert(rows).select()
   if (insertError) {
     await admin.from('pick_drafts').update({ status: draft.status, reviewed_at: null }).eq('id', params.id)

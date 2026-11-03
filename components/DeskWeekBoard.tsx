@@ -28,9 +28,11 @@ interface Props {
   active: { season_type: number; week: number } | null
   /** Curated systems/trends attached to each game — depth without the payload. */
   linkedCounts: Record<string, { systems: number; trends: number }>
+  /** Free and Portfolio picks attached to each game (todays_bets.game_id). */
+  betCounts?: Record<string, number>
   /** Whether this member holds the Research Desk rung or better. */
   hasDesk: boolean
-  /** Game write-ups open at Private Intelligence, not at the Desk. */
+  /** Legacy: game write-ups open with the Vault. No longer shown on the board. */
   hasWriteups: boolean
   isAdmin: boolean
   /**
@@ -98,7 +100,7 @@ function teamName(sport: string, team: string, abbrev: string): string {
 }
 
 export default function DeskWeekBoard({
-  sport, games, weeks, active, linkedCounts, hasDesk, hasWriteups, isAdmin, researchClosed,
+  sport, games, weeks, active, linkedCounts, betCounts = {}, hasDesk, hasWriteups, isAdmin, researchClosed,
   days = null, lineFilter = null,
 }: Props) {
   const router = useRouter()
@@ -275,23 +277,24 @@ export default function DeskWeekBoard({
     const c = linkedCounts[g.id]
     return c && c.systems + c.trends > 0
   }).length
-  const writeups = games.filter(g => g.has_writeup).length
-  const moved = games.filter(g => lineMove(g.spread_open, g.spread_current)).length
-  // A zero is dropped rather than printed. "0 With research / 0 Write-ups / 0
-  // Lines moved" is three cells of nothing on most boards most days, and it
-  // reads as a broken product rather than an early week. The game count stays:
-  // it is the one number that is never noise.
+  // Bets, not write-ups (Ed, Nov 2026): he is not writing game write-ups, he
+  // is attaching the free and Portfolio picks to each game. "Lines moved" went
+  // the same day -- a count of moved lines told nobody anything.
+  const bets = games.reduce((n, g) => n + (betCounts[g.id] ?? 0), 0)
+  // A zero is dropped rather than printed. "0 With research / 0 Bets" is cells
+  // of nothing on most boards most days, and it reads as a broken product
+  // rather than an early week. The game count stays: it is the one number
+  // that is never noise.
   const summary = [
     { value: games.length, label: games.length === 1 ? 'Game' : 'Games' },
     { value: researched, label: 'With research', accent: researched > 0 },
-    { value: writeups, label: writeups === 1 ? 'Write-up' : 'Write-ups', accent: writeups > 0 },
-    { value: moved, label: moved === 1 ? 'Line moved' : 'Lines moved' },
+    { value: bets, label: bets === 1 ? 'Bet' : 'Bets', accent: bets > 0 },
   ].filter((s, i) => i === 0 || s.value > 0)
 
   // When nothing on the board carries research, one quiet line says so instead
   // of the same "No research yet" tag on every card. When some games do, the
   // per-card tag stays, because then the contrast is the information.
-  const anyResearch = games.some(g => g.has_writeup || (linkedCounts[g.id]?.systems ?? 0) + (linkedCounts[g.id]?.trends ?? 0) > 0)
+  const anyResearch = games.some(g => (betCounts[g.id] ?? 0) > 0 || (linkedCounts[g.id]?.systems ?? 0) + (linkedCounts[g.id]?.trends ?? 0) > 0)
 
   return (
     <div className={`desk-board${isPending ? ' is-switching' : ''}`} aria-busy={isPending}>
@@ -450,6 +453,7 @@ export default function DeskWeekBoard({
             {day.games.map(g => {
               const counts = linkedCounts[g.id] ?? { systems: 0, trends: 0 }
               const attached = counts.systems + counts.trends
+              const betsHere = betCounts[g.id] ?? 0
               const spread = spreadLabel(g.spread_current, g.home_abbrev, g.away_abbrev)
               const move = lineMove(g.spread_open, g.spread_current)
               const totalMove = lineMove(g.total_open, g.total_current)
@@ -602,22 +606,22 @@ export default function DeskWeekBoard({
                             <IconLock size={11} /> Research closed
                           </span>
                         ) : unlocked ? (
-                          <span className="desk-tag desk-tag--open">{attached} attached</span>
+                          <span className="desk-tag desk-tag--open">{attached} Systems/Trends</span>
                         ) : (
                           <span className="desk-tag desk-tag--locked">
-                            <IconLock size={11} /> {attached} locked
+                            <IconLock size={11} /> {attached} Systems/Trends
                           </span>
                         )
                       )}
-                      {g.has_writeup && (
-                        // Its own lock, not the Desk's: this tag used to read
-                        // "Desk note" and show open to Desk members, who then
-                        // hit a paywall on the game page.
-                        <span className={`desk-tag ${hasWriteups || isAdmin ? 'desk-tag--open' : 'desk-tag--locked'}`}>
-                          {!(hasWriteups || isAdmin) && <IconLock size={11} />} Write-up
+                      {betsHere > 0 && (
+                        // Open for the Desk. Anyone else may still see the free
+                        // ones on the game page, but the Portfolio picks among
+                        // them are locked, so the tag shows the lock.
+                        <span className={`desk-tag ${hasDesk || isAdmin ? 'desk-tag--open' : 'desk-tag--locked'}`}>
+                          {!(hasDesk || isAdmin) && <IconLock size={11} />} {betsHere} {betsHere === 1 ? 'Bet' : 'Bets'}
                         </span>
                       )}
-                      {anyResearch && attached === 0 && !g.has_writeup && (
+                      {anyResearch && attached === 0 && betsHere === 0 && (
                         <span className="desk-tag desk-tag--empty">No research yet</span>
                       )}
                     </span>

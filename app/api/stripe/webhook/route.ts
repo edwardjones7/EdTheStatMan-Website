@@ -14,6 +14,7 @@ import { claimEmail, recordPurchaseEvent } from '@/lib/notify/lifecycle-log'
 import { syncDiscordRole } from '@/lib/discord/roles'
 import type { AccessGrant } from '@/lib/offer'
 import type { Tier } from '@/lib/access'
+import { isTrialPass } from '@/lib/trial'
 import type Stripe from 'stripe'
 
 /**
@@ -47,6 +48,7 @@ const DAY_MS = 24 * 60 * 60 * 1000
 interface ProfileRow {
   id: string
   email: string | null
+  pass_tier?: string | null
   pass_expires_at: string | null
   attributed_at: string | null
   last_stripe_session_id: string | null
@@ -55,7 +57,7 @@ interface ProfileRow {
 
 // `email` is here only so the admin alerts can name the customer; nothing
 // else in this route reads it.
-const PROFILE_COLS = 'id, email, pass_expires_at, attributed_at, last_stripe_session_id, sub_event_at'
+const PROFILE_COLS = 'id, email, pass_tier, pass_expires_at, attributed_at, last_stripe_session_id, sub_event_at'
 
 async function profileById(admin: any, userId: string): Promise<ProfileRow | null> {
   const { data } = await admin.from('profiles').select(PROFILE_COLS).eq('id', userId).single()
@@ -165,7 +167,7 @@ async function welcome(admin: any, input: {
   email: string | null
   tier: Tier
   mode: 'pass' | 'subscription'
-  period: 'month' | 'season' | null
+  period: 'month' | 'year' | 'season' | null
   accessEndsAt: string | null
   amountCents: number | null | undefined
   currency: string | null | undefined
@@ -267,7 +269,18 @@ export async function POST(req: Request) {
         return NextResponse.json({ received: true, deduped: true })
       }
 
-      const currentMs = existing?.pass_expires_at ? new Date(existing.pass_expires_at).getTime() : 0
+      // Days stack on a live pass -- except the free trial, which is not a
+      // purchase. Stacking on it would hand a Portfolio buyer a few extra
+      // days of a product they did not buy, and a Desk buyer free days they
+      // already had. A trial member's paid days start now.
+      const { data: trialRow } = await admin
+        .from('profiles').select('desk_trial_ends_at').eq('id', userId).maybeSingle()
+      const onTrial = isTrialPass({
+        pass_tier: existing?.pass_tier ?? null,
+        pass_expires_at: existing?.pass_expires_at ?? null,
+        desk_trial_ends_at: (trialRow as any)?.desk_trial_ends_at ?? null,
+      })
+      const currentMs = existing?.pass_expires_at && !onTrial ? new Date(existing.pass_expires_at).getTime() : 0
       const passExpiresAt = passExpiryFrom(resolved.grant, currentMs, `session ${session.id}`)
 
       await recordPurchase(admin, {
@@ -309,8 +322,9 @@ export async function POST(req: Request) {
         email: existing?.email ?? session.customer_details?.email ?? null,
         tier: resolved.tier,
         mode: 'pass',
-        // 'until' is a season pass, 'days' the 30-day Portfolio.
-        period: resolved.grant.kind === 'until' ? 'season' : resolved.grant.kind === 'days' ? 'month' : null,
+        // 'until' is a pre-Nov-2026 season pass; 'days' is 30 or 365.
+        period: resolved.grant.kind === 'until' ? 'season'
+          : resolved.grant.kind === 'days' ? (resolved.grant.days >= 365 ? 'year' : 'month') : null,
         accessEndsAt: passExpiresAt,
         amountCents: session.amount_total,
         currency: session.currency,

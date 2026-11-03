@@ -12,7 +12,8 @@ export const FUNNEL_EVENTS = [
   'magic_link_sent',
   'push_opt_in',
   'discord_connect',
-  'plan_toggle',       // month/season switch on /win
+  'plan_toggle',       // 30-day / 365-day switch on /win
+  'trial_started',     // Research Desk free trial begun (server side, /api/trial)
   'checkout_click',
   'checkout_started',  // Stripe session created
   'purchase',          // webhook confirmed payment

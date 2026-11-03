@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { selectAll } from '@/lib/supabase/select-all'
 import { SEASON_ENDS_AT } from '@/lib/offer'
+import { isTrialPass } from '@/lib/trial'
 import { passExpiringMessage, passExpiredMessage, sendLifecycleEmail, type LifecycleKind, type LifecycleMessage } from '@/lib/notify/lifecycle'
 import { emailLogReady, claimEmail, releaseEmail } from '@/lib/notify/lifecycle-log'
 
@@ -95,10 +96,20 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  // A pass ending within a day of SEASON_ENDS_AT is the season itself ending;
-  // there is no season pass to sell into, so the copy changes and the win-back
-  // is skipped.
+  // A pass ending within a day of SEASON_ENDS_AT is a pre-Nov-2026 season pass
+  // reaching its end, so the copy changes and the win-back is skipped. A
+  // 365-day pass that happens to end later is not that, hence the window
+  // rather than ">=".
   const seasonEndMs = new Date(SEASON_ENDS_AT).getTime()
+
+  // Free-trial markers, read on their own so the cron still runs before
+  // pricing_01_trial_and_pick_games.sql is applied (the select just errors).
+  const trialEnds = new Map<string, string>()
+  {
+    const { data: trialRows, error: trialErr } = await admin
+      .from('profiles').select('id, desk_trial_ends_at').not('desk_trial_ends_at', 'is', null)
+    if (!trialErr) for (const t of trialRows ?? []) trialEnds.set(t.id, t.desk_trial_ends_at)
+  }
 
   const plan: { row: Row; kind: LifecycleKind; ref: string; message: LifecycleMessage }[] = []
   const skipped: Record<string, number> = {}
@@ -112,14 +123,18 @@ export async function GET(req: Request) {
     const endsMs = new Date(r.pass_expires_at).getTime()
     const left = endsMs - now
     const ref = r.pass_expires_at.slice(0, 10)
-    const seasonOver = endsMs >= seasonEndMs - DAY_MS
+    const seasonOver = Math.abs(endsMs - seasonEndMs) <= DAY_MS
+    const trial = isTrialPass({ pass_tier: r.pass_tier, pass_expires_at: r.pass_expires_at, desk_trial_ends_at: trialEnds.get(r.id) ?? null })
+
+    // A trial is seven days long, so "a week left" would land the day it starts.
+    if (trial && left > 30 * HOUR_MS) { skip('trial running'); continue }
 
     if (left > 2 * DAY_MS && left <= 7 * DAY_MS) {
       plan.push({ row: r, kind: 'pass_expiring_7d', ref,
         message: passExpiringMessage({ tier: r.pass_tier, expiresAt: r.pass_expires_at, daysLeft: 7, seasonOver }) })
     } else if (left > 0 && left <= 30 * HOUR_MS) {
       plan.push({ row: r, kind: 'pass_expiring_1d', ref,
-        message: passExpiringMessage({ tier: r.pass_tier, expiresAt: r.pass_expires_at, daysLeft: 1, seasonOver }) })
+        message: passExpiringMessage({ tier: r.pass_tier, expiresAt: r.pass_expires_at, daysLeft: 1, seasonOver, trial }) })
     } else if (left <= -3 * DAY_MS) {
       // The win-back is the one sales note here, so it honours the alert
       // toggle and carries an unsubscribe link. access_expires_at is checked

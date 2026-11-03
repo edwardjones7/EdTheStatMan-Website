@@ -73,7 +73,7 @@ export async function releaseEmail(admin: any, userId: string, kind: LifecycleKi
 export async function recordPurchaseEvent(admin: any, input: {
   userId: string
   tier: string
-  period: 'month' | 'season' | null
+  period: 'month' | 'year' | 'season' | null
   amountCents: number | null | undefined
   currency?: string | null
 }): Promise<void> {

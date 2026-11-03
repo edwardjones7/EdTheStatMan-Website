@@ -1,6 +1,6 @@
 // Mirrors Tier in lib/access.ts. Change both together.
 export type SubscriptionTier =
-  | 'retail' | 'portfolio' | 'desk' | 'private' | 'institutional'
+  | 'retail' | 'portfolio' | 'desk' | 'private' | 'institutional' // 'institutional' is legacy; read through normalizeTier()
 
 // Stripe's own status strings, stored verbatim. NOT an enum any more: Stripe
 // emits 'unpaid', 'incomplete_expired' and 'paused', and a PG enum that rejects

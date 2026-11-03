@@ -705,3 +705,44 @@
 .perf-sport-grid .perf-sport-card {
   max-width: none;
 }
+
+/* ---- Nov 2026 pricing: 30/365-day one-time plans, the Desk free trial ---- */
+
+.pricing-card__term {
+  margin-top: 4px;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.pricing-card__save {
+  margin-top: 6px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--accent-lime);
+}
+
+.pricing-card__features--icons .pricing-card__feature svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--accent-lime);
+}
+
+.pricing-terms {
+  margin: 18px auto 0;
+  max-width: 640px;
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.trial-cta {
+  margin-top: 10px;
+}
+
+.trial-cta__fine,
+.pricing-card__trial-note {
+  margin-top: 6px;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-align: center;
+}

@@ -2,10 +2,12 @@
 
 import { useState, type CSSProperties } from 'react'
 import Link from 'next/link'
+import '@/styles/proof-win.css'
 import CheckoutButton from './CheckoutButton'
-import { OFFER_PLANS, OFFER_FREE_FEATURES, SEASON_ENDS_AT } from '@/lib/offer'
+import TrialButton from './TrialButton'
+import { OFFER_PLANS, OFFER_FREE_FEATURES, annualSavingsPct } from '@/lib/offer'
 import type { OfferPlan, OfferTierKey, BillingPeriod } from '@/lib/offer'
-import { TIER_RANK, normalizeTier, type Membership, type Tier } from '@/lib/access'
+import { normalizeTier, type Membership, type Tier } from '@/lib/access'
 
 interface Props {
   membership: Membership
@@ -13,45 +15,40 @@ interface Props {
   /** Include the free (Public Intelligence) comparison column (offer page only). */
   showFree?: boolean
   highlight?: OfferTierKey
-  /** When their access runs out (ISO). Tells a season holder from a monthly one. */
+  /** Unused since the Nov 2026 pricing; kept so callers need not change. */
   expiresAt?: string | null
-}
-
-const DAY_MS = 24 * 60 * 60 * 1000
-
-/** Access that already runs to the end of the season: they hold the season pass. */
-export function holdsSeason(expiresAt: string | null | undefined): boolean {
-  if (!expiresAt) return false
-  return Date.parse(expiresAt) >= Date.parse(SEASON_ENDS_AT) - DAY_MS
+  /** Show the free-trial button on the Research Desk card (lib/trial.ts). */
+  trial?: { available: boolean; onTrial: boolean } | null
 }
 
 /**
- * What to show on a plan card for this member.
+ * What to show on a plan card for this member. Shared with WinPlans, and the
+ * same rules app/api/stripe/checkout enforces, so a button is never offered
+ * that the server would refuse.
  *
- *   'current'  they hold exactly this rung on this billing period
+ *   'current'  they hold this product and are looking at the 30-day option
+ *              (a second 30 days on top of a live 30 is refused: an
+ *              accidental double buy is the dispute we never want)
+ *   'extend'   they hold this product; 365 days stacks on what they have
  *   'buy'      offer it
- *   'hide'     strictly below what they already hold
+ *   'hide'     already covered (Desk holders), or the sibling product. A
+ *              Vault member is pointed at the Research Desk, not at the
+ *              Portfolio, because the pass slot holds one product.
  *
- * Note the deliberate difference from the old isUpgrade(): a member on the
- * MONTHLY plan of a rung is still offered that rung's SEASON pass. The previous
- * implementation returned false for equal rank and rendered no button at all,
- * which silently blocked the most valuable conversion on the page.
+ * A member on the free trial is offered everything: the trial is not a sale.
  */
 export function cardState(
   currentTier: Tier | null,
   isPaid: boolean,
   plan: OfferPlan,
   period: BillingPeriod,
-  heldSeason: boolean
-): 'current' | 'buy' | 'hide' {
-  if (!isPaid || !currentTier) return 'buy'
-  const held = TIER_RANK[normalizeTier(currentTier)]
-  const offered = TIER_RANK[plan.key]
-  if (offered > held) return 'buy'
-  if (offered < held) return 'hide'
-  // Same rung: the season pass is still an upgrade from monthly.
-  if (period === 'season' && !heldSeason) return 'buy'
-  return 'current'
+  onTrial = false,
+): 'current' | 'extend' | 'buy' | 'hide' {
+  if (!isPaid || !currentTier || onTrial) return 'buy'
+  const held = normalizeTier(currentTier)
+  if (plan.key === held) return period === 'year' ? 'extend' : 'current'
+  if (plan.key === 'desk') return 'buy'
+  return 'hide'
 }
 
 export default function PricingCards({
@@ -59,10 +56,9 @@ export default function PricingCards({
   currentTier,
   showFree = false,
   highlight = 'desk',
-  expiresAt = null,
+  trial = null,
 }: Props) {
-  const heldSeason = holdsSeason(expiresAt)
-  const [period, setPeriod] = useState<BillingPeriod>('season')
+  const [period, setPeriod] = useState<BillingPeriod>('year')
 
   const isPaid = membership === 'active' || membership === 'admin'
   const isLoggedIn = membership !== 'logged-out'
@@ -70,14 +66,14 @@ export default function PricingCards({
   const isAdmin = membership === 'admin'
 
   const offered = OFFER_PLANS.filter(
-    plan => cardState(currentTier, isPaid, plan, period, heldSeason) !== 'hide'
+    plan => cardState(currentTier, isPaid, plan, period, trial?.onTrial) !== 'hide'
   )
   // A member already at the top rung, or an admin, has nothing to be sold. The
   // anti-downgrade rule would otherwise leave one card stretched across the
   // full grid width, which reads like a broken layout rather than a good place
   // to be.
   const nothingToSell = isAdmin || offered.every(
-    plan => cardState(currentTier, isPaid, plan, period, heldSeason) === 'current'
+    plan => cardState(currentTier, isPaid, plan, period, trial?.onTrial) === 'current'
   )
 
   // The grid used to be auto-fit/minmax, which fit only three 300px columns
@@ -92,22 +88,22 @@ export default function PricingCards({
     return (
       <div className="pricing-topped-out">
         <span className="pricing-topped-out__badge">
-          {isAdmin ? 'Admin' : 'Institutional Intelligence'}
+          {isAdmin ? 'Admin' : 'The Research Desk'}
         </span>
         <p>
           {isAdmin
-            ? 'Admin accounts hold every rung of the ladder. Nothing to buy here.'
-            : 'You hold the top rung. Every system, every trend, the highest-conviction library, and the whole schedule.'}
+            ? 'Admin accounts hold everything. Nothing to buy here.'
+            : 'You hold the Research Desk: every game, the whole Vault and every pick.'}
         </p>
-        <Link href="/vault" className="btn btn--outline">Open the Vault</Link>
+        <Link href="/desk/nfl" className="btn btn--outline">Open the Desk</Link>
       </div>
     )
   }
 
   return (
     <div style={{ maxWidth: '1320px', margin: '0 auto' }}>
-      {/* The season pass is the SKU we push: one sale and one dispute window
-          instead of twelve of each. It is the default selection. */}
+      {/* 365 days is the SKU we push: one sale and one dispute window instead
+          of twelve of each. It is the default selection. */}
       <div className="billing-toggle" role="group" aria-label="Billing period">
         <button
           type="button"
@@ -115,15 +111,15 @@ export default function PricingCards({
           onClick={() => setPeriod('month')}
           aria-pressed={period === 'month'}
         >
-          Monthly
+          30-Day Access
         </button>
         <button
           type="button"
-          className={`billing-toggle__opt${period === 'season' ? ' is-active' : ''}`}
-          onClick={() => setPeriod('season')}
-          aria-pressed={period === 'season'}
+          className={`billing-toggle__opt${period === 'year' ? ' is-active' : ''}`}
+          onClick={() => setPeriod('year')}
+          aria-pressed={period === 'year'}
         >
-          Season Pass
+          365-Day Access
           <span className="billing-toggle__hint">best value</span>
         </button>
       </div>
@@ -133,12 +129,12 @@ export default function PricingCards({
         style={{ '--pricing-cols': cols, '--pricing-cols-md': colsMd } as CSSProperties}
       >
         {offered.map(plan => {
-          const sku = period === 'month' ? plan.month : plan.season
-          const state = cardState(currentTier, isPaid, plan, period, heldSeason)
+          const sku = period === 'month' ? plan.month : plan.year
+          const state = cardState(currentTier, isPaid, plan, period, trial?.onTrial)
 
           const featured = plan.key === highlight
-          const vault = plan.key === 'private' || plan.key === 'institutional'
-          const top = plan.key === 'institutional'
+          const vault = plan.key === 'private'
+          const top = plan.key === 'desk'
 
           return (
             <div
@@ -155,10 +151,11 @@ export default function PricingCards({
                 {plan.badge && <span className="pricing-card__badge">{plan.badge}</span>}
               </div>
 
-              <div className="pricing-card__price">
-                {sku.price}
-                {sku.mode === 'subscription' && <span className="pricing-card__per">/mo</span>}
-              </div>
+              <div className="pricing-card__price">{sku.price}</div>
+              <div className="pricing-card__term">{sku.note}</div>
+              {period === 'year' && (
+                <div className="pricing-card__save">Save {annualSavingsPct(plan)}% versus 30-day pricing</div>
+              )}
 
               <div className="pricing-card__desc">{plan.tagline}</div>
 
@@ -183,21 +180,26 @@ export default function PricingCards({
                   priceId={sku.priceId}
                   tierKey={plan.key}
                   period={sku.period}
-                  label={isExpired ? `Renew — ${sku.price}` : sku.ctaLabel}
+                  label={state === 'extend' ? 'Add 365 Days' : isExpired ? `Renew — ${sku.price}` : sku.ctaLabel}
                   variant={featured ? 'primary' : 'outline'}
                 />
               )}
-
-              <div className="pricing-card__note">{sku.note}</div>
+              {plan.key === 'desk' && trial && !isPaid && (
+                <TrialButton available={trial.available} loggedIn={isLoggedIn} />
+              )}
             </div>
           )
         })}
       </div>
 
+      <p className="pricing-terms">
+        No automatic renewal. No recurring charges. Access expires at the end of the purchased period.
+      </p>
+
       {showFree && (
         <div className="retail-strip">
           <div className="retail-strip__head">
-            <span className="retail-strip__name">Vault {'—'} Public Intelligence</span>
+            <span className="retail-strip__name">Free account</span>
             <span className="retail-strip__price">Free</span>
           </div>
           <ul className="retail-strip__features">

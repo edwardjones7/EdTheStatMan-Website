@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { hasPickEngineColumns } from '@/lib/picks/columns'
 import { engineColumnsFromBody } from '@/lib/picks/admin-columns'
+import { gameIdPatch } from '@/lib/picks/game-match'
 
 async function assertAdmin() {
   const supabase = await createClient()
@@ -55,8 +56,11 @@ export async function PUT(req: Request, context: { params: Promise<{ id: string 
   // slug is never touched here -- it is the pick's permanent URL.
   const engineCols = (await hasPickEngineColumns(admin)) ? engineColumnsFromBody(body) : {}
 
+  const gameCol = await gameIdPatch(admin, body, { sport: body.sport || null, date: body.date || null, bet: body.bet || null, opponent: body.opponent || null }, 'keep')
+
   const { data, error } = await admin.from('todays_bets').update({
     ...engineCols,
+    ...gameCol,
     date:            body.date            || null,
     sport:           body.sport           || null,
     risk:            body.risk            || null,

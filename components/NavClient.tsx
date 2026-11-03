@@ -42,6 +42,11 @@ interface NavLink {
   children?: NavChild[]
 }
 
+// Ed's order (Nov 2026): Research Desk, Vault, Portfolio -- the Desk is the
+// top product and holds the other two. The Blog left the bar the same day:
+// Ed is not writing it, so it lives in the footer only, and the posts and
+// /blog itself are untouched in case it comes back.
+//
 // Four products, not eight links. The bar was full; Contact moved to the
 // footer and the two EdTheStatBot entries collapsed into The Portfolio.
 //
@@ -50,14 +55,6 @@ interface NavLink {
 // to open -- but the second page of each product used to cost two navigations
 // and a server round trip in between, which is the click this is removing.
 const NAV_LINKS: NavLink[] = [
-  {
-    href: '/portfolio',
-    label: 'The Portfolio',
-    children: [
-      { href: '/portfolio', label: 'Picks', exact: true },
-      { href: '/portfolio/performance', label: 'Results' },
-    ],
-  },
   // Straight to the board rather than to /desk, which is only a server
   // redirect. That hop is a round trip the router cannot cover: it holds the
   // old page up until the redirect resolves, and the skeleton in
@@ -87,10 +84,14 @@ const NAV_LINKS: NavLink[] = [
       { href: '/vault/trends', label: 'Trends' },
     ],
   },
-  // Top level, not under The Portfolio: free picks are the front door for
-  // visitors arriving from X, and the Portfolio is the paid product.
-  { href: '/picks', label: 'Free Picks' },
-  { href: '/blog', label: 'Blog' },
+  {
+    href: '/portfolio',
+    label: 'The Portfolio',
+    children: [
+      { href: '/portfolio', label: 'Picks', exact: true },
+      { href: '/portfolio/performance', label: 'Results' },
+    ],
+  },
   { href: '/win', label: 'Membership', offer: true },
 ]
 
@@ -107,7 +108,7 @@ function primaryCta(
     case 'free':    return { href: '/win', label: 'Unlock All' }
     case 'expired': return { href: '/win', label: 'Renew' }
     // Every rung below the top can still climb.
-    case 'active':  return tier === 'institutional' ? null : { href: '/win', label: 'Upgrade' }
+    case 'active':  return tier === 'desk' ? null : { href: '/win', label: 'Upgrade' }
     default:        return null
   }
 }

@@ -20,7 +20,7 @@ export default function VaultRowDetail({ kind, row }: { kind: VaultKind; row: Va
   const pct = row.pct === null ? null : Math.round(row.pct * 100)
   const winning = row.w > row.l
   // The list's own upgrade target for this rung, carried into checkout.
-  const plan = row.required === 'institutional' ? 'institutional' : 'private'
+  const plan = 'private' as const
 
   return (
     <section className="section" style={{ paddingBottom: '48px' }}>
@@ -65,17 +65,17 @@ export default function VaultRowDetail({ kind, row }: { kind: VaultKind; row: Va
             {row.season && <p className="vault-row-rule__meta">Season: {row.season}</p>}
           </article>
         ) : (
-          <div className={`sys-gate-card${plan === 'institutional' ? ' sys-gate-card--elite' : ''}`} style={{ maxWidth: 'none' }}>
+          <div className={'sys-gate-card'} style={{ maxWidth: 'none' }}>
             <div className="sys-gate-card__icon"><IconLock size={30} /></div>
             <h2 className="content-gate-card__title">
               The {noun} behind this record is locked
             </h2>
             <p className="content-gate-card__desc">
-              {row.code} is part of {plan === 'institutional' ? 'the Institutional library' : 'the Vault'}.
-              The record is public; the {noun} itself opens with {TIER_SHORT_LABEL[plan]} Intelligence.
+              {row.code} is part of the Handicapping Vault.
+              The record is public; the {noun} itself opens with the Vault or the Research Desk.
             </p>
             <div className="content-gate-card__actions">
-              <Link href={`/win?plan=${plan}&period=season`} className="btn btn--primary">
+              <Link href={`/win?plan=${plan}&period=year`} className="btn btn--primary">
                 Unlock {TIER_SHORT_LABEL[plan]} &rarr;
               </Link>
             </div>

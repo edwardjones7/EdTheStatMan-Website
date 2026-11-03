@@ -15,10 +15,8 @@
  */
 
 import { createAdminClient } from '@/lib/supabase/admin'
-import { selectAll } from '@/lib/supabase/select-all'
 import { rowMinTier } from '@/lib/gate'
-import { nyToday } from '@/lib/brief'
-import { oddsOf, type RecordSource } from '@/lib/records'
+import { oddsOf } from '@/lib/records'
 import { isUuid } from './slug'
 import { hasPickEngineColumns } from './columns'
 
@@ -84,56 +82,6 @@ export function toPublicPick(row: any): PublicPick {
     updatedAt: row.updated_at ?? null,
     xPostId: row.x_post_id ?? null,
     source: row.source ?? null,
-  }
-}
-
-export interface PicksData {
-  /** Every row, raw, for lib/records.ts. Server only -- never pass to a client component. */
-  records: RecordSource[]
-  upcomingFree: PublicPick[]
-  recentFree: PublicPick[]
-  /** Members' picks on today's and later cards, locked. Count only, for the upsell. */
-  upcomingMembers: number
-  today: string
-}
-
-export async function loadPicksData(now: Date = new Date()): Promise<PicksData> {
-  const admin = createAdminClient() as any
-  const { data } = await selectAll(() => admin
-    .from('todays_bets')
-    .select('*')
-    .order('date', { ascending: false, nullsFirst: false })
-    .order('id'))
-  const rows = (data ?? []).filter(isPublishable)
-
-  const today = nyToday(now)
-  // Yesterday too: a late game posted last night is still waiting on a grade
-  // this morning, and dropping it would make an open pick look withdrawn.
-  const yesterday = nyToday(new Date(now.getTime() - 864e5))
-
-  const upcomingFree: PublicPick[] = []
-  const recentFree: PublicPick[] = []
-  let upcomingMembers = 0
-
-  for (const row of rows) {
-    const pick = toPublicPick(row)
-    const open = pick.result === 'pending' && row.is_active !== false && !!pick.date && pick.date >= yesterday
-    if (pick.free) {
-      if (open) upcomingFree.push(pick)
-      else if (isGraded(pick.result) && row.show_on_results === true) recentFree.push(pick)
-    } else if (open) {
-      upcomingMembers++
-    }
-  }
-
-  upcomingFree.sort((a, b) => (a.date ?? '').localeCompare(b.date ?? '') || (a.postedAt ?? '').localeCompare(b.postedAt ?? ''))
-
-  return {
-    records: rows as RecordSource[],
-    upcomingFree,
-    recentFree: recentFree.slice(0, 25),
-    upcomingMembers,
-    today,
   }
 }
 

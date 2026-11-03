@@ -37,10 +37,10 @@ interface AccountClientProps {
 // duplicated across four files and drifted. Only the descriptions live here.
 const TIER_DESCRIPTION: Record<SubscriptionTier, string> = {
   retail: 'A curated set of free systems, trends and picks. Records visible on everything else.',
-  portfolio: 'Every pick, unlocked, with the full line and number.',
-  desk: 'The full schedule for all four leagues with live lines, every game on its own page, plus everything in The Portfolio.',
-  private: 'The complete systems and trends libraries, filterable, plus everything in The Research Desk.',
-  institutional: 'The highest-conviction library, at this tier only, on top of everything in Private Intelligence.',
+  portfolio: 'Every EdTheStatBot pick, unlocked, with the full line and number.',
+  private: 'The complete systems and trends libraries, filterable.',
+  desk: 'Everything: every game on its own page with the research and bets attached, the whole Handicapping Vault, and every Portfolio pick.',
+  institutional: 'The complete systems and trends libraries, filterable.',
 }
 
 function formatDate(dateStr: string) {
@@ -148,9 +148,9 @@ export default function AccountClient({
 
   const avatarClass = profile.is_admin
     ? 'account-hero__avatar account-hero__avatar--admin'
-    : normalized === 'institutional' || normalized === 'private'
-    ? 'account-hero__avatar account-hero__avatar--elite'
     : normalized === 'desk'
+    ? 'account-hero__avatar account-hero__avatar--elite'
+    : normalized === 'private'
     ? 'account-hero__avatar account-hero__avatar--premium'
     : 'account-hero__avatar'
 

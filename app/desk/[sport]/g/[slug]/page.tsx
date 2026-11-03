@@ -5,6 +5,8 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { resolveAccess, ACCESS_SELECT, atLeastTier } from '@/lib/access'
 import { rowMinTier, researchClosedFor, holdsLibrary } from '@/lib/gate'
+import { toPublicPick } from '@/lib/picks/public'
+import { oddsOf } from '@/lib/records'
 import {
   toPublicGame, weekLabel, writeupWordCount,
   gameBrief, gameBriefSentences, spreadLabel, moneylineLabel, lineMove,
@@ -104,8 +106,9 @@ export default async function NflGamePage({ params }: { params: { sport: string;
   }
   const { tier: userTier, isAdmin, hasElite } = access
   // The Desk's defining rule: curated Vault rows are visible IN THE CONTEXT
-  // of a matchup to Desk members, even though the browsable library is
-  // Private. Institutional rows stay institutional everywhere.
+  // of a matchup to Desk members. (The Desk now holds the whole Vault as well,
+  // so this mostly matters for a closed week, where the in-context window
+  // shuts but the library itself does not.)
   const hasDesk = isAdmin || access.atLeast('desk')
 
   const { data: gameRow } = await (admin as any)
@@ -136,7 +139,7 @@ export default async function NflGamePage({ params }: { params: { sport: string;
   // the exact date, so DST never drops a late tip or adds tomorrow's first one.
   const sportKey = params.sport.toLowerCase()
   const gameDay = game.kickoff ? easternDate(game.kickoff) : null
-  const [sysLinks, trendLinks, weekRows, homeSeason, awaySeason, dayRows] = await Promise.all([
+  const [sysLinks, trendLinks, weekRows, homeSeason, awaySeason, dayRows, betRows] = await Promise.all([
     (admin as any).from('nfl_game_systems').select('system_id').eq('game_id', game.id),
     (admin as any).from('nfl_game_trends').select('trend_id').eq('game_id', game.id),
     (admin as any)
@@ -159,6 +162,9 @@ export default async function NflGamePage({ params }: { params: { sport: string;
           .lt('kickoff', `${addDays(gameDay, 1)}T06:00:00Z`)
           .order('kickoff', { ascending: true })
       : Promise.resolve({ data: [] }),
+    // The bets on this game. Errors harmlessly (no rows) until
+    // pricing_01_trial_and_pick_games.sql adds todays_bets.game_id.
+    (admin as any).from('todays_bets').select('*').eq('game_id', game.id).order('id'),
   ])
   const systemIds = (sysLinks.data ?? []).map((r: any) => r.system_id)
   const trendIds = (trendLinks.data ?? []).map((r: any) => r.trend_id)
@@ -205,13 +211,31 @@ export default async function NflGamePage({ params }: { params: { sport: string;
         // a game takes nothing from them -- this clause is untouched by it.
         atLeastTier(userTier, required) ||
         // The Desk's in-context window, and the only thing closing shuts.
-        (hasDesk && !researchClosed && required !== 'institutional')
+        (hasDesk && !researchClosed)
       if (canSee) visible.push(row)
-      else if (required === 'institutional') lockedElite.push(toTeaser(row))
       else locked.push(toTeaser(row))
     }
     return { visible, locked, lockedElite }
   }
+  // The bets: free picks open to everyone, Portfolio picks open to whoever
+  // holds the picks (the Portfolio or the Desk). Redacted here, on the server,
+  // so a locked bet's line never crosses the wire.
+  const bets: GameBet[] = ((betRows as any)?.data ?? [])
+    .filter((row: any) => row.is_active !== false || row.show_on_results === true)
+    .map((row: any) => {
+      const pub = toPublicPick(row)
+      const canSee = isAdmin || pub.free || atLeastTier(userTier, rowMinTier(row, 'portfolio'))
+      return {
+        key: pub.key,
+        free: pub.free,
+        locked: canSee ? false : pub.locked,
+        bet: canSee ? row.bet ?? null : pub.bet,
+        odds: canSee ? pub.odds ?? oddsOf({ odds: row.odds ?? null, line: row.line ?? null }) : pub.odds,
+        result: pub.result,
+        note: canSee ? row.note ?? null : pub.note,
+      }
+    })
+
   const systems = partition(systemsResult.data ?? [])
   const trends = partition(trendsResult.data ?? [])
 
@@ -310,7 +334,7 @@ export default async function NflGamePage({ params }: { params: { sport: string;
   const linkedCount =
     systems.visible.length + systems.locked.length + systems.lockedElite.length +
     trends.visible.length + trends.locked.length + trends.lockedElite.length
-  const hasResearch = publicGame.has_writeup || linkedCount > 0
+  const hasResearch = publicGame.has_writeup || linkedCount > 0 || bets.length > 0
   const url = `https://edthestatman.com${gamePath(params.sport, game.slug)}`
 
   // Graded against the closing line; null until the game is final and priced.
@@ -493,20 +517,10 @@ export default async function NflGamePage({ params }: { params: { sport: string;
               dangerouslySetInnerHTML={{ __html: game.writeup_html }}
             />
           )}
-          {!hasElite && publicGame.has_writeup && (
-            <div className="sys-gate-card sys-gate-card--elite reveal" style={{ maxWidth: 'none' }}>
-              <div className="sys-gate-card__icon"><IconLock size={30} /></div>
-              <div className="content-gate-card__title">
-                The full {game.away_abbrev}–{game.home_abbrev} breakdown is inside
-              </div>
-              <p className="content-gate-card__desc">
-                {publicGame.writeup_words} words of matchup analysis, angles, and the systems behind them, for Private Intelligence members and above.
-              </p>
-              <div className="content-gate-card__actions">
-                <Link href="/win" className="btn btn--primary">See Private Intelligence &rarr;</Link>
-              </div>
-            </div>
-          )}
+          {/* Write-ups are retired (Ed, Nov 2026): the locked "breakdown is
+              inside" card is gone. An old write-up still renders above for
+              the readers who can open it. The bets take its place. */}
+          {bets.length > 0 && <BetsSection bets={bets} />}
 
           {/* Linked systems & trends */}
           {(systems.visible.length + systems.locked.length + systems.lockedElite.length > 0) && (
@@ -537,7 +551,7 @@ export default async function NflGamePage({ params }: { params: { sport: string;
               <h2 className="nfl-game-empty__title">No research added yet</h2>
               <p className="nfl-game-empty__text">
                 Nothing has been attached to this matchup yet. The systems and trends
-                that qualify, and the full breakdown once it is written, land here as
+                that qualify, and the bets on it, land here as
                 the week fills in — check back closer to {startWord(params.sport)}.
               </p>
               <Link href={`/desk/${params.sport}`} className="nfl-game-empty__link">
@@ -644,6 +658,58 @@ function matchupFor(g: Pick<NflGame, 'home_abbrev' | 'away_abbrev' | 'kickoff'>,
 function sportBadge(sport: string | null | undefined): string {
   const key = (sport ?? '').trim()
   return SPORT_SHORT[key as keyof typeof SPORT_SHORT] ?? key.toUpperCase() ?? ''
+}
+
+interface GameBet {
+  key: string
+  free: boolean
+  locked: boolean
+  bet: string | null
+  odds: number | null
+  result: 'pending' | 'win' | 'loss' | 'push'
+  note: string | null
+}
+
+function oddsText(odds: number | null): string | null {
+  if (odds === null || odds === undefined || !Number.isFinite(odds)) return null
+  return odds > 0 ? `+${odds}` : String(odds)
+}
+
+/** What is being bet on this game: Ed's free picks and the Portfolio picks. */
+function BetsSection({ bets }: { bets: GameBet[] }) {
+  const anyLocked = bets.some(b => b.locked)
+  return (
+    <div className="nfl-linked-section game-bets reveal">
+      <h2 className="nfl-linked-section__title">Bets on this game</h2>
+      <ul className="game-bets__list">
+        {bets.map(b => (
+          <li key={b.key} className={`game-bets__item${b.locked ? ' is-locked' : ''}`}>
+            <span className={`game-bets__tag${b.free ? ' is-free' : ''}`}>{b.free ? 'Free' : 'Portfolio'}</span>
+            {b.locked ? (
+              <span className="game-bets__bet game-bets__bet--locked">
+                <IconLock size={12} /> Portfolio pick
+              </span>
+            ) : (
+              <Link href={`/picks/${encodeURIComponent(b.key)}`} className="game-bets__bet">
+                {b.bet ?? 'Pick'}
+                {oddsText(b.odds) && <span className="game-bets__odds">{oddsText(b.odds)}</span>}
+              </Link>
+            )}
+            {b.result !== 'pending' && (
+              <span className={`game-bets__result is-${b.result}`}>{b.result.toUpperCase()}</span>
+            )}
+            {!b.locked && b.note && <span className="game-bets__note">{b.note}</span>}
+          </li>
+        ))}
+      </ul>
+      {anyLocked && (
+        <p className="game-bets__more">
+          Portfolio picks open with the <Link href="/win?plan=portfolio">EdTheStatBot Portfolio</Link> or
+          the <Link href="/win?plan=desk">Research Desk</Link>.
+        </p>
+      )}
+    </div>
+  )
 }
 
 function LinkedSection({ title, visible, locked, lockedElite, href, closed }: {

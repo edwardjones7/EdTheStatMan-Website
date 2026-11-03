@@ -544,3 +544,91 @@ a.game-nav__step:hover { border-color: rgba(var(--teal-rgb), 0.4); }
   font-size: 0.8rem;
   color: var(--text-muted);
 }
+
+/* ---- Bets on a Desk game (todays_bets.game_id) ---- */
+
+.game-bets__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.game-bets__item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-card);
+}
+
+.game-bets__tag {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 999px;
+  color: var(--accent-gold);
+  border: 1px solid rgba(var(--gold-rgb), 0.4);
+}
+
+.game-bets__tag.is-free {
+  color: var(--accent-teal);
+  border-color: rgba(45, 212, 191, 0.4);
+}
+
+.game-bets__bet {
+  font-weight: 700;
+  color: var(--text-heading);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+a.game-bets__bet:hover {
+  color: var(--accent-teal);
+}
+
+.game-bets__bet--locked {
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.game-bets__odds {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.game-bets__result {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+}
+
+.game-bets__result.is-win { color: var(--accent-lime); }
+.game-bets__result.is-loss { color: var(--accent-red); }
+
+.game-bets__note {
+  flex-basis: 100%;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.game-bets__more {
+  margin-top: 12px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}

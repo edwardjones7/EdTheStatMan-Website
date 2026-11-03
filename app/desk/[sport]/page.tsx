@@ -18,6 +18,8 @@ import {
   weeksFromDates, isYmd, dateWeekOfDay, dateWeekDays, deskToday, addDays, easternDate,
 } from '@/lib/desk'
 import { selectAll } from '@/lib/supabase/select-all'
+import { createClient } from '@/lib/supabase/server'
+import { loadTrialState, type TrialState } from '@/lib/trial'
 
 export const dynamic = 'force-dynamic'
 
@@ -84,6 +86,15 @@ export default async function DeskSport({
   // that the board exists and how much is on it. The curated research attached
   // to each game is what the Desk rung buys.
   const hasDesk = isAdmin || access.atLeast('desk')
+
+  // The free-trial button on the paywall. Only for a signed-in visitor without
+  // the Desk -- the one case the paywall renders for someone who could start
+  // one -- so nobody else pays for the extra auth round trip.
+  let trial: TrialState = { available: false, onTrial: false, endsAt: null }
+  if (!hasDesk && membership !== 'logged-out') {
+    const { data: { user } } = await (await createClient()).auth.getUser()
+    trial = await loadTrialState(admin, user?.id)
+  }
 
   // The week rail needs every week of the season but none of the payload, so it
   // reads four columns and the board reads one week of rows. A college season is
@@ -215,7 +226,7 @@ export default async function DeskSport({
 
   type NoteRow = { title: string; body_html: string; min_tier: string; is_published: boolean }
 
-  const [linkRows, noteResult] = await Promise.all([
+  const [linkRows, noteResult, betRows] = await Promise.all([
     // Curated link counts per game — proof of depth without shipping the links.
     gameIds.length > 0
       ? Promise.all([
@@ -235,7 +246,24 @@ export default async function DeskSport({
           .eq('week', active.week)
           .maybeSingle()
       : Promise.resolve({ data: null }),
+    // The bets on each game (todays_bets.game_id, lib/picks/game-match.ts).
+    // Before pricing_01 the column is missing, the query errors, and every
+    // count is simply zero.
+    gameIds.length > 0
+      ? (admin as any)
+          .from('todays_bets')
+          .select('game_id, is_active, show_on_results')
+          .in('game_id', gameIds)
+      : Promise.resolve({ data: [] }),
   ])
+
+  const betCounts: Record<string, number> = {}
+  for (const row of (betRows as any)?.data ?? []) {
+    // Same "is it public" rule as lib/picks/public.ts: an inactive pick that
+    // was never published is still a draft.
+    if (row.is_active === false && row.show_on_results !== true) continue
+    betCounts[row.game_id] = (betCounts[row.game_id] ?? 0) + 1
+  }
 
   const [sysLinks, trendLinks] = linkRows as any[]
   const linkedCounts: Record<string, { systems: number; trends: number }> = {}
@@ -364,6 +392,7 @@ export default async function DeskSport({
               weeks={weeks}
               active={active}
               linkedCounts={linkedCounts}
+              betCounts={betCounts}
               hasDesk={hasDesk}
               hasWriteups={access.hasElite}
               isAdmin={isAdmin}
@@ -380,12 +409,13 @@ export default async function DeskSport({
               <span className="section-label">Membership</span>
               <h2 className="section-title">Pull up a <span className="text-gradient">chair</span></h2>
               <p className="section-subtitle" style={{ margin: '0 auto' }}>
-                The Research Desk opens every matchup: the curated trends behind it,
-                the desk note, and everything in The Portfolio.
+                The Research Desk opens every matchup: the systems and trends behind
+                it, the bets on it, the whole Handicapping Vault and every Portfolio
+                pick. Try it free for 7 days, no card needed.
               </p>
             </div>
             <div style={{ marginTop: '60px' }}>
-              <PricingCards membership={membership} currentTier={userTier} expiresAt={access.expiresAt?.toISOString() ?? null} highlight="desk" />
+              <PricingCards membership={membership} currentTier={userTier} expiresAt={access.expiresAt?.toISOString() ?? null} highlight="desk" trial={trial} />
             </div>
           </div>
         </section>

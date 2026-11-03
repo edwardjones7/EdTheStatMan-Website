@@ -103,7 +103,7 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
   // $49 buys the Portfolio, which opens none of them.
   const unlockPlan = required === 'retail' ? undefined : planByKey(required)
   const unlockLine = unlockPlan
-    ? `This post is part of ${unlockPlan.name}: ${unlockPlan.month.price}${unlockPlan.month.mode === 'subscription' ? '/mo' : ''} or ${unlockPlan.season.price} for the season, and every rung above it.`
+    ? `This post is part of ${unlockPlan.name}: ${unlockPlan.month.price} for 30 days or ${unlockPlan.year.price} for 365${unlockPlan.key === 'desk' ? '' : ', or the Research Desk'}.`
     : 'Unlock it with a membership.'
 
   const plainText = stripHtml(post.content)

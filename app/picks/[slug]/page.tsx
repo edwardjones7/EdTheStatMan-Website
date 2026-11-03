@@ -11,7 +11,7 @@ import '@/styles/picks.css'
 
 const BASE = 'https://edthestatman.com'
 
-// Same as /picks: the page is the same for every visitor, so it is cached, and
+// The page is the same for every visitor, so it is cached, and
 // admin saves and grades clear it at once (lib/picks/revalidate.ts).
 export const revalidate = 300
 
@@ -120,7 +120,7 @@ export default async function PickPage({ params }: { params: { slug: string } })
       <section className="section pick-detail">
         <div className="container pick-detail__container">
           <nav className="pick-detail__crumb" aria-label="Breadcrumb">
-            <Link href="/picks">&larr; Free picks</Link>
+            <Link href="/portfolio/performance">&larr; Every pick</Link>
           </nav>
 
           <article className={`pick-detail__card ${pick.locked ? 'pick-detail__card--locked' : ''}`}>
@@ -173,14 +173,12 @@ export default async function PickPage({ params }: { params: { slug: string } })
                 <h2 className="picks-signup__title">Get Ed&apos;s next free pick</h2>
                 <p className="picks-signup__text">A free account gets an alert when Ed posts a free pick, plus the free systems.</p>
               </div>
-              <Link href="/signup?next=/picks" className="btn btn--primary">Create a free account</Link>
+              <Link href={`/signup?next=/picks/${encodeURIComponent(pick.key)}`} className="btn btn--primary">Create a free account</Link>
             </div>
           )}
 
           <p className="picks-more">
-            <Link href="/picks">All free picks and the record</Link>
-            {' · '}
-            <Link href="/portfolio/performance">See every pick</Link>
+            <Link href="/portfolio/performance">See every pick and the record</Link>
           </p>
         </div>
       </section>

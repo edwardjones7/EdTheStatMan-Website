@@ -31,6 +31,8 @@ export interface TodaysBet {
   is_elite: boolean
   show_on_results: boolean
   created_at: string
+  /** The Desk game this pick is on (pricing_01_trial_and_pick_games.sql). */
+  game_id?: string | null
 }
 
 interface Props {
@@ -106,6 +108,8 @@ const EMPTY_FORM = {
   // 'retail' matches the todays_bets column default: a pick is free unless
   // someone says otherwise, which is the opposite of the Vault tables.
   is_active: true, min_tier: 'retail' as Tier, show_on_results: false,
+  // 'auto' = match it to a Desk game on save; '' = no game; else a game id.
+  game_id: 'auto',
 }
 
 export default function TodaysBets({ rows, isAdmin, userTier, isMember, lockedCount = 0, lockedBets = [], eliteLockedBets = [], editMode = false, headerContent, onHeaderEdit, resetKey = 0, emptyState }: Props) {
@@ -151,6 +155,7 @@ export default function TodaysBets({ rows, isAdmin, userTier, isMember, lockedCo
       is_active:       row.is_active,
       min_tier:        normalizeTier(row.min_tier),
       show_on_results: row.show_on_results,
+      game_id:         row.game_id ?? 'auto',
     })
     setEditId(row.id)
     setFormMode('edit')
@@ -454,7 +459,7 @@ export default function TodaysBets({ rows, isAdmin, userTier, isMember, lockedCo
                       <td style={{ ...tdStyle, color: 'var(--accent-teal)', fontWeight: 600 }}>{t.sport ?? '—'}</td>
                       <td style={tdStyle}>
                         <span className="bet-cell-locked" aria-hidden="true"><IconLock size={13} /></span>
-                        <span className="sr-only">Edge pick — Private Intelligence only</span>
+                        <span className="sr-only">Edge pick — Vault and Research Desk only</span>
                       </td>
                       <td style={tdStyle}><span className="bet-cell-locked" aria-hidden="true"><IconLock size={13} /></span></td>
                       <td style={tdStyle}><span className="bet-cell-locked" aria-hidden="true"><IconLock size={13} /></span></td>
@@ -613,6 +618,8 @@ function BetForm({ form, setField, onSave, onCancel, saving, error }: BetFormPro
           </select>
         </div>
 
+        <GamePicker form={form} setField={setField} />
+
         <div>
           <label style={labelStyle}>Note</label>
           <input
@@ -648,6 +655,51 @@ function BetForm({ form, setField, onSave, onCancel, saving, error }: BetFormPro
           Cancel
         </button>
       </div>
+    </div>
+  )
+}
+
+/**
+ * Which Desk game the pick is on, so it shows under "Bets" on that game's
+ * page. Defaults to auto-match (sport + date + team, lib/picks/game-match.ts);
+ * the options are that day's games in the pick's league, with the one
+ * auto-match would choose marked.
+ */
+function GamePicker({ form, setField }: { form: typeof EMPTY_FORM; setField: (name: string, value: string | boolean) => void }) {
+  const [games, setGames] = useState<{ id: string; label: string; kickoff: string | null }[]>([])
+  const [suggested, setSuggested] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!form.sport || !form.date.trim()) { setGames([]); setSuggested(null); return }
+    const ctl = new AbortController()
+    const t = window.setTimeout(() => {
+      const q = new URLSearchParams({ sport: form.sport, date: form.date, bet: form.bet, opponent: form.opponent })
+      fetch(`/api/admin/pick-games?${q}`, { signal: ctl.signal })
+        .then(r => r.json())
+        .then(j => { setGames(j.games ?? []); setSuggested(j.suggested ?? null) })
+        .catch(() => {})
+    }, 300)
+    return () => { window.clearTimeout(t); ctl.abort() }
+  }, [form.sport, form.date, form.bet, form.opponent])
+
+  const when = (iso: string | null) => iso
+    ? new Date(iso).toLocaleString('en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York' })
+    : 'TBD'
+  const suggestedLabel = games.find(g => g.id === suggested)?.label
+
+  return (
+    <div>
+      <label style={labelStyle}>Game</label>
+      <select value={form.game_id} onChange={e => setField('game_id', e.target.value)} style={inputStyle}>
+        <option value="auto">Auto-match{suggestedLabel ? ` (${suggestedLabel})` : ' (none found)'}</option>
+        <option value="">No game</option>
+        {games.map(g => (
+          <option key={g.id} value={g.id}>{g.label} · {when(g.kickoff)}</option>
+        ))}
+        {form.game_id && form.game_id !== 'auto' && !games.some(g => g.id === form.game_id) && (
+          <option value={form.game_id}>Current game</option>
+        )}
+      </select>
     </div>
   )
 }

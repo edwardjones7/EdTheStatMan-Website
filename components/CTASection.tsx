@@ -59,11 +59,6 @@ export default function CTASection({ content = DEFAULT_CTA, editMode, onEdit, re
                     : `See Plans — from ${OFFER_ENTRY_PRICE}`}{' '}
                   <IconArrowRight size={16} />
                 </Link>
-                {/* On-site, not off to X: a visitor not ready to pay should
-                    land on the free picks, where the signup ask lives. */}
-                <Link href="/picks" className="btn btn--secondary btn--lg">
-                  <span className="btn__icon"><IconBolt size={15} /></span> Get Free Picks
-                </Link>
               </>
             ) : (
               <>

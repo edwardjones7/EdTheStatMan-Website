@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 export default function TermsPage() {
   return (
-    <LegalPage label="Legal" title="Terms of Service" updated="October 15, 2026">
+    <LegalPage label="Legal" title="Terms of Service" updated="November 2, 2026">
       <p>
         These terms cover your use of EdTheStatMan.com (&ldquo;the site&rdquo;), operated by
         EdTheStatMan in New Jersey (&ldquo;we&rdquo;, &ldquo;us&rdquo;). By creating an account or
@@ -53,13 +53,15 @@ export default function TermsPage() {
       <h2>Memberships and billing</h2>
       <ul>
         <li>
-          <strong>Season passes and The Portfolio</strong> are one-time payments. They give access
-          until the end date stated on the plan (season passes run through the Super Bowl) and do not renew.
+          <strong>Every plan is a one-time payment</strong> for 30 or 365 days of access, shown on
+          the plan before you buy. Nothing renews automatically and there are no recurring charges;
+          access ends at the end of the period you bought. Plans bought before November 2026 keep
+          the terms they were sold on.
         </li>
         <li>
-          <strong>Monthly plans</strong> on The Research Desk and above renew automatically every
-          month at the price shown at checkout until you cancel. You can cancel at any time from
-          your account page; access continues to the end of the period you have paid for.
+          <strong>The Research Desk free trial</strong> gives a free account 7 days of Research
+          Desk access. No card is collected and nothing is charged when it ends. One trial per
+          person; we may end trials opened with duplicate or disposable accounts.
         </li>
         <li>Payments are processed by Stripe. We never see or store your full card number.</li>
       </ul>
@@ -67,9 +69,7 @@ export default function TermsPage() {
       <h2>All sales are final</h2>
       <p>
         Because picks and research are delivered the moment you join, <strong>we do not offer
-        refunds</strong> on any purchase, including one-time passes, monthly renewals and unused
-        time. Cancelling a monthly plan stops future charges; it does not refund the current
-        period. If you believe you were charged in error, <Link href="/contact">contact us</Link>{' '}
+        refunds</strong> on any purchase, including unused time. If you believe you were charged in error, <Link href="/contact">contact us</Link>{' '}
         and we will look into it.
       </p>
 

@@ -7,9 +7,11 @@ import CheckoutAutoStart from '@/components/CheckoutAutoStart'
 import ProofStrip from '@/components/ProofStrip'
 import { IconArrowRight } from '@/components/Icons'
 import {
-  OFFER_DISCLAIMER, OFFER_META_DESCRIPTION, OFFER_PLANS, SEASON_ENDS_AT, planByKey,
+  OFFER_META_DESCRIPTION, OFFER_PLANS, TRIAL_DAYS, planByKey,
   type BillingPeriod, type OfferTierKey,
 } from '@/lib/offer'
+import { createAdminClient } from '@/lib/supabase/admin'
+import { loadTrialState } from '@/lib/trial'
 import { resolveAccess, ACCESS_SELECT, TIER_SHORT_LABEL } from '@/lib/access'
 import { loadProof } from '@/lib/proof'
 import '@/styles/proof-win.css'
@@ -36,11 +38,6 @@ export const metadata: Metadata = {
   },
 }
 
-/** "February 15, 2027": the season pass end date, as the FAQ states it. */
-const SEASON_END_LABEL = new Date(SEASON_ENDS_AT).toLocaleDateString('en-US', {
-  month: 'long', day: 'numeric', year: 'numeric', timeZone: 'America/New_York',
-})
-
 /**
  * Every answer here must be true today, by the same rule as the bullets in
  * lib/offer.ts. Delivery channels are lib/notify (email, web push, Discord);
@@ -52,32 +49,33 @@ const FAQ: { q: string; a: ReactNode }[] = [
     q: 'What is the difference between the plans?',
     a: (
       <>
-        The Portfolio is the picks: every model play with its full line and number, plus the
-        graded history. The Research Desk adds the season schedule with opening and current
-        lines and a page for every game. Private Intelligence adds the full Vault of systems and
-        team trends. Institutional adds the highest-conviction library, which no other rung
-        sees. Each rung includes everything below it.
+        The Research Desk is everything: every game in the NFL, college football, NBA and college
+        basketball on its own page with the systems, trends and bets attached, plus the complete
+        Handicapping Vault and every EdTheStatBot Portfolio pick. The Handicapping Vault is the
+        full library of systems and team trends. The EdTheStatBot Portfolio is the picks, with
+        the full line and number and the graded history. The Vault and the Portfolio are
+        separate; the Research Desk is the only plan with both.
       </>
     ),
   },
   {
-    q: 'Do season passes renew?',
+    q: 'How does the free trial work?',
     a: (
       <>
-        No. A season pass is one payment and runs through {SEASON_END_LABEL}, after the Super
-        Bowl. Nothing auto-renews, so there is nothing to cancel. The Portfolio&apos;s 30-day
-        option is also one-time and never renews.
+        Create a free account and start the trial from the Research Desk card. You get the whole
+        Research Desk for {TRIAL_DAYS} days. We never ask for a card, so there is nothing to
+        cancel and nothing is charged when it ends. After that, buy whichever plan fits, or none.
+        One trial per account.
       </>
     ),
   },
   {
-    q: 'How do I cancel a monthly plan?',
+    q: 'Does anything renew?',
     a: (
       <>
-        Monthly Research Desk, Private and Institutional plans bill every month until you cancel.
-        Cancel at any time from the billing portal on your{' '}
-        <Link href="/account">account page</Link>. Access runs to the end of the period you have
-        paid for.
+        No. Every plan is one payment for 30 or 365 days. There is no automatic renewal and no
+        recurring charge, so there is nothing to cancel. Access ends at the end of the period you
+        bought, and you can buy again whenever you like.
       </>
     ),
   },
@@ -85,9 +83,8 @@ const FAQ: { q: string; a: ReactNode }[] = [
     q: 'Can I get a refund?',
     a: (
       <>
-        No. All sales are final, including season passes, monthly renewals and unused time.
-        Cancelling a monthly plan stops future charges; it does not refund the current one. The
-        full policy is in the <Link href="/terms">Terms of Service</Link>.
+        No. All sales are final, including unused time. The full policy is in the{' '}
+        <Link href="/terms">Terms of Service</Link>.
       </>
     ),
   },
@@ -116,7 +113,7 @@ const FAQ: { q: string; a: ReactNode }[] = [
 export default async function Pricing({
   searchParams,
 }: {
-  searchParams: { checkout?: string; period?: string; canceled?: string; plan?: string }
+  searchParams: { checkout?: string; period?: string; canceled?: string; plan?: string; trial?: string }
 }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -131,22 +128,27 @@ export default async function Pricing({
     access = resolveAccess(profile as any, true)
   }
   const { tier: userTier, isPaid, membership, expiresAt } = access
-  const proof = await loadProof()
+  const [proof, trial] = await Promise.all([
+    loadProof(),
+    loadTrialState(createAdminClient(), user?.id),
+  ])
 
-  const resumePlan = user && !isPaid ? planByKey(searchParams.checkout ?? '') : undefined
-  // Resume on the period they picked. This always used the season SKU, so a
-  // visitor who chose $49 monthly and signed up landed on a $199-$1,499 checkout.
+  const resumePlan = user && (!isPaid || trial.onTrial) ? planByKey(searchParams.checkout ?? '') : undefined
+  // Resume on the period they picked, so a 30-day buyer who had to sign up
+  // first does not land on a 365-day checkout.
   const resumeSku = resumePlan
-    ? (searchParams.period === 'month' ? resumePlan.month : resumePlan.season)
+    ? (searchParams.period === 'month' ? resumePlan.month : resumePlan.year)
     : undefined
 
-  // ?plan=<tier>&period=month|season, from links elsewhere on the site. Only
+  // ?plan=<tier>&period=month|year, from links elsewhere on the site. Only
   // preselects and highlights; it never starts a checkout (that is ?checkout=).
-  // Season stays the default: it is the SKU we push.
-  const initialPeriod: BillingPeriod = searchParams.period === 'month' ? 'month' : 'season'
-  const selectedPlan: OfferTierKey | null = OFFER_PLANS.find(p => p.key === searchParams.plan)?.key ?? null
+  // 365 days stays the default: it is the SKU we push. ?trial=1 (back from
+  // signup via the trial button) highlights the Research Desk.
+  const initialPeriod: BillingPeriod = searchParams.period === 'month' ? 'month' : 'year'
+  const selectedPlan: OfferTierKey | null =
+    OFFER_PLANS.find(p => p.key === searchParams.plan)?.key ?? (searchParams.trial ? 'desk' : null)
 
-  const entry = OFFER_PLANS[0]
+  const entry = OFFER_PLANS.find(p => p.key === 'portfolio') ?? OFFER_PLANS[0]
 
   return (
     <main>
@@ -159,11 +161,11 @@ export default async function Pricing({
         <div className="container">
           <div className="reveal" style={{ textAlign: 'center' }}>
             <span className="section-label">Membership</span>
-            <h1 className="page-header__title">The picks, the research, <span className="text-gradient">the Vault</span></h1>
+            <h1 className="page-header__title">The research, the Vault, <span className="text-gradient">the picks</span></h1>
             <p className="page-header__subtitle">
-              Start with the picks. Add the Research Desk or the full Vault when you want them;
-              every rung includes everything below it. Season passes are one payment and never
-              renew.
+              The Research Desk holds everything. The Handicapping Vault and the EdTheStatBot
+              Portfolio are sold on their own. Every plan is one payment for 30 or 365 days, and
+              nothing renews. Try the Research Desk free for {TRIAL_DAYS} days, no card needed.
             </p>
           </div>
         </div>
@@ -190,7 +192,15 @@ export default async function Pricing({
             </div>
           )}
 
-          {isPaid && (
+          {trial.onTrial && trial.endsAt && (
+            <div className="win-notice win-notice--active">
+              ✓ Your free Research Desk trial runs until{' '}
+              {new Date(trial.endsAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', timeZone: 'America/New_York' })}.
+              {' '}Nothing is charged when it ends. Pick a plan below to keep going.
+            </div>
+          )}
+
+          {isPaid && !trial.onTrial && (
             <div className="win-notice win-notice--active">
               ✓ {TIER_SHORT_LABEL[userTier ?? 'retail']} access active
               {expiresAt ? ` until ${expiresAt.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}` : ''}.{' '}
@@ -199,16 +209,16 @@ export default async function Pricing({
           )}
 
           <WinPlans
-            membership={membership}
-            currentTier={userTier}
-            expiresAt={expiresAt ? expiresAt.toISOString() : null}
+            membership={trial.onTrial ? 'free' : membership}
+            currentTier={trial.onTrial ? 'retail' : userTier}
             initialPeriod={initialPeriod}
             selectedPlan={selectedPlan}
+            trialAvailable={trial.available}
+            onTrial={trial.onTrial}
           />
 
           <div className="win-disclaimer">
             <p>
-              {OFFER_DISCLAIMER}{' '}
               <strong>All sales are final; we do not offer refunds.</strong>{' '}
               See the <Link href="/terms">Terms of Service</Link>.{' '}
               Questions? <Link href="/contact">Contact us</Link>.
@@ -244,16 +254,14 @@ export default async function Pricing({
             <p className="cta-box__text">
               {isPaid
                 ? 'Your plan is active. Any rung above it is in the plans, whenever you want it.'
-                : `The Portfolio is ${entry.month.price} for 30 days or ${entry.season.price} for the season, and every graded pick is public before you buy.`}
+                : `The EdTheStatBot Portfolio is ${entry.month.price} for 30 days or ${entry.year.price} for 365, and every graded pick is public before you buy.`}
             </p>
             <div className="cta-box__actions">
               <a href="#plans" className="btn btn--primary btn--lg">
                 Choose a Plan <IconArrowRight size={16} />
               </a>
-              {isPaid ? (
+              {isPaid && (
                 <Link href="/account" className="btn btn--secondary btn--lg">Your Account</Link>
-              ) : (
-                <Link href="/picks" className="btn btn--secondary btn--lg">Get Free Picks</Link>
               )}
             </div>
           </div>
