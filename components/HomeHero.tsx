@@ -191,7 +191,7 @@ export function HomeBoardSection({ board }: { board: HomeBoard | null }) {
           <p className="home-board__count">
             {plural(board.games, 'game', 'games')}
             {board.withResearch > 0
-              ? `, ${board.withResearch} with systems and trends attached`
+              ? `, ${board.withResearch} with systems and trends attached.`
               : '. Systems and trends go up before game time.'}
             {board.bets > 0 && ` ${plural(board.bets, 'bet', 'bets')} posted.`}
           </p>
