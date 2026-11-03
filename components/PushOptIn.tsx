@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { IconBell } from './Icons'
+import { trackEvent } from '@/lib/track-client'
 
 // Browser push opt-in button. Renders nothing where push can't work (Safari
 // without an installed PWA, older browsers, or no VAPID key configured) rather
@@ -24,7 +25,8 @@ function urlBase64ToArrayBuffer(base64String: string): ArrayBuffer {
   return buffer
 }
 
-export default function PushOptIn() {
+/** `context` names the placement in the push_opt_in funnel event. */
+export default function PushOptIn({ context = 'never_miss' }: { context?: string } = {}) {
   const [state, setState] = useState<State>('idle')
   const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
 
@@ -77,6 +79,9 @@ export default function PushOptIn() {
       if (!res.ok) throw new Error('save failed')
 
       setState('on')
+      // Only after the subscription is saved server side: a granted permission
+      // whose save failed is not an opt-in anyone will get alerts from.
+      trackEvent('push_opt_in', { context })
     } catch (err) {
       console.error('Push subscribe failed:', err)
       setState('error')

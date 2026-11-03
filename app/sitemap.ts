@@ -2,16 +2,37 @@ import type { MetadataRoute } from 'next'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { DESK_SPORTS } from '@/lib/desk'
 import { gamePath } from '@/lib/nfl'
+import { selectAll } from '@/lib/supabase/select-all'
+import { seoSitemapEntries } from '@/lib/seo-sitemap'
+import { pickSitemapEntries } from '@/lib/picks/sitemap'
 
 const BASE = 'https://edthestatman.com'
+
+// Without this the sitemap was prerendered once at build, so every game
+// published after a deploy stayed out of it until the next one.
+export const revalidate = 3600
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const admin = createAdminClient()
 
-  const [{ data: posts }, { data: games }] = await Promise.all([
+  // Games are paged: there are several thousand published rows across the four
+  // leagues, and an unpaged read stopped at exactly 1,000 (lib/supabase/select-all.ts).
+  const [{ data: posts }, { data: allGames }] = await Promise.all([
     (admin as any).from('posts').select('slug, updated_at').eq('published', true),
-    (admin as any).from('nfl_games').select('slug, sport, updated_at').eq('is_published', true),
+    selectAll(() => (admin as any)
+      .from('nfl_games')
+      .select('slug, sport, updated_at, spread_current, total_current')
+      .eq('is_published', true)
+      .order('id')),
   ])
+
+  // A college basketball week is 250 to 470 games, most of them small-school
+  // matchups ESPN never prices. Without a line the page is a schedule entry and
+  // nothing else, and thousands of those would read as thin content. List one
+  // once it has a market; the page itself stays reachable either way.
+  const games = allGames.filter((g: any) =>
+    g.sport !== 'cbb' || g.spread_current != null || g.total_current != null
+  )
 
   // Grouped by product, and every URL is a v3 path. The six pre-v3 routes are
   // 308s now (next.config.js), and a sitemap that lists a redirect asks every
@@ -38,6 +59,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE}/blog`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
     { url: `${BASE}/win`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.7 },
     { url: `${BASE}/contact`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.5 },
+    { url: `${BASE}/responsible-gaming`, lastModified: new Date(), changeFrequency: 'yearly', priority: 0.3 },
+    { url: `${BASE}/terms`, lastModified: new Date(), changeFrequency: 'yearly', priority: 0.2 },
+    { url: `${BASE}/privacy`, lastModified: new Date(), changeFrequency: 'yearly', priority: 0.2 },
   ]
 
   const blogRoutes: MetadataRoute.Sitemap = (posts ?? []).map((post: any) => ({
@@ -58,5 +82,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }))
 
-  return [...staticRoutes, ...blogRoutes, ...gameRoutes]
+  // Team pages and Vault row pages (lib/seo-sitemap.ts).
+  const seoRoutes = await seoSitemapEntries()
+  // /picks and every public pick page (lib/picks/sitemap.ts).
+  const pickRoutes = await pickSitemapEntries(BASE)
+
+  return [...staticRoutes, ...blogRoutes, ...gameRoutes, ...seoRoutes, ...pickRoutes]
 }

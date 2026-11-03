@@ -7,42 +7,59 @@
 // Pure module — no server imports — so client components can use it too.
 
 /**
- * The v3 ladder. Each rung includes everything below it.
+ * The Nov 2026 product set. NOT a ladder any more: three products, two of them
+ * siblings, and one that holds everything.
  *
- *   retail        Vault — Public Intelligence      free (the 'retail' key
- *                 is the stored DB value; copy says Public / free)
- *   portfolio     The Portfolio (picks)            $49 once / $199 season
- *   desk          The Research Desk                $129/mo  / $499 season
- *   private       Vault — Private Intelligence     $199/mo  / $799 season
- *   institutional Vault — Institutional            $399/mo  / $1,499 season
+ *   retail        Free                                  free
+ *   portfolio     EdTheStatBot Portfolio (the picks)    $29 / 30 days, $249 / 365 days
+ *   private       Handicapping Vault (systems, trends)  $39 / 30 days, $349 / 365 days
+ *   desk          The Research Desk (all of the above   $79 / 30 days, $699 / 365 days
+ *                 plus the game boards)                 7-day free trial, no card
+ *
+ * The stored values did not change ('private' is the Vault in the database),
+ * so no profile or content row had to be rewritten. 'institutional' folded into
+ * the Vault: it is a legacy value now, mapped to 'private' on read.
+ *
+ * Portfolio and Vault are SEPARATE. Buying one never opens the other; the
+ * Research Desk is the only thing that holds both. That is why gating goes
+ * through tierCovers() below and not through a rank comparison.
  */
-export type Tier = 'retail' | 'portfolio' | 'desk' | 'private' | 'institutional'
+export type Tier = 'retail' | 'portfolio' | 'private' | 'desk'
 
-/** Ordering for gates and for upgrade/anti-downgrade decisions. */
+/**
+ * Price order, cheapest first. Use for "the cheapest product that unlocks
+ * this" and for display order, NEVER for access: Vault outranks Portfolio here
+ * and still does not open a single pick.
+ */
 export const TIER_RANK: Record<Tier, number> = {
   retail: 0,
   portfolio: 1,
-  desk: 2,
-  private: 3,
-  institutional: 4,
+  private: 2,
+  desk: 3,
+}
+
+/** What each product opens. The one place entitlement is defined. */
+const COVERS: Record<Tier, Tier[]> = {
+  retail: ['retail'],
+  portfolio: ['retail', 'portfolio'],
+  private: ['retail', 'private'],
+  desk: ['retail', 'portfolio', 'private', 'desk'],
 }
 
 /** Full product names. The single source of tier copy for the whole app. */
 export const TIER_LABEL: Record<Tier, string> = {
-  retail: 'Vault — Public Intelligence',
-  portfolio: 'The Portfolio',
+  retail: 'Free',
+  portfolio: 'EdTheStatBot Portfolio',
+  private: 'Handicapping Vault',
   desk: 'The Research Desk',
-  private: 'Vault — Private Intelligence',
-  institutional: 'Vault — Institutional Intelligence',
 }
 
 /** Short names for nav pills, badges and inline confirmations. */
 export const TIER_SHORT_LABEL: Record<Tier, string> = {
   retail: 'Free',
   portfolio: 'Portfolio',
+  private: 'Vault',
   desk: 'Research Desk',
-  private: 'Private',
-  institutional: 'Institutional',
 }
 
 /**
@@ -69,15 +86,14 @@ export interface AccessOption { value: Tier; label: string }
 /** betting_systems and betting_trends. */
 export const VAULT_ACCESS_OPTIONS: AccessOption[] = [
   { value: 'retail', label: 'Free' },
-  { value: 'private', label: 'Private Intelligence' },
-  { value: 'institutional', label: 'Institutional Intelligence' },
+  { value: 'private', label: 'Vault members' },
 ]
 
 /** todays_bets. */
 export const PICK_ACCESS_OPTIONS: AccessOption[] = [
   { value: 'retail', label: 'Free' },
   { value: 'portfolio', label: 'Portfolio' },
-  { value: 'private', label: 'Edge pick (Private Intelligence)' },
+  { value: 'private', label: 'Edge pick (Vault members)' },
 ]
 
 /**
@@ -89,14 +105,14 @@ export const PICK_ACCESS_OPTIONS: AccessOption[] = [
 export function accessBadge(minTier: string | null | undefined): { variant: string; label: string } {
   switch (normalizeTier(minTier)) {
     case 'retail': return { variant: 'free', label: 'Free' }
-    case 'institutional': return { variant: 'elite', label: 'Institutional' }
     case 'portfolio': return { variant: 'members', label: 'Portfolio' }
-    default: return { variant: 'members', label: 'Private' }
+    case 'desk': return { variant: 'elite', label: 'Desk' }
+    default: return { variant: 'members', label: 'Vault' }
   }
 }
 
 /** Ladder order, lowest first. Safe to iterate for UI. */
-export const TIERS: Tier[] = ['retail', 'portfolio', 'desk', 'private', 'institutional']
+export const TIERS: Tier[] = ['retail', 'portfolio', 'private', 'desk']
 
 /**
  * Pre-v3 tier values, mapped onto the ladder.
@@ -109,7 +125,9 @@ const LEGACY_TIER: Record<string, Tier> = {
   free: 'retail',
   basic: 'desk',
   premium: 'private',
-  elite: 'institutional',
+  elite: 'private',
+  // Folded into the Vault in Nov 2026. Rows and profiles may still hold it.
+  institutional: 'private',
 }
 
 /** Normalize any stored tier string (legacy or current) onto the ladder. */
@@ -120,22 +138,26 @@ export function normalizeTier(value: string | null | undefined): Tier {
 }
 
 /**
- * The ladder predicate — the one gate every check funnels through.
- * Standalone (not just a method on Access) so client components that only
- * receive a tier string can use it, the way isPaidTier() is used today.
+ * Does `tier` open content gated at `required`? The one gate every check
+ * funnels through.
+ *
+ * Named for the old ladder, kept so the dozens of call sites read the same,
+ * but it is a lookup in COVERS now, not a rank comparison: a Vault member is
+ * "above" the Portfolio on price and still does not get the picks.
+ *
+ * Takes a raw string so client components -- which only ever receive
+ * `userTier: string | null` as a prop -- can call it directly, and so a legacy
+ * value still in the column resolves correctly.
  */
-export function atLeastTier(tier: string | null | undefined, required: Tier): boolean {
-  // Takes a raw string so client components -- which only ever receive
-  // `userTier: string | null` as a prop -- can call it directly, and so a
-  // legacy value still in the column resolves correctly.
+export function atLeastTier(tier: string | null | undefined, required: string): boolean {
   if (tier === null || tier === undefined) return false
-  return TIER_RANK[normalizeTier(tier)] >= TIER_RANK[required]
+  return COVERS[normalizeTier(tier)].includes(normalizeTier(required))
 }
 
 /** True for any paid rung. Use instead of hand-written tier lists. */
 export function isPaidTier(tier: string | null | undefined): boolean {
   if (tier === null || tier === undefined) return false
-  return atLeastTier(normalizeTier(tier), 'portfolio')
+  return normalizeTier(tier) !== 'retail'
 }
 
 /**
@@ -200,7 +222,7 @@ export interface Access {
   isAdmin: boolean
   membership: Membership
   expiresAt: Date | null
-  /** Ladder gate, bound to this user. `access.atLeast('private')` */
+  /** Content gate, bound to this user. `access.atLeast('private')` opens the Vault. */
   atLeast: (required: Tier) => boolean
   /**
    * Has ANY paid rung. Correct for nav, CTAs, the offer page and the account
@@ -238,7 +260,7 @@ export function resolveAccess(
     membership,
     expiresAt,
     atLeast: (required: Tier) => atLeastTier(tier, required),
-    isPaid: atLeastTier(tier, 'portfolio'),
+    isPaid: !!tier && tier !== 'retail',
     hasElite: atLeastTier(tier, 'private'),
     billing: (profile?.billing_mode as BillingMode) ?? 'none',
     subStatus: profile?.subscription_status ?? null,
@@ -248,7 +270,7 @@ export function resolveAccess(
 
   if (!isLoggedIn) return build(null, false, 'logged-out', null)
 
-  if (profile?.is_admin) return build('institutional', true, 'admin', null)
+  if (profile?.is_admin) return build('desk', true, 'admin', null)
 
   const storedTier = normalizeTier(profile?.subscription_tier)
   const expiresAt = profile?.access_expires_at ? new Date(profile.access_expires_at) : null

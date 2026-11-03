@@ -7,6 +7,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { getAccess } from '@/lib/access-server'
 import { rowMinTier, compareBySample } from '@/lib/gate'
 import { atLeastTier, TIER_SHORT_LABEL, type Tier } from '@/lib/access'
+import { planByKey } from '@/lib/offer'
 import { SPORT_LABEL, SPORT_SHORT, type Sport } from '@/lib/desk'
 import { IconLock, IconChartBar, IconTarget, IconArrowRight, IconCheckCircle } from '@/components/Icons'
 
@@ -16,11 +17,11 @@ export const dynamic = 'force-dynamic'
 // here too produced "The Vault — EdTheStatMan.com – EdTheStatMan.com" in the tab.
 export const metadata: Metadata = {
   title: 'The Vault',
-  description: 'Every betting system and team trend we track, in one place. Free, Private and Institutional access levels.',
+  description: 'Every betting system and team trend we track, in one place. Free to browse; the Handicapping Vault opens all of it.',
   alternates: { canonical: 'https://edthestatman.com/vault' },
   openGraph: {
     title: 'The Vault — EdTheStatMan.com',
-    description: 'Every betting system and team trend we track, in one place. Free, Private and Institutional access levels.',
+    description: 'Every betting system and team trend we track, in one place. Free to browse; the Handicapping Vault opens all of it.',
     url: 'https://edthestatman.com/vault',
     images: [{ url: '/og-cover.jpg', width: 1200, height: 630 }],
   },
@@ -42,19 +43,24 @@ const LEVELS: {
   },
   {
     tier: 'private',
-    name: 'Private Intelligence',
-    price: '$199/mo · $799 season',
-    body: 'The complete libraries, unlocked and filterable. Every system, every team trend, with alerts the moment one triggers.',
-    features: ['Every system and trend, unlocked', 'Filter by sport, team and situation', 'Alerts the moment one triggers'],
+    name: 'Handicapping Vault',
+    price: priceLine('private'),
+    body: 'The complete libraries, unlocked and filterable. Every system and every team trend we track.',
+    features: ['Every system and trend, unlocked', 'Filter by sport, team and situation', 'Sort across the whole Vault'],
   },
   {
-    tier: 'institutional',
-    name: 'Institutional Intelligence',
-    price: '$399/mo · $1,499 season',
-    body: 'The raw material underneath the conclusions: a query builder across the whole Vault, an API key, and a backtester for your own systems.',
-    features: ['Query builder across the whole Vault', 'API key', 'Backtester for your own systems'],
+    tier: 'desk',
+    name: 'The Research Desk',
+    price: priceLine('desk'),
+    body: 'The whole Vault, plus every game on its own page with the research and the bets attached, plus every Portfolio pick.',
+    features: ['The complete Handicapping Vault', 'Every game, researched', 'All EdTheStatBot Portfolio picks'],
   },
 ]
+
+function priceLine(key: 'private' | 'desk'): string {
+  const plan = planByKey(key)
+  return plan ? `${plan.month.price} / 30 days · ${plan.year.price} / 365 days` : ''
+}
 
 function pctDisplay(pct: number | null | undefined): string {
   if (pct === null || pct === undefined) return '—'
@@ -287,11 +293,12 @@ export default async function VaultLanding() {
             })}
           </div>
 
-          {!access.atLeast('institutional') && (
+          {!access.atLeast('desk') && (
             <div style={{ marginTop: '56px' }}>
               <PricingCards
                 membership={membership}
                 currentTier={userTier}
+                expiresAt={access.expiresAt?.toISOString() ?? null}
                 highlight="private"
               />
             </div>

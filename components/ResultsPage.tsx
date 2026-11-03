@@ -1,4 +1,5 @@
 'use client'
+import '@/styles/proof-win.css'
 
 import EditableText from './EditableText'
 import type { ResultsContent, ResultsStatCard, ResultsChartBar, ResultsYearRow } from '@/lib/site-content'

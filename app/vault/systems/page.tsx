@@ -4,7 +4,9 @@ import SportTabsSystem from '@/components/SportTabsSystem'
 import PricingCards from '@/components/PricingCards'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getAccess } from '@/lib/access-server'
-import { partitionBySport, compareByCode } from '@/lib/gate'
+import { compareByCode } from '@/lib/gate'
+import { partitionForVisitor } from '@/lib/vault-visitor'
+import SignupPrompt from '@/components/SignupPrompt'
 
 export const dynamic = 'force-dynamic'
 
@@ -54,9 +56,13 @@ export default async function VaultSystems() {
   if (error) ({ data: rawSystems } = await base())
   const systems = (rawSystems ?? []).sort(compareByCode)
 
-  const { visible, lockedCounts, teasers } = partitionBySport(
+  // Logged-out visitors get free rows split out, so they are told plainly
+  // that those open with a free account (lib/vault-visitor.ts).
+  const { visible, lockedCounts, teasers, teaserTiers, freeLockedCounts, freeTeasers } = partitionForVisitor(
     systems as any[], userTier, isAdmin, 'private'
   )
+  const loggedOut = membership === 'logged-out'
+  const freeTotal = Object.values(freeLockedCounts).reduce((a, b) => a + b, 0)
 
   return (
     <main>
@@ -70,6 +76,18 @@ export default async function VaultSystems() {
               win percentages, sample sizes and season data.
             </p>
           </div>
+          {loggedOut && freeTotal > 0 && (
+            <div style={{ marginTop: '24px' }}>
+              <SignupPrompt
+                context="vault_systems"
+                next="/vault/systems"
+                variant="banner"
+                title={`${freeTotal} of these systems are free.`}
+                body="They open with a free account: the full rule, not just the record. Google or one email link."
+                cta="Open them free"
+              />
+            </div>
+          )}
           <SportTabsSystem
             systems={visible as any[]}
             lockedCounts={lockedCounts}
@@ -78,6 +96,9 @@ export default async function VaultSystems() {
             eliteTeasers={[]}
             userTier={userTier}
             isAdmin={isAdmin}
+            teaserTiers={teaserTiers}
+            freeLockedCounts={freeLockedCounts}
+            freeTeasers={freeTeasers}
           />
         </div>
       </section>
@@ -89,12 +110,12 @@ export default async function VaultSystems() {
               <span className="section-label">Membership</span>
               <h2 className="section-title">Open the <span className="text-gradient">Vault</span></h2>
               <p className="section-subtitle" style={{ margin: '0 auto' }}>
-                Private Intelligence unlocks the complete systems and trends libraries.
-                Institutional adds the raw rows underneath them.
+                The Handicapping Vault unlocks the complete systems and trends libraries.
+                The Research Desk includes the whole Vault, plus every game and every pick.
               </p>
             </div>
             <div style={{ marginTop: '60px' }}>
-              <PricingCards membership={membership} currentTier={userTier} highlight="private" />
+              <PricingCards membership={membership} currentTier={userTier} expiresAt={access.expiresAt?.toISOString() ?? null} highlight="private" />
             </div>
           </div>
         </section>

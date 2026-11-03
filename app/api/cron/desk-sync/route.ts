@@ -3,6 +3,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { syncTargets } from '@/lib/desk-sync'
 import { currentWeekOf } from '@/lib/nfl'
 import { DESK_SPORTS, deskSweep, nextDeskWeek, weeksFromDates, defaultDeskSeason, dateWeekOf } from '@/lib/desk'
+import { selectAll } from '@/lib/supabase/select-all'
 
 export const dynamic = 'force-dynamic'
 // Four sports, two weeks each, plus the odds backfill on anything new.
@@ -79,11 +80,12 @@ export async function GET(req: Request) {
       .maybeSingle()
     const season: number = seasonRow?.season ?? new Date().getFullYear()
 
-    const { data: weekRows } = await admin
+    const { data: weekRows } = await selectAll(() => admin
       .from('nfl_games')
       .select('season_type, week, kickoff, status')
       .eq('sport', sport)
       .eq('season', season)
+      .order('id'))
 
     const active = currentWeekOf(weekRows ?? [], new Date())
     if (!active) {

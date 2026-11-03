@@ -152,9 +152,9 @@ export async function splitRecipients(
     if (!row.email) continue
     // Never mail an address nobody proved they own. See confirmedAccountIds().
     if (!confirmed.has(row.id)) continue
-    // The ladder predicate, not a parallel rule: if they could open the pick
-    // on the site, they hear about it. Inclusive, so a Private member is
-    // atLeast('desk') and gets Desk picks without being listed anywhere.
+    // The site's own gate, not a parallel rule: if they could open the pick
+    // on the site, they hear about it. A Research Desk member clears
+    // 'portfolio'; a Vault member does not, because the Vault has no picks.
     // Every row here is a registered profile, so all of them clear 'retail'.
     if (resolveAccess(row, true).atLeast(audience)) entitled.push(toRecipient(row))
     else locked.push(toRecipient(row))

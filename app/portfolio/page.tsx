@@ -12,6 +12,8 @@ import { atLeastTier } from '@/lib/access'
 import { rowMinTier } from '@/lib/gate'
 import { toBetTeaser, BET_TEASER_LIMIT } from '@/lib/teaser'
 import type { LockedBetTeaser } from '@/lib/teaser'
+import PortfolioEmpty from '@/components/PortfolioEmpty'
+import { buildProof } from '@/lib/proof'
 
 export const metadata: Metadata = {
   // Just the page name: app/layout.tsx appends ' – EdTheStatMan.com' through
@@ -95,6 +97,15 @@ export default async function Portfolio() {
   // TodaysBets drops every show_on_results row when it renders
   // (components/TodaysBets.tsx:224), so they never reach the list either way.
 
+  // No open plays at all (nothing visible, nothing locked): the page would
+  // otherwise be one grey line. Show the record instead, built from the rows
+  // already loaded -- buildProof() keeps only show_on_results rows, the same
+  // ones /portfolio/performance counts. Only computed when it will render.
+  const hasOpen = todaysBets.some(b => !b.show_on_results) || lockedRows.length > 0
+  const emptyState = !isAdmin && !hasOpen
+    ? <PortfolioEmpty proof={buildProof(allBets as any)} isMember={isMember} />
+    : undefined
+
   return (
     <>
       {isAdmin ? (
@@ -109,6 +120,7 @@ export default async function Portfolio() {
           lockedBets={lockedBets}
           eliteLockedBets={eliteLockedBets}
           headerContent={headerContent}
+          emptyState={emptyState}
         />
       )}
       <NeverMissAPick userTier={userTier} />

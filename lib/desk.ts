@@ -185,3 +185,52 @@ export function deskSportLabel(sport: string): string {
 export function isSport(value: string): value is Sport {
   return (SPORTS as readonly string[]).includes(value)
 }
+
+// ---- Basketball days -------------------------------------------------------
+//
+// A basketball board is read one night at a time, not one week: an NBA week is
+// 50-odd games and a college one 250 to 470, and nobody wants Tuesday's slate
+// buried under Saturday's. The derived week stays the internal key (the rail,
+// desk notes and research closing all run on it), and a DAY is a filter on top
+// of it, carried in the URL as ?day=YYYY-MM-DD the way ?week= is.
+
+/**
+ * When "today" turns over, in hours after midnight Eastern.
+ *
+ * Not midnight: a West Coast late game tips at 10:30pm ET and ends past 1am,
+ * and a reader checking the score at 12:30 means last night's slate. By 4am the
+ * last game anyone is following is over.
+ */
+export const DESK_DAY_ROLL_HOURS = 4
+
+/** The Desk's "today" as YYYY-MM-DD, rolling over at 4am Eastern. */
+export function deskToday(now: Date = new Date()): string {
+  return easternDate(new Date(now.getTime() - DESK_DAY_ROLL_HOURS * 60 * 60 * 1000))
+}
+
+/** A strict YYYY-MM-DD that is also a real calendar date. */
+export function isYmd(value: string | null | undefined): value is string {
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false
+  const t = Date.parse(`${value}T00:00:00Z`)
+  return Number.isFinite(t) && new Date(t).toISOString().slice(0, 10) === value
+}
+
+/** YYYY-MM-DD plus n calendar days. Done in UTC so no DST hour can skip a day. */
+export function addDays(ymd: string, n: number): string {
+  return new Date(Date.parse(`${ymd}T00:00:00Z`) + n * DAY_MS).toISOString().slice(0, 10)
+}
+
+/** The seven Eastern dates, Monday first, that make up a derived week. */
+export function dateWeekDays(season: number, week: number): string[] {
+  const monday = dateWeekStart(season, week).toISOString().slice(0, 10)
+  return Array.from({ length: 7 }, (_, i) => addDays(monday, i))
+}
+
+/**
+ * The derived week a calendar date falls in. Noon UTC is mid-morning Eastern,
+ * so easternDate() inside dateWeekOf reads back the same date on either side of
+ * a DST change.
+ */
+export function dateWeekOfDay(season: number, ymd: string): number {
+  return dateWeekOf(season, `${ymd}T12:00:00Z`)
+}

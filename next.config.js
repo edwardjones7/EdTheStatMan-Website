@@ -27,6 +27,8 @@ const nextConfig = {
       { source: '/betting-trends', destination: '/vault/trends', permanent: true },
       { source: '/model-picks', destination: '/portfolio', permanent: true },
       { source: '/results', destination: '/portfolio/performance', permanent: true },
+      // The /picks listing was dropped before launch; pick pages stay.
+      { source: '/picks', destination: '/portfolio/performance', permanent: false },
       { source: '/nfl', destination: '/desk/nfl', permanent: true },
       { source: '/nfl/games/:slug', destination: '/desk/nfl/g/:slug', permanent: true },
     ]

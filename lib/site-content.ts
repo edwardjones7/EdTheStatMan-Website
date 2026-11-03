@@ -210,21 +210,23 @@ export const DEFAULT_FEATURES: FeaturesContent = {
     {
       number: '06',
       title: 'Instant Alerts',
-      text: 'Get notified the moment picks drop via X and Discord. Never miss an edge with real-time betting alerts.',
-      href: 'https://x.com/EdTheStatMan',
-      linkText: 'Join Now',
+      text: 'Get notified the moment picks drop via Discord, email and push. Never miss an edge with real-time betting alerts.',
+      href: 'https://discord.gg/rXBZkSPcJb',
+      linkText: 'Join the Discord',
       iconColor: 'purple',
       isExternal: true,
     },
-    // Appended after launch of the Elite NFL Season Pass. Keep new cards at the
-    // END of this array — the home page merges DB overrides onto defaults by
-    // index, so inserting mid-array would mis-apply saved edits.
+    // Keep new cards at the END of this array — the home page merges DB
+    // overrides onto defaults by index, so inserting mid-array would mis-apply
+    // saved edits. Production stores six cards, so this one always renders
+    // from here. It sold the Elite NFL Hub and Season Pass until the v3 ladder
+    // retired both.
     {
       number: '07',
-      title: 'Elite NFL Hub',
-      text: 'Week-by-week NFL breakdowns with the systems and trends behind every matchup, plus curated Edge Picks — exclusive to the Elite Season Pass.',
+      title: 'Research Desk',
+      text: 'Every NFL, college football, NBA and college basketball game on its own page, with opening and current lines as they move.',
       href: '/desk/nfl',
-      linkText: 'Enter the Hub',
+      linkText: 'Open the Desk',
       iconColor: 'gold',
     },
   ],

@@ -1,0 +1,102 @@
+/* Onboarding checklist on /account (components/OnboardingChecklist.tsx).
+   Sits inside the account card system; only the rows are new. */
+
+.onboarding {
+  margin-bottom: 24px;
+  border-color: rgba(var(--teal-rgb), 0.25);
+}
+
+.onboarding__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.onboarding__count {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.onboarding__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.onboarding__row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  /* 44px minimum row, so the whole step is an easy target on a phone. */
+  min-height: 44px;
+  padding: 12px 0;
+  border-top: 1px solid var(--border-color);
+}
+
+.onboarding__row:first-child {
+  border-top: 0;
+}
+
+.onboarding__box {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  border: 1.5px solid rgba(var(--teal-rgb), 0.45);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--bg-primary);
+}
+
+.onboarding__row--done .onboarding__box {
+  background: var(--accent-teal);
+  border-color: var(--accent-teal);
+}
+
+.onboarding__text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.onboarding__title {
+  color: var(--text-primary);
+  font-size: 0.925rem;
+  font-weight: 500;
+}
+
+.onboarding__row--done .onboarding__title {
+  color: var(--text-secondary);
+}
+
+.onboarding__hint {
+  color: var(--text-muted);
+  font-size: 0.775rem;
+}
+
+.onboarding__action {
+  flex-shrink: 0;
+}
+
+@media (max-width: 520px) {
+  .onboarding__row {
+    flex-wrap: wrap;
+  }
+  .onboarding__action {
+    width: 100%;
+    padding-left: 36px;
+  }
+}
+
+/* "Set up push" jumps to the Pick Alerts card; clear the fixed nav + ticker. */
+#alerts {
+  scroll-margin-top: calc(var(--nav-height) + var(--ticker-height) + 16px);
+}

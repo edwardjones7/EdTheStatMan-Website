@@ -1,17 +1,27 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { IconMail } from '@/components/Icons'
+import { safeNext } from '@/lib/safe-redirect'
+import ResendButton from './ResendButton'
+import '@/styles/front-door.css'
 
 export const metadata: Metadata = {
   title: 'Verify Your Email – EdTheStatMan.com',
+  // Without this it inherited the root layout's canonical and told crawlers
+  // it was a copy of the homepage.
+  robots: { index: false, follow: false },
 }
 
 export default function VerifyEmailPage({
   searchParams,
 }: {
-  searchParams: { email?: string }
+  searchParams: { email?: string; next?: string }
 }) {
   const email = searchParams.email
+  // Carried through so "try again" and "back to sign in" land where the visitor
+  // was going, not on the homepage.
+  const next = safeNext(searchParams.next, '/')
+  const nextQs = `next=${encodeURIComponent(next)}`
 
   return (
     <main className="auth-page">
@@ -48,11 +58,18 @@ export default function VerifyEmailPage({
         </div>
 
         <p className="verify-hint">
-          Didn&apos;t receive it? Check your spam folder, or{' '}
-          <Link href="/signup" className="auth-link">try signing up again</Link>.
+          Didn&apos;t receive it? Check your spam folder first.
+          {email ? ' Or send a new link below; it confirms the account and signs you in.' : ''}
         </p>
 
-        <Link href="/login" className="btn btn--outline" style={{ width: '100%', justifyContent: 'center', marginTop: '8px' }}>
+        {email && <ResendButton email={email} next={next} />}
+
+        <p className="verify-hint" style={{ marginTop: '16px' }}>
+          Wrong address?{' '}
+          <Link href={`/signup?${nextQs}`} className="auth-link">Start again</Link>.
+        </p>
+
+        <Link href={`/login?${nextQs}`} className="btn btn--outline" style={{ width: '100%', justifyContent: 'center', marginTop: '8px' }}>
           Back to Sign In
         </Link>
       </div>

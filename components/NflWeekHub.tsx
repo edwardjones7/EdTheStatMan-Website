@@ -22,8 +22,13 @@ interface Props {
 
 const STATUS_LABEL: Record<string, string> = { pre: 'Upcoming', in: 'Live', post: 'Final' }
 
-function kickoffDisplay(kickoff: string | null): string {
+function kickoffDisplay(kickoff: string | null, tbd?: boolean | null): string {
   if (!kickoff) return 'TBD'
+  if (tbd) {
+    return `${new Date(kickoff).toLocaleDateString('en-US', {
+      weekday: 'short', month: 'short', day: 'numeric', timeZone: 'America/New_York',
+    })} · TBD`
+  }
   return new Date(kickoff).toLocaleString('en-US', {
     weekday: 'short', month: 'short', day: 'numeric',
     hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York', timeZoneName: 'short',
@@ -76,7 +81,7 @@ export default function NflWeekHub({ games, weeks, active, linkedCounts, hasElit
                   <span className="nfl-game-card__draft">Draft</span>
                 )}
                 <div className="nfl-game-card__meta">
-                  <span>{kickoffDisplay(game.kickoff)}</span>
+                  <span>{kickoffDisplay(game.kickoff, game.kickoff_tbd)}</span>
                   <span className={`nfl-game-card__status nfl-game-card__status--${game.status}`}>
                     {STATUS_LABEL[game.status] ?? game.status}
                   </span>

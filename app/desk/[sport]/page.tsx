@@ -13,7 +13,13 @@ import { atLeastTier, normalizeTier } from '@/lib/access'
 import { researchClosedFor, holdsLibrary } from '@/lib/gate'
 import { toPublicGame, currentWeekOf, weekLabel, weekIsOver } from '@/lib/nfl'
 import type { NflGame, PublicNflGame } from '@/lib/nfl'
-import { DESK_SPORTS, deskSportLabel, deskSeasonLabel, defaultDeskSeason, startWord } from '@/lib/desk'
+import {
+  DESK_SPORTS, deskSportLabel, deskSeasonLabel, defaultDeskSeason, startWord,
+  weeksFromDates, isYmd, dateWeekOfDay, dateWeekDays, deskToday, addDays, easternDate,
+} from '@/lib/desk'
+import { selectAll } from '@/lib/supabase/select-all'
+import { createClient } from '@/lib/supabase/server'
+import { loadTrialState, type TrialState } from '@/lib/trial'
 
 export const dynamic = 'force-dynamic'
 
@@ -38,7 +44,7 @@ export default async function DeskSport({
   searchParams,
 }: {
   params: { sport: string }
-  searchParams: { week?: string; type?: string }
+  searchParams: { week?: string; type?: string; day?: string; all?: string }
 }) {
   const sport = params.sport.toLowerCase()
   if (!DESK_SPORTS.includes(sport as any)) notFound()
@@ -81,16 +87,26 @@ export default async function DeskSport({
   // to each game is what the Desk rung buys.
   const hasDesk = isAdmin || access.atLeast('desk')
 
+  // The free-trial button on the paywall. Only for a signed-in visitor without
+  // the Desk -- the one case the paywall renders for someone who could start
+  // one -- so nobody else pays for the extra auth round trip.
+  let trial: TrialState = { available: false, onTrial: false, endsAt: null }
+  if (!hasDesk && membership !== 'logged-out') {
+    const { data: { user } } = await (await createClient()).auth.getUser()
+    trial = await loadTrialState(admin, user?.id)
+  }
+
   // The week rail needs every week of the season but none of the payload, so it
   // reads four columns and the board reads one week of rows. A college season is
   // roughly 1,400 games against the NFL's 272: pulling all of them with `*` to
   // render a single week of cards is the shape that stops working the moment a
   // second league lands.
-  const { data: weekRows } = await (admin as any)
+  const { data: weekRows } = await selectAll(() => (admin as any)
     .from('nfl_games')
     .select('season_type, week, kickoff, status, is_published')
     .eq('sport', sport)
     .eq('season', season)
+    .order('id'))
 
   type WeekRow = Pick<NflGame, 'season_type' | 'week' | 'kickoff' | 'status' | 'is_published'>
   const visibleWeekRows: WeekRow[] = (weekRows ?? []).filter(
@@ -106,8 +122,22 @@ export default async function DeskSport({
     .sort((a, b) => a.season_type - b.season_type || a.week - b.week)
     .map(w => ({ ...w, label: weekLabel(w.season_type, w.week, sport, season) }))
 
-  const requestedType = searchParams.type === 'post' ? 3 : searchParams.week ? 2 : null
-  const requestedWeek = Number(searchParams.week) || null
+  let requestedType: number | null = searchParams.type === 'post' ? 3 : searchParams.week ? 2 : null
+  let requestedWeek: number | null = Number(searchParams.week) || null
+
+  // Basketball reads a night at a time (see "Basketball days" in lib/desk.ts).
+  // A ?day= with no ?week= -- the game page's "all games that day" link -- names
+  // its own week, so the date is enough to land on the right board.
+  const dated = weeksFromDates(sport)
+  const requestedDay = dated && isYmd(searchParams.day) ? searchParams.day : null
+  if (requestedDay && !searchParams.week) {
+    const w = dateWeekOfDay(season, requestedDay)
+    const hit = weeks.find(x => x.week === w)
+    if (hit) {
+      requestedType = hit.season_type
+      requestedWeek = hit.week
+    }
+  }
 
   // No week in the URL means the reader arrived from somewhere else -- the nav,
   // a bookmark, the Portfolio and back -- and a bare board opens on the week
@@ -140,15 +170,63 @@ export default async function DeskSport({
     .filter((g: NflGame) => g.is_published || isAdmin)
     .map(toPublicGame)
 
+  // ---- Day strip and line filter (basketball) -------------------------------
+  // The week is still the key; a day narrows the board inside it. It defaults
+  // to the Desk's today (rolling at 4am Eastern) when today is in the week on
+  // screen, and to the whole week otherwise -- a past or future week has no
+  // "tonight" to open on. ?day=week asks for the whole week explicitly.
+  //
+  // Everything here is decided on the SERVER and handed down as labels, so the
+  // client never reads a clock to decide what "Today" means.
+  const today = deskToday()
+  const weekDays = dated && active ? dateWeekDays(season, active.week) : []
+  const activeDay: string | null = !dated || searchParams.day === 'week'
+    ? null
+    : requestedDay && weekDays.includes(requestedDay)
+      ? requestedDay
+      : weekDays.includes(today) ? today : null
+
+  // Most of a college basketball week never gets a line: 250 to 470 games, the
+  // bulk of them small-school matchups ESPN does not price. Those cards are a
+  // schedule entry and nothing else, so the board opens on the priced games and
+  // ?all=1 brings the rest back.
+  const lineFilterOn = sport === 'cbb' && searchParams.all !== '1'
+  const hasLine = (g: PublicNflGame) =>
+    g.spread_current != null || g.spread_open != null || g.total_current != null || g.total_open != null
+  const onDay = (g: PublicNflGame, day: string) => Boolean(g.kickoff) && easternDate(g.kickoff!) === day
+
+  const dayGames = activeDay ? weekGames.filter(g => onDay(g, activeDay)) : weekGames
+  const boardGames = lineFilterOn ? dayGames.filter(hasLine) : dayGames
+  const hiddenByLine = dayGames.length - boardGames.length
+
+  const relative: Record<string, string> = {
+    [addDays(today, -1)]: 'Yesterday',
+    [today]: 'Today',
+    [addDays(today, 1)]: 'Tomorrow',
+  }
+  const dayOptions = weekDays.map(date => {
+    const noon = new Date(`${date}T12:00:00Z`)
+    return {
+      date,
+      label: relative[date] ?? noon.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' }),
+      sub: noon.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' }),
+      count: weekGames.filter(g => onDay(g, date) && (!lineFilterOn || hasLine(g))).length,
+    }
+  })
+
   // The link counts and the desk note both depend only on `active`, so they go
   // out together. They used to run in series, which cost a whole extra Supabase
   // round trip (~200ms measured) on the render path of a page that already
   // blocks on auth and the full game list before either can start.
-  const gameIds = weekGames.map(g => g.id)
+  //
+  // Counted for the games actually on the board, not the whole week: a college
+  // basketball week is several hundred ids, which is a very long `in` filter to
+  // send for cards that are not being rendered.
+  const gameIds = boardGames.map(g => g.id)
 
   type NoteRow = { title: string; body_html: string; min_tier: string; is_published: boolean }
 
-  const [linkRows, noteResult] = await Promise.all([
+  const [linkRows, noteResult, betRows] = await Promise.all([
     // Curated link counts per game — proof of depth without shipping the links.
     gameIds.length > 0
       ? Promise.all([
@@ -168,7 +246,24 @@ export default async function DeskSport({
           .eq('week', active.week)
           .maybeSingle()
       : Promise.resolve({ data: null }),
+    // The bets on each game (todays_bets.game_id, lib/picks/game-match.ts).
+    // Before pricing_01 the column is missing, the query errors, and every
+    // count is simply zero.
+    gameIds.length > 0
+      ? (admin as any)
+          .from('todays_bets')
+          .select('game_id, is_active, show_on_results')
+          .in('game_id', gameIds)
+      : Promise.resolve({ data: [] }),
   ])
+
+  const betCounts: Record<string, number> = {}
+  for (const row of (betRows as any)?.data ?? []) {
+    // Same "is it public" rule as lib/picks/public.ts: an inactive pick that
+    // was never published is still a draft.
+    if (row.is_active === false && row.show_on_results !== true) continue
+    betCounts[row.game_id] = (betCounts[row.game_id] ?? 0) + 1
+  }
 
   const [sysLinks, trendLinks] = linkRows as any[]
   const linkedCounts: Record<string, { systems: number; trends: number }> = {}
@@ -291,11 +386,15 @@ export default async function DeskSport({
           ) : (
             <DeskWeekBoard
               sport={sport}
-              games={weekGames}
+              games={boardGames}
+              days={dated ? { options: dayOptions, active: activeDay } : null}
+              lineFilter={sport === 'cbb' ? { on: lineFilterOn, hidden: hiddenByLine } : null}
               weeks={weeks}
               active={active}
               linkedCounts={linkedCounts}
+              betCounts={betCounts}
               hasDesk={hasDesk}
+              hasWriteups={access.hasElite}
               isAdmin={isAdmin}
               researchClosed={researchClosed}
             />
@@ -310,12 +409,13 @@ export default async function DeskSport({
               <span className="section-label">Membership</span>
               <h2 className="section-title">Pull up a <span className="text-gradient">chair</span></h2>
               <p className="section-subtitle" style={{ margin: '0 auto' }}>
-                The Research Desk opens every matchup: the curated trends behind it,
-                the desk note, and everything in The Portfolio.
+                The Research Desk opens every matchup: the systems and trends behind
+                it, the bets on it, the whole Handicapping Vault and every Portfolio
+                pick. Try it free for 7 days, no card needed.
               </p>
             </div>
             <div style={{ marginTop: '60px' }}>
-              <PricingCards membership={membership} currentTier={userTier} highlight="desk" />
+              <PricingCards membership={membership} currentTier={userTier} expiresAt={access.expiresAt?.toISOString() ?? null} highlight="desk" trial={trial} />
             </div>
           </div>
         </section>

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import type { SubscriptionTier, SubscriptionStatus, AccessLevel } from '@/lib/supabase/types'
 import { normalizeTier, TIERS, TIER_SHORT_LABEL, type Tier } from '@/lib/access'
+import AdminPickDraftsTab from '@/components/AdminPickDraftsTab'
 
 /** The four sellable rungs, in ladder order. */
 const PAID_TIERS: Tier[] = TIERS.filter(t => t !== 'retail')
@@ -14,9 +15,8 @@ const PAID_TIERS: Tier[] = TIERS.filter(t => t !== 'retail')
 const TIER_ROW_COLOR: Record<Tier, string> = {
   retail: 'var(--text-muted)',
   portfolio: 'var(--accent-teal)',
-  desk: 'var(--accent-teal)',
-  private: 'var(--accent-gold)',
-  institutional: 'var(--accent-gold)',
+  private: 'var(--accent-teal)',
+  desk: 'var(--accent-gold)',
 }
 
 /**
@@ -32,7 +32,7 @@ const TIER_ROW_COLOR: Record<Tier, string> = {
  */
 function liveTier(u: User): Tier {
   // Deliberately NOT special-cased for admins, even though resolveAccess()
-  // hands them institutional on the site. Admin is an overlay on this screen,
+  // hands them the Research Desk on the site. Admin is an overlay on this screen,
   // not a rung: it has its own row, and the two are counted separately so the
   // breakdown still sums to the total. Returning 'institutional' here put both
   // admins into the Institutional row AND the Admins row, and inflated Paid
@@ -237,8 +237,8 @@ function isThisMonth(dateStr: string) {
 
 export default function AdminDashboard({ users, posts, initialTab, initialAnalytics }: Props) {
   const router = useRouter()
-  const [tab, setTab]     = useState<'users' | 'posts'>(
-    (['users', 'posts'].includes(initialTab ?? '') ? initialTab : 'users') as 'users'
+  const [tab, setTab]     = useState<'users' | 'posts' | 'picks'>(
+    (['users', 'posts', 'picks'].includes(initialTab ?? '') ? initialTab : 'users') as 'users'
   )
   const [range, setRange]         = useState<Range>('month')
   const [weekStart, setWeekStart] = useState(defaultWeekStart)
@@ -710,7 +710,13 @@ export default function AdminDashboard({ users, posts, initialTab, initialAnalyt
           <button className={`admin-tab ${tab === 'posts' ? 'admin-tab--active' : ''}`} onClick={() => setTab('posts')}>
             Posts <span className="admin-tab__count">{posts.length}</span>
           </button>
+          <button className={`admin-tab ${tab === 'picks' ? 'admin-tab--active' : ''}`} onClick={() => setTab('picks')}>
+            Pick Queue
+          </button>
         </div>
+
+        {/* ── Pick Queue (X posts awaiting approval) ── */}
+        {tab === 'picks' && <AdminPickDraftsTab />}
 
         {/* ── Users Table ── */}
         {tab === 'users' && (

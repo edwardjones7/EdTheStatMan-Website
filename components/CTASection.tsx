@@ -54,12 +54,11 @@ export default function CTASection({ content = DEFAULT_CTA, editMode, onEdit, re
                 <Link href="/win" className="btn btn--primary btn--lg">
                   {membership === 'expired'
                     ? 'Renew Access'
-                    : `Unlock Full Access — ${OFFER_ENTRY_PRICE}`}{' '}
+                    // "Full Access" at the entry price was untrue: $49 buys the
+                    // Portfolio, the bottom rung. Name the price as a floor.
+                    : `See Plans — from ${OFFER_ENTRY_PRICE}`}{' '}
                   <IconArrowRight size={16} />
                 </Link>
-                <a href="https://x.com/EdTheStatMan" className="btn btn--secondary btn--lg" target="_blank" rel="noopener">
-                  <span className="btn__icon"><IconBolt size={15} /></span> Follow on X
-                </a>
               </>
             ) : (
               <>

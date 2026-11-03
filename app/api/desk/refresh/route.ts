@@ -3,6 +3,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { syncTargets } from '@/lib/desk-sync'
 import { currentWeekOf } from '@/lib/nfl'
 import { DESK_SPORTS, defaultDeskSeason } from '@/lib/desk'
+import { selectAll } from '@/lib/supabase/select-all'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
@@ -91,12 +92,13 @@ export async function POST(req: Request) {
 
   const season: number = seasonRow?.season ?? defaultDeskSeason(sport)
 
-  const { data: weekRows } = await admin
+  const { data: weekRows } = await selectAll(() => admin
     .from('nfl_games')
     .select('season_type, week, kickoff, status, updated_at')
     .eq('sport', sport)
     .eq('season', season)
     .eq('is_published', true)
+    .order('id'))
 
   const rows = weekRows ?? []
   const active = currentWeekOf(rows, new Date())

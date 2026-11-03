@@ -1,0 +1,748 @@
+/* Proof and /win (sub-project 4).
+ *
+ * Kept out of app/globals.css so it can land without colliding with the other
+ * branches editing that file. Imported by ProofStrip, WinPlans, BookCards,
+ * ResultsLedger, ResultsPage and the pages that use them; global CSS imported
+ * from a component is still global, so every class here is namespaced.
+ *
+ * Mobile first. Nothing in here may make the PAGE scroll sideways at 375px:
+ * the comparison table scrolls inside its own box and the ledger stacks.
+ */
+
+/* ---------- ProofStrip ---------- */
+.proof {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  padding: 20px 18px;
+  display: grid;
+  gap: 16px;
+  max-width: 920px;
+  margin: 0 auto;
+  min-width: 0;
+}
+
+.proof--compact {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  padding: 16px 0 0;
+  margin-top: 20px;
+  border-top: 1px solid var(--border-color);
+  max-width: none;
+  gap: 12px;
+}
+
+.proof__head {
+  display: grid;
+  gap: 4px;
+}
+
+.proof__eyebrow {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.proof__headline {
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: clamp(1.6rem, 6vw, 2.4rem);
+  line-height: 1.1;
+  color: var(--text-heading);
+  font-variant-numeric: tabular-nums;
+}
+
+.proof--compact .proof__headline {
+  font-size: clamp(1.25rem, 4.5vw, 1.6rem);
+}
+
+.proof__sport {
+  color: var(--text-heading);
+}
+
+.proof__record--up { color: var(--accent-teal); }
+.proof__record--even { color: var(--accent-gold); }
+.proof__record--down { color: var(--accent-red); }
+
+.proof__sub {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.proof__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.proof__chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-color);
+  border-left-width: 3px;
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.proof__chip--up { border-left-color: var(--accent-teal); }
+.proof__chip--even { border-left-color: var(--accent-gold); }
+.proof__chip--down { border-left-color: var(--accent-red); }
+
+.proof__chip-sport {
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--text-heading);
+}
+
+.proof__chip-record {
+  font-family: var(--font-mono);
+  color: var(--text-secondary);
+}
+
+.proof__chip-pct {
+  color: var(--text-muted);
+}
+
+.proof__books {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.proof__book strong {
+  font-family: var(--font-mono);
+  color: var(--text-heading);
+}
+
+.proof__book-label {
+  color: var(--text-muted);
+}
+
+.proof__book-meta {
+  font-variant-numeric: tabular-nums;
+}
+
+.proof__book--up .proof__book-meta { color: var(--accent-teal); }
+.proof__book--down .proof__book-meta { color: var(--accent-red); }
+
+.proof__foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+}
+
+.proof__note {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.6;
+  color: var(--text-muted);
+  flex: 1 1 280px;
+}
+
+.proof__ledger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--accent-teal);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.proof__ledger:hover { gap: 9px; }
+
+@media (min-width: 720px) {
+  .proof { padding: 26px 30px; }
+  .proof--compact { padding: 16px 0 0; }
+}
+
+/* ---------- /portfolio empty state ---------- */
+.portfolio-empty {
+  margin-top: 28px;
+  display: grid;
+  gap: 20px;
+  text-align: center;
+}
+
+.portfolio-empty .proof { text-align: left; }
+
+.portfolio-empty__lead {
+  margin: 0 auto;
+  max-width: 560px;
+  color: var(--text-secondary);
+}
+
+.portfolio-empty__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+}
+
+/* ---------- /win ---------- */
+.win-proof {
+  padding: 0 0 48px;
+}
+
+.win-section {
+  padding-top: 40px;
+}
+
+.win-notice {
+  max-width: 640px;
+  margin: 0 auto 28px;
+  text-align: center;
+  background: rgba(var(--gold-rgb), 0.1);
+  border: 1px solid rgba(var(--gold-rgb), 0.3);
+  border-radius: var(--radius-md);
+  padding: 12px 20px;
+  color: var(--accent-gold);
+  font-size: 0.9rem;
+}
+
+.win-notice--strong { font-weight: 600; }
+
+.win-notice--active {
+  background: rgba(var(--teal-rgb), 0.1);
+  border-color: rgba(var(--teal-rgb), 0.3);
+  color: var(--accent-teal);
+  font-weight: 600;
+}
+
+.win-notice a { color: inherit; text-decoration: underline; }
+
+/* The global featured badge reads 'Most Popular'. On /win the card is marked
+   for a reason the page can stand behind, carried in data-flag. */
+.win-plans .pricing-card--featured::before {
+  content: attr(data-flag);
+}
+
+.win-card {
+  padding: 32px 22px;
+  scroll-margin-top: calc(var(--nav-height) + 24px);
+}
+
+.win-card__label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+@media (min-width: 720px) {
+  .win-card { padding: 36px 30px; }
+}
+
+/* Comparison table */
+.win-compare {
+  margin-top: 64px;
+  min-width: 0;
+}
+
+.win-compare__title {
+  font-size: clamp(1.4rem, 4vw, 1.8rem);
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.win-compare__sub {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  margin: 0 auto 20px;
+}
+
+.win-compare__scroll {
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  background: var(--bg-card);
+}
+
+.win-compare__scroll:focus-visible {
+  outline: 2px solid var(--accent-teal);
+  outline-offset: 2px;
+}
+
+.win-compare__table {
+  width: 100%;
+  min-width: 720px;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.85rem;
+}
+
+.win-compare__table th,
+.win-compare__table td {
+  padding: 12px 10px;
+  text-align: center;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.win-compare__table thead th {
+  vertical-align: bottom;
+  scroll-margin-top: calc(var(--nav-height) + 24px);
+}
+
+.win-compare__table tfoot th,
+.win-compare__table tfoot td {
+  border-bottom: 0;
+}
+
+/* Feature column stays put while the rungs scroll under it. */
+.win-compare__feat {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: var(--bg-card);
+  text-align: left !important;
+  font-weight: 500;
+  color: var(--text-secondary);
+  width: 34%;
+  min-width: 170px;
+  box-shadow: 1px 0 0 var(--border-color);
+}
+
+.win-compare__name {
+  display: block;
+  font-weight: 700;
+  color: var(--accent-teal);
+  font-size: 0.82rem;
+}
+
+.win-compare__price {
+  display: block;
+  font-family: var(--font-heading);
+  font-weight: 800;
+  color: var(--text-heading);
+  font-size: 1.05rem;
+  margin-top: 2px;
+}
+
+.win-compare__table .is-featured {
+  background: rgba(var(--teal-rgb), 0.05);
+}
+
+.win-compare__table .check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(var(--teal-rgb), 0.1);
+  color: var(--accent-teal);
+  font-size: 0.7rem;
+}
+
+.win-compare__no {
+  color: var(--text-muted);
+}
+
+.win-compare__soon {
+  display: inline-block;
+  margin-left: 6px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent-gold);
+}
+
+.win-compare__incl {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.win-compare__table tfoot .btn {
+  padding-left: 8px;
+  padding-right: 8px;
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+.win-compare__table .checkout-error {
+  font-size: 0.72rem;
+}
+
+.win-disclaimer {
+  max-width: 640px;
+  margin: 48px auto 0;
+  text-align: center;
+}
+
+.win-disclaimer p {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  line-height: 1.8;
+}
+
+.win-disclaimer strong { color: var(--text-secondary); }
+.win-disclaimer a { color: var(--accent-teal); }
+
+/* FAQ */
+.win-faq { padding-top: 0; }
+
+.win-faq__title {
+  text-align: center;
+  font-size: clamp(1.4rem, 4vw, 1.8rem);
+  margin-bottom: 24px;
+}
+
+.win-faq__list {
+  max-width: 760px;
+  margin: 0 auto;
+  display: grid;
+  gap: 10px;
+}
+
+.win-faq__item {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 0 18px;
+}
+
+.win-faq__item[open] { border-color: var(--border-glow); }
+
+.win-faq__item summary {
+  cursor: pointer;
+  list-style: none;
+  padding: 16px 0;
+  font-weight: 600;
+  color: var(--text-heading);
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.win-faq__item summary::-webkit-details-marker { display: none; }
+
+.win-faq__item summary::after {
+  content: '+';
+  color: var(--accent-teal);
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.win-faq__item[open] summary::after { content: '\2212'; }
+
+.win-faq__a {
+  padding: 0 0 18px;
+  color: var(--text-secondary);
+  font-size: 0.92rem;
+  line-height: 1.75;
+}
+
+.win-faq__a a { color: var(--accent-teal); }
+
+/* ---------- /portfolio/performance ---------- */
+.perf-proof { padding: 0 0 8px; }
+
+/* The two books */
+.books { padding-top: 48px; padding-bottom: 24px; }
+
+.books__title {
+  text-align: center;
+  font-size: clamp(1.4rem, 4vw, 1.8rem);
+  margin-bottom: 24px;
+}
+
+.books__grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  max-width: 920px;
+  margin: 0 auto;
+}
+
+@media (min-width: 760px) {
+  .books__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+.book-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  padding: 22px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.book-card--members { border-color: rgba(var(--teal-rgb), 0.35); }
+
+.book-card__name {
+  font-size: 1.1rem;
+  margin: 0 0 4px;
+  color: var(--text-heading);
+}
+
+.book-card__blurb {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.book-card__stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.book-card__stat {
+  display: grid;
+  gap: 2px;
+}
+
+.book-card__value {
+  font-family: var(--font-mono);
+  font-weight: 800;
+  font-size: clamp(1rem, 4vw, 1.3rem);
+  color: var(--text-heading);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.book-card__value--up { color: var(--accent-teal); }
+.book-card__value--even { color: var(--accent-gold); }
+.book-card__value--down { color: var(--accent-red); }
+
+.book-card__label {
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.book-card__meta,
+.book-card__floor {
+  margin: 0;
+  font-size: 0.76rem;
+  color: var(--text-muted);
+}
+
+.book-card__sports {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.book-card__sport {
+  display: grid;
+  grid-template-columns: 3.5rem 1fr auto auto;
+  gap: 10px;
+  align-items: baseline;
+  padding: 8px 10px;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.02);
+  border-left: 3px solid var(--border-color);
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.book-card__sport--up { border-left-color: var(--accent-teal); }
+.book-card__sport--even { border-left-color: var(--accent-gold); }
+.book-card__sport--down { border-left-color: var(--accent-red); }
+
+.book-card__sport-name { font-weight: 800; color: var(--text-heading); }
+.book-card__sport-rec { font-family: var(--font-mono); color: var(--text-secondary); }
+.book-card__sport-pct { color: var(--text-secondary); }
+.book-card__sport-u { font-family: var(--font-mono); color: var(--text-muted); }
+
+/* The ledger */
+.ledger { padding-top: 40px; }
+
+.ledger__head { margin-bottom: 20px; }
+
+.ledger__title {
+  font-size: clamp(1.4rem, 4vw, 1.8rem);
+  margin-bottom: 6px;
+}
+
+.ledger__sub {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.ledger__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.ledger__table thead { display: none; }
+
+/* Phone: each pick is a small card, label beside value. */
+.ledger__table tr {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 12px;
+  padding: 14px 14px;
+  margin-bottom: 10px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+}
+
+.ledger__table td {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.ledger__table td::before {
+  content: attr(data-label);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.ledger__table td.ledger__pick { grid-column: 1 / -1; font-weight: 700; color: var(--text-heading); }
+
+.ledger__sport { color: var(--accent-teal); font-weight: 700; }
+.ledger__mono { font-family: var(--font-mono); }
+.ledger__date { white-space: nowrap; }
+
+.ledger__result {
+  display: inline-block;
+  align-self: flex-start;
+  padding: 1px 9px;
+  border-radius: 20px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.ledger__result--win { background: rgba(var(--teal-rgb), 0.15); color: var(--accent-teal); }
+.ledger__result--loss { background: rgba(var(--red-rgb), 0.15); color: var(--accent-red); }
+.ledger__result--push { background: rgba(var(--gold-rgb), 0.15); color: var(--accent-gold); }
+.ledger__result--pending { background: rgba(255, 255, 255, 0.05); color: var(--text-muted); }
+
+@media (min-width: 900px) {
+  .ledger__table thead { display: table-header-group; }
+  .ledger__table tr {
+    display: table-row;
+    padding: 0;
+    margin: 0;
+    background: none;
+    border: 0;
+    border-radius: 0;
+  }
+  .ledger__table tbody tr { border-bottom: 1px solid var(--border-color); }
+  .ledger__table th {
+    text-align: left;
+    padding: 10px 10px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border-color);
+  }
+  .ledger__table td {
+    display: table-cell;
+    padding: 12px 10px;
+    vertical-align: middle;
+  }
+  .ledger__table td::before { content: none; }
+  .ledger__table td.ledger__pick { color: var(--text-primary); }
+  .ledger__num { text-align: right !important; }
+}
+
+.ledger__pager {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.ledger__pageno {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+/* Per-sport cards (ResultsPage, still used by the admin results editor). They
+   were flex-wrapped with a max width, so five sports left one card alone on a
+   row of its own. A grid keeps every row full width. */
+.perf-sport-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.perf-sport-grid .perf-sport-card {
+  max-width: none;
+}
+
+/* ---- Nov 2026 pricing: 30/365-day one-time plans, the Desk free trial ---- */
+
+.pricing-card__term {
+  margin-top: 4px;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.pricing-card__save {
+  margin-top: 6px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--accent-lime);
+}
+
+.pricing-card__features--icons .pricing-card__feature svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--accent-lime);
+}
+
+.pricing-terms {
+  margin: 18px auto 0;
+  max-width: 640px;
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.trial-cta {
+  margin-top: 10px;
+}
+
+.trial-cta__fine,
+.pricing-card__trial-note {
+  margin-top: 6px;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-align: center;
+}

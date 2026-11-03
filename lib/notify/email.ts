@@ -8,8 +8,9 @@ import { Resend } from 'resend'
 import type { NotifiablePick, PickAudience, Recipient } from './audience'
 import { renderPick, renderPickLocked, SITE_URL } from './message'
 import { TIER_SHORT_LABEL } from '@/lib/access'
+import { BUSINESS_NAME, BUSINESS_POSTAL_ADDRESS, PROBLEM_GAMBLING_LINE } from '@/lib/business'
 
-const FROM = 'EdTheStatMan Picks <noreply@edthestatman.com>'
+export const FROM = 'EdTheStatMan Picks <noreply@edthestatman.com>'
 /**
  * Resend's batch endpoint caps at 100 messages per call. Overridable only so the
  * multi-chunk path can be exercised against a short list — leave it unset in
@@ -31,12 +32,14 @@ function isRateLimit(error: { name?: string; statusCode?: number; message?: stri
   )
 }
 
-function unsubscribeUrl(token: string): string {
+export function unsubscribeUrl(token: string): string {
   return `${SITE_URL}/api/notifications/unsubscribe?token=${encodeURIComponent(token)}`
 }
 
 // Site palette, hard-coded: email clients can't read CSS custom properties.
-const C = {
+// Exported so lifecycle mail (lib/notify/lifecycle.ts) looks like the same
+// sender rather than a second brand.
+export const C = {
   bg: '#071219',
   card: '#0c1e28',
   border: '#12293a',
@@ -48,7 +51,26 @@ const C = {
   muted: '#5f7783',
 }
 
-const FONT = "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif"
+export const FONT = "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif"
+
+/**
+ * The 21+ / 1-800-GAMBLER line and, once BUSINESS_POSTAL_ADDRESS is set, the
+ * CAN-SPAM address. One helper so pick alerts and lifecycle mail can never
+ * disagree about what every message must carry.
+ */
+export function complianceFooterHtml(): string {
+  return `<p style="margin:14px 0 0;font-family:${FONT};font-size:11px;line-height:1.5;color:${C.muted};">
+              21+. ${PROBLEM_GAMBLING_LINE} Nothing here is financial advice.
+            </p>${BUSINESS_POSTAL_ADDRESS ? `
+            <p style="margin:8px 0 0;font-family:${FONT};font-size:11px;line-height:1.5;color:${C.muted};">
+              ${BUSINESS_NAME} &middot; ${BUSINESS_POSTAL_ADDRESS}
+            </p>` : ''}`
+}
+
+/** Plain-text twin of complianceFooterHtml(). */
+export function complianceFooterText(): string {
+  return `21+. ${PROBLEM_GAMBLING_LINE}${BUSINESS_POSTAL_ADDRESS ? `\n${BUSINESS_NAME}, ${BUSINESS_POSTAL_ADDRESS}` : ''}`
+}
 
 /**
  * Table-based with inlined styles throughout — Outlook ignores <div> layout and
@@ -133,9 +155,7 @@ function html(
               &nbsp;&middot;&nbsp;
               <a href="${url}" style="color:${C.secondary};text-decoration:underline;">edthestatman.com</a>
             </p>
-            <p style="margin:14px 0 0;font-family:${FONT};font-size:11px;line-height:1.5;color:${C.muted};">
-              21+. Please wager responsibly. Nothing here is financial advice.
-            </p>
+            ${complianceFooterHtml()}
           </td>
         </tr>
 
@@ -186,7 +206,7 @@ async function sendTo(
           from: FROM,
           to: r.email,
           subject: title,
-          text: `${body}\n\n${cta}: ${url}\n\nUnsubscribe: ${unsubscribeUrl(r.notifyToken)}`,
+          text: `${body}\n\n${cta}: ${url}\n\nUnsubscribe: ${unsubscribeUrl(r.notifyToken)}\n\n${complianceFooterText()}`,
           html: html(title, body, url, unsubscribeUrl(r.notifyToken), audience, cta, locked),
           headers: {
             // Lets Gmail/Apple Mail show a native unsubscribe control, which

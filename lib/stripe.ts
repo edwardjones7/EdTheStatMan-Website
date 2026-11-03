@@ -28,7 +28,7 @@ function legacyPriceGrant(priceId: string): { tier: OfferTierKey; grant: AccessG
     return { tier: 'private', grant: { kind: 'days', days: 365 } }
   }
   if (priceId && priceId === process.env.NEXT_PUBLIC_STRIPE_ELITE_PRICE_ID) {
-    return { tier: 'institutional', grant: { kind: 'until', endsAt: '2027-02-15T12:00:00Z' } }
+    return { tier: 'private', grant: { kind: 'until', endsAt: '2027-02-15T12:00:00Z' } }
   }
   return null
 }

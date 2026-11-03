@@ -2,10 +2,12 @@
 
 import { useEffect, useState, useTransition } from 'react'
 import Link from 'next/link'
-import { useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { logout } from '@/app/actions/auth'
 import { updateProfile, updatePassword, updateNotifyEmail } from '@/app/account/actions'
 import PushOptIn from './PushOptIn'
+import OnboardingChecklist from './OnboardingChecklist'
+import { trackEvent } from '@/lib/track-client'
 import { IconUser, IconLock, IconBolt, IconBell, IconChat } from './Icons'
 import type { SubscriptionTier } from '@/lib/supabase/types'
 import { normalizeTier, TIER_SHORT_LABEL } from '@/lib/access'
@@ -25,16 +27,20 @@ interface AccountClientProps {
   provider: string
   /** Whether this member has already linked a Discord account. */
   discordLinked?: boolean
+  /** Any push subscription stored for this member, on any device. */
+  pushSubscribed?: boolean
+  /** Has this member ever loaded /portfolio, /desk or /vault? */
+  productVisited?: boolean
 }
 
 // Labels come from TIER_SHORT_LABEL in lib/access.ts -- tier copy used to be
 // duplicated across four files and drifted. Only the descriptions live here.
 const TIER_DESCRIPTION: Record<SubscriptionTier, string> = {
   retail: 'A curated set of free systems, trends and picks. Records visible on everything else.',
-  portfolio: 'Every pick, unlocked, with the full line and unit sizing.',
-  desk: 'The season schedule with curated trends attached to every matchup, plus everything in The Portfolio.',
-  private: 'The complete systems and trends libraries, filterable, plus everything in The Research Desk.',
-  institutional: 'Query builder, API key and backtester on top of everything in Private Intelligence.',
+  portfolio: 'Every EdTheStatBot pick, unlocked, with the full line and number.',
+  private: 'The complete systems and trends libraries, filterable.',
+  desk: 'Everything: every game on its own page with the research and bets attached, the whole Handicapping Vault, and every Portfolio pick.',
+  institutional: 'The complete systems and trends libraries, filterable.',
 }
 
 function formatDate(dateStr: string) {
@@ -45,9 +51,34 @@ function formatDate(dateStr: string) {
 
 type Msg = { type: 'success' | 'error'; text: string }
 
-export default function AccountClient({ profile, provider, discordLinked = false }: AccountClientProps) {
+export default function AccountClient({
+  profile, provider, discordLinked = false, pushSubscribed = false, productVisited = false,
+}: AccountClientProps) {
   const searchParams = useSearchParams()
   const subscribeSuccess = searchParams.get('success') === '1'
+  const router = useRouter()
+
+  // Stripe sends the buyer back here the moment payment clears, which can be
+  // before its webhook has reached us and raised the tier. Reading the tier
+  // then said "Welcome to Free access" to someone who had just paid. Until the
+  // new tier lands, say so honestly and re-read the profile a few times.
+  const activating = subscribeSuccess && !profile.is_admin &&
+    normalizeTier(profile.subscription_tier) === 'retail'
+  const [activationTimedOut, setActivationTimedOut] = useState(false)
+  useEffect(() => {
+    if (!activating) return
+    let tries = 0
+    const timer = setInterval(() => {
+      tries++
+      if (tries > 10) {
+        clearInterval(timer)
+        setActivationTimedOut(true)
+        return
+      }
+      router.refresh()
+    }, 3000)
+    return () => clearInterval(timer)
+  }, [activating, router])
 
   // The OAuth callback redirects back with ?discord=<status>. Every outcome gets
   // words, including the ones that are nobody's fault -- a silent return to the
@@ -68,6 +99,12 @@ export default function AccountClient({ profile, provider, discordLinked = false
   // not replay a stale "connected" that may no longer be true.
   useEffect(() => {
     if (!discordStatus) return
+    // Recorded on the way BACK from Discord, not on the button click: only a
+    // completed link is a connection. The parameter is stripped just below, so
+    // a refresh cannot record it twice.
+    if (discordStatus === 'connected' || discordStatus === 'join-server') {
+      trackEvent('discord_connect', { status: discordStatus })
+    }
     const url = new URL(window.location.href)
     url.searchParams.delete('discord')
     window.history.replaceState({}, '', url.toString())
@@ -111,9 +148,9 @@ export default function AccountClient({ profile, provider, discordLinked = false
 
   const avatarClass = profile.is_admin
     ? 'account-hero__avatar account-hero__avatar--admin'
-    : normalized === 'institutional' || normalized === 'private'
-    ? 'account-hero__avatar account-hero__avatar--elite'
     : normalized === 'desk'
+    ? 'account-hero__avatar account-hero__avatar--elite'
+    : normalized === 'private'
     ? 'account-hero__avatar account-hero__avatar--premium'
     : 'account-hero__avatar'
 
@@ -169,10 +206,37 @@ export default function AccountClient({ profile, provider, discordLinked = false
     <main className="account-page">
       <div className="account-container">
 
-        {subscribeSuccess && (
+        {subscribeSuccess && !activating && (
           <div className="account-success-banner">
             &#10003; Payment successful! Welcome to {tierConfig.label} access.
           </div>
+        )}
+        {activating && (
+          <div className="account-success-banner" role="status" aria-live="polite">
+            {activationTimedOut ? (
+              <>
+                &#10003; Payment received. Your access is taking longer than usual to switch on.
+                Refresh in a minute, or <Link href="/contact">contact us</Link> and we&apos;ll sort it.
+              </>
+            ) : (
+              <>&#10003; Payment received. Switching on your access…</>
+            )}
+          </div>
+        )}
+
+        {/* Paying members only, and only while access is live: an expired
+            member's next step is renewing, not linking Discord. */}
+        {normalized !== 'retail' && !profile.is_admin && isActive && (
+          <OnboardingChecklist
+            tier={normalized}
+            emailOn={notifyEmail}
+            onEnableEmail={() => handleNotifyToggle(true)}
+            emailBusy={isPending}
+            pushSubscribed={pushSubscribed}
+            discordLinked={discordLinked}
+            productVisited={productVisited}
+            justPurchased={subscribeSuccess}
+          />
         )}
 
         {/* Hero */}
@@ -330,8 +394,8 @@ export default function AccountClient({ profile, provider, discordLinked = false
             </div>
           )}
 
-          {/* Pick alerts */}
-          <div className="account-card">
+          {/* Pick alerts. id is the checklist's "Set up push" target. */}
+          <div className="account-card" id="alerts">
             <div className="account-card__header">
               <div className="account-card__icon"><IconBell size={18} /></div>
               <h2 className="account-card__title">Pick Alerts</h2>
@@ -357,7 +421,7 @@ export default function AccountClient({ profile, provider, discordLinked = false
               <span className="account-field-hint" style={{ display: 'block', marginBottom: '8px' }}>
                 Browser notifications on this device:
               </span>
-              <PushOptIn />
+              <PushOptIn context="account" />
             </div>
             {notifyMsg && (
               <div className={notifyMsg.type === 'error' ? 'auth-error' : 'auth-success'}>

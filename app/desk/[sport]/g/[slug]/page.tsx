@@ -5,17 +5,23 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { resolveAccess, ACCESS_SELECT, atLeastTier } from '@/lib/access'
 import { rowMinTier, researchClosedFor, holdsLibrary } from '@/lib/gate'
+import { toPublicPick } from '@/lib/picks/public'
+import { oddsOf } from '@/lib/records'
 import {
   toPublicGame, weekLabel, writeupWordCount,
   gameBrief, gameBriefSentences, spreadLabel, moneylineLabel, lineMove,
   decodeSlugParam, gamePath, weekIsOver,
 } from '@/lib/nfl'
 import type { NflGame } from '@/lib/nfl'
-import { deskSportLabel, deskSeasonLabel, SPORT_SHORT, startWord, weeksFromDates } from '@/lib/desk'
+import { deskSportLabel, deskSeasonLabel, SPORT_SHORT, startWord, weeksFromDates, easternDate, addDays } from '@/lib/desk'
+import { atsTag, ouTag } from '@/lib/ats'
+import { teamPath, teamSeasonGames, teamShortName, byKickoff } from '@/lib/desk-teams'
+import '@/styles/seo-desk.css'
 import { toTeaser } from '@/lib/teaser'
 import type { LockedTeaser } from '@/lib/teaser'
 import NflGameAdminPanel from '@/components/NflGameAdminPanel'
 import LockedTeaserCard from '@/components/LockedTeaserCard'
+import SignupPrompt from '@/components/SignupPrompt'
 import RecordStrip from '@/components/RecordStrip'
 import { IconLock } from '@/components/Icons'
 
@@ -70,8 +76,14 @@ function gameWhen(game: Pick<NflGame, 'season_type' | 'week' | 'season' | 'kicko
   return weekLabel(game.season_type, game.week, sport, game.season)
 }
 
-function kickoffDisplay(kickoff: string | null, sport: string): string {
+function kickoffDisplay(kickoff: string | null, sport: string, tbd?: boolean | null): string {
   if (!kickoff) return weeksFromDates(sport) ? 'Tip-off TBD' : 'Kickoff TBD'
+  if (tbd) {
+    const day = new Date(kickoff).toLocaleDateString('en-US', {
+      weekday: 'long', month: 'long', day: 'numeric', year: 'numeric', timeZone: 'America/New_York',
+    })
+    return `${day} · ${weeksFromDates(sport) ? 'Tip-off' : 'Kickoff'} time TBD`
+  }
   return new Date(kickoff).toLocaleString('en-US', {
     weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
     hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York', timeZoneName: 'short',
@@ -94,8 +106,9 @@ export default async function NflGamePage({ params }: { params: { sport: string;
   }
   const { tier: userTier, isAdmin, hasElite } = access
   // The Desk's defining rule: curated Vault rows are visible IN THE CONTEXT
-  // of a matchup to Desk members, even though the browsable library is
-  // Private. Institutional rows stay institutional everywhere.
+  // of a matchup to Desk members. (The Desk now holds the whole Vault as well,
+  // so this mostly matters for a closed week, where the in-context window
+  // shuts but the library itself does not.)
   const hasDesk = isAdmin || access.atLeast('desk')
 
   const { data: gameRow } = await (admin as any)
@@ -120,16 +133,38 @@ export default async function NflGamePage({ params }: { params: { sport: string;
   // this page cannot answer from the game alone: whether the week is over. It
   // goes out with the link queries rather than after them, so it costs no extra
   // round trip on the render path.
-  const [sysLinks, trendLinks, weekRows] = await Promise.all([
+  // The internal links ride the same round trip: both teams' seasons (for
+  // prev/next) and the rest of this game's Eastern calendar day. The day window
+  // is padded past both UTC offsets Eastern time can have and then trimmed to
+  // the exact date, so DST never drops a late tip or adds tomorrow's first one.
+  const sportKey = params.sport.toLowerCase()
+  const gameDay = game.kickoff ? easternDate(game.kickoff) : null
+  const [sysLinks, trendLinks, weekRows, homeSeason, awaySeason, dayRows, betRows] = await Promise.all([
     (admin as any).from('nfl_game_systems').select('system_id').eq('game_id', game.id),
     (admin as any).from('nfl_game_trends').select('trend_id').eq('game_id', game.id),
     (admin as any)
       .from('nfl_games')
       .select('kickoff, status')
-      .eq('sport', params.sport.toLowerCase())
+      .eq('sport', sportKey)
       .eq('season', game.season)
       .eq('season_type', game.season_type)
       .eq('week', game.week),
+    teamSeasonGames(admin, sportKey, game.season, game.home_abbrev),
+    teamSeasonGames(admin, sportKey, game.season, game.away_abbrev),
+    gameDay
+      ? (admin as any)
+          .from('nfl_games')
+          .select('id, slug, kickoff, status, home_abbrev, away_abbrev, home_score, away_score, spread_current, total_current')
+          .eq('sport', sportKey)
+          .eq('season', game.season)
+          .eq('is_published', true)
+          .gte('kickoff', `${gameDay}T03:00:00Z`)
+          .lt('kickoff', `${addDays(gameDay, 1)}T06:00:00Z`)
+          .order('kickoff', { ascending: true })
+      : Promise.resolve({ data: [] }),
+    // The bets on this game. Errors harmlessly (no rows) until
+    // pricing_01_trial_and_pick_games.sql adds todays_bets.game_id.
+    (admin as any).from('todays_bets').select('*').eq('game_id', game.id).order('id'),
   ])
   const systemIds = (sysLinks.data ?? []).map((r: any) => r.system_id)
   const trendIds = (trendLinks.data ?? []).map((r: any) => r.trend_id)
@@ -176,13 +211,31 @@ export default async function NflGamePage({ params }: { params: { sport: string;
         // a game takes nothing from them -- this clause is untouched by it.
         atLeastTier(userTier, required) ||
         // The Desk's in-context window, and the only thing closing shuts.
-        (hasDesk && !researchClosed && required !== 'institutional')
+        (hasDesk && !researchClosed)
       if (canSee) visible.push(row)
-      else if (required === 'institutional') lockedElite.push(toTeaser(row))
       else locked.push(toTeaser(row))
     }
     return { visible, locked, lockedElite }
   }
+  // The bets: free picks open to everyone, Portfolio picks open to whoever
+  // holds the picks (the Portfolio or the Desk). Redacted here, on the server,
+  // so a locked bet's line never crosses the wire.
+  const bets: GameBet[] = ((betRows as any)?.data ?? [])
+    .filter((row: any) => row.is_active !== false || row.show_on_results === true)
+    .map((row: any) => {
+      const pub = toPublicPick(row)
+      const canSee = isAdmin || pub.free || atLeastTier(userTier, rowMinTier(row, 'portfolio'))
+      return {
+        key: pub.key,
+        free: pub.free,
+        locked: canSee ? false : pub.locked,
+        bet: canSee ? row.bet ?? null : pub.bet,
+        odds: canSee ? pub.odds ?? oddsOf({ odds: row.odds ?? null, line: row.line ?? null }) : pub.odds,
+        result: pub.result,
+        note: canSee ? row.note ?? null : pub.note,
+      }
+    })
+
   const systems = partition(systemsResult.data ?? [])
   const trends = partition(trendsResult.data ?? [])
 
@@ -281,8 +334,42 @@ export default async function NflGamePage({ params }: { params: { sport: string;
   const linkedCount =
     systems.visible.length + systems.locked.length + systems.lockedElite.length +
     trends.visible.length + trends.locked.length + trends.lockedElite.length
-  const hasResearch = publicGame.has_writeup || linkedCount > 0
+  const hasResearch = publicGame.has_writeup || linkedCount > 0 || bets.length > 0
   const url = `https://edthestatman.com${gamePath(params.sport, game.slug)}`
+
+  // Graded against the closing line; null until the game is final and priced.
+  const ats = atsTag(publicGame)
+  const ou = ouTag(publicGame)
+
+  // Prev/next for each side, from that team's own published season. A draft
+  // game (admin view) is not in the list, so it simply gets no neighbours.
+  const neighbours = (rows: NflGame[]) => {
+    const i = rows.findIndex(r => r.id === game.id)
+    return i < 0 ? { prev: null, next: null } : { prev: rows[i - 1] ?? null, next: rows[i + 1] ?? null }
+  }
+  const teamNav = [
+    { abbrev: game.away_abbrev, name: teamShortName(sportKey, game.away_abbrev, game.away_team), ...neighbours(awaySeason) },
+    { abbrev: game.home_abbrev, name: teamShortName(sportKey, game.home_abbrev, game.home_team), ...neighbours(homeSeason) },
+  ]
+
+  // Other games that day. A college Saturday is 60-plus games and a basketball
+  // night can be 150, so the list is capped and leads with priced games -- the
+  // ones with something on the page -- and the board link carries the rest.
+  type DayRow = Pick<NflGame, 'id' | 'slug' | 'kickoff' | 'status' | 'home_abbrev' | 'away_abbrev' | 'home_score' | 'away_score' | 'spread_current' | 'total_current'>
+  const sameDay: DayRow[] = (((dayRows as any).data ?? []) as DayRow[])
+    .filter(r => r.id !== game.id && r.kickoff && easternDate(r.kickoff) === gameDay)
+  const DAY_LINKS = 12
+  const priced = (r: DayRow) => r.spread_current != null || r.total_current != null
+  const dayLinks = [...sameDay]
+    .sort((a, b) => Number(priced(b)) - Number(priced(a)) || byKickoff(a, b))
+    .slice(0, DAY_LINKS)
+    .sort(byKickoff)
+  const dayBoardHref = weeksFromDates(sportKey) && gameDay
+    ? `/desk/${sportKey}?day=${gameDay}`
+    : `/desk/${sportKey}?week=${game.week}${game.season_type === 3 ? '&type=post' : ''}`
+  const dayName = game.kickoff
+    ? new Date(game.kickoff).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', timeZone: 'America/New_York' })
+    : null
 
   return (
     <main>
@@ -294,11 +381,40 @@ export default async function NflGamePage({ params }: { params: { sport: string;
             '@type': 'SportsEvent',
             name: `${game.away_team} at ${game.home_team}`,
             startDate: game.kickoff ?? undefined,
-            eventStatus: game.status === 'post' ? 'https://schema.org/EventScheduled' : 'https://schema.org/EventScheduled',
+            // schema.org has no "completed" status: a game that went ahead as
+            // planned stays EventScheduled after it is played.
+            eventStatus: 'https://schema.org/EventScheduled',
+            ...(game.venue_name
+              ? {
+                  location: {
+                    '@type': 'Place',
+                    name: game.venue_name,
+                    address: {
+                      '@type': 'PostalAddress',
+                      addressLocality: game.venue_city ?? undefined,
+                      addressRegion: game.venue_state ?? undefined,
+                    },
+                  },
+                }
+              : {}),
             homeTeam: { '@type': 'SportsTeam', name: game.home_team },
             awayTeam: { '@type': 'SportsTeam', name: game.away_team },
             sport: weeksFromDates(params.sport) ? 'Basketball' : 'American Football',
             url,
+          }),
+        }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'BreadcrumbList',
+            itemListElement: [
+              { '@type': 'ListItem', position: 1, name: 'Research Desk', item: 'https://edthestatman.com/desk' },
+              { '@type': 'ListItem', position: 2, name: deskSportLabel(sportKey), item: `https://edthestatman.com/desk/${sportKey}` },
+              { '@type': 'ListItem', position: 3, name: `${game.away_team} at ${game.home_team}`, item: url },
+            ],
           }),
         }}
       />
@@ -320,12 +436,18 @@ export default async function NflGamePage({ params }: { params: { sport: string;
             <h1 className="nfl-game-header__title">
               {game.away_team} <span className="nfl-game-header__at">at</span> {game.home_team}
             </h1>
-            <p className="nfl-game-header__kickoff">{kickoffDisplay(game.kickoff, params.sport)}</p>
+            <p className="nfl-game-header__kickoff">{kickoffDisplay(game.kickoff, params.sport, game.kickoff_tbd)}</p>
             {showScore && (
               <div className="nfl-game-header__score">
                 <span>{game.away_abbrev} {game.away_score}</span>
                 <span className="nfl-game-header__score-sep">—</span>
                 <span>{game.home_abbrev} {game.home_score}</span>
+              </div>
+            )}
+            {(ats || ou) && (
+              <div className="ats-tags ats-tags--header" aria-label="Result against the closing line">
+                {ats && <span className={`ats-tag ats-tag--${ats.side === 'push' ? 'push' : 'cover'}`}>{ats.label}</span>}
+                {ou && <span className={`ats-tag ats-tag--${ou.result}`}>{ou.label}</span>}
               </div>
             )}
             <p className="nfl-game-header__brief">{game.brief || brief}</p>
@@ -395,20 +517,10 @@ export default async function NflGamePage({ params }: { params: { sport: string;
               dangerouslySetInnerHTML={{ __html: game.writeup_html }}
             />
           )}
-          {!hasElite && publicGame.has_writeup && (
-            <div className="sys-gate-card sys-gate-card--elite reveal" style={{ maxWidth: 'none' }}>
-              <div className="sys-gate-card__icon"><IconLock size={30} /></div>
-              <div className="content-gate-card__title">
-                The full {game.away_abbrev}–{game.home_abbrev} breakdown is inside
-              </div>
-              <p className="content-gate-card__desc">
-                {publicGame.writeup_words} words of matchup analysis, angles, and the systems behind them — Institutional members only.
-              </p>
-              <div className="content-gate-card__actions">
-                <Link href="/win" className="btn btn--primary">Go Institutional &rarr;</Link>
-              </div>
-            </div>
-          )}
+          {/* Write-ups are retired (Ed, Nov 2026): the locked "breakdown is
+              inside" card is gone. An old write-up still renders above for
+              the readers who can open it. The bets take its place. */}
+          {bets.length > 0 && <BetsSection bets={bets} />}
 
           {/* Linked systems & trends */}
           {(systems.visible.length + systems.locked.length + systems.lockedElite.length > 0) && (
@@ -439,7 +551,7 @@ export default async function NflGamePage({ params }: { params: { sport: string;
               <h2 className="nfl-game-empty__title">No research added yet</h2>
               <p className="nfl-game-empty__text">
                 Nothing has been attached to this matchup yet. The systems and trends
-                that qualify, and the full breakdown once it is written, land here as
+                that qualify, and the bets on it, land here as
                 the week fills in — check back closer to {startWord(params.sport)}.
               </p>
               <Link href={`/desk/${params.sport}`} className="nfl-game-empty__link">
@@ -447,10 +559,92 @@ export default async function NflGamePage({ params }: { params: { sport: string;
               </Link>
             </div>
           )}
+
+          {/* Front door: a light free-account ask for logged-out readers. */}
+          {!user && (
+            <SignupPrompt
+              context="desk_game"
+              className="fd-desk-prompt"
+              variant="banner"
+              title="Follow this week free."
+              body="A free account gets you the free picks and an alert when one drops."
+            />
+          )}
+        </div>
+      </section>
+
+      {/* Where to go next. Its own section, after the main one, so it reads as
+          navigation rather than as part of the matchup's research. */}
+      <section className="section game-nav-section" aria-label="More from the Desk">
+        <div className="container" style={{ maxWidth: '900px' }}>
+          <div className="game-nav">
+            {teamNav.map(t => (
+              <div className="game-nav__team" key={t.abbrev}>
+                <h2 className="game-nav__title">
+                  <Link href={teamPath(sportKey, t.abbrev)}>{t.name}</Link>
+                </h2>
+                <Link href={teamPath(sportKey, t.abbrev)} className="game-nav__more">
+                  {t.abbrev} schedule &amp; ATS record &rarr;
+                </Link>
+                <div className="game-nav__steps">
+                  {t.prev ? (
+                    <Link href={gamePath(sportKey, t.prev.slug)} className="game-nav__step">
+                      <span className="game-nav__step-key">&larr; Previous</span>
+                      <span className="game-nav__step-val">{matchupFor(t.prev, t.abbrev)}</span>
+                    </Link>
+                  ) : <span className="game-nav__step game-nav__step--none">First game of the season</span>}
+                  {t.next ? (
+                    <Link href={gamePath(sportKey, t.next.slug)} className="game-nav__step game-nav__step--next">
+                      <span className="game-nav__step-key">Next &rarr;</span>
+                      <span className="game-nav__step-val">{matchupFor(t.next, t.abbrev)}</span>
+                    </Link>
+                  ) : <span className="game-nav__step game-nav__step--none game-nav__step--next">No later game posted</span>}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {dayName && sameDay.length > 0 && (
+            <div className="game-day">
+              <h2 className="game-nav__title">Other games {dayName}</h2>
+              <ul className="game-day__list">
+                {dayLinks.map(r => {
+                  const tag = atsTag(r)
+                  return (
+                    <li key={r.id}>
+                      <Link href={gamePath(sportKey, r.slug)} className="game-day__link">
+                        <span>{r.away_abbrev} at {r.home_abbrev}</span>
+                        {r.status === 'post' && r.home_score !== null && r.away_score !== null ? (
+                          <span className="game-day__meta">{r.away_score}-{r.home_score}{tag ? ` · ${tag.label}` : ''}</span>
+                        ) : r.spread_current != null ? (
+                          <span className="game-day__meta">{spreadLabel(r.spread_current, r.home_abbrev, r.away_abbrev)}</span>
+                        ) : null}
+                      </Link>
+                    </li>
+                  )
+                })}
+              </ul>
+              <Link href={dayBoardHref} className="game-nav__more">
+                {sameDay.length > dayLinks.length
+                  ? `All ${sameDay.length + 1} games that day on the board →`
+                  : 'See the board →'}
+              </Link>
+            </div>
+          )}
         </div>
       </section>
     </main>
   )
+}
+
+/** "vs MIA · Oct 12" or "@ MIA · Oct 12", from one team's side of a game. */
+function matchupFor(g: Pick<NflGame, 'home_abbrev' | 'away_abbrev' | 'kickoff'>, abbrev: string): string {
+  const home = g.home_abbrev === abbrev
+  const opp = home ? g.away_abbrev : g.home_abbrev
+  const day = g.kickoff
+    ? new Date(g.kickoff).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'America/New_York' })
+    : 'TBD'
+  return `${home ? 'vs' : '@'} ${opp} · ${day}`
 }
 
 /**
@@ -464,6 +658,58 @@ export default async function NflGamePage({ params }: { params: { sport: string;
 function sportBadge(sport: string | null | undefined): string {
   const key = (sport ?? '').trim()
   return SPORT_SHORT[key as keyof typeof SPORT_SHORT] ?? key.toUpperCase() ?? ''
+}
+
+interface GameBet {
+  key: string
+  free: boolean
+  locked: boolean
+  bet: string | null
+  odds: number | null
+  result: 'pending' | 'win' | 'loss' | 'push'
+  note: string | null
+}
+
+function oddsText(odds: number | null): string | null {
+  if (odds === null || odds === undefined || !Number.isFinite(odds)) return null
+  return odds > 0 ? `+${odds}` : String(odds)
+}
+
+/** What is being bet on this game: Ed's free picks and the Portfolio picks. */
+function BetsSection({ bets }: { bets: GameBet[] }) {
+  const anyLocked = bets.some(b => b.locked)
+  return (
+    <div className="nfl-linked-section game-bets reveal">
+      <h2 className="nfl-linked-section__title">Bets on this game</h2>
+      <ul className="game-bets__list">
+        {bets.map(b => (
+          <li key={b.key} className={`game-bets__item${b.locked ? ' is-locked' : ''}`}>
+            <span className={`game-bets__tag${b.free ? ' is-free' : ''}`}>{b.free ? 'Free' : 'Portfolio'}</span>
+            {b.locked ? (
+              <span className="game-bets__bet game-bets__bet--locked">
+                <IconLock size={12} /> Portfolio pick
+              </span>
+            ) : (
+              <Link href={`/picks/${encodeURIComponent(b.key)}`} className="game-bets__bet">
+                {b.bet ?? 'Pick'}
+                {oddsText(b.odds) && <span className="game-bets__odds">{oddsText(b.odds)}</span>}
+              </Link>
+            )}
+            {b.result !== 'pending' && (
+              <span className={`game-bets__result is-${b.result}`}>{b.result.toUpperCase()}</span>
+            )}
+            {!b.locked && b.note && <span className="game-bets__note">{b.note}</span>}
+          </li>
+        ))}
+      </ul>
+      {anyLocked && (
+        <p className="game-bets__more">
+          Portfolio picks open with the <Link href="/win?plan=portfolio">EdTheStatBot Portfolio</Link> or
+          the <Link href="/win?plan=desk">Research Desk</Link>.
+        </p>
+      )}
+    </div>
+  )
 }
 
 function LinkedSection({ title, visible, locked, lockedElite, href, closed }: {
