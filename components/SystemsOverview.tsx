@@ -145,7 +145,7 @@ function RecordInput({ wins, losses, onChange, resetKey }: {
         style={{
           background: 'transparent',
           border: 'none',
-          borderBottom: '1px dashed rgba(45,212,191,0.55)',
+          borderBottom: '1px dashed rgba(var(--brand-rgb), 0.55)',
           outline: 'none',
           color: 'var(--text-primary)',
           fontSize: '1.1rem',

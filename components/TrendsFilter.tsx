@@ -43,13 +43,13 @@ const TABS: { label: string; value: Sport }[] = [
 ]
 
 const SPORT_STYLE: Record<string, { bg: string; color: string; label: string }> = {
-  nba: { bg: 'rgba(245, 158, 11, 0.1)', color: 'var(--accent-gold)', label: 'NBA' },
-  wnba: { bg: 'rgba(251, 146, 60, 0.1)', color: '#d98a6f', label: 'WNBA' },
-  cbb: { bg: 'rgba(45, 212, 191, 0.1)', color: 'var(--accent-teal)', label: 'CBB' },
-  nfl: { bg: 'rgba(56, 189, 248, 0.1)', color: '#38bdf8', label: 'NFL' },
-  nflpre: { bg: 'rgba(125, 211, 252, 0.1)', color: '#7dd3fc', label: 'NFL Pre' },
-  cfl: { bg: 'rgba(244, 63, 94, 0.1)', color: '#f43f5e', label: 'CFL' },
-  cfb: { bg: 'rgba(233, 196, 106, 0.1)', color: 'var(--accent-gold)', label: 'CFB' },
+  nba: { bg: 'rgba(var(--sport-nba), 0.1)', color: 'rgb(var(--sport-nba))', label: 'NBA' },
+  wnba: { bg: 'rgba(var(--sport-wnba), 0.1)', color: 'rgb(var(--sport-wnba))', label: 'WNBA' },
+  cbb: { bg: 'rgba(var(--sport-cbb), 0.1)', color: 'rgb(var(--sport-cbb))', label: 'CBB' },
+  nfl: { bg: 'rgba(var(--sport-nfl), 0.1)', color: 'rgb(var(--sport-nfl))', label: 'NFL' },
+  nflpre: { bg: 'rgba(var(--sport-nflpre), 0.1)', color: 'rgb(var(--sport-nflpre))', label: 'NFL Pre' },
+  cfl: { bg: 'rgba(var(--sport-cfl), 0.1)', color: 'rgb(var(--sport-cfl))', label: 'CFL' },
+  cfb: { bg: 'rgba(var(--sport-cfb), 0.1)', color: 'rgb(var(--sport-cfb))', label: 'CFB' },
 }
 
 const SPORTS = ['nba', 'wnba', 'cbb', 'nfl', 'nflpre', 'cfl', 'cfb'] as const
@@ -459,7 +459,7 @@ export default function TrendsFilter({ trends, lockedCounts = {}, lockedTeasers 
           <button
             className="btn btn--outline btn--sm"
             onClick={() => fileRef.current?.click()}
-            style={{ borderColor: 'rgba(45,212,191,0.4)', color: 'var(--accent-teal)' }}
+            style={{ borderColor: 'rgba(var(--brand-rgb), 0.4)', color: 'var(--accent-teal)' }}
           >
             &#8679; Import XLSX
           </button>
@@ -474,7 +474,7 @@ export default function TrendsFilter({ trends, lockedCounts = {}, lockedTeasers 
               })
               router.refresh()
             }}
-            style={{ borderColor: 'rgba(239,68,68,0.4)', color: '#ef4444' }}
+            style={{ borderColor: 'rgba(var(--down-rgb), 0.4)', color: 'var(--down)' }}
           >
             Clear All
           </button>
@@ -504,7 +504,7 @@ export default function TrendsFilter({ trends, lockedCounts = {}, lockedTeasers 
             Configure Import — {xlsxSheets.length} sheet{xlsxSheets.length !== 1 ? 's' : ''} found
           </div>
           {importError && (
-            <div style={{ color: '#ef4444', marginBottom: '10px', fontSize: '0.85rem' }}>{importError}</div>
+            <div style={{ color: 'var(--down)', marginBottom: '10px', fontSize: '0.85rem' }}>{importError}</div>
           )}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '14px' }}>
             {xlsxSheets.map((sheet, i) => (
@@ -540,8 +540,8 @@ export default function TrendsFilter({ trends, lockedCounts = {}, lockedTeasers 
                     cursor: 'pointer',
                     fontSize: '0.75rem',
                     fontWeight: 600,
-                    background: sheet.is_free ? 'rgba(56,189,248,0.15)' : 'rgba(124,58,237,0.15)',
-                    color: sheet.is_free ? '#38bdf8' : 'var(--accent-gold)',
+                    background: sheet.is_free ? 'rgba(var(--sky-rgb), 0.15)' : 'rgba(var(--brand-rgb), 0.15)',
+                    color: sheet.is_free ? 'var(--accent-sky)' : 'var(--brand)',
                   }}
                 >
                   {sheet.is_free ? 'Free' : 'Private'}
@@ -701,7 +701,7 @@ export default function TrendsFilter({ trends, lockedCounts = {}, lockedTeasers 
                             onClick={() => deleteRow(row.id, row.description)}
                             style={{
                               padding: '3px 9px', borderRadius: '10px', border: 'none', cursor: 'pointer',
-                              fontSize: '0.7rem', background: 'rgba(239,68,68,0.1)', color: '#ef4444',
+                              fontSize: '0.7rem', background: 'rgba(var(--down-rgb), 0.1)', color: 'var(--down)',
                             }}
                           >
                             ✕
@@ -747,8 +747,8 @@ export default function TrendsFilter({ trends, lockedCounts = {}, lockedTeasers 
                               <span style={{
                                 display: 'inline-flex', alignItems: 'center',
                                 padding: '2px 8px', borderRadius: 'var(--radius-full)', fontSize: '0.68rem', fontWeight: 600,
-                                background: row.is_active ? 'rgba(45,212,191,0.12)' : 'rgba(239,68,68,0.12)',
-                                color: row.is_active ? 'var(--accent-teal)' : '#ef4444',
+                                background: row.is_active ? 'rgba(var(--up-rgb), 0.12)' : 'rgba(var(--down-rgb), 0.12)',
+                                color: row.is_active ? 'var(--accent-teal)' : 'var(--down)',
                               }}>
                                 {row.is_active ? 'Active' : 'Inactive'}
                               </span>
@@ -975,7 +975,7 @@ export default function TrendsFilter({ trends, lockedCounts = {}, lockedTeasers 
             <button
               onClick={() => { setEditMode(false); setFormMode('hidden'); setXlsxSheets(null) }}
               title="Exit edit mode"
-              style={{ ...fabStyle, background: 'rgba(45,212,191,0.15)', color: 'var(--accent-teal)', border: '2px solid rgba(45,212,191,0.35)' }}
+              style={{ ...fabStyle, background: 'rgba(var(--brand-rgb), 0.15)', color: 'var(--accent-teal)', border: '2px solid rgba(var(--brand-rgb), 0.35)' }}
             >
               ✕
             </button>
@@ -990,8 +990,8 @@ export default function TrendsFilter({ trends, lockedCounts = {}, lockedTeasers 
           )}
           {editMode && (
             <span style={{
-              background: 'rgba(45,212,191,0.12)',
-              border: '1px solid rgba(45,212,191,0.25)',
+              background: 'rgba(var(--brand-rgb), 0.12)',
+              border: '1px solid rgba(var(--brand-rgb), 0.25)',
               color: 'var(--accent-teal)',
               fontSize: '0.68rem',
               fontWeight: 600,

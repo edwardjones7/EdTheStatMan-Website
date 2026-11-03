@@ -56,9 +56,9 @@ interface Props {
 }
 
 const RESULT_STYLE: Record<string, { bg: string; color: string; label: string }> = {
-  win:     { bg: 'rgba(45,212,191,0.15)',  color: '#2dd4bf', label: 'Win' },
-  loss:    { bg: 'rgba(239,68,68,0.15)',   color: '#f8717a', label: 'Loss' },
-  push:    { bg: 'rgba(234,179,8,0.15)',   color: '#facc15', label: 'Push' },
+  win:     { bg: 'rgba(var(--up-rgb), 0.15)',  color: 'var(--up)', label: 'Win' },
+  loss:    { bg: 'rgba(var(--down-rgb), 0.15)',   color: 'var(--down)', label: 'Loss' },
+  push:    { bg: 'rgba(var(--sky-rgb), 0.15)',   color: 'var(--text-muted)', label: 'Push' },
   pending: { bg: 'rgba(161,161,170,0.08)', color: 'var(--text-muted)', label: 'Pending' },
 }
 
@@ -281,7 +281,7 @@ export default function TodaysBets({ rows, isAdmin, userTier, isMember, lockedCo
             style={{
               background: 'var(--bg-secondary)',
               border: '1px solid var(--border)',
-              borderLeft: `3px solid ${notifyReport.skipped ? '#facc15' : '#2dd4bf'}`,
+              borderLeft: `3px solid ${notifyReport.skipped ? 'var(--text-muted)' : 'var(--up)'}`,
               borderRadius: '8px',
               padding: '12px 16px',
               margin: '0 0 16px',
@@ -369,7 +369,7 @@ export default function TodaysBets({ rows, isAdmin, userTier, isMember, lockedCo
                               {!isLoggedOut && (row.is_active || isMember) && (
                                 <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
                                   {row.is_active && (
-                                    <span style={tagStyle('var(--accent-teal)', 'rgba(45,212,191,0.12)')}>Active</span>
+                                    <span style={tagStyle('var(--accent-teal)', 'rgba(var(--brand-rgb), 0.12)')}>Active</span>
                                   )}
                                   {/* Gate state is only meaningful to someone who
                                       can see both kinds — otherwise every row is free. */}
@@ -377,7 +377,7 @@ export default function TodaysBets({ rows, isAdmin, userTier, isMember, lockedCo
                                     isEdgePick(row)
                                       ? <span style={tagStyle('var(--accent-gold)', 'rgba(var(--gold-rgb),0.18)')}>Edge</span>
                                       : isFreePick(row)
-                                      ? <span style={tagStyle('#38bdf8', 'rgba(56,189,248,0.12)')}>Free</span>
+                                      ? <span style={tagStyle('var(--accent-sky)', 'rgba(var(--sky-rgb), 0.12)')}>Free</span>
                                       : <span style={tagStyle('var(--accent-gold)', 'rgba(var(--gold-rgb),0.12)')}>Members</span>
                                   )}
                                 </div>
@@ -415,7 +415,7 @@ export default function TodaysBets({ rows, isAdmin, userTier, isMember, lockedCo
                               </button>
                               <button
                                 className="admin-action-btn"
-                                style={{ marginLeft: '6px', color: '#f8717a' }}
+                                style={{ marginLeft: '6px', color: 'var(--down)' }}
                                 onClick={() => deleteRow(row.id)}
                               >
                                 ✕
@@ -573,7 +573,7 @@ function BetForm({ form, setField, onSave, onCancel, saving, error }: BetFormPro
       padding: '20px',
       margin: '8px 0 12px',
     }}>
-      {error && <p style={{ color: '#f8717a', fontSize: '0.85rem', marginBottom: '12px' }}>{error}</p>}
+      {error && <p style={{ color: 'var(--down)', fontSize: '0.85rem', marginBottom: '12px' }}>{error}</p>}
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '12px' }}>
         {[

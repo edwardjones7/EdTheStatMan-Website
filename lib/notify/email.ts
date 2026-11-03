@@ -40,15 +40,16 @@ export function unsubscribeUrl(token: string): string {
 // Exported so lifecycle mail (lib/notify/lifecycle.ts) looks like the same
 // sender rather than a second brand.
 export const C = {
-  bg: '#071219',
-  card: '#0c1e28',
-  border: '#12293a',
-  teal: '#2dd4bf',
-  gold: '#e9c46a',
-  heading: '#f4fafc',
-  text: '#dbe7ec',
-  secondary: '#93a8b3',
-  muted: '#5f7783',
+  bg: '#0F151B',
+  card: '#18212A',
+  border: '#2B3743',
+  brand: '#F0B44C',
+  sky: '#B8C4CE',
+  down: '#EF6A5F',
+  heading: '#E9EDF0',
+  text: '#C9D2D9',
+  secondary: '#A3B0BB',
+  muted: '#8796A3',
 }
 
 export const FONT = "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif"
@@ -93,7 +94,7 @@ function html(
   const badgeText = locked
     ? `${TIER_SHORT_LABEL[audience].toUpperCase()} MEMBERS`
     : isFree ? 'FREE PICK' : TIER_SHORT_LABEL[audience].toUpperCase()
-  const badgeColor = isFree && !locked ? C.teal : C.gold
+  const badgeColor = isFree && !locked ? C.sky : C.brand
 
   return `<!doctype html>
 <html lang="en">
@@ -116,7 +117,7 @@ function html(
         <tr>
           <td align="center" style="padding-bottom:24px;">
             <a href="${url}" style="text-decoration:none;">
-              <span style="font-family:${FONT};font-size:19px;font-weight:700;letter-spacing:.5px;color:${C.heading};">Ed<span style="color:${C.teal};">The</span>StatMan</span>
+              <span style="font-family:${FONT};font-size:19px;font-weight:700;letter-spacing:.5px;color:${C.heading};">EdTheStatMan<span style="display:inline-block;width:9px;height:17px;margin-left:3px;vertical-align:-2px;background-color:${C.brand};">&nbsp;</span></span>
             </a>
           </td>
         </tr>
@@ -137,7 +138,7 @@ function html(
             <!-- Bulletproof CTA: padding sits on the <a>, not the cell. -->
             <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-top:30px;">
               <tr>
-                <td align="center" bgcolor="${C.teal}" style="border-radius:7px;">
+                <td align="center" bgcolor="${C.brand}" style="border-radius:7px;">
                   <a href="${url}" style="display:inline-block;padding:14px 32px;font-family:${FONT};font-size:15px;font-weight:700;color:${C.bg};text-decoration:none;border-radius:7px;">${cta} &rarr;</a>
                 </td>
               </tr>

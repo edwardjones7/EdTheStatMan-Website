@@ -1,14 +1,14 @@
 'use client'
 
-import { useEffect, useState, type CSSProperties } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import '@/styles/proof-win.css'
+import '@/styles/rate-sheet.css'
 import CheckoutButton from './CheckoutButton'
 import TrialButton from './TrialButton'
-import { cardState } from './PricingCards'
-import { IconCheckCircle } from './Icons'
+import { cardState, RateSheet, PeriodToggle, ToppedOut } from './PricingCards'
 import {
-  OFFER_PLANS, OFFER_FREE_FEATURES, OFFER_COMPARE_ROWS, TRIAL_DAYS, annualSavingsPct,
+  OFFER_PLANS, OFFER_FREE_FEATURES, OFFER_COMPARE_ROWS, TRIAL_DAYS,
 } from '@/lib/offer'
 import type { OfferPlan, OfferTierKey, BillingPeriod } from '@/lib/offer'
 import type { Membership, Tier } from '@/lib/access'
@@ -17,7 +17,8 @@ import { trackEvent } from '@/lib/track-client'
 /**
  * The plans on /win. Three products in the order Ed sells them -- Research
  * Desk, Vault, Portfolio -- on a 30-day / 365-day toggle, every one a one-time
- * payment. PricingCards renders the same cards on the Desk and Vault pages;
+ * payment, as one rate sheet (RateSheet). PricingCards renders the same sheet
+ * on the Desk and Vault paywalls;
  * the purchase rules are its cardState(), imported, so the two surfaces cannot
  * disagree about what someone may buy.
  *
@@ -25,13 +26,6 @@ import { trackEvent } from '@/lib/track-client'
  * than derived "each rung includes the one below": the Vault does not include
  * the picks, so the products are not a ladder.
  */
-
-/** What each card IS, in two or three words. */
-const HEADLINE_LABEL: Record<OfferTierKey, string> = {
-  desk: 'Everything',
-  private: 'Systems + Trends',
-  portfolio: 'Picks',
-}
 
 type Col = 'retail' | OfferTierKey
 
@@ -84,9 +78,6 @@ export default function WinPlans({ membership, currentTier, initialPeriod, selec
     ? selectedPlan
     : 'desk'
 
-  const cols = cards.length
-  const colsMd = cols <= 2 ? cols : 1
-
   useEffect(() => {
     if (!selectedPlan) return
     const el = document.getElementById(`plan-${selectedPlan}`) ?? document.getElementById(`compare-${selectedPlan}`)
@@ -125,87 +116,37 @@ export default function WinPlans({ membership, currentTier, initialPeriod, selec
   }
 
   return (
-    <div className="win-plans">
-      <div className="billing-toggle" role="group" aria-label="Access period">
-        <button
-          type="button"
-          className={`billing-toggle__opt${period === 'month' ? ' is-active' : ''}`}
-          onClick={() => choose('month')}
-          aria-pressed={period === 'month'}
-        >
-          30-Day Access
-        </button>
-        <button
-          type="button"
-          className={`billing-toggle__opt${period === 'year' ? ' is-active' : ''}`}
-          onClick={() => choose('year')}
-          aria-pressed={period === 'year'}
-        >
-          365-Day Access
-          <span className="billing-toggle__hint">best value</span>
-        </button>
+    <div className="win-plans rate-wrap">
+      <div className="rate-bar">
+        <p className="rate-bar__note">
+          {period === 'year' ? 'Prices for 365 days.' : 'Prices for 30 days.'} One payment, nothing renews.
+        </p>
+        <PeriodToggle period={period} onChange={choose} />
       </div>
 
       {nothingToSell ? (
-        <div className="pricing-topped-out">
-          <span className="pricing-topped-out__badge">{isAdmin ? 'Admin' : 'The Research Desk'}</span>
-          <p>
-            {isAdmin
-              ? 'Admin accounts hold everything. Nothing to buy here.'
-              : 'You hold the Research Desk: every game, the whole Vault and every pick.'}
-          </p>
-          <Link href="/desk/nfl" className="btn btn--outline">Open the Desk</Link>
-        </div>
+        <ToppedOut isAdmin={isAdmin} />
       ) : (
-        <div
-          className="pricing-grid win-plans__grid"
-          style={{ '--pricing-cols': cols, '--pricing-cols-md': colsMd } as CSSProperties}
-        >
-          {cards.map(plan => {
-            const sku = period === 'month' ? plan.month : plan.year
-            const featured = plan.key === featuredKey
-            return (
-              <div
-                key={plan.key}
-                id={`plan-${plan.key}`}
-                // The global ::before on --featured says "Most Popular"; this
-                // page says why it is marked instead, via data-flag.
-                data-flag={plan.key === selectedPlan ? 'Your pick' : 'Recommended'}
-                className={[
-                  'pricing-card win-card',
-                  featured ? 'pricing-card--featured' : '',
-                  plan.key === 'private' ? 'pricing-card--vault' : '',
-                ].filter(Boolean).join(' ')}
-              >
-                <span className="win-card__label">{HEADLINE_LABEL[plan.key]}</span>
-                <div className="pricing-card__name">{plan.name}</div>
-                <div className="pricing-card__price">{sku.price}</div>
-                <div className="pricing-card__term">{sku.note}</div>
-                {period === 'year' && (
-                  <div className="pricing-card__save">Save {annualSavingsPct(plan)}% versus 30-day pricing</div>
-                )}
-                <div className="pricing-card__desc">{plan.tagline}</div>
-                <ul className="pricing-card__features pricing-card__features--icons">
-                  {plan.features.map(f => (
-                    <li key={f} className="pricing-card__feature">
-                      <IconCheckCircle size={15} /> {f}
-                    </li>
-                  ))}
-                </ul>
-                {cta(plan, featured)}
-                {plan.key === 'desk' && !isPaid && (
-                  <TrialButton available={trialAvailable} loggedIn={isLoggedIn} />
-                )}
-                {plan.key === 'desk' && onTrial && (
-                  <div className="pricing-card__trial-note">You are on the free trial. Buying ends it and starts your paid days.</div>
-                )}
-              </div>
-            )
-          })}
-        </div>
+        <RateSheet
+          plans={cards}
+          period={period}
+          stateOf={state}
+          highlight={featuredKey}
+          picked={selectedPlan}
+          isExpired={isExpired}
+          idFor={plan => `plan-${plan.key}`}
+          extra={plan => plan.key === 'desk' ? (
+            <>
+              {!isPaid && <TrialButton available={trialAvailable} loggedIn={isLoggedIn} />}
+              {onTrial && (
+                <p className="rate-sheet__note">You are on the free trial. Buying ends it and starts your paid days.</p>
+              )}
+            </>
+          ) : null}
+        />
       )}
 
-      <p className="pricing-terms">
+      <p className="rate-terms">
         No automatic renewal. No recurring charges. Access expires at the end of the purchased period.
         {' '}The {TRIAL_DAYS}-day Research Desk trial needs no card and ends on its own.
       </p>

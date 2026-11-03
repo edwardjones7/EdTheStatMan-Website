@@ -122,7 +122,7 @@ export default function ActionCard({ content = DEFAULT_ACTION_CARD, editMode, on
 
 const selectStyle: React.CSSProperties = {
   background: 'transparent',
-  border: '1px dashed rgba(45,212,191,0.45)',
+  border: '1px dashed rgba(var(--brand-rgb), 0.45)',
   borderRadius: '4px',
   padding: '2px 6px',
   color: 'inherit',

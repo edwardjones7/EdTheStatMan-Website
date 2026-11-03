@@ -251,14 +251,14 @@ export function passExpiredMessage(input: {
 
 /** Table-based and inline-styled, for the same reasons as email.ts. */
 export function renderLifecycleHtml(m: LifecycleMessage): string {
-  const accent = m.tone === 'problem' ? '#f8717a' : C.gold
+  const accent = m.tone === 'problem' ? C.down : C.brand
   const home = siteUrl()
   const paragraphs = m.paragraphs
     .map((p, i) => `<p style="margin:${i === 0 ? '14px' : '12px'} 0 0;font-family:${FONT};font-size:16px;line-height:1.6;color:${C.secondary};">${esc(p)}</p>`)
     .join('\n            ')
   const links = m.links.length === 0 ? '' : `
             <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-top:22px;">
-              ${m.links.map((l) => `<tr><td style="padding:5px 0;font-family:${FONT};font-size:15px;line-height:1.5;"><a href="${esc(l.href)}" style="color:${C.teal};text-decoration:underline;">${esc(l.label)}</a></td></tr>`).join('\n              ')}
+              ${m.links.map((l) => `<tr><td style="padding:5px 0;font-family:${FONT};font-size:15px;line-height:1.5;"><a href="${esc(l.href)}" style="color:${C.brand};text-decoration:underline;">${esc(l.label)}</a></td></tr>`).join('\n              ')}
             </table>`
   const unsub = m.unsubscribeToken
     ? `<br><a href="${esc(unsubscribeUrl(m.unsubscribeToken))}" style="color:${C.secondary};text-decoration:underline;">Unsubscribe from marketing email</a>`
@@ -283,7 +283,7 @@ export function renderLifecycleHtml(m: LifecycleMessage): string {
         <tr>
           <td align="center" style="padding-bottom:24px;">
             <a href="${esc(home)}" style="text-decoration:none;">
-              <span style="font-family:${FONT};font-size:19px;font-weight:700;letter-spacing:.5px;color:${C.heading};">Ed<span style="color:${C.teal};">The</span>StatMan</span>
+              <span style="font-family:${FONT};font-size:19px;font-weight:700;letter-spacing:.5px;color:${C.heading};">EdTheStatMan<span style="display:inline-block;width:9px;height:17px;margin-left:3px;vertical-align:-2px;background-color:${C.brand};">&nbsp;</span></span>
             </a>
           </td>
         </tr>
@@ -303,7 +303,7 @@ export function renderLifecycleHtml(m: LifecycleMessage): string {
 
             <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-top:30px;">
               <tr>
-                <td align="center" bgcolor="${C.teal}" style="border-radius:7px;">
+                <td align="center" bgcolor="${C.brand}" style="border-radius:7px;">
                   <a href="${esc(m.cta.href)}" style="display:inline-block;padding:14px 32px;font-family:${FONT};font-size:15px;font-weight:700;color:${C.bg};text-decoration:none;border-radius:7px;">${esc(m.cta.label)} &rarr;</a>
                 </td>
               </tr>

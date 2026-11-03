@@ -598,8 +598,8 @@ a.game-nav__step:hover { border-color: rgba(var(--teal-rgb), 0.4); }
 }
 
 .game-bets__tag.is-free {
-  color: var(--accent-teal);
-  border-color: rgba(45, 212, 191, 0.4);
+  color: var(--accent-sky);
+  border-color: rgba(var(--sky-rgb), 0.4);
 }
 
 .game-bets__bet {

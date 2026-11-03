@@ -29,9 +29,9 @@ function parseDateVal(dateStr: string | null): number {
 }
 
 const RESULT_STYLE: Record<string, { bg: string; color: string; label: string }> = {
-  win:     { bg: 'rgba(45,212,191,0.15)',  color: '#2dd4bf', label: 'Win' },
-  loss:    { bg: 'rgba(239,68,68,0.15)',   color: '#f8717a', label: 'Loss' },
-  push:    { bg: 'rgba(234,179,8,0.15)',   color: '#facc15', label: 'Push' },
+  win:     { bg: 'rgba(var(--up-rgb), 0.15)',  color: 'var(--up)', label: 'Win' },
+  loss:    { bg: 'rgba(var(--down-rgb), 0.15)',   color: 'var(--down)', label: 'Loss' },
+  push:    { bg: 'rgba(var(--sky-rgb), 0.15)',   color: 'var(--text-muted)', label: 'Push' },
   pending: { bg: 'rgba(161,161,170,0.08)', color: '#a1a1aa', label: 'Pending' },
 }
 
@@ -221,7 +221,7 @@ export default function RecentPicksResults({ rows, isAdmin = false, editMode = f
                             </button>
                             <button
                               className="admin-action-btn"
-                              style={{ marginLeft: '6px', color: '#f8717a' }}
+                              style={{ marginLeft: '6px', color: 'var(--down)' }}
                               onClick={() => deleteRow(row.id)}
                             >
                               ✕
@@ -278,7 +278,7 @@ function BetForm({ form, setField, onSave, onCancel, saving, error }: BetFormPro
       padding: '20px',
       margin: '8px 0 12px',
     }}>
-      {error && <p style={{ color: '#f8717a', fontSize: '0.85rem', marginBottom: '12px' }}>{error}</p>}
+      {error && <p style={{ color: 'var(--down)', fontSize: '0.85rem', marginBottom: '12px' }}>{error}</p>}
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '12px' }}>
         {[

@@ -59,7 +59,7 @@ export const metadata: Metadata = {
 // Matches --bg-primary, so mobile browser chrome blends into the page instead
 // of a white bar above a dark site.
 export const viewport: Viewport = {
-  themeColor: '#071219',
+  themeColor: '#0F151B',
   colorScheme: 'dark',
 }
 

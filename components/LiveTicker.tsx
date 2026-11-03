@@ -52,15 +52,15 @@ const BADGE_CLASS: Record<string, string> = {
 }
 
 const BADGE_COLORS: Record<string, string> = {
-  up:      'rgba(45,212,191,0.15)',
-  down:    'rgba(248,113,122,0.15)',
-  neutral: 'rgba(148,163,184,0.15)',
+  up:      'rgba(var(--up-rgb), 0.15)',
+  down:    'rgba(var(--down-rgb), 0.15)',
+  neutral: 'rgba(var(--sky-rgb), 0.15)',
 }
 
 const BADGE_TEXT_COLORS: Record<string, string> = {
-  up:      '#2dd4bf',
-  down:    '#f8717a',
-  neutral: '#94a3b8',
+  up:      'var(--up)',
+  down:    'var(--down)',
+  neutral: 'var(--text-muted)',
 }
 
 const QUICK_ICONS = ['🏈', '🏀', '⚾', '🏒', '⚽', '🏆', '💰', '📈', '🔥', '✅', '⭐', '🎯']
@@ -173,7 +173,7 @@ function TickerItemCard({
             lineHeight: 1,
             transition: 'color 0.15s',
           }}
-          onMouseEnter={e => (e.currentTarget.style.color = '#f8717a')}
+          onMouseEnter={e => (e.currentTarget.style.color = 'var(--down)')}
           onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-muted)')}
         >
           ✕
@@ -204,8 +204,8 @@ function TickerItemCard({
                     onClick={() => onPatch({ icon: item.icon === ic ? '' : ic })}
                     title={ic}
                     style={{
-                      background: item.icon === ic ? 'rgba(45,212,191,0.18)' : 'transparent',
-                      border: item.icon === ic ? '1px solid rgba(45,212,191,0.4)' : '1px solid transparent',
+                      background: item.icon === ic ? 'rgba(var(--brand-rgb), 0.18)' : 'transparent',
+                      border: item.icon === ic ? '1px solid rgba(var(--brand-rgb), 0.4)' : '1px solid transparent',
                       borderRadius: '4px',
                       cursor: 'pointer',
                       fontSize: '0.9rem',
@@ -260,8 +260,8 @@ function TickerItemCard({
               setShowBadge(v => !v)
             }}
             style={{
-              background: showBadge ? 'rgba(45,212,191,0.08)' : 'transparent',
-              border: `1px solid ${showBadge ? 'rgba(45,212,191,0.3)' : 'var(--border)'}`,
+              background: showBadge ? 'rgba(var(--brand-rgb), 0.08)' : 'transparent',
+              border: `1px solid ${showBadge ? 'rgba(var(--brand-rgb), 0.3)' : 'var(--border)'}`,
               borderRadius: '5px',
               cursor: 'pointer',
               color: showBadge ? 'var(--accent-teal)' : 'var(--text-muted)',
@@ -360,7 +360,7 @@ export default function LiveTicker({ content = DEFAULT_TICKER, editMode, onEdit,
         // Offset below the fixed nav so the header (and "+ Add Item" button) isn't clipped.
         marginTop: 'calc(var(--nav-height) + 12px)',
         background: 'var(--bg-secondary)',
-        borderBottom: '2px solid rgba(45,212,191,0.2)',
+        borderBottom: '2px solid rgba(var(--brand-rgb), 0.2)',
       }}>
         {/* Header */}
         <div style={{
@@ -377,7 +377,6 @@ export default function LiveTicker({ content = DEFAULT_TICKER, editMode, onEdit,
               borderRadius: '50%',
               background: 'var(--accent-teal)',
               display: 'inline-block',
-              boxShadow: '0 0 6px var(--accent-teal)',
             }} />
             <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--accent-teal)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
               Ticker
@@ -395,7 +394,7 @@ export default function LiveTicker({ content = DEFAULT_TICKER, editMode, onEdit,
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
             {error && (
               <span style={{
-                background: 'rgba(239,68,68,0.92)',
+                background: 'rgba(var(--down-rgb), 0.92)',
                 color: '#fff',
                 fontSize: '0.7rem',
                 padding: '4px 8px',
@@ -407,9 +406,9 @@ export default function LiveTicker({ content = DEFAULT_TICKER, editMode, onEdit,
             <button
               onClick={addItem}
               style={{
-                background: 'rgba(45,212,191,0.1)',
+                background: 'rgba(var(--brand-rgb), 0.1)',
                 color: 'var(--accent-teal)',
-                border: '1px solid rgba(45,212,191,0.3)',
+                border: '1px solid rgba(var(--brand-rgb), 0.3)',
                 borderRadius: '6px',
                 cursor: 'pointer',
                 fontFamily: 'inherit',
@@ -445,7 +444,7 @@ export default function LiveTicker({ content = DEFAULT_TICKER, editMode, onEdit,
                 onClick={onSave}
                 disabled={saving || !dirty}
                 style={{
-                  background: dirty ? 'var(--accent-teal)' : 'rgba(45,212,191,0.25)',
+                  background: dirty ? 'var(--accent-teal)' : 'rgba(var(--brand-rgb), 0.25)',
                   color: dirty ? '#000' : 'var(--text-muted)',
                   border: 'none',
                   borderRadius: '6px',

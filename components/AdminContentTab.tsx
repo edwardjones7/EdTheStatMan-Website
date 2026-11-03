@@ -70,7 +70,7 @@ export default function AdminContentTab({ content: initialContent }: Props) {
       </div>
 
       {err && (
-        <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '8px', padding: '10px 14px', color: '#f8717a', fontSize: '0.85rem', marginBottom: '16px' }}>
+        <div style={{ background: 'rgba(var(--down-rgb), 0.1)', border: '1px solid rgba(var(--down-rgb), 0.3)', borderRadius: '8px', padding: '10px 14px', color: 'var(--down)', fontSize: '0.85rem', marginBottom: '16px' }}>
           {err}
         </div>
       )}
@@ -263,7 +263,7 @@ function ContentAccordion({
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '14px 18px',
-          background: open ? 'rgba(45,212,191,0.06)' : 'var(--bg-secondary)',
+          background: open ? 'rgba(var(--brand-rgb), 0.06)' : 'var(--bg-secondary)',
           border: 'none',
           cursor: 'pointer',
           color: 'var(--text-primary)',

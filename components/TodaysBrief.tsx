@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import type { Brief } from '@/lib/brief'
 import { formatCardDate, relativeLabel } from '@/lib/brief'
-import { IconLock, IconArrowRight } from './Icons'
+import { IconLock } from './Icons'
 import ProofStrip from './ProofStrip'
 import type { ProofData } from '@/lib/proof'
 
@@ -20,9 +20,14 @@ import type { ProofData } from '@/lib/proof'
 export default function TodaysBrief({ brief, proof }: { brief: Brief; proof?: ProofData }) {
   // Nothing scheduled and nothing graded — render nothing rather than an empty
   // shell. A blank section is worse than no section.
-  if (!brief.date && !brief.record && !proof) return null
+  //
+  // The homepage states the record in the quote strip under the hero
+  // (HomeRecord), so it passes no `proof` and the brief is only the card. The
+  // blended "Published record" fallback is gone for good: it mixed both books
+  // into a figure under break-even.
+  if (!brief.date && !proof) return null
 
-  const { date, visible, lockedCount, sportCounts, total, record } = brief
+  const { date, visible, lockedCount, sportCounts, total } = brief
 
   return (
     <section className="section brief" aria-labelledby="brief-heading">
@@ -87,7 +92,7 @@ export default function TodaysBrief({ brief, proof }: { brief: Brief; proof?: Pr
                 <strong>{lockedCount}</strong>{' '}
                 {lockedCount === 1 ? 'more play' : 'more plays'} on this card
               </span>
-              <span className="brief__unlock">Unlock <IconArrowRight /></span>
+              <span className="brief__unlock">Unlock</span>
             </Link>
           )}
 
@@ -99,15 +104,8 @@ export default function TodaysBrief({ brief, proof }: { brief: Brief; proof?: Pr
           {proof && <ProofStrip proof={proof} variant="compact" className="brief__proof" />}
 
           <footer className="brief__foot">
-            {!proof && record && (
-              <span className="brief__record">
-                Published record{' '}
-                <strong>{record.w}&ndash;{record.l}{record.p > 0 ? `–${record.p}` : ''}</strong>
-                <span className="brief__pct">({record.pct.toFixed(1)}%)</span>
-              </span>
-            )}
             <Link href="/portfolio" className="brief__more">
-              The Portfolio <IconArrowRight />
+              Every pick in the Portfolio
             </Link>
           </footer>
 

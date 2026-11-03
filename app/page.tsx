@@ -3,7 +3,8 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { SITE_CONTENT_DEFAULTS } from '@/lib/site-content'
 import type { AllSiteContent } from '@/lib/site-content'
-import Hero from '@/components/Hero'
+import HomeHero, { type HeroCta } from '@/components/HomeHero'
+import HomeRecord from '@/components/HomeRecord'
 import Features from '@/components/Features'
 import CTASection from '@/components/CTASection'
 import SportsBand from '@/components/SportsBand'
@@ -13,6 +14,9 @@ import { resolveAccess, ACCESS_SELECT } from '@/lib/access'
 import { buildBrief } from '@/lib/brief'
 import type { BriefSource } from '@/lib/brief'
 import { loadProof } from '@/lib/proof'
+import { loadHomeBoard } from '@/lib/home-board'
+import { loadTrialState } from '@/lib/trial'
+import '@/styles/home.css'
 
 export const metadata: Metadata = {
   title: 'EdTheStatMan.com – Winning Sports Betting Picks, Systems & Trends',
@@ -38,6 +42,7 @@ export default async function Home() {
   // Started first and awaited late: it is an independent read, so it should not
   // add a round trip to the page.
   const proofPromise = loadProof()
+  const boardPromise = loadHomeBoard()
   const supabase = await createClient()
 
   const { data: contentRows } = await (supabase as any).from('site_content').select('key, value')
@@ -91,7 +96,13 @@ export default async function Home() {
       .single()
     access = resolveAccess(profile as any, true)
   }
-  const { tier: userTier, isAdmin, isPaid, membership } = access
+  const { tier: userTier, isAdmin, membership } = access
+
+  // The trial state decides the hero's primary button (components/HomeHero.tsx):
+  // whether a member without the Desk may start one, and whether a Desk member
+  // is on one. Started here and awaited with the other independent reads.
+  const hasDesk = isAdmin || access.atLeast('desk')
+  const trialPromise = user ? loadTrialState(createAdminClient(), user.id) : null
 
   // Today's Brief. Read through the admin client for the same reason the
   // Portfolio page does -- the app's tier logic is the gate, not RLS -- and
@@ -101,28 +112,39 @@ export default async function Home() {
     .from('todays_bets')
     .select('id, date, sport, bet, line, opponent, result, is_active, is_free, is_elite, show_on_results')
   const brief = buildBrief((briefRows ?? []) as BriefSource[], userTier, isAdmin)
-  // The record shown under the brief comes from lib/proof.ts, not brief.record,
+  // The record strip under the hero comes from lib/proof.ts, not brief.record,
   // so it splits the two books the way every other surface does.
-  const proof = await proofPromise
-  const briefNode = <TodaysBrief brief={brief} proof={proof} />
+  const [proof, board, trial] = await Promise.all([proofPromise, boardPromise, trialPromise])
+  const cta: HeroCta =
+    !user || !trial ? { kind: 'signup' }
+    : hasDesk ? { kind: 'desk', trialEndsAt: trial.onTrial ? trial.endsAt : null }
+    : trial.available ? { kind: 'trial' }
+    : { kind: 'plans', expired: membership === 'expired' }
+  const briefNode = <TodaysBrief brief={brief} />
+  const heroNode = (
+    <>
+      <HomeHero board={board} cta={cta} />
+      <HomeRecord proof={proof} />
+    </>
+  )
 
   return (
-    <>
+    <div className="home">
       {isAdmin ? (
         // Admin gets the interactive editor with a single pencil FAB
         // (LiveTicker is rendered inside HomeEditor for admins)
-        <HomeEditor content={content} brief={briefNode} />
+        <HomeEditor content={content} hero={heroNode} brief={briefNode} />
       ) : (
         // Everyone else gets static server-rendered sections
         // (the ticker is rendered globally by the root layout)
         <>
-          <Hero            content={content.hero} isLoggedIn={userTier !== null} />
+          {heroNode}
           {briefNode}
           <Features        content={content.features} />
           <SportsBand />
           <CTASection      content={content.cta_section} membership={membership} />
         </>
       )}
-    </>
+    </div>
   )
 }

@@ -21,8 +21,8 @@ self.addEventListener('push', (event) => {
   const title = payload.title || 'EdTheStatMan'
   const options = {
     body: payload.body || 'A new pick is live.',
-    icon: '/logo.png',
-    badge: '/logo.png',
+    icon: '/icon-192.png',
+    badge: '/badge-96.png',
     data: { url: payload.url || '/model-picks' },
     // Collapses rapid-fire alerts into one entry per slate on the lock screen.
     tag: 'ets-pick',
