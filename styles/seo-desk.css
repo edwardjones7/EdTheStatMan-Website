@@ -102,6 +102,12 @@
 
 .desk-days::-webkit-scrollbar { display: none; }
 
+/* Centred with auto margins rather than justify-content: centre. When the row
+   overflows at phone width, justify-content would push the first pill past the
+   left edge where it cannot be scrolled to; auto margins collapse to zero then. */
+.desk-days > :first-child { margin-left: auto; }
+.desk-days > :last-child { margin-right: auto; }
+
 .desk-day-pill {
   flex: 0 0 auto;
   display: flex;
@@ -200,9 +206,22 @@
   box-shadow: inset 0 0 0 2px var(--bg-card);
 }
 
+.desk-days-bar { justify-content: center; }
+
 @media (min-width: 641px) {
-  .desk-days-wrap { flex: 1 1 auto; }
   .desk-days { padding: 2px 4px; }
+}
+
+/* Wide enough for the days and the toggle on one line: take the toggle out of
+   the flow so the days centre on the page, not on whatever space it leaves. */
+@media (min-width: 1200px) {
+  .desk-days-bar { position: relative; }
+  .desk-line-toggle {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+  }
 }
 
 /* One quiet line in place of a stack of identical empty-state tags. */
