@@ -44,7 +44,6 @@ export default async function Home() {
   // Started first and awaited late: it is an independent read, so it should not
   // add a round trip to the page.
   const proofPromise = loadProof()
-  const boardPromise = loadHomeBoard()
   const supabase = await createClient()
 
   const { data: contentRows } = await (supabase as any).from('site_content').select('key, value')
@@ -101,6 +100,9 @@ export default async function Home() {
   // is on one. Started here and awaited with the other independent reads.
   const hasDesk = isAdmin || access.atLeast('desk')
   const trialPromise = user ? loadTrialState(createAdminClient(), user.id) : null
+  // Started here, not with the other reads: what the board may say depends on
+  // who is looking, so it has to wait for the viewer.
+  const boardPromise = loadHomeBoard({ tier: userTier, isAdmin, hasDesk })
 
   // Today's Brief. Read through the admin client for the same reason the
   // Portfolio page does -- the app's tier logic is the gate, not RLS -- and
@@ -170,7 +172,7 @@ export default async function Home() {
         card={card}
         proof={heroProof}
       />
-      <HomeBoardSection board={board} hasDesk={cta.kind === 'desk'} />
+      <HomeBoardSection board={board} />
     </>
   )
 

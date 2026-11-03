@@ -176,6 +176,8 @@
 .home-board__table th:last-child,
 .home-board__table td:last-child { padding-right: 20px; }
 
+.home-board__table.is-wide { min-width: 640px; }
+
 .home-board__table .is-num { text-align: right; }
 .home-board__table .is-mono {
   font-family: var(--font-mono);
@@ -193,6 +195,12 @@
 }
 .home-board__game:hover { color: var(--brand); }
 .home-board__game:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+
+.home-board__bet,
+.home-board__research .home-board__locked {
+  display: block;
+  white-space: nowrap;
+}
 
 .home-board__sport {
   margin-right: 8px;

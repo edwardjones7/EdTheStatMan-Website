@@ -1,6 +1,6 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import type { HomeBoard } from '@/lib/home-board'
+import type { BoardBet, BoardRow, HomeBoard } from '@/lib/home-board'
 import { TRIAL_DAYS } from '@/lib/offer'
 import HomeTrialButton from './HomeTrialButton'
 import { IconLock } from './Icons'
@@ -80,20 +80,52 @@ function CardHook({ card }: { card: HeroCard }) {
   )
 }
 
-function Board({ board, hasDesk }: { board: HomeBoard; hasDesk: boolean }) {
+function researchLabel(r: BoardRow): string {
+  return [
+    r.systems > 0 && plural(r.systems, 'system', 'systems'),
+    r.trends > 0 && plural(r.trends, 'trend', 'trends'),
+  ].filter(Boolean).join(', ')
+}
+
+/** Open bets by name, locked ones as a count. BoardBet carries no text when locked. */
+function BetsCell({ bets }: { bets: BoardBet[] }) {
+  if (bets.length === 0) return <span className="is-quiet">–</span>
+  const open = bets.filter(b => !b.locked)
+  const locked = bets.length - open.length
+  return (
+    <>
+      {open.slice(0, 2).map((b, i) => (
+        <Link key={b.key ?? i} href={`/picks/${encodeURIComponent(b.key ?? '')}`} className="home-board__bet">
+          {b.bet ?? 'Pick'}
+          {b.result !== 'pending' && <span className="home-board__open"> {b.result.toUpperCase()}</span>}
+        </Link>
+      ))}
+      {open.length > 2 && <span className="home-board__open">+{open.length - 2} more</span>}
+      {locked > 0 && (
+        <Link href="/win?plan=portfolio" className="home-board__locked">
+          <IconLock size={12} /> {plural(locked, 'Portfolio pick', 'Portfolio picks')}
+        </Link>
+      )}
+    </>
+  )
+}
+
+function Board({ board }: { board: HomeBoard }) {
   // A column of "None yet" sells nothing and reads as an unfinished product,
-  // so it only appears once at least one game on screen carries research.
-  const showResearch = board.withResearch > 0
+  // so each one only appears once a game on screen has something to put in it.
+  const showResearch = board.rows.some(r => r.systems + r.trends > 0)
+  const showBets = board.rows.some(r => r.bets.length > 0)
   return (
     <div className="home-board">
       <div className="home-board__scroll" role="region" aria-label={`${board.title} lines`} tabIndex={0}>
-        <table className="home-board__table">
+        <table className={`home-board__table${showResearch || showBets ? ' is-wide' : ''}`}>
           <thead>
             <tr>
               <th scope="col">Game</th>
               <th scope="col" className="is-num">Spread</th>
               <th scope="col" className="is-num">Total</th>
               {showResearch && <th scope="col" className="is-num">Research</th>}
+              {showBets && <th scope="col" className="is-num">Bets</th>}
             </tr>
           </thead>
           <tbody>
@@ -114,15 +146,20 @@ function Board({ board, hasDesk }: { board: HomeBoard; hasDesk: boolean }) {
                 </td>
                 {showResearch && (
                   <td className="is-num home-board__research">
-                    {r.research === 0 ? (
+                    {r.systems + r.trends === 0 ? (
                       <span className="is-quiet">–</span>
-                    ) : hasDesk ? (
-                      <Link href={r.href}>{plural(r.research, 'system or trend', 'systems and trends')}</Link>
+                    ) : r.researchOpen ? (
+                      <Link href={r.href}>{researchLabel(r)}</Link>
                     ) : (
                       <Link href={r.href} className="home-board__locked">
-                        <IconLock size={12} /> {plural(r.research, 'system or trend', 'systems and trends')}
+                        <IconLock size={12} /> {researchLabel(r)}
                       </Link>
                     )}
+                  </td>
+                )}
+                {showBets && (
+                  <td className="is-num home-board__research">
+                    <BetsCell bets={r.bets} />
                   </td>
                 )}
               </tr>
@@ -143,7 +180,7 @@ function Board({ board, hasDesk }: { board: HomeBoard; hasDesk: boolean }) {
 }
 
 /** Today's games, with research shown as a locked count, not a blank. */
-export function HomeBoardSection({ board, hasDesk }: { board: HomeBoard | null; hasDesk: boolean }) {
+export function HomeBoardSection({ board }: { board: HomeBoard | null }) {
   if (!board || board.rows.length === 0) return null
   return (
     <section className="home-board-section" aria-labelledby="home-board-title">
@@ -156,9 +193,10 @@ export function HomeBoardSection({ board, hasDesk }: { board: HomeBoard | null; 
             {board.withResearch > 0
               ? `, ${board.withResearch} with systems and trends attached`
               : '. Systems and trends go up before game time.'}
+            {board.bets > 0 && ` ${plural(board.bets, 'bet', 'bets')} posted.`}
           </p>
         </header>
-        <Board board={board} hasDesk={hasDesk} />
+        <Board board={board} />
       </div>
     </section>
   )
