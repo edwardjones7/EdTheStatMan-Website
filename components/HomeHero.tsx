@@ -11,8 +11,10 @@ import { IconLock } from './Icons'
  *   1. what is on the card right now (the hook),
  *   2. the slogan and description (admin-editable site_content.hero),
  *   3. the one action, worded around that card when there is one,
- *   4. the record, so "does it win?" is answered before the scroll,
- *   5. the live board, with research shown as a locked count, not a blank.
+ *   4. the record, so "does it win?" is answered before the scroll.
+ *
+ * The live board is its own section straight after (HomeBoardSection): inside
+ * the hero it doubled the height and pushed everything else down the page.
  *
  * Server component; every figure arrives already shaped. The stadium photo
  * from the old hero sits behind it, greyscale and dark, so colour on the page
@@ -149,10 +151,21 @@ function Board({ board, hasDesk }: { board: HomeBoard; hasDesk: boolean }) {
   )
 }
 
+/** Today's games, with research shown as a locked count, not a blank. */
+export function HomeBoardSection({ board, hasDesk }: { board: HomeBoard | null; hasDesk: boolean }) {
+  if (!board || board.rows.length === 0) return null
+  return (
+    <div className="home-board-section">
+      <div className="container">
+        <Board board={board} hasDesk={hasDesk} />
+      </div>
+    </div>
+  )
+}
+
 export default function HomeHero({
-  board, cta, title, accent, description, card, proof,
+  cta, title, accent, description, card, proof,
 }: {
-  board: HomeBoard | null
   cta: HeroCta
   title: string
   accent: string
@@ -225,8 +238,6 @@ export default function HomeHero({
             </Link>
           )}
         </div>
-
-        {board && board.rows.length > 0 && <Board board={board} hasDesk={cta.kind === 'desk'} />}
       </div>
     </section>
   )

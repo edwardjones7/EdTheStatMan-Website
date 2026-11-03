@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { SITE_CONTENT_DEFAULTS } from '@/lib/site-content'
 import type { AllSiteContent } from '@/lib/site-content'
-import HomeHero, { type HeroCta, type HeroCard, type HeroProof } from '@/components/HomeHero'
+import HomeHero, { HomeBoardSection, type HeroCta, type HeroCard, type HeroProof } from '@/components/HomeHero'
 import HomeFreePicks from '@/components/HomeFreePicks'
 import { BOOK_LABEL } from '@/lib/proof'
 import { minus } from '@/lib/home-board'
@@ -161,7 +161,6 @@ export default async function Home() {
   const heroNode = (
     <>
       <HomeHero
-        board={board}
         cta={cta}
         title={content.hero.title}
         accent={content.hero.titleAccent}
@@ -169,6 +168,7 @@ export default async function Home() {
         card={card}
         proof={heroProof}
       />
+      <HomeBoardSection board={board} hasDesk={cta.kind === 'desk'} />
       {!user && <HomeFreePicks />}
     </>
   )
