@@ -265,12 +265,18 @@ export default function NavClient({ user, membership = 'logged-out' }: NavClient
     // Stop when the page is actually on screen, which nothing React exposes
     // will tell us: usePathname flips ~215ms in and the transition resolves
     // ~500ms in, both while the previous page is still the only thing rendered,
-    // so ending on either leaves most of the wait uncovered. The page is a
-    // direct child of <body>, so that child swapping IS the arrival -- and it
-    // fires for the Desk's skeleton too, which is exactly the right moment to
-    // hand over, since from there the skeleton is the loading state.
+    // so ending on either leaves most of the wait uncovered. The page is the
+    // direct child of #main (the skip-link target in app/layout.tsx), so that
+    // child swapping IS the arrival -- and it fires for the Desk's skeleton
+    // too, which is exactly the right moment to hand over, since from there
+    // the skeleton is the loading state.
+    //
+    // Must be #main, not <body>. The page used to sit directly in <body>; once
+    // the #main wrapper went in, <body>'s children never changed on navigation,
+    // and the bar swept until the 15s failsafe on every click (measured: page
+    // on screen at 1.1s, bar cleared at 15.0s).
     watcher.current = new MutationObserver(stopNavigating)
-    watcher.current.observe(document.body, { childList: true })
+    watcher.current.observe(document.getElementById('main') ?? document.body, { childList: true })
     failsafe.current = setTimeout(stopNavigating, 15000)
 
     setPending(href)
