@@ -4,12 +4,10 @@ import { notFound } from 'next/navigation'
 import CTASection from '@/components/CTASection'
 import DeskWeekBoard from '@/components/DeskWeekBoard'
 import NflAdminBar from '@/components/NflAdminBar'
-import DeskNoteEditor from '@/components/DeskNoteEditor'
 import DeskLiveRefresh from '@/components/DeskLiveRefresh'
 import PricingCards from '@/components/PricingCards'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getAccess } from '@/lib/access-server'
-import { atLeastTier, normalizeTier } from '@/lib/access'
 import { researchClosedFor, holdsLibrary } from '@/lib/gate'
 import { toPublicGame, currentWeekOf, weekLabel, weekIsOver } from '@/lib/nfl'
 import type { NflGame, PublicNflGame } from '@/lib/nfl'
@@ -28,7 +26,7 @@ export async function generateMetadata(
 ): Promise<Metadata> {
   const label = deskSportLabel(params.sport)
   const title = `The Research Desk — ${label}`
-  const description = `Every ${label} game on one schedule, with the betting trends curated for that matchup, opening and current lines, and the weekly desk note.`
+  const description = `Every ${label} game on one schedule, with the betting trends curated for that matchup, opening and current lines, and the bets on each game.`
   const url = `https://edthestatman.com/desk/${params.sport}`
   return {
     title,
@@ -214,7 +212,7 @@ export default async function DeskSport({
     }
   })
 
-  // The link counts and the desk note both depend only on `active`, so they go
+  // The link counts and the bet counts both depend only on `active`, so they go
   // out together. They used to run in series, which cost a whole extra Supabase
   // round trip (~200ms measured) on the render path of a page that already
   // blocks on auth and the full game list before either can start.
@@ -224,9 +222,7 @@ export default async function DeskSport({
   // send for cards that are not being rendered.
   const gameIds = boardGames.map(g => g.id)
 
-  type NoteRow = { title: string; body_html: string; min_tier: string; is_published: boolean }
-
-  const [linkRows, noteResult, betRows] = await Promise.all([
+  const [linkRows, betRows] = await Promise.all([
     // Curated link counts per game — proof of depth without shipping the links.
     gameIds.length > 0
       ? Promise.all([
@@ -234,18 +230,6 @@ export default async function DeskSport({
           (admin as any).from('nfl_game_trends').select('game_id').in('game_id', gameIds),
         ])
       : Promise.resolve([{ data: [] }, { data: [] }] as any[]),
-    // The weekly desk note. The table arrives with tier_ladder_06; until then
-    // the query errors harmlessly and the note simply doesn't render.
-    active
-      ? (admin as any)
-          .from('desk_notes')
-          .select('title, body_html, min_tier, is_published')
-          .eq('sport', sport)
-          .eq('season', season)
-          .eq('season_type', active.season_type)
-          .eq('week', active.week)
-          .maybeSingle()
-      : Promise.resolve({ data: null }),
     // The bets on each game (todays_bets.game_id, lib/picks/game-match.ts).
     // Before pricing_01 the column is missing, the query errors, and every
     // count is simply zero.
@@ -271,12 +255,11 @@ export default async function DeskSport({
   for (const row of sysLinks?.data ?? []) if (linkedCounts[row.game_id]) linkedCounts[row.game_id].systems++
   for (const row of trendLinks?.data ?? []) if (linkedCounts[row.game_id]) linkedCounts[row.game_id].trends++
 
-  const rawNote: NoteRow | null = ((noteResult as any)?.data ?? null) as NoteRow | null
-  // A draft is visible to its author only; everyone else sees no note at all.
-  const note = rawNote && (rawNote.is_published || isAdmin) ? rawNote : null
-  const canReadNote = note
-    ? isAdmin || atLeastTier(userTier, normalizeTier(note.min_tier))
-    : false
+  // The Bets panel at the top of the board replaced the weekly Desk Note
+  // (Ed, Nov 2026): the picks attached to the games are what he is producing,
+  // so the headline is how many there are across the games on screen.
+  const totalBets = Object.values(betCounts).reduce((n, c) => n + c, 0)
+  const gamesWithBets = Object.keys(betCounts).length
 
   // Is the week on screen already played out? If so the Desk rung's in-context
   // window on it has shut, and the cards must say so rather than advertise a
@@ -344,35 +327,23 @@ export default async function DeskSport({
           )}
 
           {isAdmin && (
-            <>
-              <NflAdminBar sport={sport} season={season} seasonLabel={seasonLabel} seasonType={active?.season_type} week={active?.week} />
-              {active && (
-                <DeskNoteEditor
-                  sport={sport}
-                  season={season}
-                  seasonType={active.season_type}
-                  week={active.week}
-                  weekLabel={weekLabel(active.season_type, active.week, sport, season)}
-                  existing={rawNote}
-                />
-              )}
-            </>
+            <NflAdminBar sport={sport} season={season} seasonLabel={seasonLabel} seasonType={active?.season_type} week={active?.week} />
           )}
 
-          {note && (
-            <div className={`desk-note${canReadNote ? '' : ' desk-note--locked'}`}>
+          {active && boardGames.length > 0 && (
+            <div className={`desk-note${hasDesk ? '' : ' desk-note--locked'}`}>
               <div className="desk-note__label">
-                Desk Note{!note.is_published && ' — draft, visible to you only'}
+                Bets — {weekLabel(active.season_type, active.week, sport, season)}
+                {activeDay && ` · ${dayOptions.find(d => d.date === activeDay)?.label ?? activeDay}`}
               </div>
-              <h2 className="desk-note__title">{note.title}</h2>
-              {canReadNote ? (
-                <div
-                  className="desk-note__body"
-                  dangerouslySetInnerHTML={{ __html: note.body_html }}
-                />
-              ) : (
+              <h2 className="desk-note__title">
+                {totalBets === 0
+                  ? 'No bets placed on these games yet'
+                  : `${totalBets} ${totalBets === 1 ? 'bet' : 'bets'} placed across ${gamesWithBets} ${gamesWithBets === 1 ? 'game' : 'games'}`}
+              </h2>
+              {totalBets > 0 && !hasDesk && (
                 <p className="desk-note__gate">
-                  This week&apos;s note is written for Research Desk members.{' '}
+                  The bets on each game open with the Research Desk.{' '}
                   <Link href="/win">Open the Desk →</Link>
                 </p>
               )}
