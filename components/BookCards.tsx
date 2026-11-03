@@ -26,8 +26,10 @@ export default function BookCards({ proof, rows }: { proof: ProofData; rows: Rec
   return (
     <section className="section books" aria-labelledby="books-heading">
       <div className="container">
-        <h2 id="books-heading" className="books__title">Two records, kept apart</h2>
-        <div className="books__grid">
+        <h2 id="books-heading" className="books__title">
+          {shown.length > 1 ? 'Two records, kept apart' : 'The record, by sport'}
+        </h2>
+        <div className={`books__grid${shown.length === 1 ? ' books__grid--single' : ''}`}>
           {shown.map(b => {
             const s = proof.books[b]!
             const sports = recordsBySport(rows.filter(r => bookOf(r) === b))

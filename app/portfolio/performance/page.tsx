@@ -88,8 +88,10 @@ export default async function Results({ searchParams }: { searchParams: { page?:
           <span className="section-label">Live Track Record</span>
           <h1 className="page-header__title">Model <span className="text-gradient">Results</span></h1>
           <p className="page-header__subtitle">
-            Every graded pick, win or lose. The members&apos; card and the free picks are kept as
-            two separate records, split by sport, with the full log underneath.
+            {proof.books.members && proof.books.free
+              ? <>Every graded pick, win or lose. The members&apos; card and the free picks are kept as
+                  two separate records, split by sport, with the full log underneath.</>
+              : 'Every graded pick, win or lose, split by sport, with the full log underneath.'}
           </p>
         </div>
       </header>
