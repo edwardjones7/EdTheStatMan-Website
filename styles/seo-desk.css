@@ -34,9 +34,9 @@
 /* A cover is the headline result, so it takes the accent. Totals stay
    neutral-but-legible: over and under are directions, not good or bad news. */
 .ats-tag--cover {
-  background: rgba(var(--teal-rgb), 0.12);
-  border-color: rgba(var(--teal-rgb), 0.3);
-  color: var(--accent-teal);
+  background: rgba(var(--up-rgb), 0.12);
+  border-color: rgba(var(--up-rgb), 0.3);
+  color: var(--up);
 }
 
 .ats-tag--over,
@@ -430,7 +430,7 @@ a.game-nav__step:hover { border-color: rgba(var(--teal-rgb), 0.4); }
   line-height: 1.1;
 }
 
-.team-stats__value.is-win { color: var(--accent-teal); }
+.team-stats__value.is-win { color: var(--up); }
 
 .team-stats__label {
   font-family: var(--font-mono);
@@ -506,7 +506,7 @@ a.game-nav__step:hover { border-color: rgba(var(--teal-rgb), 0.4); }
   border-radius: var(--radius-sm);
   font-size: 0.68rem;
   text-align: center;
-  background: rgba(148, 190, 200, 0.1);
+  background: rgba(170, 186, 198, 0.1);
   color: var(--text-secondary);
 }
 

@@ -1,7 +1,7 @@
 import Link from 'next/link'
-import Image from 'next/image'
 import { IconInstagram } from './Icons'
 import { PROBLEM_GAMBLING_LINE } from '@/lib/business'
+import BrandMark from '@/components/BrandMark'
 
 export default function Footer() {
   return (
@@ -10,7 +10,7 @@ export default function Footer() {
         <div className="footer__grid">
           <div className="footer__brand">
             <Link href="/" className="nav__logo">
-              <div className="nav__logo-icon"><Image src="/logo.png" alt="EdTheStatMan logo" width={36} height={36} /></div>
+              <span className="nav__logo-icon"><BrandMark size={24} /></span>
               <span>EdTheStatMan</span>
             </Link>
             <p>Data-driven betting systems and trends. Where handicappers get sharp and bettors win.</p>

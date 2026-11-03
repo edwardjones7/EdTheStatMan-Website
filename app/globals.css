@@ -5,63 +5,82 @@
 
 /* ---------- CSS Custom Properties ---------- */
 :root {
-  /* Colors */
-  --bg-primary: #071219;
-  --bg-secondary: #0a1820;
-  --bg-card: #0c1e28;
-  --bg-card-hover: #12293a;
-  --bg-glass: rgba(7, 18, 25, 0.92);
+  /* Colors: "trading terminal" (brand refresh, Nov 2026).
+     Ink-and-slate ground, hairline rules, no gradients or glows. Amber is the
+     only brand colour. Green and red mean results and line moves, nothing
+     else, and always travel with a + or a minus sign. */
+  --bg-primary: #0F151B;
+  --bg-secondary: #121A21;
+  --bg-card: #18212A;
+  --bg-card-hover: #1E2933;
+  --bg-glass: rgba(15, 21, 27, 0.94);
+  --bg-ink: #0A0F14;
 
-  /* Brand accents (from logo gradient: lime -> teal -> sky) */
-  --accent-teal: #2dd4bf;
-  --accent-lime: #a8e063;
-  --accent-sky: #38bdf8;
-  --accent-gold: #e9c46a;
-  --accent-red: #f8717a;
-  --accent-orange: #d98a6f;
+  --brand: #F0B44C;
+  --up: #46C28E;
+  --down: #EF6A5F;
+  --brand-rgb: 240, 180, 76;
+  --up-rgb: 70, 194, 142;
+  --down-rgb: 239, 106, 95;
+
+  /* Legacy accent names, kept so the 600-odd existing references follow the
+     new palette. "teal" was the old brand colour, so it maps to amber; wins
+     that used it are pointed at --up explicitly further down. "sky" and
+     "lime" were secondary brand hues and fold into the neutral and up. */
+  --accent-teal: var(--brand);
+  --accent-lime: var(--up);
+  --accent-sky: #B8C4CE;
+  --accent-gold: var(--brand);
+  --accent-red: var(--down);
+  --accent-orange: var(--brand);
 
   /* RGB triplets for rgba() composition */
-  --teal-rgb: 45, 212, 191;
+  --teal-rgb: var(--brand-rgb);
 
-  /* Muted sport tints — left rules + sport badges only */
-  --sport-nfl: 111, 183, 217;
-  --sport-nflpre: 142, 201, 227;
-  --sport-nba: 217, 179, 111;
-  --sport-wnba: 217, 138, 111;
-  --sport-cfb: 157, 168, 224;
-  --sport-cfl: 217, 124, 143;
-  --sport-cbb: 111, 217, 184;
-  --lime-rgb: 168, 224, 99;
-  --sky-rgb: 56, 189, 248;
-  --gold-rgb: 233, 196, 106;
-  --red-rgb: 248, 113, 122;
+  /* Sport tints, left rules and sport badges only. Desaturated so they sit
+     under amber rather than compete with it. */
+  --sport-nfl: 143, 168, 191;
+  --sport-nflpre: 163, 184, 204;
+  --sport-nba: 191, 166, 130;
+  --sport-wnba: 191, 150, 130;
+  --sport-cfb: 160, 160, 196;
+  --sport-cfl: 191, 140, 150;
+  --sport-cbb: 130, 186, 168;
+  --lime-rgb: var(--up-rgb);
+  --sky-rgb: 184, 196, 206;
+  --gold-rgb: var(--brand-rgb);
+  --red-rgb: var(--down-rgb);
 
-  --gradient-primary: linear-gradient(135deg, #a8e063 0%, #2dd4bf 55%, #38bdf8 100%);
-  --gradient-warm: linear-gradient(135deg, #e9c46a 0%, #d98a6f 100%);
-  --gradient-green: linear-gradient(135deg, #2dd4bf 0%, #38bdf8 100%);
-  --gradient-hero: linear-gradient(180deg, rgba(7, 18, 25, 0) 0%, #071219 100%);
+  /* Flat on purpose. These stay as gradients only so every existing
+     `background: var(--gradient-*)` and background-clip:text still parses. */
+  --gradient-primary: linear-gradient(var(--brand), var(--brand));
+  --gradient-warm: linear-gradient(var(--brand), var(--brand));
+  --gradient-green: linear-gradient(var(--up), var(--up));
+  --gradient-hero: linear-gradient(180deg, rgba(15, 21, 27, 0) 0%, #0F151B 100%);
 
-  --text-primary: #dbe7ec;
-  --text-secondary: #93a8b3;
-  /* 4.9:1 or better on every surface, hovered cards included. Was #5f7783,
-     which fell to 3.4:1 on a hovered card behind 10px labels. */
-  --text-muted: #7a929e;
-  --text-heading: #f4fafc;
+  --text-primary: #C9D2D9;
+  --text-secondary: #A3B0BB;
+  /* 4.6:1 or better on --bg-card-hover. */
+  --text-muted: #8796A3;
+  --text-heading: #E9EDF0;
 
-  --border-color: rgba(148, 190, 200, 0.1);
-  --border-glow: rgba(45, 212, 191, 0.25);
+  --border-color: #2B3743;
+  --border-faint: #1C2630;
+  /* Referenced 43 times but never declared before the refresh, so every one
+     of those borders drew nothing. */
+  --border: var(--border-color);
+  --border-glow: rgba(var(--brand-rgb), 0.35);
 
-  /* Candlestick chart texture (echoes the brand banner) */
-  --texture-candles: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='420' height='140' viewBox='0 0 420 140'%3E%3Cg opacity='0.08'%3E%3Cline x1='15' y1='20' x2='15' y2='110' stroke='%232DD4BF'/%3E%3Crect x='11' y='45' width='8' height='40' fill='%232DD4BF'/%3E%3Cline x1='45' y1='30' x2='45' y2='115' stroke='%23F8717A'/%3E%3Crect x='41' y='55' width='8' height='35' fill='%23F8717A'/%3E%3Cline x1='75' y1='15' x2='75' y2='100' stroke='%232DD4BF'/%3E%3Crect x='71' y='35' width='8' height='30' fill='%232DD4BF'/%3E%3Cline x1='105' y1='25' x2='105' y2='120' stroke='%232DD4BF'/%3E%3Crect x='101' y='50' width='8' height='45' fill='%232DD4BF'/%3E%3Cline x1='135' y1='35' x2='135' y2='110' stroke='%23F8717A'/%3E%3Crect x='131' y='60' width='8' height='30' fill='%23F8717A'/%3E%3Cline x1='165' y1='10' x2='165' y2='95' stroke='%232DD4BF'/%3E%3Crect x='161' y='30' width='8' height='35' fill='%232DD4BF'/%3E%3Cline x1='195' y1='20' x2='195' y2='105' stroke='%232DD4BF'/%3E%3Crect x='191' y='40' width='8' height='40' fill='%232DD4BF'/%3E%3Cline x1='225' y1='40' x2='225' y2='125' stroke='%23F8717A'/%3E%3Crect x='221' y='65' width='8' height='35' fill='%23F8717A'/%3E%3Cline x1='255' y1='15' x2='255' y2='90' stroke='%232DD4BF'/%3E%3Crect x='251' y='28' width='8' height='32' fill='%232DD4BF'/%3E%3Cline x1='285' y1='25' x2='285' y2='100' stroke='%232DD4BF'/%3E%3Crect x='281' y='38' width='8' height='36' fill='%232DD4BF'/%3E%3Cline x1='315' y1='30' x2='315' y2='118' stroke='%23F8717A'/%3E%3Crect x='311' y='58' width='8' height='38' fill='%23F8717A'/%3E%3Cline x1='345' y1='12' x2='345' y2='92' stroke='%232DD4BF'/%3E%3Crect x='341' y='26' width='8' height='34' fill='%232DD4BF'/%3E%3Cline x1='375' y1='22' x2='375' y2='108' stroke='%232DD4BF'/%3E%3Crect x='371' y='42' width='8' height='38' fill='%232DD4BF'/%3E%3Cline x1='405' y1='32' x2='405' y2='112' stroke='%23F8717A'/%3E%3Crect x='401' y='55' width='8' height='30' fill='%23F8717A'/%3E%3C/g%3E%3C/svg%3E");
+  --texture-candles: none;
 
   /* Typography */
   /* next/font registers the faces under hashed family names and exposes them
-     as --font-outfit / --font-inter (app/layout.tsx). Naming 'Outfit' and
-     'Inter' directly matched nothing, so the whole site rendered in the
-     system fallback. */
-  --font-heading: var(--font-outfit), var(--font-inter), system-ui, sans-serif;
-  --font-body: var(--font-inter), system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+     as --font-archivo / --font-jetbrains (app/layout.tsx). Name the variables,
+     never the retail family names: those match nothing and fall through to
+     the system font. */
+  --font-heading: var(--font-archivo), system-ui, sans-serif;
+  --font-body: var(--font-archivo), system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), 'JetBrains Mono', ui-monospace, monospace;
 
   /* Spacing */
   --nav-height: 72px;
@@ -77,15 +96,15 @@
   --transition-slow: 600ms var(--ease-out-expo);
 
   /* Shadows */
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
-  --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.5);
-  --shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.6);
+  --shadow-sm: none;
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.45);
 
   /* Border Radius */
-  --radius-sm: 4px;
-  --radius-md: 6px;
-  --radius-lg: 8px;
-  --radius-xl: 10px;
+  --radius-sm: 2px;
+  --radius-md: 3px;
+  --radius-lg: 4px;
+  --radius-xl: 4px;
   --radius-full: 9999px;
 }
 
@@ -128,7 +147,7 @@ a {
 }
 
 a:hover {
-  color: #5ce8d5;
+  color: #F6C977;
 }
 
 img {
@@ -223,7 +242,7 @@ input, textarea, select {
   background-clip: text;
 }
 
-.text-green { color: var(--accent-teal); }
+.text-green { color: var(--up); }
 .text-red { color: var(--accent-red); }
 .text-cyan { color: var(--accent-teal); }
 .text-gold { color: var(--accent-gold); }
@@ -260,7 +279,7 @@ input, textarea, select {
 .bg-fx__dots {
   position: absolute;
   inset: 0;
-  background-image: radial-gradient(rgba(148, 190, 200, 0.06) 1px, transparent 1px);
+  background-image: radial-gradient(rgba(170, 186, 198, 0.06) 1px, transparent 1px);
   background-size: 26px 26px;
 }
 
@@ -868,14 +887,14 @@ html[data-navigating] .nav__progress-fill {
   filter: saturate(0.18) contrast(1.12) brightness(0.62);
 }
 
-/* Teal duotone wash over the photo */
+/* Photo goes greyscale under the ink ground: colour on the page is data. */
 .hero__media::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(115deg, #0b3d4a 0%, #12707a 55%, #1c8f8a 100%);
-  mix-blend-mode: color;
-  opacity: 0.85;
+  background: #0F151B;
+  mix-blend-mode: saturation;
+  opacity: 1;
 }
 
 /* Brand scrim: navy wash from the left so the copy reads, teal glow for life,
@@ -884,9 +903,8 @@ html[data-navigating] .nav__progress-fill {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(100% 75% at 50% 30%, rgba(var(--teal-rgb), 0.26) 0%, transparent 62%),
-    radial-gradient(85% 70% at 50% 45%, rgba(7, 18, 25, 0.9) 0%, rgba(7, 18, 25, 0.72) 55%, rgba(7, 18, 25, 0.55) 100%),
-    linear-gradient(180deg, rgba(7, 18, 25, 0.78) 0%, rgba(7, 18, 25, 0.45) 30%, rgba(7, 18, 25, 0.6) 70%, var(--bg-primary) 100%);
+    radial-gradient(85% 70% at 50% 45%, rgba(15, 21, 27, 0.9) 0%, rgba(15, 21, 27, 0.72) 55%, rgba(15, 21, 27, 0.55) 100%),
+    linear-gradient(180deg, rgba(15, 21, 27, 0.78) 0%, rgba(15, 21, 27, 0.45) 30%, rgba(15, 21, 27, 0.6) 70%, var(--bg-primary) 100%);
 }
 
 .hero__container {
@@ -939,7 +957,7 @@ html[data-navigating] .nav__progress-fill {
   line-height: 1.02;
   letter-spacing: -0.025em;
   margin-bottom: 22px;
-  text-shadow: 0 2px 30px rgba(7, 18, 25, 0.8);
+  text-shadow: 0 2px 30px rgba(15, 21, 27, 0.8);
   animation: fadeInUp 0.6s var(--ease-out-expo) 0.22s both;
 }
 
@@ -982,7 +1000,7 @@ html[data-navigating] .nav__progress-fill {
   z-index: 1;
   margin-top: auto;
   border-top: 1px solid rgba(var(--teal-rgb), 0.18);
-  background: linear-gradient(180deg, rgba(7, 18, 25, 0.35) 0%, rgba(7, 18, 25, 0.85) 100%);
+  background: linear-gradient(180deg, rgba(15, 21, 27, 0.35) 0%, rgba(15, 21, 27, 0.85) 100%);
   backdrop-filter: blur(10px);
   animation: fadeInUp 0.6s var(--ease-out-expo) 0.58s both;
 }
@@ -1049,13 +1067,13 @@ html[data-navigating] .nav__progress-fill {
   color: #04202b;
   background: var(--gradient-primary);
   font-weight: 700;
-  box-shadow: 0 6px 24px rgba(var(--teal-rgb), 0.28);
+  box-shadow: none;
 }
 
 .btn--primary:hover {
   transform: translateY(-2px);
   filter: brightness(1.06);
-  box-shadow: 0 10px 32px rgba(var(--teal-rgb), 0.42);
+  box-shadow: none;
   color: #04202b;
 }
 
@@ -1089,7 +1107,7 @@ html[data-navigating] .nav__progress-fill {
 
 .btn--green {
   color: var(--bg-primary);
-  background: var(--gradient-green);
+  background: var(--up);
 }
 
 .btn--green:hover {
@@ -1107,7 +1125,7 @@ html[data-navigating] .nav__progress-fill {
 .btn--outline:hover {
   background: rgba(var(--teal-rgb), 0.12);
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(var(--teal-rgb), 0.2);
+  box-shadow: none;
   color: var(--accent-teal);
 }
 
@@ -1148,7 +1166,7 @@ html[data-navigating] .nav__progress-fill {
   top: var(--nav-height);
   left: 0;
   right: 0;
-  background: linear-gradient(180deg, var(--bg-secondary) 0%, rgba(10, 24, 32, 0.96) 100%);
+  background: var(--bg-secondary);
   border-bottom: 1px solid rgba(var(--teal-rgb), 0.16);
   padding: 8px 0;
   overflow: hidden;
@@ -1188,7 +1206,7 @@ html[data-navigating] .nav__progress-fill {
   display: inline-flex;
   align-items: center;
   color: var(--accent-teal);
-  filter: drop-shadow(0 0 6px rgba(var(--teal-rgb), 0.55));
+  filter: none;
   flex-shrink: 0;
 }
 
@@ -1218,8 +1236,8 @@ html[data-navigating] .nav__progress-fill {
 }
 
 .ticker__trend--up {
-  color: var(--accent-teal);
-  background: rgba(var(--teal-rgb), 0.1);
+  color: var(--up);
+  background: rgba(var(--up-rgb), 0.1);
 }
 
 .ticker__trend--down {
@@ -1286,19 +1304,19 @@ html[data-navigating] .nav__progress-fill {
 
 .card__icon--cyan,
 .card__icon--green {
-  background: linear-gradient(150deg, rgba(var(--lime-rgb), 0.16), rgba(var(--teal-rgb), 0.16));
+  background: rgba(var(--brand-rgb), 0.12);
   border-color: rgba(var(--teal-rgb), 0.3);
   color: var(--accent-teal);
 }
 
 .card__icon--purple {
-  background: linear-gradient(150deg, rgba(var(--teal-rgb), 0.16), rgba(var(--sky-rgb), 0.16));
+  background: rgba(var(--brand-rgb), 0.12);
   border-color: rgba(var(--sky-rgb), 0.3);
   color: var(--accent-sky);
 }
 
 .card__icon--gold {
-  background: linear-gradient(150deg, rgba(var(--gold-rgb), 0.18), rgba(217, 138, 111, 0.16));
+  background: rgba(var(--gold-rgb), 0.18);
   border-color: rgba(var(--gold-rgb), 0.3);
   color: var(--accent-gold);
 }
@@ -1331,7 +1349,7 @@ html[data-navigating] .nav__progress-fill {
   align-items: center;
   justify-content: space-between;
   padding: 24px 32px;
-  background: linear-gradient(135deg, rgba(var(--teal-rgb), 0.04) 0%, rgba(var(--teal-rgb), 0.03) 100%);
+  background: var(--bg-card);
   border-bottom: 1px solid var(--border-color);
 }
 
@@ -1463,13 +1481,13 @@ html[data-navigating] .nav__progress-fill {
   pointer-events: none;
 }
 
-.sys-card--nfl::after  { background: radial-gradient(circle, rgba(var(--gold-rgb), 0.06), transparent 70%); }
-.sys-card--cfb::after  { background: radial-gradient(circle, rgba(var(--gold-rgb), 0.06), transparent 70%); }
-.sys-card--nba::after  { background: radial-gradient(circle, rgba(217, 138, 111, 0.06), transparent 70%); }
-.sys-card--cbb::after  { background: radial-gradient(circle, rgba(var(--teal-rgb), 0.06), transparent 70%); }
-.sys-card--cfl::after    { background: radial-gradient(circle, rgba(var(--lime-rgb), 0.06), transparent 70%); }
-.sys-card--wnba::after   { background: radial-gradient(circle, rgba(217, 138, 111, 0.06), transparent 70%); }
-.sys-card--nflpre::after { background: radial-gradient(circle, rgba(var(--gold-rgb), 0.06), transparent 70%); }
+.sys-card--nfl::after  { background: none; }
+.sys-card--cfb::after  { background: none; }
+.sys-card--nba::after  { background: none; }
+.sys-card--cbb::after  { background: none; }
+.sys-card--cfl::after    { background: none; }
+.sys-card--wnba::after   { background: none; }
+.sys-card--nflpre::after { background: none; }
 
 .sys-card:hover {
   transform: translateY(-2px);
@@ -1623,7 +1641,7 @@ html[data-navigating] .nav__progress-fill {
 }
 
 .cta-box {
-  background: linear-gradient(165deg, var(--bg-card) 0%, rgba(10, 24, 32, 0.9) 100%);
+  background: var(--bg-card);
   border: 1px solid rgba(var(--teal-rgb), 0.22);
   border-radius: var(--radius-xl);
   padding: 76px 48px;
@@ -1636,7 +1654,7 @@ html[data-navigating] .nav__progress-fill {
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(75% 110% at 50% 0%, rgba(var(--teal-rgb), 0.12) 0%, transparent 62%);
+  background: none;
   pointer-events: none;
 }
 
@@ -1678,7 +1696,7 @@ html[data-navigating] .nav__progress-fill {
   flex: 1 1 300px;
   min-width: 0;
   position: relative;
-  background: linear-gradient(165deg, var(--bg-card) 0%, rgba(10, 24, 32, 0.85) 100%);
+  background: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
   padding: 32px 30px;
@@ -1703,7 +1721,7 @@ html[data-navigating] .nav__progress-fill {
 
 .feature-card:hover {
   border-color: rgba(var(--teal-rgb), 0.35);
-  background: linear-gradient(165deg, var(--bg-card-hover) 0%, rgba(12, 30, 40, 0.9) 100%);
+  background: var(--bg-card-hover);
   transform: translateY(-4px);
   box-shadow: 0 14px 40px rgba(0, 0, 0, 0.35);
 }
@@ -1714,7 +1732,7 @@ html[data-navigating] .nav__progress-fill {
 
 .feature-card:hover .card__icon {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(var(--teal-rgb), 0.22);
+  box-shadow: none;
 }
 
 .feature-card__number {
@@ -1816,8 +1834,8 @@ html[data-navigating] .nav__progress-fill {
 }
 
 .trend-badge--win {
-  background: rgba(var(--teal-rgb), 0.1);
-  color: var(--accent-teal);
+  background: rgba(var(--up-rgb), 0.1);
+  color: var(--up);
 }
 
 .trend-badge--loss {
@@ -1845,7 +1863,7 @@ html[data-navigating] .nav__progress-fill {
   display: flex;
   flex-direction: column;
   padding: 12px 20px;
-  background: linear-gradient(180deg, rgba(255,255,255,0.035) 0%, var(--bg-card) 100%);
+  background: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
   min-width: 120px;
@@ -1922,7 +1940,7 @@ html[data-navigating] .nav__progress-fill {
 
 /* Elite gate — gold luxury treatment for elite-only content upsells */
 .sys-gate-card--elite {
-  background: linear-gradient(180deg, rgba(var(--gold-rgb), 0.06), var(--bg-card) 55%);
+  background: var(--bg-card);
   border-color: rgba(var(--gold-rgb), 0.45);
   box-shadow: 0 0 32px rgba(var(--gold-rgb), 0.08);
 }
@@ -2113,7 +2131,7 @@ html[data-navigating] .nav__progress-fill {
 .sys-row-card__access-badge--free { background: rgba(var(--sky-rgb),0.12); color: var(--accent-sky); }
 .sys-row-card__access-badge--members { background: rgba(var(--gold-rgb),0.12); color: var(--accent-gold); }
 .sys-row-card__access-badge--elite {
-  background: linear-gradient(135deg, rgba(var(--gold-rgb),0.25), rgba(var(--gold-rgb),0.1));
+  background: rgba(var(--gold-rgb), 0.16);
   border: 1px solid rgba(var(--gold-rgb),0.4);
   color: var(--accent-gold);
 }
@@ -2161,7 +2179,7 @@ html[data-navigating] .nav__progress-fill {
   white-space: nowrap;
 }
 
-.sys-row-card__record--win { color: var(--accent-teal); }
+.sys-row-card__record--win { color: var(--up); }
 .sys-row-card__record--loss { color: var(--accent-red); }
 .sys-row-card__record--neutral { color: var(--text-secondary); }
 
@@ -2186,7 +2204,7 @@ html[data-navigating] .nav__progress-fill {
   letter-spacing: -0.01em;
 }
 
-.sys-row-card__pct--win { color: var(--accent-teal); }
+.sys-row-card__pct--win { color: var(--up); }
 .sys-row-card__pct--neutral { color: var(--text-muted); }
 
 /* Record strip — honest W/T/L proportions with a 52.4% break-even tick */
@@ -2203,7 +2221,7 @@ html[data-navigating] .nav__progress-fill {
   height: 100%;
 }
 
-.record-strip__seg--win { background: var(--accent-teal); border-radius: 2px 0 0 2px; }
+.record-strip__seg--win { background: var(--up); border-radius: 2px 0 0 2px; }
 .record-strip__seg--tie { background: var(--text-muted); }
 .record-strip__seg--loss { background: rgba(var(--red-rgb), 0.55); border-radius: 0 2px 2px 0; }
 
@@ -2420,7 +2438,7 @@ html[data-navigating] .nav__progress-fill {
   overflow: hidden;
   width: 100%;
   height: 200px;
-  background: linear-gradient(135deg, var(--bg-secondary), var(--bg-card));
+  background: var(--bg-card);
   border-bottom: 1px solid var(--border-color);
 }
 
@@ -2483,7 +2501,7 @@ html[data-navigating] .nav__progress-fill {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  background: rgba(7, 18, 25, 0.85);
+  background: rgba(15, 21, 27, 0.85);
   border: 1px solid rgba(var(--gold-rgb), 0.3);
   color: var(--accent-gold);
   font-size: 0.7rem;
@@ -2685,7 +2703,7 @@ html[data-navigating] .nav__progress-fill {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, transparent 55%, rgba(7, 18, 25, 0.35));
+  background: linear-gradient(180deg, transparent 55%, rgba(15, 21, 27, 0.35));
   pointer-events: none;
 }
 
@@ -2945,7 +2963,6 @@ html[data-navigating] .nav__progress-fill {
   position: relative;
   overflow: hidden;
   background:
-    radial-gradient(120% 130% at 50% 0%, rgba(var(--teal-rgb), 0.11), transparent 60%),
     var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-xl);
@@ -3012,9 +3029,9 @@ html[data-navigating] .nav__progress-fill {
   border-radius: var(--radius-sm);
 }
 .perf-streak--win {
-  color: var(--accent-teal);
-  background: rgba(var(--teal-rgb), 0.12);
-  border: 1px solid rgba(var(--teal-rgb), 0.3);
+  color: var(--up);
+  background: rgba(var(--up-rgb), 0.12);
+  border: 1px solid rgba(var(--up-rgb), 0.3);
 }
 .perf-streak--loss {
   color: var(--accent-red);
@@ -3172,7 +3189,7 @@ html[data-navigating] .nav__progress-fill {
   font-weight: 700;
   color: var(--bg-primary);
 }
-.perf-form__cell--win  { background: var(--accent-teal); }
+.perf-form__cell--win  { background: var(--up); }
 .perf-form__cell--loss { background: var(--accent-red); }
 .perf-form__cell--push { background: var(--accent-gold); }
 
@@ -3240,7 +3257,7 @@ html[data-navigating] .nav__progress-fill {
   opacity: 0.85;
 }
 
-.chart-bar--green { background: var(--accent-teal); }
+.chart-bar--green { background: var(--up); }
 .chart-bar--red { background: var(--accent-red); }
 
 .chart-bar__tooltip {
@@ -3526,7 +3543,7 @@ textarea.form-input {
   transform: translateX(-50%);
   width: 600px;
   height: 400px;
-  background: radial-gradient(ellipse, rgba(var(--teal-rgb), 0.05) 0%, transparent 70%);
+  background: none;
   pointer-events: none;
 }
 
@@ -3650,7 +3667,7 @@ textarea.form-input {
 
 /* Elite (NFL Season Pass) — the luxury anchor card */
 .pricing-card--elite {
-  background: linear-gradient(180deg, rgba(var(--gold-rgb), 0.06), var(--bg-card) 45%);
+  background: var(--bg-card);
   border-color: rgba(var(--gold-rgb), 0.45);
   box-shadow: 0 0 32px rgba(var(--gold-rgb), 0.08);
 }
@@ -3665,7 +3682,7 @@ textarea.form-input {
 }
 
 .pricing-card--elite .pricing-card__badge {
-  background: linear-gradient(135deg, var(--accent-gold), var(--accent-orange));
+  background: var(--brand);
 }
 
 .pricing-card__name {
@@ -3991,8 +4008,7 @@ textarea.form-input {
 
   .hero__scrim {
     background:
-      radial-gradient(120% 90% at 82% 12%, rgba(var(--teal-rgb), 0.28) 0%, transparent 55%),
-      linear-gradient(180deg, rgba(7, 18, 25, 0.86) 0%, rgba(7, 18, 25, 0.9) 55%, var(--bg-primary) 100%);
+      linear-gradient(180deg, rgba(15, 21, 27, 0.86) 0%, rgba(15, 21, 27, 0.9) 55%, var(--bg-primary) 100%);
   }
 
   .footer__grid {
@@ -4186,7 +4202,7 @@ textarea.form-input {
 }
 
 .auth-card__title {
-  font-family: var(--font-outfit);
+  font-family: var(--font-heading);
   font-size: 1.6rem;
   font-weight: 700;
   color: var(--text-primary);
@@ -4225,9 +4241,9 @@ textarea.form-input {
 }
 
 .auth-success {
-  background: rgba(var(--teal-rgb), 0.1);
-  border: 1px solid rgba(var(--teal-rgb), 0.3);
-  color: var(--accent-teal);
+  background: rgba(var(--up-rgb), 0.1);
+  border: 1px solid rgba(var(--up-rgb), 0.3);
+  color: var(--up);
   padding: 12px 16px;
   border-radius: 8px;
   font-size: 0.875rem;
@@ -4478,7 +4494,7 @@ textarea.form-input {
 }
 
 .nav__user-tier--elite {
-  background: linear-gradient(135deg, rgba(var(--gold-rgb), 0.25), rgba(var(--gold-rgb), 0.1));
+  background: rgba(var(--gold-rgb), 0.16);
   border: 1px solid rgba(var(--gold-rgb), 0.4);
   color: var(--accent-gold);
 }
@@ -4587,7 +4603,7 @@ textarea.form-input {
   left: -80px;
   width: 280px;
   height: 280px;
-  background: radial-gradient(circle, rgba(var(--teal-rgb), 0.07) 0%, transparent 70%);
+  background: none;
   pointer-events: none;
 }
 
@@ -4610,13 +4626,13 @@ textarea.form-input {
 }
 
 .account-hero__avatar--premium {
-  background: linear-gradient(135deg, var(--accent-gold), var(--accent-orange));
+  background: var(--brand);
   box-shadow: 0 0 0 4px rgba(var(--gold-rgb), 0.12);
 }
 
 .account-hero__avatar--elite {
-  background: linear-gradient(135deg, var(--accent-gold), var(--accent-orange));
-  box-shadow: 0 0 0 4px rgba(var(--gold-rgb), 0.2), 0 0 24px rgba(var(--gold-rgb), 0.25);
+  background: var(--brand);
+  box-shadow: 0 0 0 4px rgba(var(--gold-rgb), 0.2);
 }
 
 .account-hero__avatar--admin {
@@ -4694,8 +4710,8 @@ textarea.form-input {
 
 .account-plan-card--free::before    { background: var(--text-muted); }
 .account-plan-card--basic::before   { background: var(--gradient-green); }
-.account-plan-card--premium::before { background: linear-gradient(180deg, var(--accent-gold), var(--accent-orange)); }
-.account-plan-card--elite::before   { background: linear-gradient(180deg, var(--accent-gold), var(--accent-orange)); }
+.account-plan-card--premium::before { background: var(--brand); }
+.account-plan-card--elite::before   { background: var(--brand); }
 .account-plan-card--admin::before   { background: var(--gradient-warm); }
 
 .account-plan-card--basic   { box-shadow: inset 80px 0 100px rgba(var(--teal-rgb), 0.03); }
@@ -4828,9 +4844,9 @@ textarea.form-input {
 
 /* --- Sign Out Row --- */
 .account-success-banner {
-  background: rgba(var(--teal-rgb), 0.1);
-  border: 1px solid rgba(var(--teal-rgb), 0.3);
-  color: var(--accent-teal);
+  background: rgba(var(--up-rgb), 0.1);
+  border: 1px solid rgba(var(--up-rgb), 0.3);
+  color: var(--up);
   padding: 14px 20px;
   border-radius: var(--radius-md);
   font-size: 0.9375rem;
@@ -4972,7 +4988,7 @@ textarea.form-input {
   white-space: nowrap;
 }
 
-.admin-kpi-card__badge--green  { background: rgba(var(--teal-rgb), 0.12); color: var(--accent-teal); }
+.admin-kpi-card__badge--green  { background: rgba(var(--up-rgb), 0.12); color: var(--up); }
 .admin-kpi-card__badge--red    { background: rgba(var(--red-rgb), 0.12); color: var(--accent-red); }
 .admin-kpi-card__badge--muted  { background: rgba(255,255,255,0.06); color: var(--text-muted); }
 
@@ -5005,7 +5021,7 @@ textarea.form-input {
 }
 
 .admin-kpi-card__bar-fill--cyan   { background: var(--accent-teal); }
-.admin-kpi-card__bar-fill--green  { background: var(--accent-teal); }
+.admin-kpi-card__bar-fill--green  { background: var(--up); }
 .admin-kpi-card__bar-fill--purple { background: var(--accent-gold); }
 .admin-kpi-card__bar-fill--gold   { background: var(--accent-gold); }
 
@@ -5325,7 +5341,7 @@ textarea.form-input {
   white-space: nowrap;
 }
 
-.admin-badge--green  { background: rgba(var(--teal-rgb), 0.12); color: var(--accent-teal); }
+.admin-badge--green  { background: rgba(var(--up-rgb), 0.12); color: var(--up); }
 .admin-badge--red    { background: rgba(var(--red-rgb), 0.12); color: var(--accent-red); }
 .admin-badge--yellow { background: rgba(var(--gold-rgb), 0.12);  color: var(--accent-gold); }
 .admin-badge--blue   { background: rgba(var(--sky-rgb), 0.12);  color: var(--accent-sky); }
@@ -6122,7 +6138,7 @@ textarea.form-input {
 
 .analytics-chart__bar {
   width: 100%;
-  background: linear-gradient(to top, var(--accent-teal), rgba(var(--teal-rgb), 0.5));
+  background: var(--brand);
   border-radius: 3px 3px 0 0;
   min-height: 2px;
   transition: filter 0.15s;
@@ -6210,7 +6226,6 @@ textarea.form-input {
 .sports-band {
   padding: var(--section-padding) 0;
   background:
-    radial-gradient(70% 100% at 50% 0%, rgba(var(--teal-rgb), 0.07) 0%, transparent 70%),
     var(--bg-primary);
   border-top: 1px solid var(--border-color);
 }
@@ -6246,8 +6261,7 @@ textarea.form-input {
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(180deg, transparent 25%, rgba(7, 18, 25, 0.88) 100%),
-    linear-gradient(160deg, rgba(var(--teal-rgb), 0.22) 0%, transparent 60%);
+    linear-gradient(180deg, transparent 25%, rgba(15, 21, 27, 0.88) 100%);
   transition: opacity var(--transition-medium);
 }
 
@@ -6317,7 +6331,7 @@ textarea.form-input {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(7, 18, 25, 0.88);
+  background: rgba(15, 21, 27, 0.88);
   backdrop-filter: blur(6px);
 }
 
@@ -6413,9 +6427,9 @@ textarea.form-input {
   border-radius: 3px;
   background: linear-gradient(
     90deg,
-    rgba(148, 190, 200, 0.16) 0%,
-    rgba(148, 190, 200, 0.07) 50%,
-    rgba(148, 190, 200, 0.16) 100%
+    rgba(170, 186, 198, 0.16) 0%,
+    rgba(170, 186, 198, 0.07) 50%,
+    rgba(170, 186, 198, 0.16) 100%
   );
   user-select: none;
 }
@@ -6436,7 +6450,7 @@ textarea.form-input {
 
 .sys-row-card--elite-teaser {
   border-color: rgba(var(--gold-rgb), 0.35);
-  background: linear-gradient(90deg, rgba(var(--gold-rgb), 0.05), transparent 60%);
+  background: rgba(var(--gold-rgb), 0.04);
 }
 
 .sys-row-card--elite-teaser:hover {
@@ -6960,7 +6974,7 @@ textarea.form-input {
 /* The Vault rungs inherit the gold treatment the whole site already uses
    for locked content — see .pricing-card--elite and .sys-gate-card--elite. */
 .pricing-card--vault {
-  background: linear-gradient(180deg, rgba(var(--gold-rgb), 0.05), var(--bg-card) 45%);
+  background: var(--bg-card);
   border-color: rgba(var(--gold-rgb), 0.32);
 }
 
@@ -6972,7 +6986,7 @@ textarea.form-input {
 .pricing-card--vault .pricing-card__name { color: var(--accent-gold); }
 
 .pricing-card--vault .pricing-card__badge {
-  background: linear-gradient(135deg, var(--accent-gold), var(--accent-orange));
+  background: var(--brand);
 }
 
 .pricing-card--vault .pricing-card__feature .check {
@@ -6982,7 +6996,7 @@ textarea.form-input {
 
 /* Institutional is the anchor: same gold, more weight. */
 .pricing-card--institutional {
-  background: linear-gradient(180deg, rgba(var(--gold-rgb), 0.09), var(--bg-card) 50%);
+  background: var(--bg-card);
   border-color: rgba(var(--gold-rgb), 0.5);
   box-shadow: 0 0 36px rgba(var(--gold-rgb), 0.1);
 }
@@ -7060,7 +7074,7 @@ textarea.form-input {
 }
 
 .retail-strip__feature .cross {
-  background: rgba(148, 190, 200, 0.07);
+  background: rgba(170, 186, 198, 0.07);
   color: var(--text-muted);
 }
 
@@ -7123,7 +7137,7 @@ textarea.form-input {
   column-gap: 16px;
   row-gap: 6px;
   padding: 26px 28px;
-  background: linear-gradient(180deg, rgba(var(--gold-rgb), 0.06), var(--bg-card) 62%);
+  background: var(--bg-card);
   border: 1px solid rgba(var(--gold-rgb), 0.26);
   border-radius: var(--radius-xl);
   text-decoration: none;
@@ -7292,7 +7306,7 @@ textarea.form-input {
   text-transform: uppercase;
   letter-spacing: 1px;
   white-space: nowrap;
-  background: rgba(148, 190, 200, 0.08);
+  background: rgba(170, 186, 198, 0.08);
   color: var(--text-secondary);
 }
 
@@ -7403,7 +7417,7 @@ textarea.form-input {
 
 .vault-level--held {
   border-color: rgba(var(--teal-rgb), 0.4);
-  background: linear-gradient(180deg, rgba(var(--teal-rgb), 0.05), var(--bg-card) 55%);
+  background: var(--bg-card);
 }
 
 .vault-level__head {
@@ -7760,7 +7774,7 @@ textarea.form-input {
   gap: 10px;
   padding: 11px 16px;
   border-bottom: 1px solid var(--border-color);
-  background: rgba(148, 190, 200, 0.03);
+  background: rgba(170, 186, 198, 0.03);
   font-family: var(--font-mono);
   font-size: 0.72rem;
   color: var(--text-secondary);
@@ -7830,7 +7844,7 @@ textarea.form-input {
   font-weight: 700;
   letter-spacing: 0.5px;
   color: var(--text-secondary);
-  background: rgba(148, 190, 200, 0.07);
+  background: rgba(170, 186, 198, 0.07);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
 }
@@ -7952,7 +7966,7 @@ textarea.form-input {
 
 /* Movement is why both the opening and current numbers are stored. */
 .desk-chip__move { font-size: 0.64rem; font-weight: 700; }
-.desk-chip__move--up { color: var(--accent-teal); }
+.desk-chip__move--up { color: var(--up); }
 .desk-chip__move--down { color: var(--accent-red); }
 
 .desk-card__foot {
@@ -8031,14 +8045,14 @@ textarea.form-input {
 .desk-note {
   margin-top: 32px;
   padding: 28px 32px;
-  background: linear-gradient(180deg, rgba(var(--teal-rgb), 0.05), var(--bg-card) 55%);
+  background: var(--bg-card);
   border: 1px solid rgba(var(--teal-rgb), 0.28);
   border-left: 3px solid var(--accent-teal);
   border-radius: var(--radius-xl);
 }
 
 .desk-note--locked {
-  background: linear-gradient(180deg, rgba(var(--gold-rgb), 0.05), var(--bg-card) 55%);
+  background: var(--bg-card);
   border-color: rgba(var(--gold-rgb), 0.3);
   border-left-color: var(--accent-gold);
 }
@@ -8091,7 +8105,7 @@ textarea.form-input {
   margin: 0 auto;
   padding: 32px;
   text-align: center;
-  background: linear-gradient(180deg, rgba(var(--gold-rgb), 0.06), var(--bg-card) 50%);
+  background: var(--bg-card);
   border: 1px solid rgba(var(--gold-rgb), 0.35);
   border-radius: var(--radius-xl);
 }
@@ -8100,7 +8114,7 @@ textarea.form-input {
   display: inline-block;
   padding: 4px 14px;
   border-radius: var(--radius-full);
-  background: linear-gradient(135deg, var(--accent-gold), var(--accent-orange));
+  background: var(--brand);
   color: var(--bg-primary);
   font-family: var(--font-mono);
   font-size: 0.65rem;
@@ -8350,7 +8364,7 @@ textarea.form-input {
   font-weight: 700;
   letter-spacing: 0.5px;
   color: var(--text-secondary);
-  background: rgba(148, 190, 200, 0.07);
+  background: rgba(170, 186, 198, 0.07);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-sm);
 }
@@ -8429,9 +8443,9 @@ textarea.form-input {
 }
 
 .brief__result.is-win {
-  color: var(--accent-teal);
-  background: rgba(var(--teal-rgb), 0.1);
-  border-color: rgba(var(--teal-rgb), 0.3);
+  color: var(--up);
+  background: rgba(var(--up-rgb), 0.1);
+  border-color: rgba(var(--up-rgb), 0.3);
 }
 
 .brief__result.is-loss {
@@ -8442,7 +8456,7 @@ textarea.form-input {
 
 .brief__result.is-push {
   color: var(--text-muted);
-  background: rgba(148, 190, 200, 0.07);
+  background: rgba(170, 186, 198, 0.07);
   border-color: var(--border-color);
 }
 
@@ -8812,7 +8826,7 @@ textarea.form-input {
   background: var(--text-muted);
 }
 
-.perf-split-card--up::before   { background: var(--accent-teal); }
+.perf-split-card--up::before   { background: var(--up); }
 .perf-split-card--even::before { background: var(--accent-gold); }
 .perf-split-card--down::before { background: var(--accent-red); }
 
@@ -8848,7 +8862,7 @@ textarea.form-input {
   color: var(--text-primary);
 }
 
-.perf-split-card--up .perf-split-card__pct   { color: var(--accent-teal); }
+.perf-split-card--up .perf-split-card__pct   { color: var(--up); }
 .perf-split-card--down .perf-split-card__pct { color: var(--accent-red); }
 
 .perf-split-card__record {
@@ -9201,3 +9215,102 @@ textarea.form-input {
     margin-top: 13px;
   }
 }
+
+/* ============================================================================
+   Trading terminal pass (brand refresh, Nov 2026)
+   ----------------------------------------------------------------------------
+   Base overrides that move the whole site at once. Page-specific restyles
+   live beside their components. Rules here win by source order, so keep this
+   block last in the file.
+   ========================================================================= */
+
+body { line-height: 1.6; }
+
+::selection { background: rgba(var(--brand-rgb), 0.35); color: var(--text-heading); }
+
+/* Headlines: Archivo, heavy and condensed through the width axis. */
+h1, h2 {
+  font-weight: 800;
+  font-stretch: 75%;
+  font-variation-settings: 'wdth' 75;
+  letter-spacing: -0.005em;
+  line-height: 1.02;
+}
+h3, h4 {
+  font-weight: 700;
+  font-stretch: 90%;
+  font-variation-settings: 'wdth' 90;
+}
+
+.section-title { font-size: clamp(2.2rem, 4.4vw, 3.4rem); }
+
+/* Eyebrows: plain amber text, no capitals, no rule. */
+.section-label {
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 0.95rem;
+  font-weight: 650;
+  color: var(--brand);
+  margin-bottom: 12px;
+}
+.section-label::before { display: none; }
+
+/* Gradient text is now a flat amber. */
+.text-gradient {
+  background: none;
+  -webkit-text-fill-color: currentColor;
+  color: var(--brand);
+}
+
+/* Wordmark and mark */
+.nav__logo span {
+  background: none;
+  -webkit-text-fill-color: currentColor;
+  color: var(--text-heading);
+  font-stretch: 85%;
+  font-variation-settings: 'wdth' 85;
+  font-weight: 750;
+  letter-spacing: 0;
+}
+.nav__logo-icon {
+  width: auto;
+  height: auto;
+  border: 0;
+  border-radius: 0;
+  overflow: visible;
+}
+.auth-card__mark { display: flex; justify-content: center; margin: 0 auto 16px; }
+
+/* Buttons: flat fills, square corners, no lift and no glow. */
+.btn { border-radius: var(--radius-sm); transition: background-color var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast); }
+.btn:hover { transform: none; }
+.btn--primary,
+.btn--primary:hover {
+  background: var(--brand);
+  color: #0F151B;
+  box-shadow: none;
+  filter: none;
+}
+.btn--primary:hover { background: #F6C977; }
+.btn--glass,
+.btn--secondary {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-heading);
+  backdrop-filter: none;
+}
+.btn--glass:hover,
+.btn--secondary:hover {
+  background: var(--bg-card-hover);
+  border-color: #3A4856;
+  color: var(--text-heading);
+}
+.btn--outline { color: var(--text-heading); border-color: var(--border-color); }
+.btn--outline:hover { background: var(--bg-card-hover); border-color: var(--brand); color: var(--text-heading); box-shadow: none; }
+
+/* Cards stop floating: hover is a surface change, not a lift. */
+.card:hover,
+.sys-card:hover,
+.feature-card:hover,
+.pricing-card:hover,
+.desk-card:hover { transform: none; box-shadow: none; }

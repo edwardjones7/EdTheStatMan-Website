@@ -1,9 +1,8 @@
 import type { Metadata, Viewport } from 'next'
-import { Inter, Outfit, JetBrains_Mono } from 'next/font/google'
+import { Archivo, JetBrains_Mono } from 'next/font/google'
 import './globals.css'
 import Navigation from '@/components/Navigation'
 import Footer from '@/components/Footer'
-import BackgroundEffects from '@/components/BackgroundEffects'
 import BackToTop from '@/components/BackToTop'
 import ClientScripts from '@/components/ClientScripts'
 import PageViewTracker from '@/components/PageViewTracker'
@@ -17,23 +16,20 @@ import { DEFAULT_TICKER } from '@/lib/site-content'
 import type { TickerContent } from '@/lib/site-content'
 import { Suspense } from 'react'
 
-const inter = Inter({ 
+// Archivo carries the whole site: condensed and heavy for headlines (via its
+// width axis, see --font-heading in globals.css), normal width for body.
+// JetBrains Mono is kept for lines, odds and records only.
+const archivo = Archivo({
   subsets: ['latin'],
-  variable: '--font-inter',
+  axes: ['wdth'],
+  variable: '--font-archivo',
   display: 'swap',
 })
 
-const outfit = Outfit({ 
-  subsets: ['latin'],
-  weight: ['600', '700', '800'],
-  variable: '--font-outfit',
-  display: 'swap',
-})
-
-const jetbrainsMono = JetBrains_Mono({ 
+const jetbrainsMono = JetBrains_Mono({
   subsets: ['latin'],
   weight: ['500', '700'],
-  variable: '--font-mono',
+  variable: '--font-jetbrains',
   display: 'swap',
 })
 
@@ -96,7 +92,7 @@ export default async function RootLayout({
   }
 
   return (
-    <html lang="en" className={`${inter.variable} ${outfit.variable} ${jetbrainsMono.variable}`}>
+    <html lang="en" className={`${archivo.variable} ${jetbrainsMono.variable}`}>
       <head>
         {/* BotID's invisible challenge. Must be mounted for every route listed
             in BOTID_PROTECTED, because this is what tells the browser to attach
@@ -160,7 +156,6 @@ export default async function RootLayout({
       <body>
         {/* First focusable element on every page. */}
         <a href="#main" className="skip-link">Skip to content</a>
-        <BackgroundEffects />
         <Suspense>
           <Navigation />
         </Suspense>

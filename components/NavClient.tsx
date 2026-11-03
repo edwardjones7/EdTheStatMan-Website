@@ -1,7 +1,6 @@
 'use client'
 
 import Link from 'next/link'
-import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import { useState, useEffect, useRef, useCallback, useTransition } from 'react'
 import NavAuth from './NavAuth'
@@ -10,6 +9,7 @@ import type { Membership } from '@/lib/access'
 import type { SubscriptionTier } from '@/lib/supabase/types'
 import { DESK_SPORTS } from '@/lib/desk'
 import { DESK_SPORT_COOKIE } from '@/lib/desk-place'
+import BrandMark from '@/components/BrandMark'
 
 interface NavClientProps {
   membership: Membership
@@ -311,7 +311,7 @@ export default function NavClient({ user, membership = 'logged-out' }: NavClient
       >
         <div className="nav__inner">
           <Link href="/" className="nav__logo">
-            <div className="nav__logo-icon"><Image src="/logo.png" alt="EdTheStatMan logo" width={36} height={36} priority /></div>
+            <span className="nav__logo-icon"><BrandMark size={24} /></span>
             <span>EdTheStatMan</span>
           </Link>
 
