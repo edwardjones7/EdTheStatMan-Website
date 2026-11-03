@@ -85,16 +85,7 @@ function Board({ board, hasDesk }: { board: HomeBoard; hasDesk: boolean }) {
   // so it only appears once at least one game on screen carries research.
   const showResearch = board.withResearch > 0
   return (
-    <section className="home-board" aria-labelledby="home-board-title">
-      <header className="home-board__head">
-        <h2 id="home-board-title" className="home-board__title">{board.title}</h2>
-        <span className="home-board__count">
-          {plural(board.games, 'game', 'games')}
-          {showResearch
-            ? `, ${board.withResearch} with systems and trends attached`
-            : '. Systems and trends go up before game time.'}
-        </span>
-      </header>
+    <div className="home-board">
       <div className="home-board__scroll" role="region" aria-label={`${board.title} lines`} tabIndex={0}>
         <table className="home-board__table">
           <thead>
@@ -147,7 +138,7 @@ function Board({ board, hasDesk }: { board: HomeBoard; hasDesk: boolean }) {
           {board.others}
         </span>
       </footer>
-    </section>
+    </div>
   )
 }
 
@@ -155,11 +146,21 @@ function Board({ board, hasDesk }: { board: HomeBoard; hasDesk: boolean }) {
 export function HomeBoardSection({ board, hasDesk }: { board: HomeBoard | null; hasDesk: boolean }) {
   if (!board || board.rows.length === 0) return null
   return (
-    <div className="home-board-section">
+    <section className="home-board-section" aria-labelledby="home-board-title">
       <div className="container">
+        <header className="home-board-section__head">
+          <span className="section-label">The Board</span>
+          <h2 id="home-board-title" className="section-title">{board.title}</h2>
+          <p className="home-board__count">
+            {plural(board.games, 'game', 'games')}
+            {board.withResearch > 0
+              ? `, ${board.withResearch} with systems and trends attached`
+              : '. Systems and trends go up before game time.'}
+          </p>
+        </header>
         <Board board={board} hasDesk={hasDesk} />
       </div>
-    </div>
+    </section>
   )
 }
 
