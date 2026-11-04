@@ -510,6 +510,12 @@
 /* ---------- /portfolio/performance ---------- */
 .perf-proof { padding: 0 0 8px; }
 
+/* Centred under the centred page header. */
+.perf-proof .proof { text-align: center; }
+.perf-proof .proof__chips,
+.perf-proof .proof__books,
+.perf-proof .proof__foot { justify-content: center; }
+
 /* The two books */
 .books { padding-top: 48px; padding-bottom: 24px; }
 
@@ -530,6 +536,21 @@
 @media (min-width: 760px) {
   .books__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+/* One book with graded picks: a lone card in a two-column grid sat in the left
+   half beside an empty slot. It takes the row instead, and centres. */
+@media (min-width: 760px) {
+  .books__grid--single { grid-template-columns: minmax(0, 1fr); }
+  .books__grid--single .book-card__sports {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px 16px;
+  }
+}
+.books__grid--single .book-card__head,
+.books__grid--single .book-card__stat,
+.books__grid--single .book-card__meta,
+.books__grid--single .book-card__floor { text-align: center; }
 
 .book-card {
   background: var(--bg-card);

@@ -7,6 +7,7 @@ import BackToTop from '@/components/BackToTop'
 import ClientScripts from '@/components/ClientScripts'
 import PageViewTracker from '@/components/PageViewTracker'
 import GlobalTicker from '@/components/GlobalTicker'
+import { loadTickerFacts, liveTickerItems } from '@/lib/ticker-live'
 import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import { BotIdClient } from 'botid/client'
@@ -79,6 +80,8 @@ export default async function RootLayout({
     .eq('key', 'ticker')
     .single()
   const ticker: TickerContent = { ...DEFAULT_TICKER, ...((tickerRow?.value as object) ?? {}) }
+  const tickerFacts = await loadTickerFacts().catch(() => [])
+  const liveTicker: TickerContent = { ...ticker, items: liveTickerItems(ticker.items, tickerFacts) }
 
   let isAdmin = false
   const { data: { user } } = await supabase.auth.getUser()
@@ -159,7 +162,7 @@ export default async function RootLayout({
         <Suspense>
           <Navigation />
         </Suspense>
-        <GlobalTicker content={ticker} isAdmin={isAdmin} />
+        <GlobalTicker content={ticker} live={liveTicker} isAdmin={isAdmin} />
         {/* Reserve flow space for the fixed ticker so page content clears it. */}
         <div className="ticker-spacer" aria-hidden />
         {/* A div, not <main>: pages already render their own <main>, and

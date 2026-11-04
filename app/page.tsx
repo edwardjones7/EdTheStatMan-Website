@@ -3,13 +3,13 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { SITE_CONTENT_DEFAULTS } from '@/lib/site-content'
 import type { AllSiteContent } from '@/lib/site-content'
-import HomeHero, { type HeroCta, type HeroCard, type HeroProof } from '@/components/HomeHero'
+import HomeHero, { HomeBoardSection, type HeroCta, type HeroCard, type HeroProof } from '@/components/HomeHero'
 import HomeFreePicks from '@/components/HomeFreePicks'
 import { BOOK_LABEL } from '@/lib/proof'
 import { minus } from '@/lib/home-board'
 import Features from '@/components/Features'
-import CTASection from '@/components/CTASection'
 import SportsBand from '@/components/SportsBand'
+import CTASection from '@/components/CTASection'
 import HomeEditor from '@/components/HomeEditor'
 import TodaysBrief from '@/components/TodaysBrief'
 import { resolveAccess, ACCESS_SELECT } from '@/lib/access'
@@ -44,7 +44,6 @@ export default async function Home() {
   // Started first and awaited late: it is an independent read, so it should not
   // add a round trip to the page.
   const proofPromise = loadProof()
-  const boardPromise = loadHomeBoard()
   const supabase = await createClient()
 
   const { data: contentRows } = await (supabase as any).from('site_content').select('key, value')
@@ -57,25 +56,21 @@ export default async function Home() {
   // Merge DB overrides with defaults; for features cards, always use correct hrefs/linkTexts from defaults
   const rawFeatures = raw.features as any ?? {}
   const mergedFeatures = { ...SITE_CONTENT_DEFAULTS.features, ...rawFeatures }
-  if (rawFeatures.cards && Array.isArray(rawFeatures.cards)) {
-    mergedFeatures.cards = SITE_CONTENT_DEFAULTS.features.cards.map((defaults, i) => {
-      const saved = rawFeatures.cards[i] ?? {}
-      // A saved card that is still the retired Expert Blog (the slot became
-      // the Research Desk in Nov 2026) is ignored rather than rendered with
-      // the Desk's link under the blog's words. Saving the card in the admin
-      // editor replaces it and this stops mattering.
-      const override = saved.title === 'Expert Blog' ? {} : saved
-      return {
-        ...defaults,
-        ...override,
-        // "Â " is a mis-decoded non-breaking space in production's saved text.
-        text: String(override.text ?? defaults.text).replace(/Â? /g, ' ').trim(),
-        href: defaults.href,
-        linkText: defaults.linkText,
-        isExternal: defaults.isExternal,
-      }
-    })
-  }
+  // Saved cards attach by id. The six cards saved before Nov 2026 have none, so
+  // they fall away rather than putting Model Picks' words on the Desk's link.
+  const savedCards: any[] = Array.isArray(rawFeatures.cards) ? rawFeatures.cards : []
+  mergedFeatures.cards = SITE_CONTENT_DEFAULTS.features.cards.map(defaults => {
+    const override = savedCards.find(c => c?.id === defaults.id) ?? {}
+    return {
+      ...defaults,
+      ...override,
+      // "Â " is a mis-decoded non-breaking space in production's saved text.
+      text: String(override.text ?? defaults.text).replace(/Â? /g, ' ').trim(),
+      href: defaults.href,
+      linkText: defaults.linkText,
+      isExternal: defaults.isExternal,
+    }
+  })
 
   const content: AllSiteContent = {
     hero:             { ...SITE_CONTENT_DEFAULTS.hero,             ...(raw.hero             as object ?? {}) },
@@ -105,6 +100,9 @@ export default async function Home() {
   // is on one. Started here and awaited with the other independent reads.
   const hasDesk = isAdmin || access.atLeast('desk')
   const trialPromise = user ? loadTrialState(createAdminClient(), user.id) : null
+  // Started here, not with the other reads: what the board may say depends on
+  // who is looking, so it has to wait for the viewer.
+  const boardPromise = loadHomeBoard({ tier: userTier, isAdmin, hasDesk })
 
   // Today's Brief. Read through the admin client for the same reason the
   // Portfolio page does -- the app's tier logic is the gate, not RLS -- and
@@ -122,7 +120,9 @@ export default async function Home() {
     : hasDesk ? { kind: 'desk', trialEndsAt: trial.onTrial ? trial.endsAt : null }
     : trial.available ? { kind: 'trial' }
     : { kind: 'plans', expired: membership === 'expired' }
-  const briefNode = <TodaysBrief brief={brief} />
+  // Only for someone who can read the card. All padlocks tells a visitor nothing
+  // the hero's "4 plays" line has not already said.
+  const briefNode = brief.total > 0 && brief.lockedCount === 0 ? <TodaysBrief brief={brief} /> : null
 
   // The hook above the slogan: what is on the card right now.
   const card: HeroCard | null = brief.date && brief.total > 0
@@ -165,7 +165,6 @@ export default async function Home() {
   const heroNode = (
     <>
       <HomeHero
-        board={board}
         cta={cta}
         title={content.hero.title}
         accent={content.hero.titleAccent}
@@ -173,7 +172,7 @@ export default async function Home() {
         card={card}
         proof={heroProof}
       />
-      {!user && <HomeFreePicks />}
+      <HomeBoardSection board={board} />
     </>
   )
 
@@ -191,7 +190,9 @@ export default async function Home() {
           {briefNode}
           <Features        content={content.features} />
           <SportsBand />
-          <CTASection      content={content.cta_section} membership={membership} />
+          <CTASection      content={content.cta_section} membership={membership} trial={cta.kind === 'signup' || cta.kind === 'trial'} />
+          {/* Last on purpose: it is the fallback for whoever passed on the trial. */}
+          {!user && <HomeFreePicks />}
         </>
       )}
     </div>

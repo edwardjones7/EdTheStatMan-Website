@@ -40,7 +40,7 @@ export default function TodaysBrief({ brief, proof }: { brief: Brief; proof?: Pr
               {date ? relativeLabel(date) : 'The card'}
               {date && <span className="brief__date">{formatCardDate(date)}</span>}
             </div>
-            <h2 id="brief-heading" className="brief__title">Today&rsquo;s Brief</h2>
+            <h2 id="brief-heading" className="brief__title">{brief.isToday ? 'Today’s Brief' : 'The Latest Brief'}</h2>
           </header>
 
           {total > 0 ? (

@@ -114,38 +114,29 @@
 
 /* ---------- Board panel ---------- */
 
+.home-board-section {
+  padding: 56px 0;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border-color);
+}
+
+.home-board-section__head {
+  margin-bottom: 24px;
+  text-align: center;
+}
+
 .home-board {
   width: 100%;
-  max-width: 980px;
+  max-width: 880px;
   min-width: 0;
+  margin: 0 auto;
   background: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-sm);
 }
 
-.home-board__head {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 4px 16px;
-  padding: 14px 20px;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.home-board__title {
-  margin: 0;
-  font-family: var(--font-body);
-  font-size: 0.95rem;
-  font-weight: 650;
-  font-stretch: 100%;
-  font-variation-settings: 'wdth' 100;
-  letter-spacing: 0;
-  line-height: 1.4;
-  color: var(--text-heading);
-}
-
 .home-board__count {
+  margin: 8px 0 0;
   font-size: 0.875rem;
   color: var(--text-muted);
 }
@@ -165,7 +156,7 @@
 }
 
 .home-board__table th {
-  padding: 10px 12px;
+  padding: 8px 12px;
   font-size: 0.8rem;
   font-weight: 500;
   text-align: left;
@@ -174,7 +165,7 @@
 }
 
 .home-board__table td {
-  padding: 12px;
+  padding: 8px 12px;
   border-top: 1px solid var(--border-color);
   vertical-align: top;
   color: var(--text-heading);
@@ -184,6 +175,8 @@
 .home-board__table td:first-child { padding-left: 20px; }
 .home-board__table th:last-child,
 .home-board__table td:last-child { padding-right: 20px; }
+
+.home-board__table.is-wide { min-width: 640px; }
 
 .home-board__table .is-num { text-align: right; }
 .home-board__table .is-mono {
@@ -202,6 +195,20 @@
 }
 .home-board__game:hover { color: var(--brand); }
 .home-board__game:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+
+.home-board__bet,
+.home-board__research .home-board__locked {
+  display: block;
+  white-space: nowrap;
+}
+
+.home-board__sport {
+  margin-right: 8px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
 
 .home-board__when {
   display: block;
@@ -417,7 +424,6 @@
   .home-hero__sub { font-size: 1.05rem; }
   .home-hero__actions .home-btn { flex: 1 1 100%; }
   .home-board { flex-basis: 100%; }
-  .home-board__head,
   .home-board__foot { padding-left: 16px; padding-right: 16px; }
   .home-board__table th:first-child,
   .home-board__table td:first-child { padding-left: 16px; }
@@ -444,15 +450,16 @@
   inset: 0;
   z-index: -1;
 }
-/* On the photo only: a filter on the wrapper would also darken the fade
-   below and leave the hero's bottom edge blacker than the page under it. */
+/* On the photo only: a filter on the wrapper would also darken the fade below.
+   The photo runs to the hero's bottom edge on purpose: fading it out into the
+   page background made the section after it read as more of the hero. */
 .home-hero__media img { filter: grayscale(1) brightness(0.55) contrast(1.05); }
 .home-hero__media::after {
   content: '';
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(180deg, rgba(15, 21, 27, 0.72) 0%, rgba(15, 21, 27, 0.82) 45%, #0F151B 78%);
+    linear-gradient(180deg, rgba(15, 21, 27, 0.72) 0%, rgba(15, 21, 27, 0.8) 45%, rgba(15, 21, 27, 0.7) 100%);
 }
 .home-hero__inner { position: relative; }
 

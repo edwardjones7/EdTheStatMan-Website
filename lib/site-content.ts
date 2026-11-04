@@ -12,6 +12,8 @@
 //     USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = true));
 
 export interface FeatureCard {
+  /** Which product this is. Saved edits attach by this, never by position. */
+  id: string
   number: string
   title: string
   text: string
@@ -166,62 +168,36 @@ export const DEFAULT_FEATURES: FeaturesContent = {
   titleAccent: 'Edge',
   titleSuffix: 'Starts Here',
   subtitle: 'Data-driven tools and analysis to make smarter sports betting decisions.',
+  // One card per product, in the order they are sold (lib/offer.ts). Was six
+  // cards until Nov 2026; the record and the alerts have their own places now.
   cards: [
     {
+      id: 'desk',
       number: '01',
-      title: 'Model Picks',
-      text: 'Data-backed model picks for the NFL, College Football, NBA Playoffs, and the NCAA Tournament.',
-      href: '/portfolio',
-      linkText: 'View Picks',
+      title: 'The Research Desk',
+      text: 'Every NFL, college football, NBA and college basketball game on its own page, with the lines, how they moved, and the systems, trends and bets attached.',
+      href: '/desk',
+      linkText: 'Open the Desk',
       iconColor: 'cyan',
     },
     {
+      id: 'vault',
       number: '02',
-      title: 'Betting Systems',
-      text: 'Proven, data-backed betting systems across NFL, College Football, NBA, and College Basketball. Updated daily with live records.',
-      href: '/vault/systems',
-      linkText: 'Explore Systems',
+      title: 'Handicapping Vault',
+      text: 'Every system and every trend, yours to search. ATS records, over/under patterns and situational edges by sport.',
+      href: '/vault',
+      linkText: 'Browse the Vault',
       iconColor: 'purple',
     },
     {
+      id: 'portfolio',
       number: '03',
-      title: 'Betting Trends',
-      text: 'Team-by-team trend analysis for every major sport. Discover ATS records, over/under patterns, and situational edges.',
-      href: '/vault/trends',
-      linkText: 'View Trends',
+      title: 'EdTheStatBot Portfolio',
+      text: 'The picks themselves. Every play graded in public, wins and losses alike.',
+      href: '/portfolio',
+      linkText: 'See the picks',
       iconColor: 'green',
     },
-    {
-      number: '04',
-      title: 'Results',
-      text: 'Full transparency with historical performance records. Track my model picks over time.',
-      href: '/portfolio/performance',
-      linkText: 'See Results',
-      iconColor: 'gold',
-    },
-    // Was the Expert Blog until Nov 2026, when Ed stopped writing it and it
-    // left the nav. The Research Desk took the slot (and stopped being a
-    // seventh card); production's saved card 05 was rewritten to match.
-    {
-      number: '05',
-      title: 'Research Desk',
-      text: 'Every NFL, college football, NBA and college basketball game on its own page, with the systems, trends and bets attached.',
-      href: '/desk/nfl',
-      linkText: 'Open the Desk',
-      iconColor: 'gold',
-    },
-    {
-      number: '06',
-      title: 'Instant Alerts',
-      text: 'Get notified the moment picks drop via Discord, email and push. Never miss an edge with real-time betting alerts.',
-      href: 'https://discord.gg/rXBZkSPcJb',
-      linkText: 'Join the Discord',
-      iconColor: 'purple',
-      isExternal: true,
-    },
-    // Keep new cards at the END of this array — the home page merges DB
-    // overrides onto defaults by index, so inserting mid-array would mis-apply
-    // saved edits.
   ],
 }
 

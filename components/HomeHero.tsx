@@ -1,6 +1,6 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import type { HomeBoard } from '@/lib/home-board'
+import type { BoardBet, BoardRow, HomeBoard } from '@/lib/home-board'
 import { TRIAL_DAYS } from '@/lib/offer'
 import HomeTrialButton from './HomeTrialButton'
 import { IconLock } from './Icons'
@@ -11,8 +11,10 @@ import { IconLock } from './Icons'
  *   1. what is on the card right now (the hook),
  *   2. the slogan and description (admin-editable site_content.hero),
  *   3. the one action, worded around that card when there is one,
- *   4. the record, so "does it win?" is answered before the scroll,
- *   5. the live board, with research shown as a locked count, not a blank.
+ *   4. the record, so "does it win?" is answered before the scroll.
+ *
+ * The live board is its own section straight after (HomeBoardSection): inside
+ * the hero it doubled the height and pushed everything else down the page.
  *
  * Server component; every figure arrives already shaped. The stadium photo
  * from the old hero sits behind it, greyscale and dark, so colour on the page
@@ -78,35 +80,59 @@ function CardHook({ card }: { card: HeroCard }) {
   )
 }
 
-function Board({ board, hasDesk }: { board: HomeBoard; hasDesk: boolean }) {
-  // A column of "None yet" sells nothing and reads as an unfinished product,
-  // so it only appears once at least one game on screen carries research.
-  const showResearch = board.withResearch > 0
+function researchLabel(r: BoardRow): string {
+  return [
+    r.systems > 0 && plural(r.systems, 'system', 'systems'),
+    r.trends > 0 && plural(r.trends, 'trend', 'trends'),
+  ].filter(Boolean).join(', ')
+}
+
+/** Open bets by name, locked ones as a count. BoardBet carries no text when locked. */
+function BetsCell({ bets }: { bets: BoardBet[] }) {
+  if (bets.length === 0) return <span className="is-quiet">–</span>
+  const open = bets.filter(b => !b.locked)
+  const locked = bets.length - open.length
   return (
-    <section className="home-board" aria-labelledby="home-board-title">
-      <header className="home-board__head">
-        <h2 id="home-board-title" className="home-board__title">{board.title}</h2>
-        <span className="home-board__count">
-          {plural(board.games, 'game', 'games')}
-          {showResearch
-            ? `, ${board.withResearch} with systems and trends attached`
-            : '. Systems and trends go up before kickoff.'}
-        </span>
-      </header>
+    <>
+      {open.slice(0, 2).map((b, i) => (
+        <Link key={b.key ?? i} href={`/picks/${encodeURIComponent(b.key ?? '')}`} className="home-board__bet">
+          {b.bet ?? 'Pick'}
+          {b.result !== 'pending' && <span className="home-board__open"> {b.result.toUpperCase()}</span>}
+        </Link>
+      ))}
+      {open.length > 2 && <span className="home-board__open">+{open.length - 2} more</span>}
+      {locked > 0 && (
+        <Link href="/win?plan=portfolio" className="home-board__locked">
+          <IconLock size={12} /> {plural(locked, 'Portfolio pick', 'Portfolio picks')}
+        </Link>
+      )}
+    </>
+  )
+}
+
+function Board({ board }: { board: HomeBoard }) {
+  // A column of "None yet" sells nothing and reads as an unfinished product,
+  // so each one only appears once a game on screen has something to put in it.
+  const showResearch = board.rows.some(r => r.systems + r.trends > 0)
+  const showBets = board.rows.some(r => r.bets.length > 0)
+  return (
+    <div className="home-board">
       <div className="home-board__scroll" role="region" aria-label={`${board.title} lines`} tabIndex={0}>
-        <table className="home-board__table">
+        <table className={`home-board__table${showResearch || showBets ? ' is-wide' : ''}`}>
           <thead>
             <tr>
               <th scope="col">Game</th>
               <th scope="col" className="is-num">Spread</th>
               <th scope="col" className="is-num">Total</th>
               {showResearch && <th scope="col" className="is-num">Research</th>}
+              {showBets && <th scope="col" className="is-num">Bets</th>}
             </tr>
           </thead>
           <tbody>
             {board.rows.map(r => (
               <tr key={r.id}>
                 <td>
+                  {r.sportTag && <span className="home-board__sport">{r.sportTag}</span>}
                   <Link href={r.href} className="home-board__game">{r.matchup}</Link>
                   <span className="home-board__when">{r.when}</span>
                 </td>
@@ -120,15 +146,20 @@ function Board({ board, hasDesk }: { board: HomeBoard; hasDesk: boolean }) {
                 </td>
                 {showResearch && (
                   <td className="is-num home-board__research">
-                    {r.research === 0 ? (
+                    {r.systems + r.trends === 0 ? (
                       <span className="is-quiet">–</span>
-                    ) : hasDesk ? (
-                      <Link href={r.href}>{plural(r.research, 'system or trend', 'systems and trends')}</Link>
+                    ) : r.researchOpen ? (
+                      <Link href={r.href}>{researchLabel(r)}</Link>
                     ) : (
                       <Link href={r.href} className="home-board__locked">
-                        <IconLock size={12} /> {plural(r.research, 'system or trend', 'systems and trends')}
+                        <IconLock size={12} /> {researchLabel(r)}
                       </Link>
                     )}
+                  </td>
+                )}
+                {showBets && (
+                  <td className="is-num home-board__research">
+                    <BetsCell bets={r.bets} />
                   </td>
                 )}
               </tr>
@@ -138,20 +169,42 @@ function Board({ board, hasDesk }: { board: HomeBoard; hasDesk: boolean }) {
       </div>
       <footer className="home-board__foot">
         <Link href={board.href} className="home-board__all">
-          The full {board.sportLabel} board
+          {board.allLabel}
         </Link>
         <span className="home-board__others">
-          College football, NBA and college basketball are on the Desk too.
+          {board.others}
         </span>
       </footer>
+    </div>
+  )
+}
+
+/** Today's games, with research shown as a locked count, not a blank. */
+export function HomeBoardSection({ board }: { board: HomeBoard | null }) {
+  if (!board || board.rows.length === 0) return null
+  return (
+    <section className="home-board-section" aria-labelledby="home-board-title">
+      <div className="container">
+        <header className="home-board-section__head">
+          <span className="section-label">The Board</span>
+          <h2 id="home-board-title" className="section-title">{board.title}</h2>
+          <p className="home-board__count">
+            {plural(board.games, 'game', 'games')}
+            {board.withResearch > 0
+              ? `, ${board.withResearch} with systems and trends attached.`
+              : '. Systems and trends go up before game time.'}
+            {board.bets > 0 && ` ${plural(board.bets, 'bet', 'bets')} posted.`}
+          </p>
+        </header>
+        <Board board={board} />
+      </div>
     </section>
   )
 }
 
 export default function HomeHero({
-  board, cta, title, accent, description, card, proof,
+  cta, title, accent, description, card, proof,
 }: {
-  board: HomeBoard | null
   cta: HeroCta
   title: string
   accent: string
@@ -224,8 +277,6 @@ export default function HomeHero({
             </Link>
           )}
         </div>
-
-        {board && board.rows.length > 0 && <Board board={board} hasDesk={cta.kind === 'desk'} />}
       </div>
     </section>
   )

@@ -5,7 +5,7 @@ import { DEFAULT_CTA } from '@/lib/site-content'
 import EditableText from './EditableText'
 import { IconBolt, IconChat, IconArrowRight, IconInstagram } from './Icons'
 import Link from 'next/link'
-import { OFFER_ENTRY_PRICE } from '@/lib/offer'
+import { OFFER_ENTRY_PRICE, TRIAL_DAYS } from '@/lib/offer'
 import type { Membership } from '@/lib/access'
 
 interface Props {
@@ -19,12 +19,48 @@ interface Props {
    * site_content shape is untouched.
    */
   membership?: Membership
+  /**
+   * Close on the free trial instead of the plans. Logged-out visitors always
+   * can; a signed-in account only if its one trial is unused, which only pages
+   * that read the trial state know, so they pass it.
+   */
+  trial?: boolean
 }
 
-export default function CTASection({ content = DEFAULT_CTA, editMode, onEdit, resetKey = 0, membership = 'active' }: Props) {
+export default function CTASection({ content = DEFAULT_CTA, editMode, onEdit, resetKey = 0, membership = 'active', trial }: Props) {
   const ed = editMode && onEdit
   // Admins editing the page see the member variant so the editing surface is stable.
   const selling = !ed && (membership === 'logged-out' || membership === 'free' || membership === 'expired')
+  const offerTrial = selling && (trial ?? membership === 'logged-out')
+  const trialHref = membership === 'logged-out'
+    ? `/signup?next=${encodeURIComponent('/win?trial=1#plan-desk')}`
+    : '/win?trial=1#plan-desk'
+
+  if (offerTrial) {
+    return (
+      <section className="cta-section">
+        <div className="container">
+          <div className="cta-box reveal-scale">
+            <h2 className="cta-box__title">
+              {TRIAL_DAYS} days of the Research Desk.{' '}
+              <span className="text-gradient">Free.</span>
+            </h2>
+            <p className="cta-box__text">
+              Every game, every system and trend, every pick. No card needed, and nothing renews.
+            </p>
+            <div className="cta-box__actions">
+              <Link href={trialHref} className="btn btn--primary btn--lg">
+                Start the free trial <IconArrowRight size={16} />
+              </Link>
+              <Link href="/win" className="btn btn--secondary btn--lg">
+                See plans, from {OFFER_ENTRY_PRICE}
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+    )
+  }
 
   return (
     <section className="cta-section">
