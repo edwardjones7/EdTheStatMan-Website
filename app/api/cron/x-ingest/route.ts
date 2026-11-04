@@ -1,3 +1,4 @@
+import { withCronLog } from '@/lib/cron-log'
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { ingestFromX } from '@/lib/picks/drafts'
@@ -20,7 +21,7 @@ export const maxDuration = 120
  * With X unconfigured this answers 200 with a `skipped` reason: an unset
  * feature is not a failing cron.
  */
-export async function GET(req: Request) {
+async function run(req: Request) {
   // Vercel signs cron invocations with CRON_SECRET when it is set. Same guard
   // as desk-sync and the Discord sweep: without it, anyone could run up the X
   // and AI bills by hitting this URL.
@@ -40,3 +41,5 @@ export async function GET(req: Request) {
   console.log('[x-ingest]', JSON.stringify(report), `${ms}ms`)
   return NextResponse.json({ ...report, ms })
 }
+
+export const GET = withCronLog('x-ingest', run)

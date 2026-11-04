@@ -1,3 +1,4 @@
+import { withCronLog } from '@/lib/cron-log'
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { selectAll } from '@/lib/supabase/select-all'
@@ -62,7 +63,7 @@ function subscriptionLive(r: Row, now: number): boolean {
  *
  * ?dry=1 lists what would be sent and sends nothing.
  */
-export async function GET(req: Request) {
+async function run(req: Request) {
   // Same guard as the other crons: Vercel signs its invocations with
   // CRON_SECRET, and without the check anyone could trigger a mail run.
   const secret = process.env.CRON_SECRET
@@ -188,3 +189,5 @@ export async function GET(req: Request) {
   console.log('[lifecycle] run', JSON.stringify(report))
   return NextResponse.json(report)
 }
+
+export const GET = withCronLog('lifecycle', run)
