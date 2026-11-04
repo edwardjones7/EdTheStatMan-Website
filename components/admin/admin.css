@@ -15,7 +15,7 @@
 
 .adm-notice {
   border: 1px solid var(--accent-red);
-  border-radius: 12px;
+  border-radius: var(--radius-lg, 12px);
   color: var(--text-primary);
   font-size: 0.88rem;
   padding: 12px 16px;
@@ -26,7 +26,7 @@
 .adm-alert {
   background: var(--bg-card);
   border: 1px solid var(--accent-gold);
-  border-radius: 10px;
+  border-radius: var(--radius-lg, 10px);
   color: var(--text-primary);
   cursor: pointer;
   font: inherit;
@@ -45,7 +45,7 @@
 .adm-kpi {
   background: var(--bg-card);
   border: 1px solid var(--border-color);
-  border-radius: 16px;
+  border-radius: var(--radius-lg, 16px);
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -109,7 +109,7 @@
 .adm-details {
   background: transparent;
   border: 1px solid var(--border-color);
-  border-radius: 16px;
+  border-radius: var(--radius-lg, 16px);
   padding: 14px 20px;
 }
 .adm-details summary { color: var(--text-secondary); cursor: pointer; font-size: 0.9rem; }
@@ -147,3 +147,6 @@
 .admin-container { min-width: 0; }
 .admin-container .admin-tabs { max-width: 100%; overflow-x: auto; scrollbar-width: none; }
 .admin-container .admin-tab { flex: none; white-space: nowrap; }
+
+/* The shared admin cards predate the redesign's flat corners. */
+.admin-container .admin-breakdown-card { border-radius: var(--radius-lg, 20px); }
