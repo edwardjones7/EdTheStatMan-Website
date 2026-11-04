@@ -37,15 +37,15 @@ const BREAK_EVEN = 52.38
 
 // Per-sport badge colors, mirroring the sport accents used on the systems page.
 const SPORT_THEME: Record<string, { color: string; bg: string }> = {
-  NFL:    { color: '#38bdf8', bg: 'rgba(56,189,248,0.12)' },
-  NFLPRE: { color: '#7dd3fc', bg: 'rgba(125,211,252,0.12)' },
-  CFL:    { color: '#f43f5e', bg: 'rgba(244,63,94,0.12)' },
-  CFB:    { color: '#e9c46a', bg: 'rgba(233,196,106,0.12)' },
-  NBA:    { color: '#e9c46a', bg: 'rgba(233,196,106,0.12)' },
-  WNBA:   { color: '#d98a6f', bg: 'rgba(251,146,60,0.12)' },
-  CBB:    { color: '#2dd4bf', bg: 'rgba(45,212,191,0.12)' },
+  NFL:    { color: 'rgb(var(--sport-nfl))', bg: 'rgba(var(--sport-nfl), 0.12)' },
+  NFLPRE: { color: 'rgb(var(--sport-nflpre))', bg: 'rgba(var(--sport-nflpre), 0.12)' },
+  CFL:    { color: 'rgb(var(--sport-cfl))', bg: 'rgba(var(--sport-cfl), 0.12)' },
+  CFB:    { color: 'rgb(var(--sport-cfb))', bg: 'rgba(var(--sport-cfb), 0.12)' },
+  NBA:    { color: 'rgb(var(--sport-nba))', bg: 'rgba(var(--sport-nba), 0.12)' },
+  WNBA:   { color: 'rgb(var(--sport-wnba))', bg: 'rgba(var(--sport-wnba), 0.12)' },
+  CBB:    { color: 'rgb(var(--sport-cbb))', bg: 'rgba(var(--sport-cbb), 0.12)' },
 }
-const sportTheme = (sport: string) => SPORT_THEME[sport] ?? { color: 'var(--accent-teal)', bg: 'rgba(45,212,191,0.12)' }
+const sportTheme = (sport: string) => SPORT_THEME[sport] ?? { color: 'var(--accent-teal)', bg: 'rgba(var(--brand-rgb), 0.12)' }
 
 const FORM_LEN = 7
 
@@ -178,9 +178,9 @@ function ChartBarEditor({
             <button
               onClick={() => patch(i, { color: bar.color === 'green' ? 'red' : 'green' })}
               style={{
-                background: bar.color === 'green' ? 'rgba(45,212,191,0.15)' : 'rgba(248,113,122,0.15)',
-                border: `1px solid ${bar.color === 'green' ? '#2dd4bf' : '#f8717a'}`,
-                color: bar.color === 'green' ? '#2dd4bf' : '#f8717a',
+                background: bar.color === 'green' ? 'rgba(var(--up-rgb), 0.15)' : 'rgba(var(--down-rgb), 0.15)',
+                border: `1px solid ${bar.color === 'green' ? 'var(--up)' : 'var(--down)'}`,
+                color: bar.color === 'green' ? 'var(--up)' : 'var(--down)',
                 borderRadius: '4px',
                 cursor: 'pointer',
                 fontSize: '0.7rem',
@@ -268,9 +268,9 @@ function TableRowEditor({
                 <button
                   onClick={() => patch(i, { bankrollType: row.bankrollType === 'win' ? 'loss' : 'win' })}
                   style={{
-                    background: row.bankrollType === 'win' ? 'rgba(45,212,191,0.15)' : 'rgba(248,113,122,0.15)',
-                    border: `1px solid ${row.bankrollType === 'win' ? '#2dd4bf' : '#f8717a'}`,
-                    color: row.bankrollType === 'win' ? '#2dd4bf' : '#f8717a',
+                    background: row.bankrollType === 'win' ? 'rgba(var(--up-rgb), 0.15)' : 'rgba(var(--down-rgb), 0.15)',
+                    border: `1px solid ${row.bankrollType === 'win' ? 'var(--up)' : 'var(--down)'}`,
+                    color: row.bankrollType === 'win' ? 'var(--up)' : 'var(--down)',
                     borderRadius: '4px',
                     cursor: 'pointer',
                     fontSize: '0.7rem',
@@ -286,7 +286,7 @@ function TableRowEditor({
                 <button
                   onClick={() => removeRow(i)}
                   style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: '0.85rem', padding: '2px 4px' }}
-                  onMouseEnter={e => (e.currentTarget.style.color = '#f8717a')}
+                  onMouseEnter={e => (e.currentTarget.style.color = 'var(--down)')}
                   onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-muted)')}
                 >✕</button>
               </td>
@@ -298,9 +298,9 @@ function TableRowEditor({
         onClick={addRow}
         style={{
           marginTop: '8px',
-          background: 'rgba(45,212,191,0.08)',
+          background: 'rgba(var(--brand-rgb), 0.08)',
           color: 'var(--accent-teal)',
-          border: '1px solid rgba(45,212,191,0.25)',
+          border: '1px solid rgba(var(--brand-rgb), 0.25)',
           borderRadius: '6px',
           cursor: 'pointer',
           fontFamily: 'inherit',

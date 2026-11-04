@@ -53,7 +53,7 @@
   color: var(--text-muted);
   border: 1px solid var(--border-color);
 }
-.pick-result--win { color: var(--accent-teal); border-color: rgba(var(--teal-rgb), 0.4); background: rgba(var(--teal-rgb), 0.08); }
+.pick-result--win { color: var(--up); border-color: rgba(var(--up-rgb), 0.4); background: rgba(var(--up-rgb), 0.08); }
 .pick-result--loss { color: var(--accent-red); border-color: rgba(var(--red-rgb), 0.4); background: rgba(var(--red-rgb), 0.08); }
 .pick-result--push { color: var(--accent-gold); border-color: rgba(var(--gold-rgb), 0.4); }
 

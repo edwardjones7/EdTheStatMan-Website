@@ -63,7 +63,7 @@
   color: var(--text-heading);
 }
 
-.proof__record--up { color: var(--accent-teal); }
+.proof__record--up { color: var(--up); }
 .proof__record--even { color: var(--accent-gold); }
 .proof__record--down { color: var(--accent-red); }
 
@@ -95,7 +95,7 @@
   font-variant-numeric: tabular-nums;
 }
 
-.proof__chip--up { border-left-color: var(--accent-teal); }
+.proof__chip--up { border-left-color: var(--up); }
 .proof__chip--even { border-left-color: var(--accent-gold); }
 .proof__chip--down { border-left-color: var(--accent-red); }
 
@@ -135,7 +135,7 @@
   font-variant-numeric: tabular-nums;
 }
 
-.proof__book--up .proof__book-meta { color: var(--accent-teal); }
+.proof__book--up .proof__book-meta { color: var(--up); }
 .proof__book--down .proof__book-meta { color: var(--accent-red); }
 
 .proof__foot {
@@ -196,60 +196,71 @@
 }
 
 /* ---------- /win ---------- */
-.win-proof {
-  padding: 0 0 48px;
+/* Trading terminal pass (Nov 2026): left-aligned, hairline rules, no tinted
+   cards and no glows. The plans themselves are styles/rate-sheet.css. */
+.win-header { text-align: left; padding-bottom: 32px; }
+.win-header__inner { max-width: 1180px; margin: 0 auto; }
+.win-header .page-header__title {
+  font-size: clamp(2.4rem, 6vw, 3.6rem);
+  max-width: 820px;
+}
+.win-header .page-header__subtitle {
+  margin: 0;
+  max-width: 640px;
+  font-size: 1.05rem;
+  line-height: 1.55;
+  color: var(--text-primary);
 }
 
+.win-proof {
+  padding: 0 0 56px;
+}
+
+/* The record on /win: same component, terminal labels. */
+.win-proof .proof {
+  max-width: 1180px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-secondary);
+}
+.win-proof .proof__eyebrow {
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 0.95rem;
+  font-weight: 650;
+  color: var(--brand);
+}
+.win-proof .proof__chip {
+  border-radius: var(--radius-sm);
+  background: transparent;
+}
+.win-proof .proof__ledger { color: var(--brand); }
+.win-proof .proof__ledger:hover { gap: 6px; text-decoration: underline; }
+
 .win-section {
-  padding-top: 40px;
+  padding-top: 8px;
 }
 
 .win-notice {
-  max-width: 640px;
-  margin: 0 auto 28px;
-  text-align: center;
-  background: rgba(var(--gold-rgb), 0.1);
-  border: 1px solid rgba(var(--gold-rgb), 0.3);
-  border-radius: var(--radius-md);
-  padding: 12px 20px;
-  color: var(--accent-gold);
-  font-size: 0.9rem;
+  max-width: 1180px;
+  margin: 0 auto 20px;
+  text-align: left;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-left: 3px solid var(--brand);
+  border-radius: var(--radius-sm);
+  padding: 12px 18px;
+  color: var(--text-heading);
+  font-size: 0.95rem;
 }
 
-.win-notice--strong { font-weight: 600; }
+.win-notice--strong { font-weight: 650; }
 
 .win-notice--active {
-  background: rgba(var(--teal-rgb), 0.1);
-  border-color: rgba(var(--teal-rgb), 0.3);
-  color: var(--accent-teal);
-  font-weight: 600;
+  border-left-color: var(--up);
+  font-weight: 500;
 }
 
-.win-notice a { color: inherit; text-decoration: underline; }
-
-/* The global featured badge reads 'Most Popular'. On /win the card is marked
-   for a reason the page can stand behind, carried in data-flag. */
-.win-plans .pricing-card--featured::before {
-  content: attr(data-flag);
-}
-
-.win-card {
-  padding: 32px 22px;
-  scroll-margin-top: calc(var(--nav-height) + 24px);
-}
-
-.win-card__label {
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  margin-bottom: 6px;
-}
-
-@media (min-width: 720px) {
-  .win-card { padding: 36px 30px; }
-}
+.win-notice a { color: var(--brand); text-decoration: underline; }
 
 /* Comparison table */
 .win-compare {
@@ -258,16 +269,14 @@
 }
 
 .win-compare__title {
-  font-size: clamp(1.4rem, 4vw, 1.8rem);
-  text-align: center;
+  font-size: clamp(1.7rem, 4vw, 2.2rem);
   margin-bottom: 8px;
 }
 
 .win-compare__sub {
-  text-align: center;
-  color: var(--text-muted);
-  font-size: 0.88rem;
-  margin: 0 auto 20px;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  margin: 0 0 20px;
 }
 
 .win-compare__scroll {
@@ -275,12 +284,12 @@
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   border: 1px solid var(--border-color);
-  border-radius: var(--radius-xl);
-  background: var(--bg-card);
+  border-radius: var(--radius-sm);
+  background: var(--bg-primary);
 }
 
 .win-compare__scroll:focus-visible {
-  outline: 2px solid var(--accent-teal);
+  outline: 2px solid var(--brand);
   outline-offset: 2px;
 }
 
@@ -289,36 +298,38 @@
   min-width: 720px;
   border-collapse: separate;
   border-spacing: 0;
-  font-size: 0.85rem;
+  font-size: 0.9rem;
 }
 
 .win-compare__table th,
 .win-compare__table td {
-  padding: 12px 10px;
+  padding: 12px 12px;
   text-align: center;
   vertical-align: middle;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-faint);
 }
 
 .win-compare__table thead th {
   vertical-align: bottom;
+  border-bottom-color: var(--border-color);
   scroll-margin-top: calc(var(--nav-height) + 24px);
 }
 
 .win-compare__table tfoot th,
 .win-compare__table tfoot td {
+  border-top: 1px solid var(--border-color);
   border-bottom: 0;
 }
 
-/* Feature column stays put while the rungs scroll under it. */
+/* Feature column stays put while the plans scroll under it. */
 .win-compare__feat {
   position: sticky;
   left: 0;
   z-index: 1;
-  background: var(--bg-card);
+  background: var(--bg-primary);
   text-align: left !important;
   font-weight: 500;
-  color: var(--text-secondary);
+  color: var(--text-primary);
   width: 34%;
   min-width: 170px;
   box-shadow: 1px 0 0 var(--border-color);
@@ -327,34 +338,37 @@
 .win-compare__name {
   display: block;
   font-weight: 700;
-  color: var(--accent-teal);
-  font-size: 0.82rem;
+  color: var(--text-heading);
+  font-size: 0.9rem;
 }
 
 .win-compare__price {
   display: block;
-  font-family: var(--font-heading);
-  font-weight: 800;
+  font-family: var(--font-mono);
+  font-weight: 600;
   color: var(--text-heading);
   font-size: 1.05rem;
   margin-top: 2px;
 }
 
 .win-compare__table .is-featured {
-  background: rgba(var(--teal-rgb), 0.05);
+  background: var(--bg-card);
+}
+
+.win-compare__table thead .is-featured {
+  box-shadow: inset 0 3px 0 var(--brand);
 }
 
 .win-compare__table .check {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: rgba(var(--teal-rgb), 0.1);
-  color: var(--accent-teal);
-  font-size: 0.7rem;
+  display: inline-block;
+  width: auto;
+  height: auto;
+  background: none;
+  color: var(--text-heading);
+  font-size: 0.95rem;
 }
+
+.win-compare__table .is-featured .check { color: var(--brand); }
 
 .win-compare__no {
   color: var(--text-muted);
@@ -363,99 +377,135 @@
 .win-compare__soon {
   display: inline-block;
   margin-left: 6px;
-  font-size: 0.62rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--accent-gold);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--brand);
 }
 
 .win-compare__incl {
-  font-size: 0.78rem;
+  font-size: 0.85rem;
   color: var(--text-muted);
 }
 
 .win-compare__table tfoot .btn {
+  min-height: 44px;
   padding-left: 8px;
   padding-right: 8px;
-  font-size: 0.78rem;
+  font-size: 0.85rem;
   white-space: nowrap;
 }
 
+.win-compare__table tfoot .btn--outline { border-color: var(--text-secondary); }
+
 .win-compare__table .checkout-error {
-  font-size: 0.72rem;
+  font-size: 0.75rem;
 }
 
 .win-disclaimer {
-  max-width: 640px;
-  margin: 48px auto 0;
-  text-align: center;
+  max-width: 1180px;
+  margin: 40px auto 0;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-color);
 }
 
 .win-disclaimer p {
   color: var(--text-muted);
   font-size: 0.9rem;
-  line-height: 1.8;
+  line-height: 1.7;
 }
 
-.win-disclaimer strong { color: var(--text-secondary); }
-.win-disclaimer a { color: var(--accent-teal); }
+.win-disclaimer strong { color: var(--text-primary); }
+.win-disclaimer a { color: var(--brand); }
 
-/* FAQ */
+/* FAQ: a ruled list, not a stack of cards. */
 .win-faq { padding-top: 0; }
 
 .win-faq__title {
-  text-align: center;
-  font-size: clamp(1.4rem, 4vw, 1.8rem);
-  margin-bottom: 24px;
+  max-width: 820px;
+  margin: 0 auto 16px;
+  font-size: clamp(1.7rem, 4vw, 2.2rem);
 }
 
 .win-faq__list {
-  max-width: 760px;
+  max-width: 820px;
   margin: 0 auto;
   display: grid;
-  gap: 10px;
+  border-top: 1px solid var(--border-color);
 }
 
 .win-faq__item {
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
-  padding: 0 18px;
+  background: transparent;
+  border-bottom: 1px solid var(--border-color);
+  padding: 0;
 }
-
-.win-faq__item[open] { border-color: var(--border-glow); }
 
 .win-faq__item summary {
   cursor: pointer;
   list-style: none;
+  min-height: 44px;
   padding: 16px 0;
-  font-weight: 600;
+  font-weight: 650;
+  font-size: 1.02rem;
   color: var(--text-heading);
   display: flex;
   justify-content: space-between;
+  align-items: baseline;
   gap: 12px;
+}
+
+.win-faq__item summary:hover { color: var(--brand); }
+
+.win-faq__item summary:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
 }
 
 .win-faq__item summary::-webkit-details-marker { display: none; }
 
 .win-faq__item summary::after {
   content: '+';
-  color: var(--accent-teal);
-  font-weight: 700;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  font-weight: 600;
   flex-shrink: 0;
 }
 
-.win-faq__item[open] summary::after { content: '\2212'; }
+.win-faq__item[open] summary::after { content: '\2212'; color: var(--brand); }
 
 .win-faq__a {
   padding: 0 0 18px;
-  color: var(--text-secondary);
-  font-size: 0.92rem;
-  line-height: 1.75;
+  max-width: 680px;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  line-height: 1.7;
 }
 
-.win-faq__a a { color: var(--accent-teal); }
+.win-faq__a a { color: var(--brand); }
+
+/* Closing CTA: a flat ruled band, left-aligned. */
+.win-cta .cta-box {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 36px 24px;
+  text-align: left;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+  box-shadow: inset 0 3px 0 var(--brand);
+}
+
+.win-cta .cta-box__text {
+  margin: 0 0 24px;
+  max-width: 600px;
+  color: var(--text-primary);
+}
+
+.win-cta .cta-box__actions { justify-content: flex-start; }
+.win-cta .btn--lg { min-height: 48px; padding: 14px 28px; }
+
+@media (min-width: 720px) {
+  .win-cta .cta-box { padding: 44px 40px; }
+}
 
 /* ---------- /portfolio/performance ---------- */
 .perf-proof { padding: 0 0 8px; }
@@ -526,7 +576,7 @@
   overflow-wrap: anywhere;
 }
 
-.book-card__value--up { color: var(--accent-teal); }
+.book-card__value--up { color: var(--up); }
 .book-card__value--even { color: var(--accent-gold); }
 .book-card__value--down { color: var(--accent-red); }
 
@@ -566,7 +616,7 @@
   font-variant-numeric: tabular-nums;
 }
 
-.book-card__sport--up { border-left-color: var(--accent-teal); }
+.book-card__sport--up { border-left-color: var(--up); }
 .book-card__sport--even { border-left-color: var(--accent-gold); }
 .book-card__sport--down { border-left-color: var(--accent-red); }
 
@@ -645,7 +695,7 @@
   text-transform: uppercase;
 }
 
-.ledger__result--win { background: rgba(var(--teal-rgb), 0.15); color: var(--accent-teal); }
+.ledger__result--win { background: rgba(var(--up-rgb), 0.15); color: var(--up); }
 .ledger__result--loss { background: rgba(var(--red-rgb), 0.15); color: var(--accent-red); }
 .ledger__result--push { background: rgba(var(--gold-rgb), 0.15); color: var(--accent-gold); }
 .ledger__result--pending { background: rgba(255, 255, 255, 0.05); color: var(--text-muted); }

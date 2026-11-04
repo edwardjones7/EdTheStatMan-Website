@@ -5,7 +5,6 @@ import { createClient } from '@/lib/supabase/server'
 import WinPlans from '@/components/WinPlans'
 import CheckoutAutoStart from '@/components/CheckoutAutoStart'
 import ProofStrip from '@/components/ProofStrip'
-import { IconArrowRight } from '@/components/Icons'
 import {
   OFFER_META_DESCRIPTION, OFFER_PLANS, TRIAL_DAYS, planByKey,
   type BillingPeriod, type OfferTierKey,
@@ -159,7 +158,7 @@ export default async function Pricing({
           right under it, so the header just says what is for sale. */}
       <header className="page-header win-header">
         <div className="container">
-          <div className="reveal" style={{ textAlign: 'center' }}>
+          <div className="reveal win-header__inner">
             <span className="section-label">Membership</span>
             <h1 className="page-header__title">The research, the Vault, <span className="text-gradient">the picks</span></h1>
             <p className="page-header__subtitle">
@@ -198,7 +197,7 @@ export default async function Pricing({
             <div className="win-notice win-notice--active">
               ✓ {TIER_SHORT_LABEL[userTier ?? 'retail']} access active
               {expiresAt ? ` until ${expiresAt.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}` : ''}.{' '}
-              <Link href="/account">View account →</Link>
+              <Link href="/account">View account</Link>
             </div>
           )}
 
@@ -247,7 +246,7 @@ export default async function Pricing({
       {/* The shared CTASection falls back to X / Instagram / Discord for anyone
           it does not think is buying, which ended the offer page by sending
           people off the site. This page ends on the plans. */}
-      <section className="cta-section">
+      <section className="cta-section win-cta">
         <div className="container">
           <div className="cta-box">
             <h2 className="cta-box__title">
@@ -260,7 +259,7 @@ export default async function Pricing({
             </p>
             <div className="cta-box__actions">
               <a href="#plans" className="btn btn--primary btn--lg">
-                Choose a Plan <IconArrowRight size={16} />
+                Choose a Plan
               </a>
               {isPaid && (
                 <Link href="/account" className="btn btn--secondary btn--lg">Your Account</Link>

@@ -2,7 +2,6 @@
 
 import { useState, type ReactNode } from 'react'
 import type { AllSiteContent } from '@/lib/site-content'
-import Hero from './Hero'
 import Features from './Features'
 import SportsBand from './SportsBand'
 import CTASection from './CTASection'
@@ -16,10 +15,17 @@ interface Props {
    * gating into the browser bundle.
    */
   brief?: ReactNode
+  /**
+   * The hero and the record strip under it (HomeHero + HomeRecord), rendered
+   * on the server for the same reason as the brief. Neither reads
+   * site_content: the hero's words and the board are fixed and live, so the
+   * old editable hero copy and hand-typed stat bar are no longer shown.
+   */
+  hero?: ReactNode
   content: AllSiteContent
 }
 
-export default function HomeEditor({ content, brief }: Props) {
+export default function HomeEditor({ content, brief, hero }: Props) {
   const [editMode, setEditMode] = useState(false)
   const [draft, setDraft] = useState<AllSiteContent>(content)
   const [dirty, setDirty] = useState(false)
@@ -82,7 +88,7 @@ export default function HomeEditor({ content, brief }: Props) {
   return (
     <>
       {/* The ticker is rendered globally by the root layout (editable there). */}
-      <Hero            content={draft.hero}             isLoggedIn={true} {...ep('hero')} />
+      {hero}
       {brief}
       <Features        content={draft.features}          {...ep('features')} />
       <SportsBand />

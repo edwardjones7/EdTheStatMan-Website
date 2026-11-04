@@ -1,0 +1,278 @@
+/* The rate sheet (brand refresh, Nov 2026).
+ *
+ * The plans as one sheet rather than three identical cards: the Research Desk
+ * is the lead row (first, wider, card surface, amber top rule), the Vault and
+ * the Portfolio are columns of the same sheet split by hairlines. Rendered by
+ * RateSheet in components/PricingCards.tsx on /win and on the Desk and Vault
+ * paywalls. Global once imported, so every class is namespaced rate-*.
+ *
+ * Mobile first: rows stack below 900px, so the page never scrolls sideways.
+ */
+
+.rate-wrap {
+  max-width: 1180px;
+  margin: 0 auto;
+  min-width: 0;
+  text-align: left;
+}
+
+/* ---------- Bar: note left, period switch right ---------- */
+.rate-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 24px;
+  margin-bottom: 20px;
+}
+
+.rate-bar__note {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+}
+
+.rate-toggle {
+  display: inline-flex;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background: transparent;
+}
+
+.rate-toggle__opt {
+  min-height: 44px;
+  padding: 10px 20px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color var(--transition-fast), color var(--transition-fast);
+}
+
+.rate-toggle__opt + .rate-toggle__opt { border-left: 1px solid var(--border-color); }
+.rate-toggle__opt:hover { color: var(--text-heading); background: var(--bg-card); }
+
+.rate-toggle__opt.is-active,
+.rate-toggle__opt.is-active:hover {
+  background: var(--text-heading);
+  color: var(--bg-primary);
+  font-weight: 650;
+}
+
+.rate-toggle__opt:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+/* ---------- The sheet ---------- */
+.rate-sheet {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background: var(--bg-primary);
+}
+
+.rate-sheet__row {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+  padding: 26px 20px;
+  scroll-margin-top: calc(var(--nav-height) + 24px);
+}
+
+.rate-sheet__row + .rate-sheet__row { border-top: 1px solid var(--border-color); }
+
+.rate-sheet__row--lead {
+  background: var(--bg-card);
+  box-shadow: inset 0 3px 0 var(--brand);
+  padding-top: 30px;
+}
+
+.rate-sheet__head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 4px 16px;
+}
+
+.rate-sheet__name {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 700;
+  font-stretch: 85%;
+  font-variation-settings: 'wdth' 85;
+  line-height: 1.15;
+  color: var(--text-heading);
+}
+
+.rate-sheet__row--lead .rate-sheet__name {
+  font-size: 1.6rem;
+  font-weight: 750;
+}
+
+.rate-sheet__tag {
+  font-size: 0.875rem;
+  color: var(--brand);
+}
+
+.rate-sheet__price {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+}
+
+.rate-sheet__amount {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 2.25rem;
+  line-height: 1;
+  color: var(--text-heading);
+  font-variant-numeric: tabular-nums;
+}
+
+.rate-sheet__row--lead .rate-sheet__amount { font-size: 2.75rem; }
+
+.rate-sheet__term {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+}
+
+.rate-sheet__save {
+  margin: -4px 0 0;
+  font-size: 0.95rem;
+  color: var(--text-heading);
+  font-weight: 600;
+}
+
+.rate-sheet__save--quiet { color: var(--text-secondary); }
+
+.rate-sheet__desc {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.rate-sheet__features {
+  list-style: none;
+  margin: 0;
+  padding: 14px 0 0;
+  border-top: 1px solid var(--border-faint);
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  color: var(--text-primary);
+}
+
+.rate-sheet__features li {
+  position: relative;
+  padding-left: 16px;
+}
+
+/* A short hairline tick, not a checkmark icon. */
+.rate-sheet__features li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.72em;
+  width: 7px;
+  height: 1px;
+  background: var(--text-muted);
+}
+
+.rate-sheet__row--lead .rate-sheet__features li::before { background: var(--brand); }
+
+.rate-sheet__actions {
+  margin-top: auto;
+  padding-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.rate-sheet__actions .btn {
+  min-height: 48px;
+  font-size: 1rem;
+  white-space: normal;
+  text-align: center;
+}
+
+.rate-sheet__actions .btn--outline {
+  border: 1px solid var(--text-secondary);
+  color: var(--text-heading);
+}
+
+.rate-sheet__actions .btn--outline:hover {
+  border-color: var(--text-heading);
+  background: var(--bg-card-hover);
+}
+
+.rate-sheet__actions .btn--secondary { border-color: var(--border-color); }
+.rate-sheet__actions .btn[disabled] { opacity: 0.7; cursor: default; }
+
+.rate-sheet__actions .trial-cta { margin-top: 0; }
+
+.rate-sheet__actions .trial-cta__fine,
+.rate-sheet__note {
+  margin: 6px 0 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.rate-sheet__actions .checkout-error {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--down);
+}
+
+@media (min-width: 900px) {
+  .rate-sheet { grid-template-columns: var(--rs-cols, 1.3fr 1fr 1fr); }
+  .rate-sheet__row { padding: 32px 30px; }
+  .rate-sheet__row--lead { padding-top: 35px; }
+  .rate-sheet__row + .rate-sheet__row { border-top: 0; border-left: 1px solid var(--border-color); }
+  .rate-sheet__amount { font-size: 2.5rem; }
+  .rate-sheet__row--lead .rate-sheet__amount { font-size: 3.25rem; }
+}
+
+/* ---------- Under the sheet ---------- */
+.rate-terms {
+  margin: 16px 0 0;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+/* Nothing left to sell: a single plain line in the sheet's frame. */
+.rate-topped {
+  max-width: 640px;
+  padding: 28px 24px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  box-shadow: inset 0 3px 0 var(--brand);
+}
+
+.rate-topped__name {
+  margin: 0;
+  font-weight: 700;
+  font-size: 1.2rem;
+  color: var(--text-heading);
+}
+
+.rate-topped p:not(.rate-topped__name) {
+  margin: 8px 0 20px;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+.rate-topped .btn { min-height: 44px; }

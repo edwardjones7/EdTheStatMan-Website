@@ -63,9 +63,10 @@ function callbackUrl(next: string, via: 'magic' | 'password'): string {
  * is the point: one field, one button, and the click both confirms the address
  * and signs them in, so there is no separate verify-before-use step.
  *
- * Called from /signup, /login and /signup/verify (its resend), all three of
- * which are in BOTID_PROTECTED because this sends mail to whatever address is
- * typed -- exactly what the September bot was abusing /signup for.
+ * Called from /signup, /login, /signup/verify (its resend) and the route
+ * /api/free-picks, all of which are in BOTID_PROTECTED because this sends mail
+ * to whatever address is typed -- exactly what the September bot was abusing
+ * /signup for.
  *
  * Returns a result instead of redirecting so the form can switch to its
  * "check your inbox" state in place and offer a resend.

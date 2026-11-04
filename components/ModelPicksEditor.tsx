@@ -97,9 +97,9 @@ export default function ModelPicksEditor({ rows, userTier, headerContent }: Prop
                 width: dirty ? '40px' : '54px',
                 height: dirty ? '40px' : '54px',
                 fontSize: dirty ? '1rem' : '1.3rem',
-                background: dirty ? 'var(--bg-secondary)' : 'rgba(45,212,191,0.15)',
+                background: dirty ? 'var(--bg-secondary)' : 'rgba(var(--brand-rgb), 0.15)',
                 color: dirty ? 'var(--text-muted)' : 'var(--accent-teal)',
-                border: dirty ? '2px solid var(--border)' : '2px solid rgba(45,212,191,0.35)',
+                border: dirty ? '2px solid var(--border)' : '2px solid rgba(var(--brand-rgb), 0.35)',
               }}
             >
               ✕
@@ -117,7 +117,7 @@ export default function ModelPicksEditor({ rows, userTier, headerContent }: Prop
 
         {error && (
           <span style={{
-            background: 'rgba(239,68,68,0.92)',
+            background: 'rgba(var(--down-rgb), 0.92)',
             color: '#fff',
             fontSize: '0.72rem',
             padding: '5px 9px',
@@ -132,8 +132,8 @@ export default function ModelPicksEditor({ rows, userTier, headerContent }: Prop
 
         {editMode && !dirty && (
           <span style={{
-            background: 'rgba(45,212,191,0.12)',
-            border: '1px solid rgba(45,212,191,0.25)',
+            background: 'rgba(var(--brand-rgb), 0.12)',
+            border: '1px solid rgba(var(--brand-rgb), 0.25)',
             color: 'var(--accent-teal)',
             fontSize: '0.68rem',
             fontWeight: 600,

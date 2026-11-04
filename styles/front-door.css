@@ -216,7 +216,7 @@
 /* ---------- SignupPrompt ---------- */
 
 .signup-prompt {
-  background: linear-gradient(135deg, rgba(var(--teal-rgb), 0.08), rgba(var(--sky-rgb), 0.04));
+  background: rgba(var(--brand-rgb), 0.06);
   border: 1px solid rgba(var(--teal-rgb), 0.22);
   border-radius: 14px;
 }

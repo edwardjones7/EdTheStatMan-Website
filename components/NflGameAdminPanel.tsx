@@ -106,7 +106,7 @@ export default function NflGameAdminPanel({ game, sportLabel, allSystems, allTre
   return (
     <div className="admin-inline-form" style={{ margin: '16px 0 28px' }}>
       <div className="admin-inline-form__title">Edit Game — Breakdown, Brief & Links</div>
-      {message && <div style={{ marginBottom: '10px', fontSize: '0.85rem', color: message === 'Saved.' ? 'var(--accent-teal)' : '#ef4444' }}>{message}</div>}
+      {message && <div style={{ marginBottom: '10px', fontSize: '0.85rem', color: message === 'Saved.' ? 'var(--accent-teal)' : 'var(--down)' }}>{message}</div>}
 
       <div className="admin-form-field admin-form-field--wide" style={{ marginBottom: '14px' }}>
         <label className="admin-form-label">Brief (public teaser / SEO description)</label>
