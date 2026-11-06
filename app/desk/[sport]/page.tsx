@@ -248,6 +248,10 @@ export default async function DeskSport({
     if (row.is_active === false && row.show_on_results !== true) continue
     betCounts[row.game_id] = (betCounts[row.game_id] ?? 0) + 1
   }
+  // Plus the bets typed into each game's write-up, which have no todays_bets row.
+  for (const g of boardGames) {
+    if (g.writeup_bets > 0) betCounts[g.id] = (betCounts[g.id] ?? 0) + g.writeup_bets
+  }
 
   const [sysLinks, trendLinks] = linkRows as any[]
   const linkedCounts: Record<string, { systems: number; trends: number }> = {}

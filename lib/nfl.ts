@@ -75,12 +75,36 @@ export interface PublicNflGame extends GameOdds {
   brief: string
   has_writeup: boolean
   writeup_words: number
+  /** Bets written into the write-up. A count only, like writeup_words. */
+  writeup_bets: number
   is_published: boolean
 }
 
 export function writeupWordCount(html: string): number {
   const text = html.replace(/<[^>]*>/g, ' ').replace(/&[a-z#0-9]+;/gi, ' ').trim()
   return text ? text.split(/\s+/).length : 0
+}
+
+// "OVER Zay Flowers 48.5 receiving yards", "Take the under 39.5", "Ravens +9.5",
+// "Ravens ML".
+const BET_LINE = /\b(?:over|under)\b.*\d|\d.*\b(?:over|under)\b|(?:^|\s)[+-]\d|\b(?:ml|moneyline)\b/i
+const LEAN = /\blean(?:s|ing)?\b/i
+// A bet is one short line. Old prose write-ups are full of numbers, and this is
+// what keeps a paragraph of analysis from reading as a bet.
+const BET_LINE_MAX = 100
+
+/**
+ * How many bets are written into a write-up, one per line (Ed, Nov 2026: he
+ * types props straight into the game's write-up rather than posting them as
+ * picks, so todays_bets has no row for them). A lean is an opinion, not a bet,
+ * and does not count.
+ */
+export function writeupBetCount(html: string): number {
+  return html
+    .split(/<\/(?:p|li|h[1-6])>|<br\s*\/?>/i)
+    .map(line => line.replace(/<[^>]*>/g, ' ').replace(/&[a-z#0-9]+;/gi, ' ').trim())
+    .filter(line => line.length <= BET_LINE_MAX && BET_LINE.test(line) && !LEAN.test(line))
+    .length
 }
 
 /** Odds/context fields, copied one at a time like everything else here. */
@@ -127,6 +151,7 @@ export function toPublicGame(row: NflGame): PublicNflGame {
     brief: row.brief,
     has_writeup: writeupWordCount(row.writeup_html) > 0,
     writeup_words: writeupWordCount(row.writeup_html),
+    writeup_bets: writeupBetCount(row.writeup_html),
     is_published: row.is_published,
   }
 }
