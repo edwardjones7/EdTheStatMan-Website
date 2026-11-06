@@ -259,12 +259,6 @@ export default async function DeskSport({
   for (const row of sysLinks?.data ?? []) if (linkedCounts[row.game_id]) linkedCounts[row.game_id].systems++
   for (const row of trendLinks?.data ?? []) if (linkedCounts[row.game_id]) linkedCounts[row.game_id].trends++
 
-  // The Bets panel at the top of the board replaced the weekly Desk Note
-  // (Ed, Nov 2026): the picks attached to the games are what he is producing,
-  // so the headline is how many there are across the games on screen.
-  const totalBets = Object.values(betCounts).reduce((n, c) => n + c, 0)
-  const gamesWithBets = Object.keys(betCounts).length
-
   // Is the week on screen already played out? If so the Desk rung's in-context
   // window on it has shut, and the cards must say so rather than advertise a
   // count the reader cannot open. Free here: visibleWeekRows is already loaded
@@ -332,26 +326,6 @@ export default async function DeskSport({
 
           {isAdmin && (
             <NflAdminBar sport={sport} season={season} seasonLabel={seasonLabel} seasonType={active?.season_type} week={active?.week} />
-          )}
-
-          {active && boardGames.length > 0 && (
-            <div className={`desk-note${hasDesk ? '' : ' desk-note--locked'}`}>
-              <div className="desk-note__label">
-                Bets — {weekLabel(active.season_type, active.week, sport, season)}
-                {activeDay && ` · ${dayOptions.find(d => d.date === activeDay)?.label ?? activeDay}`}
-              </div>
-              <h2 className="desk-note__title">
-                {totalBets === 0
-                  ? 'No bets placed on these games yet'
-                  : `${totalBets} ${totalBets === 1 ? 'bet' : 'bets'} placed across ${gamesWithBets} ${gamesWithBets === 1 ? 'game' : 'games'}`}
-              </h2>
-              {totalBets > 0 && !hasDesk && (
-                <p className="desk-note__gate">
-                  The bets on each game open with the Research Desk.{' '}
-                  <Link href="/win">Open the Desk →</Link>
-                </p>
-              )}
-            </div>
           )}
 
           {weeks.length === 0 ? (

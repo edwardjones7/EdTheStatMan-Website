@@ -291,9 +291,8 @@ export default function DeskWeekBoard({
     { value: bets, label: bets === 1 ? 'Bet' : 'Bets', accent: bets > 0 },
   ].filter((s, i) => i === 0 || s.value > 0)
 
-  // When nothing on the board carries research, one quiet line says so instead
-  // of the same "No research yet" tag on every card. When some games do, the
-  // per-card tag stays, because then the contrast is the information.
+  // When nothing on the board carries research, one quiet line says so. Cards
+  // with nothing attached carry no tag: an empty foot reads better than "none".
   const anyResearch = games.some(g => (betCounts[g.id] ?? 0) > 0 || (linkedCounts[g.id]?.systems ?? 0) + (linkedCounts[g.id]?.trends ?? 0) > 0)
 
   return (
@@ -620,9 +619,6 @@ export default function DeskWeekBoard({
                         <span className={`desk-tag ${hasDesk || isAdmin ? 'desk-tag--open' : 'desk-tag--locked'}`}>
                           {!(hasDesk || isAdmin) && <IconLock size={11} />} {betsHere} {betsHere === 1 ? 'Bet' : 'Bets'}
                         </span>
-                      )}
-                      {anyResearch && attached === 0 && betsHere === 0 && (
-                        <span className="desk-tag desk-tag--empty">No research yet</span>
                       )}
                     </span>
                     <span className="desk-card__go" aria-hidden="true">
