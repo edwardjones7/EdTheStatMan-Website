@@ -1,44 +1,50 @@
 /* ============================================
-   EdTheStatMan.com - v2 Data Terminal Theme
-   Deep Navy-Teal with Brand Gradient Accents
+   EdTheStatMan.com - Clean Desk Theme (light, Nov 2026)
+   Light pages, navy bands, one brand blue
    ============================================ */
 
 /* ---------- CSS Custom Properties ---------- */
 :root {
-  /* Colors: "trading terminal" (brand refresh, Nov 2026).
-     Ink-and-slate ground, hairline rules, no gradients or glows. Amber is the
-     only brand colour. Green and red mean results and line moves, nothing
-     else, and always travel with a + or a minus sign. */
-  --bg-primary: #0F151B;
-  --bg-secondary: #121A21;
-  --bg-card: #18212A;
-  --bg-card-hover: #1E2933;
-  --bg-glass: rgba(15, 21, 27, 0.94);
-  --bg-ink: #0A0F14;
+  /* Colors: "front page" (Nov 2026). Dark navy throughout, one brand blue,
+     dense modules like a sports front page. Green and red mean results and
+     line moves, nothing else, and always travel with a + or a minus sign. */
+  --bg-primary: #0A101B;
+  --bg-secondary: #0D1522;
+  --bg-card: #111A28;
+  --bg-card-hover: #162236;
+  --bg-glass: rgba(10, 16, 27, 0.94);
+  --bg-ink: #060A12;
 
-  --brand: #F0B44C;
-  --up: #46C28E;
-  --down: #EF6A5F;
-  --brand-rgb: 240, 180, 76;
-  --up-rgb: 70, 194, 142;
-  --down-rgb: 239, 106, 95;
+  --brand: #2F7BFF;
+  --brand-hover: #4A8DFF;
+  --link-hover: #9CC2FF;
+  /* Text and icons that sit ON a brand fill. */
+  --brand-ink: #FFFFFF;
+  /* The brand as TEXT (links, accent words): lighter, to read on navy. */
+  --brand-text: #6AA5FF;
+  --brand-2: #38BDF8;
+  --up: #35C98A;
+  --down: #FF6B6B;
+  --brand-rgb: 47, 123, 255;
+  --up-rgb: 53, 201, 138;
+  --down-rgb: 255, 107, 107;
+
+  /* Tint for hairline fills and hovers. */
+  --overlay-rgb: 255, 255, 255;
 
   /* Legacy accent names, kept so the 600-odd existing references follow the
-     new palette. "teal" was the old brand colour, so it maps to amber; wins
-     that used it are pointed at --up explicitly further down. "sky" and
-     "lime" were secondary brand hues and fold into the neutral and up. */
-  --accent-teal: var(--brand);
+     palette. They are almost all text, so they take the text blue. */
+  --accent-teal: #6AA5FF;
   --accent-lime: var(--up);
-  --accent-sky: #B8C4CE;
-  --accent-gold: var(--brand);
+  --accent-sky: #B3C0D1;
+  --accent-gold: #6AA5FF;
   --accent-red: var(--down);
-  --accent-orange: var(--brand);
+  --accent-orange: #6AA5FF;
 
   /* RGB triplets for rgba() composition */
-  --teal-rgb: var(--brand-rgb);
+  --teal-rgb: 106, 165, 255;
 
-  /* Sport tints, left rules and sport badges only. Desaturated so they sit
-     under amber rather than compete with it. */
+  /* Sport tints, left rules and sport badges only. */
   --sport-nfl: 143, 168, 191;
   --sport-nflpre: 163, 184, 204;
   --sport-nba: 191, 166, 130;
@@ -47,40 +53,41 @@
   --sport-cfl: 191, 140, 150;
   --sport-cbb: 130, 186, 168;
   --lime-rgb: var(--up-rgb);
-  --sky-rgb: 184, 196, 206;
-  --gold-rgb: var(--brand-rgb);
+  --sky-rgb: 179, 192, 209;
+  --gold-rgb: 106, 165, 255;
   --red-rgb: var(--down-rgb);
 
-  /* Flat on purpose. These stay as gradients only so every existing
-     `background: var(--gradient-*)` and background-clip:text still parses. */
-  --gradient-primary: linear-gradient(var(--brand), var(--brand));
-  --gradient-warm: linear-gradient(var(--brand), var(--brand));
+  /* One gradient, the logo's: blue into sky. Accent words and headline
+     figures only, never surfaces. */
+  --gradient-primary: linear-gradient(90deg, #6AA5FF, #38BDF8);
+  --gradient-warm: var(--gradient-primary);
   --gradient-green: linear-gradient(var(--up), var(--up));
-  --gradient-hero: linear-gradient(180deg, rgba(15, 21, 27, 0) 0%, #0F151B 100%);
+  --gradient-hero: linear-gradient(180deg, rgba(10, 16, 27, 0) 0%, #0A101B 100%);
 
-  --text-primary: #C9D2D9;
-  --text-secondary: #A3B0BB;
+  --text-primary: #D5DEEA;
+  --text-secondary: #B3C0D1;
   /* 4.6:1 or better on --bg-card-hover. */
-  --text-muted: #8796A3;
-  --text-heading: #E9EDF0;
+  --text-muted: #8C9CB1;
+  --text-heading: #F2F6FB;
 
-  --border-color: #2B3743;
-  --border-faint: #1C2630;
-  /* Referenced 43 times but never declared before the refresh, so every one
-     of those borders drew nothing. */
+  --border-color: #1F2B3D;
+  --border-faint: #172234;
+  --border-strong: #2C3D56;
   --border: var(--border-color);
-  --border-glow: rgba(var(--brand-rgb), 0.35);
+  --border-glow: rgba(106, 165, 255, 0.35);
 
   --texture-candles: none;
 
   /* Typography */
   /* next/font registers the faces under hashed family names and exposes them
-     as --font-archivo / --font-jetbrains (app/layout.tsx). Name the variables,
+     as --font-barlow / --font-barlow-cond (app/layout.tsx). Name the variables,
      never the retail family names: those match nothing and fall through to
      the system font. */
-  --font-heading: var(--font-archivo), system-ui, sans-serif;
-  --font-body: var(--font-archivo), system-ui, sans-serif;
-  --font-mono: var(--font-jetbrains), 'JetBrains Mono', ui-monospace, monospace;
+  --font-heading: var(--font-barlow-cond), 'Arial Narrow', system-ui, sans-serif;
+  --font-body: var(--font-barlow), system-ui, sans-serif;
+  /* Lines, odds and records: the body face with tabular figures, not a code
+     font. Every number on the site lines up without looking like a terminal. */
+  --font-mono: var(--font-barlow), system-ui, sans-serif;
 
   /* Spacing */
   --nav-height: 72px;
@@ -147,7 +154,7 @@ a {
 }
 
 a:hover {
-  color: #F6C977;
+  color: var(--link-hover);
 }
 
 img {
@@ -390,7 +397,7 @@ input, textarea, select {
 
 .nav__item:hover,
 .nav__item.is-active {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(var(--overlay-rgb), 0.05);
 }
 
 .nav__item.is-active::after {
@@ -495,7 +502,7 @@ input, textarea, select {
 
 .nav__menu-link:hover {
   color: var(--text-heading);
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(var(--overlay-rgb), 0.06);
 }
 
 .nav__menu-link.active {
@@ -753,7 +760,7 @@ html[data-navigating] .nav__progress-fill {
 
 .mobile-menu__link:hover {
   color: var(--text-heading);
-  background: rgba(255,255,255,0.03);
+  background: rgba(var(--overlay-rgb), 0.03);
 }
 
 .mobile-menu__link.active {
@@ -858,7 +865,7 @@ html[data-navigating] .nav__progress-fill {
   content: '';
   position: absolute;
   inset: 0;
-  background: #0F151B;
+  background: #0B1F3A;
   mix-blend-mode: saturation;
   opacity: 1;
 }
@@ -869,8 +876,8 @@ html[data-navigating] .nav__progress-fill {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(85% 70% at 50% 45%, rgba(15, 21, 27, 0.9) 0%, rgba(15, 21, 27, 0.72) 55%, rgba(15, 21, 27, 0.55) 100%),
-    linear-gradient(180deg, rgba(15, 21, 27, 0.78) 0%, rgba(15, 21, 27, 0.45) 30%, rgba(15, 21, 27, 0.6) 70%, var(--bg-primary) 100%);
+    radial-gradient(85% 70% at 50% 45%, rgba(11, 31, 58, 0.9) 0%, rgba(11, 31, 58, 0.72) 55%, rgba(11, 31, 58, 0.55) 100%),
+    linear-gradient(180deg, rgba(11, 31, 58, 0.78) 0%, rgba(11, 31, 58, 0.45) 30%, rgba(11, 31, 58, 0.6) 70%, var(--bg-primary) 100%);
 }
 
 .hero__container {
@@ -921,7 +928,7 @@ html[data-navigating] .nav__progress-fill {
   line-height: 1.02;
   letter-spacing: -0.025em;
   margin-bottom: 22px;
-  text-shadow: 0 2px 30px rgba(15, 21, 27, 0.8);
+  text-shadow: 0 2px 30px rgba(11, 31, 58, 0.8);
   animation: fadeInUp 0.6s var(--ease-out-expo) 0.22s both;
 }
 
@@ -964,7 +971,7 @@ html[data-navigating] .nav__progress-fill {
   z-index: 1;
   margin-top: auto;
   border-top: 1px solid rgba(var(--teal-rgb), 0.18);
-  background: linear-gradient(180deg, rgba(15, 21, 27, 0.35) 0%, rgba(15, 21, 27, 0.85) 100%);
+  background: linear-gradient(180deg, rgba(11, 31, 58, 0.35) 0%, rgba(11, 31, 58, 0.85) 100%);
   backdrop-filter: blur(10px);
   animation: fadeInUp 0.6s var(--ease-out-expo) 0.58s both;
 }
@@ -1026,7 +1033,7 @@ html[data-navigating] .nav__progress-fill {
 }
 
 .btn--primary {
-  color: #04202b;
+  color: var(--brand-ink);
   background: var(--gradient-primary);
   font-weight: 700;
   box-shadow: none;
@@ -1036,19 +1043,19 @@ html[data-navigating] .nav__progress-fill {
   transform: translateY(-2px);
   filter: brightness(1.06);
   box-shadow: none;
-  color: #04202b;
+  color: var(--brand-ink);
 }
 
 /* Frosted button for use over photography */
 .btn--glass {
   color: var(--text-heading);
-  background: rgba(244, 250, 252, 0.08);
-  border: 1px solid rgba(244, 250, 252, 0.22);
+  background: rgba(var(--overlay-rgb), 0.08);
+  border: 1px solid rgba(var(--overlay-rgb), 0.22);
   backdrop-filter: blur(10px);
 }
 
 .btn--glass:hover {
-  background: rgba(244, 250, 252, 0.14);
+  background: rgba(var(--overlay-rgb), 0.14);
   border-color: rgba(var(--teal-rgb), 0.55);
   transform: translateY(-2px);
   color: var(--text-heading);
@@ -1056,13 +1063,13 @@ html[data-navigating] .nav__progress-fill {
 
 .btn--secondary {
   color: var(--text-primary);
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(var(--overlay-rgb), 0.06);
   border: 1px solid var(--border-color);
 }
 
 .btn--secondary:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.15);
+  background: rgba(var(--overlay-rgb), 0.1);
+  border-color: rgba(var(--overlay-rgb), 0.15);
   transform: translateY(-1px);
   color: var(--text-heading);
 }
@@ -1476,7 +1483,7 @@ html[data-navigating] .nav__progress-fill {
   align-items: center;
   justify-content: center;
   font-size: 1.4rem;
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(var(--overlay-rgb), 0.04);
   border: 1px solid var(--border-color);
 }
 
@@ -1750,7 +1757,7 @@ html[data-navigating] .nav__progress-fill {
 }
 
 .trends-table thead {
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(var(--overlay-rgb), 0.03);
 }
 
 .trends-table th {
@@ -1775,7 +1782,7 @@ html[data-navigating] .nav__progress-fill {
 }
 
 .trends-table tbody tr:hover {
-  background: rgba(255, 255, 255, 0.02);
+  background: rgba(var(--overlay-rgb), 0.02);
 }
 
 .trends-table tbody tr:last-child td {
@@ -1834,7 +1841,7 @@ html[data-navigating] .nav__progress-fill {
 }
 
 .sys-stats-chip:hover {
-  border-color: rgba(255,255,255,0.18);
+  border-color: rgba(var(--overlay-rgb), 0.18);
   box-shadow: 0 4px 16px rgba(0,0,0,0.2);
 }
 
@@ -2101,7 +2108,7 @@ html[data-navigating] .nav__progress-fill {
   flex-direction: column;
   justify-content: center;
   padding: 14px 18px;
-  border-left: 1px solid rgba(255,255,255,0.06);
+  border-left: 1px solid rgba(var(--overlay-rgb), 0.06);
   align-self: stretch;
 }
 
@@ -2146,7 +2153,7 @@ html[data-navigating] .nav__progress-fill {
   flex-direction: column;
   justify-content: center;
   padding: 14px 20px 14px 16px;
-  border-left: 1px solid rgba(255,255,255,0.06);
+  border-left: 1px solid rgba(var(--overlay-rgb), 0.06);
   align-self: stretch;
   gap: 8px;
 }
@@ -2166,7 +2173,7 @@ html[data-navigating] .nav__progress-fill {
 .record-strip {
   position: relative;
   height: 6px;
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(var(--overlay-rgb), 0.06);
   border-radius: 2px;
   overflow: visible;
   display: flex;
@@ -2185,13 +2192,13 @@ html[data-navigating] .nav__progress-fill {
   top: -2px;
   bottom: -2px;
   width: 1px;
-  background: rgba(244, 250, 252, 0.55);
+  background: rgba(var(--overlay-rgb), 0.55);
 }
 
 @media (max-width: 900px) {
   .sys-row-card__body { flex-wrap: wrap; }
-  .sys-row-card__field, .sys-row-card__pct-col { border-top: 1px solid rgba(255,255,255,0.06); border-left: none; }
-  .sys-row-card__sport-col { border-right: none; border-bottom: 1px solid rgba(255,255,255,0.06); width: 100%; justify-content: flex-start; padding: 10px 16px; }
+  .sys-row-card__field, .sys-row-card__pct-col { border-top: 1px solid rgba(var(--overlay-rgb), 0.06); border-left: none; }
+  .sys-row-card__sport-col { border-right: none; border-bottom: 1px solid rgba(var(--overlay-rgb), 0.06); width: 100%; justify-content: flex-start; padding: 10px 16px; }
   .sys-stats-chip { min-width: 88px; }
 }
 
@@ -2222,7 +2229,7 @@ html[data-navigating] .nav__progress-fill {
     flex: 1 1 100%;
     max-width: none;
     padding: 12px 0;
-    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    border-top: 1px solid rgba(var(--overlay-rgb), 0.06);
   }
 
   .sys-row-card__body .sys-row-card__field,
@@ -2233,7 +2240,7 @@ html[data-navigating] .nav__progress-fill {
     max-width: none;
     padding: 12px 0 2px;
     border-left: none;
-    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    border-top: 1px solid rgba(var(--overlay-rgb), 0.06);
   }
 
   .sys-row-card__body .sys-row-card__field:last-child { padding-right: 0; }
@@ -2250,7 +2257,7 @@ html[data-navigating] .nav__progress-fill {
 
 .sys-pagination__btn {
   padding: 8px 20px;
-  background: rgba(255,255,255,0.04);
+  background: rgba(var(--overlay-rgb), 0.04);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-sm);
   font-size: 0.85rem;
@@ -2261,8 +2268,8 @@ html[data-navigating] .nav__progress-fill {
 }
 
 .sys-pagination__btn:hover:not(:disabled) {
-  background: rgba(255,255,255,0.08);
-  border-color: rgba(255,255,255,0.14);
+  background: rgba(var(--overlay-rgb), 0.08);
+  border-color: rgba(var(--overlay-rgb), 0.14);
   color: var(--text-heading);
 }
 
@@ -2351,7 +2358,7 @@ html[data-navigating] .nav__progress-fill {
 }
 
 .sport-tab:hover {
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(var(--overlay-rgb), 0.04);
   color: var(--text-heading);
 }
 
@@ -2450,7 +2457,7 @@ html[data-navigating] .nav__progress-fill {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  background: rgba(15, 21, 27, 0.85);
+  background: rgba(11, 31, 58, 0.85);
   border: 1px solid rgba(var(--gold-rgb), 0.3);
   color: var(--accent-gold);
   font-size: 0.7rem;
@@ -2644,7 +2651,7 @@ html[data-navigating] .nav__progress-fill {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, transparent 55%, rgba(15, 21, 27, 0.35));
+  background: linear-gradient(180deg, transparent 55%, rgba(11, 31, 58, 0.35));
   pointer-events: none;
 }
 
@@ -2983,7 +2990,7 @@ html[data-navigating] .nav__progress-fill {
   height: 12px;
   border-radius: var(--radius-sm);
   overflow: hidden;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(var(--overlay-rgb), 0.05);
   gap: 2px;
 }
 .perf-ratio__seg {
@@ -3074,7 +3081,7 @@ html[data-navigating] .nav__progress-fill {
   position: relative;
   height: 8px;
   border-radius: var(--radius-sm);
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(var(--overlay-rgb), 0.06);
   overflow: hidden;
 }
 .perf-winbar__fill {
@@ -3090,7 +3097,7 @@ html[data-navigating] .nav__progress-fill {
   bottom: -2px;
   left: 52.38%;
   width: 2px;
-  background: rgba(255, 255, 255, 0.32);
+  background: rgba(255, 255, 255, 0.32); /* on a coloured bar: stays white */
   border-radius: 2px;
 }
 
@@ -3292,7 +3299,7 @@ html[data-navigating] .nav__progress-fill {
 
 .form-input {
   padding: 14px 18px;
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(var(--overlay-rgb), 0.04);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   color: var(--text-primary);
@@ -3340,7 +3347,7 @@ textarea.form-input {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(var(--overlay-rgb), 0.04);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   color: var(--text-secondary);
@@ -3661,7 +3668,7 @@ textarea.form-input {
   font-family: var(--font-body);
   font-size: 0.78rem;
   font-weight: 700;
-  color: #04202b;
+  color: var(--brand-ink);
   background: var(--gradient-primary);
   border-radius: var(--radius-sm);
   padding: 3px 8px;
@@ -3736,7 +3743,7 @@ textarea.form-input {
 .team-search__input {
   flex: 1;
   padding: 14px 20px;
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(var(--overlay-rgb), 0.04);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-sm);
   color: var(--text-primary);
@@ -3763,7 +3770,7 @@ textarea.form-input {
 .newsletter input {
   flex: 1;
   padding: 14px 18px;
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(var(--overlay-rgb), 0.04);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-sm);
   color: var(--text-primary);
@@ -3968,7 +3975,7 @@ textarea.form-input {
 
   .hero__scrim {
     background:
-      linear-gradient(180deg, rgba(15, 21, 27, 0.86) 0%, rgba(15, 21, 27, 0.9) 55%, var(--bg-primary) 100%);
+      linear-gradient(180deg, rgba(11, 31, 58, 0.86) 0%, rgba(11, 31, 58, 0.9) 55%, var(--bg-primary) 100%);
   }
 
   .footer__grid {
@@ -4088,12 +4095,12 @@ textarea.form-input {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(var(--overlay-rgb), 0.1);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(var(--overlay-rgb), 0.2);
 }
 
 /* ---------- Results Stats Grid ---------- */
@@ -4287,7 +4294,7 @@ textarea.form-input {
   gap: 10px;
   margin: 24px 0;
   padding: 20px;
-  background: rgba(255,255,255,0.03);
+  background: rgba(var(--overlay-rgb), 0.03);
   border: 1px solid var(--border-color);
   border-radius: 12px;
   text-align: left;
@@ -4946,7 +4953,7 @@ textarea.form-input {
 
 .admin-kpi-card__badge--green  { background: rgba(var(--up-rgb), 0.12); color: var(--up); }
 .admin-kpi-card__badge--red    { background: rgba(var(--red-rgb), 0.12); color: var(--accent-red); }
-.admin-kpi-card__badge--muted  { background: rgba(255,255,255,0.06); color: var(--text-muted); }
+.admin-kpi-card__badge--muted  { background: rgba(var(--overlay-rgb), 0.06); color: var(--text-muted); }
 
 .admin-kpi-card__value {
   font-family: var(--font-heading);
@@ -4964,7 +4971,7 @@ textarea.form-input {
 
 .admin-kpi-card__bar {
   height: 3px;
-  background: rgba(255,255,255,0.06);
+  background: rgba(var(--overlay-rgb), 0.06);
   border-radius: 2px;
   overflow: hidden;
   margin-top: auto;
@@ -5052,7 +5059,7 @@ textarea.form-input {
 .admin-breakdown-row__bar-track {
   flex: 1;
   height: 5px;
-  background: rgba(255,255,255,0.06);
+  background: rgba(var(--overlay-rgb), 0.06);
   border-radius: 3px;
   overflow: hidden;
 }
@@ -5125,7 +5132,7 @@ textarea.form-input {
   font-weight: 600;
   padding: 1px 6px;
   border-radius: 10px;
-  background: rgba(255,255,255,0.07);
+  background: rgba(var(--overlay-rgb), 0.07);
   color: var(--text-muted);
 }
 
@@ -5150,7 +5157,7 @@ textarea.form-input {
   flex: 1;
   min-width: 200px;
   padding: 9px 14px;
-  background: rgba(255,255,255,0.04);
+  background: rgba(var(--overlay-rgb), 0.04);
   border: 1px solid var(--border-color);
   border-radius: 8px;
   color: var(--text-primary);
@@ -5234,7 +5241,7 @@ textarea.form-input {
   transition: background 0.1s;
 }
 
-.admin-table tbody tr:hover { background: rgba(255,255,255,0.02); }
+.admin-table tbody tr:hover { background: rgba(var(--overlay-rgb), 0.02); }
 
 .admin-table__empty {
   text-align: center;
@@ -5303,7 +5310,7 @@ textarea.form-input {
 .admin-badge--blue   { background: rgba(var(--sky-rgb), 0.12);  color: var(--accent-sky); }
 .admin-badge--purple { background: rgba(var(--gold-rgb), 0.12); color: var(--accent-gold); }
 .admin-badge--gold   { background: rgba(var(--gold-rgb), 0.12);  color: var(--accent-gold); }
-.admin-badge--muted  { background: rgba(255,255,255,0.06);    color: var(--text-muted); }
+.admin-badge--muted  { background: rgba(var(--overlay-rgb), 0.06);    color: var(--text-muted); }
 
 /* Tag */
 .admin-tag {
@@ -5312,7 +5319,7 @@ textarea.form-input {
   border-radius: 4px;
   font-size: 0.72rem;
   font-weight: 500;
-  background: rgba(255,255,255,0.06);
+  background: rgba(var(--overlay-rgb), 0.06);
   color: var(--text-secondary);
 }
 
@@ -5553,7 +5560,7 @@ textarea.form-input {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(10, 10, 11, 0.65);
+  background: rgba(11, 31, 58, 0.6);
   backdrop-filter: blur(2px);
   border-radius: var(--radius-lg);
   z-index: 10;
@@ -6215,7 +6222,7 @@ textarea.form-input {
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(180deg, transparent 25%, rgba(15, 21, 27, 0.88) 100%);
+    linear-gradient(180deg, transparent 25%, rgba(11, 31, 58, 0.88) 100%);
   transition: opacity var(--transition-medium);
 }
 
@@ -6283,7 +6290,7 @@ textarea.form-input {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(15, 21, 27, 0.88);
+  background: rgba(11, 31, 58, 0.88);
   backdrop-filter: blur(6px);
 }
 
@@ -6320,14 +6327,14 @@ textarea.form-input {
 /* Icon-only X button, used when the offer CTA takes the primary slot */
 .nav__cta--icon {
   padding: 9px;
-  background: rgba(244, 250, 252, 0.06);
+  background: rgba(var(--overlay-rgb), 0.06);
   border: 1px solid var(--border-color);
   color: var(--text-secondary);
   box-shadow: none;
 }
 
 .nav__cta--icon:hover {
-  background: rgba(244, 250, 252, 0.12);
+  background: rgba(var(--overlay-rgb), 0.12);
   border-color: rgba(var(--teal-rgb), 0.4);
   color: var(--text-heading);
   transform: none;
@@ -6377,9 +6384,9 @@ textarea.form-input {
   border-radius: 3px;
   background: linear-gradient(
     90deg,
-    rgba(170, 186, 198, 0.16) 0%,
-    rgba(170, 186, 198, 0.07) 50%,
-    rgba(170, 186, 198, 0.16) 100%
+    rgba(var(--overlay-rgb), 0.16) 0%,
+    rgba(var(--overlay-rgb), 0.07) 50%,
+    rgba(var(--overlay-rgb), 0.16) 100%
   );
   user-select: none;
 }
@@ -6444,7 +6451,7 @@ textarea.form-input {
 .nfl-week-pill.active {
   background: var(--accent-teal);
   border-color: var(--accent-teal);
-  color: #04202b;
+  color: var(--brand-ink);
 }
 
 .nfl-week-pill--post {
@@ -7016,7 +7023,7 @@ textarea.form-input {
 }
 
 .retail-strip__feature .cross {
-  background: rgba(170, 186, 198, 0.07);
+  background: rgba(var(--overlay-rgb), 0.07);
   color: var(--text-muted);
 }
 
@@ -7240,7 +7247,7 @@ textarea.form-input {
   font-size: 0.78rem;
   font-weight: 700;
   white-space: nowrap;
-  background: rgba(170, 186, 198, 0.08);
+  background: rgba(var(--overlay-rgb), 0.08);
   color: var(--text-secondary);
 }
 
@@ -7600,6 +7607,9 @@ textarea.form-input {
   color: var(--text-heading);
 }
 
+/* The last cell runs to the end of its row, so an odd count never leaves a
+   grey hole where the hairline background shows through. */
+.desk-summary__cell:last-child { grid-column-end: -1; }
 .desk-summary__value.is-accent { color: var(--accent-teal); }
 
 .desk-summary__label {
@@ -7700,7 +7710,7 @@ textarea.form-input {
   gap: 10px;
   padding: 11px 16px;
   border-bottom: 1px solid var(--border-color);
-  background: rgba(170, 186, 198, 0.03);
+  background: rgba(var(--overlay-rgb), 0.03);
   font-family: var(--font-mono);
   font-size: 0.72rem;
   color: var(--text-secondary);
@@ -7770,7 +7780,7 @@ textarea.form-input {
   font-weight: 700;
   letter-spacing: 0.5px;
   color: var(--text-secondary);
-  background: rgba(170, 186, 198, 0.07);
+  background: rgba(var(--overlay-rgb), 0.07);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
 }
@@ -8278,7 +8288,7 @@ textarea.form-input {
   font-weight: 700;
   letter-spacing: 0.5px;
   color: var(--text-secondary);
-  background: rgba(170, 186, 198, 0.07);
+  background: rgba(var(--overlay-rgb), 0.07);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-sm);
 }
@@ -8368,7 +8378,7 @@ textarea.form-input {
 
 .brief__result.is-push {
   color: var(--text-muted);
-  background: rgba(170, 186, 198, 0.07);
+  background: rgba(var(--overlay-rgb), 0.07);
   border-color: var(--border-color);
 }
 
@@ -9042,8 +9052,8 @@ textarea.form-input {
    Hit areas grow through invisible pseudo-elements or coarse-pointer-only
    sizing, so nothing moves on a desktop with a mouse. */
 :root {
-  /* The site is dark-only: native scrollbars, form controls and the
-     overscroll background should match instead of flashing light. */
+  /* The site is dark: native scrollbars, form controls and the overscroll
+     background should match instead of flashing light. */
   color-scheme: dark;
 }
 
@@ -9148,22 +9158,22 @@ h3, h4 {
 
 .section-title { font-size: clamp(2.2rem, 4.4vw, 3.4rem); }
 
-/* Eyebrows: plain amber text, no capitals, no rule. */
+/* Eyebrows: plain brand-blue text, no capitals, no rule. */
 .section-label {
   text-transform: none;
   letter-spacing: 0;
   font-size: 0.95rem;
   font-weight: 650;
-  color: var(--brand);
+  color: var(--brand-text);
   margin-bottom: 12px;
 }
 .section-label::before { display: none; }
 
-/* Gradient text is now a flat amber. */
+/* Gradient text is a flat brand colour. */
 .text-gradient {
   background: none;
   -webkit-text-fill-color: currentColor;
-  color: var(--brand);
+  color: var(--brand-text);
 }
 
 /* Wordmark and mark */
@@ -9191,11 +9201,11 @@ h3, h4 {
 .btn--primary,
 .btn--primary:hover {
   background: var(--brand);
-  color: #0F151B;
+  color: var(--brand-ink);
   box-shadow: none;
   filter: none;
 }
-.btn--primary:hover { background: #F6C977; }
+.btn--primary:hover { background: var(--brand-hover); }
 .btn--glass,
 .btn--secondary {
   background: transparent;
@@ -9206,7 +9216,7 @@ h3, h4 {
 .btn--glass:hover,
 .btn--secondary:hover {
   background: var(--bg-card-hover);
-  border-color: #3A4856;
+  border-color: var(--border-strong);
   color: var(--text-heading);
 }
 .btn--outline { color: var(--text-heading); border-color: var(--border-color); }
@@ -9219,7 +9229,7 @@ h3, h4 {
 .pricing-card:hover,
 .desk-card:hover { transform: none; box-shadow: none; }
 
-/* Nav: the amber fill is kept for the one action that sells (the trial),
+/* Nav: the blue fill is kept for the one action that sells (the trial),
    so "Follow on X" drops to an outline. */
 .nav__cta {
   background: transparent;
@@ -9235,7 +9245,7 @@ h3, h4 {
   box-shadow: none;
 }
 
-/* Pills become segmented tabs: square-ish, active state is an amber rule. */
+/* Pills become segmented tabs: square-ish, active state is a blue rule. */
 .desk-sport-pill,
 .desk-week-pill {
   border-radius: var(--radius-sm);
@@ -9276,7 +9286,7 @@ h3, h4 {
 .account-linked-pill { border-radius: var(--radius-sm); }
 
 /* Favourite cue on Desk cards: contrast, not colour. The side laying the
-   points is bright and heavy, the other side steps back. Amber stays free
+   points is bright and heavy, the other side steps back. Blue stays free
    for the brand and for calls to action. */
 .desk-card__side .desk-card__name { color: var(--text-secondary); font-weight: 550; }
 .desk-card__side.is-fav .desk-card__name,
@@ -9284,5 +9294,20 @@ h3, h4 {
 .desk-card__side.is-fav .desk-card__tile {
   color: var(--text-heading);
   background: var(--bg-card-hover);
-  border-color: #3A4856;
+  border-color: var(--border-strong);
+}
+
+/* ---------- Bars (front page, Nov 2026) ----------
+   The nav, the ticker and the footer sit a shade darker than the page, the
+   way a sports front page frames its content. Only the surfaces change; text
+   and accent tokens are the page's own. Aliases are not involved, so nothing
+   needs restating here. */
+.nav,
+.ticker,
+.footer {
+  --bg-primary: #060A12;
+  --bg-secondary: #060A12;
+  --bg-card: #0D1522;
+  --bg-card-hover: #111A28;
+  --bg-glass: rgba(6, 10, 18, 0.94);
 }

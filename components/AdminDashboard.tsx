@@ -515,19 +515,19 @@ export default function AdminDashboard({ users, posts, initialTab, initialAnalyt
                   <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 400 }}>
                     <button
                       onClick={() => setWeekStart(s => toDateStr(new Date(s).getTime() - 7 * DAY))}
-                      style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border-color)', borderRadius: '6px', color: 'var(--text-secondary)', cursor: 'pointer', padding: '2px 8px', fontSize: '0.85rem', lineHeight: 1.6 }}
+                      style={{ background: 'rgba(var(--overlay-rgb),0.06)', border: '1px solid var(--border-color)', borderRadius: '6px', color: 'var(--text-secondary)', cursor: 'pointer', padding: '2px 8px', fontSize: '0.85rem', lineHeight: 1.6 }}
                     >←</button>
                     <input
                       type="date"
                       value={weekStart}
                       max={defaultWeekStart()}
                       onChange={e => e.target.value && setWeekStart(e.target.value)}
-                      style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border-color)', borderRadius: '6px', color: 'var(--text-secondary)', fontSize: '0.8rem', padding: '2px 6px', cursor: 'pointer', colorScheme: 'dark' }}
+                      style={{ background: 'rgba(var(--overlay-rgb),0.06)', border: '1px solid var(--border-color)', borderRadius: '6px', color: 'var(--text-secondary)', fontSize: '0.8rem', padding: '2px 6px', cursor: 'pointer', colorScheme: 'dark' }}
                     />
                     <button
                       onClick={() => setWeekStart(s => toDateStr(Math.min(new Date(s).getTime() + 7 * DAY, new Date(defaultWeekStart()).getTime())))}
                       disabled={weekStart >= defaultWeekStart()}
-                      style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border-color)', borderRadius: '6px', color: 'var(--text-secondary)', cursor: weekStart >= defaultWeekStart() ? 'default' : 'pointer', padding: '2px 8px', fontSize: '0.85rem', lineHeight: 1.6, opacity: weekStart >= defaultWeekStart() ? 0.35 : 1 }}
+                      style={{ background: 'rgba(var(--overlay-rgb),0.06)', border: '1px solid var(--border-color)', borderRadius: '6px', color: 'var(--text-secondary)', cursor: weekStart >= defaultWeekStart() ? 'default' : 'pointer', padding: '2px 8px', fontSize: '0.85rem', lineHeight: 1.6, opacity: weekStart >= defaultWeekStart() ? 0.35 : 1 }}
                     >→</button>
                   </span>
                 )}

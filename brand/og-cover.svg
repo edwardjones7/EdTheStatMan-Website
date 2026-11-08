@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="eg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4C9BFF"/><stop offset="1" stop-color="#38BDF8"/></linearGradient>
+    <linearGradient id="tg" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#5AA2FF"/><stop offset="1" stop-color="#38BDF8"/></linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="#0B1F3A"/>
+  <g fill="#12294A"><rect x="100" y="0" width="1" height="630"/><rect x="200" y="0" width="1" height="630"/><rect x="300" y="0" width="1" height="630"/><rect x="400" y="0" width="1" height="630"/><rect x="500" y="0" width="1" height="630"/><rect x="600" y="0" width="1" height="630"/><rect x="700" y="0" width="1" height="630"/><rect x="800" y="0" width="1" height="630"/><rect x="900" y="0" width="1" height="630"/><rect x="1000" y="0" width="1" height="630"/><rect x="1100" y="0" width="1" height="630"/></g>
+  <svg x="80" y="72" width="46" height="54" viewBox="24 16 58 68"><path d="M24 16H82L76 30H40V43H72L66 57H40V70H82L76 84H24Z" fill="url(#eg)"/></svg>
+  <text x="142" y="112" font-family="Archivo Headline" font-size="40" fill="#FFFFFF">EdTheStatMan</text>
+  <g font-family="Archivo Headline" font-size="104" letter-spacing="-1">
+    <text x="80" y="300" fill="#FFFFFF">Winning Trends.</text>
+    <text x="80" y="408" fill="url(#tg)">Proven Systems.</text>
+  </g>
+  <text x="80" y="478" font-family="Archivo Text" font-size="30" fill="#A9B8CA">NFL, college football, NBA and college basketball research, posted daily.</text>
+  <text x="80" y="560" font-family="JetBrains Mono Label" font-size="26" fill="#91A3B8">EVERY PICK GRADED IN PUBLIC</text>
+  <text x="1120" y="560" text-anchor="end" font-family="Archivo Link" font-size="28" fill="#5AA2FF">edthestatman.com</text>
+</svg>

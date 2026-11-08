@@ -38,6 +38,18 @@ export interface BoardRow {
   /** The opening total when it has moved, else null. */
   totalOpen: string | null
   research: number
+  awayAbbrev: string
+  homeAbbrev: string
+  awayRecord: string | null
+  homeRecord: string | null
+  /** "Sun 1:00 PM" (no network), for the compact strip. */
+  short: string
+  broadcast: string | null
+  /** Size of the spread move since the open, in points; 0 when flat. */
+  spreadSwing: number
+  /** Signed total move since the open; 0 when flat. */
+  totalDelta: number
+  played: boolean
 }
 
 export interface HomeBoard {
@@ -69,6 +81,8 @@ interface Row {
   total_open: number | null
   total_current: number | null
   broadcast: string | null
+  home_record?: string | null
+  away_record?: string | null
 }
 
 const COLUMNS =
@@ -132,14 +146,33 @@ async function seasonRows(admin: any, season: number): Promise<Row[]> {
   )
   // kickoff_tbd arrives with desk_01_kickoff_tbd.sql; naming a missing column
   // fails the whole read, so fall back to the list without it.
-  let res = await read(`${COLUMNS}, kickoff_tbd`)
+  let res = await read(`${COLUMNS}, kickoff_tbd, home_record, away_record`)
+  if (res.error) res = await read(`${COLUMNS}, kickoff_tbd`)
   if (res.error) res = await read(COLUMNS)
   if (res.error) console.error(`[home-board] nfl_games read failed: ${res.error.message}`)
   return res.data
 }
 
-/** Null when there is no published week to show; the hero then drops the panel. */
-export async function loadHomeBoard(now: Date = new Date()): Promise<HomeBoard | null> {
+function short(g: Row): string {
+  if (g.status === 'post' || g.status === 'in') return when(g)
+  if (!g.kickoff) return 'TBD'
+  if (g.kickoff_tbd) {
+    return new Date(g.kickoff).toLocaleDateString('en-US', { weekday: 'short', timeZone: 'America/New_York' }) + ' TBD'
+  }
+  return new Date(g.kickoff).toLocaleString('en-US', {
+    weekday: 'short', hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York',
+  })
+}
+
+/**
+ * Null when there is no published week to show; the page then drops the panel.
+ * `maxRows` caps the rows returned (the counts always cover the whole week);
+ * pass Infinity for the full week, which the front page's lines strip uses.
+ */
+export async function loadHomeBoard(
+  now: Date = new Date(),
+  { maxRows = MAX_ROWS }: { maxRows?: number } = {}
+): Promise<HomeBoard | null> {
   try {
     const admin = createAdminClient() as any
     const season = await latestPublishedSeason(admin, SPORT)
@@ -167,7 +200,7 @@ export async function loadHomeBoard(now: Date = new Date()): Promise<HomeBoard |
       rank(a) - rank(b) || (rank(a) === 2 ? ms(b) - ms(a) : ms(a) - ms(b))
     )
 
-    const rows: BoardRow[] = ordered.slice(0, MAX_ROWS).map(g => {
+    const rows: BoardRow[] = ordered.slice(0, maxRows).map(g => {
       const spread = spreadLabel(g.spread_current ?? g.spread_open, g.home_abbrev, g.away_abbrev)
       const total = g.total_current ?? g.total_open
       return {
@@ -185,6 +218,17 @@ export async function loadHomeBoard(now: Date = new Date()): Promise<HomeBoard |
         totalMove: move(g.total_open, g.total_current),
         totalOpen: opened(g.total_open, g.total_current, v => String(v)),
         research: research[g.id] ?? 0,
+        awayAbbrev: g.away_abbrev,
+        homeAbbrev: g.home_abbrev,
+        awayRecord: g.away_record ?? null,
+        homeRecord: g.home_record ?? null,
+        short: short(g),
+        broadcast: g.broadcast,
+        spreadSwing: g.spread_open != null && g.spread_current != null
+          ? Math.abs(Number((g.spread_current - g.spread_open).toFixed(1))) : 0,
+        totalDelta: g.total_open != null && g.total_current != null
+          ? Number((g.total_current - g.total_open).toFixed(1)) : 0,
+        played: gameIsPlayed(g, now),
       }
     })
 

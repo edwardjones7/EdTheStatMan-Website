@@ -21,14 +21,14 @@ const fontFiles = [
   'JetBrainsMono-Figure.ttf',
 ].map((f) => join(brand, 'fonts', f))
 
-const E = 'M24 28 H58 V37 H35 V45.5 H54 V54.5 H35 V63 H58 V72 H24 Z'
+const E = 'M24 16H82L76 30H40V43H72L66 57H40V70H82L76 84H24Z'
 const read = (f) => readFileSync(join(brand, f), 'utf8')
 const tile = read('mark-tile.svg')
 
 // Apple touch icon: square filled edge to edge, no transparency (iOS rounds it).
-const appleTile = `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="#18212A"/><path d="${E}" fill="#E9EDF0"/><rect x="65" y="28" width="11" height="44" fill="#F0B44C"/></svg>`
+const appleTile = tile.replace('rx="22" ', '')
 // Android notification badge: solid white silhouette on transparent, mark ~75% wide.
-const badge = `<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="15 15 70 70"><path d="${E}" fill="#FFFFFF"/><rect x="65" y="28" width="11" height="44" fill="#FFFFFF"/></svg>`
+const badge = `<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="12 8 82 84"><path d="${E}" fill="#FFFFFF"/></svg>`
 
 function png(svg, size, out) {
   const r = new Resvg(svg, {
@@ -49,3 +49,4 @@ png(appleTile, 180, 'app/apple-icon.png')
 png(tile, 272, 'public/logo.png')
 png(tile, 192, 'public/icon-192.png')
 png(badge, 96, 'public/badge-96.png')
+png(read('og-cover.svg'), 1200, 'brand/og-cover.png')

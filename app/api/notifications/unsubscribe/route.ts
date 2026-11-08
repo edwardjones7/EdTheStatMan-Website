@@ -22,11 +22,11 @@ function page(message: string, detail: string): Response {
   return new NextResponse(
     `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
      <title>${message}</title>
-     <body style="margin:0;background:#0F151B">
+     <body style="margin:0;background:#F4F6F9">
      <div style="font-family:Arial,Helvetica,sans-serif;max-width:520px;margin:80px auto;padding:0 24px;text-align:center">
-       <h1 style="color:#E9EDF0">${message}</h1>
-       <p style="color:#A3B0BB;line-height:1.5">${detail}</p>
-       <p><a href="/account" style="color:#F0B44C">Manage your notification settings</a></p>
+       <h1 style="color:#0B1F3A">${message}</h1>
+       <p style="color:#415064;line-height:1.5">${detail}</p>
+       <p><a href="/account" style="color:#1F6FEB">Manage your notification settings</a></p>
      </div>
      </body>`,
     { headers: { 'Content-Type': 'text/html; charset=utf-8' } }

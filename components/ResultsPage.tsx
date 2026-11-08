@@ -152,7 +152,7 @@ function ChartBarEditor({
 
   return (
     <div style={{
-      background: 'rgba(255,255,255,0.02)',
+      background: 'rgba(var(--overlay-rgb),0.02)',
       border: '1px solid var(--border)',
       borderRadius: '10px',
       overflow: 'hidden',
@@ -161,7 +161,7 @@ function ChartBarEditor({
       <div style={{
         padding: '8px 12px',
         borderBottom: '1px solid var(--border)',
-        background: 'rgba(255,255,255,0.02)',
+        background: 'rgba(var(--overlay-rgb),0.02)',
         fontSize: '0.7rem',
         fontWeight: 700,
         color: 'var(--accent-teal)',
@@ -256,7 +256,7 @@ function TableRowEditor({
         </thead>
         <tbody>
           {rows.map((row, i) => (
-            <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+            <tr key={i} style={{ borderBottom: '1px solid rgba(var(--overlay-rgb),0.04)' }}>
               <td style={{ padding: '4px 8px' }}>{cellInput(row.year, v => patch(i, { year: v }), '56px')}</td>
               <td style={{ padding: '4px 8px' }}>{cellInput(row.nfl, v => patch(i, { nfl: v }))}</td>
               <td style={{ padding: '4px 8px' }}>{cellInput(row.cfb, v => patch(i, { cfb: v }))}</td>

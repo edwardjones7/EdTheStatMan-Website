@@ -389,7 +389,7 @@ export default function TrendsFilter({ trends, lockedCounts = {}, lockedTeasers 
             <button
               onClick={() => setEditMode(true)}
               title="Edit trends"
-              style={{ ...fabStyle, background: 'var(--accent-teal)', color: '#000', border: 'none' }}
+              style={{ ...fabStyle, background: 'var(--accent-teal)', color: 'var(--brand-ink)', border: 'none' }}
             >
               <IconPencil size={14} />
             </button>
@@ -673,7 +673,7 @@ export default function TrendsFilter({ trends, lockedCounts = {}, lockedTeasers 
           ) : (
             <div className="sys-card-grid">
               {baseRows.map(row => {
-                const style = SPORT_STYLE[row.sport] ?? { bg: 'rgba(255,255,255,0.05)', color: 'var(--text-muted)', label: row.sport.toUpperCase() }
+                const style = SPORT_STYLE[row.sport] ?? { bg: 'rgba(var(--overlay-rgb),0.05)', color: 'var(--text-muted)', label: row.sport.toUpperCase() }
                 const winning = row.w > row.l
 
                 return (
@@ -983,7 +983,7 @@ export default function TrendsFilter({ trends, lockedCounts = {}, lockedTeasers 
             <button
               onClick={() => setEditMode(true)}
               title="Edit trends"
-              style={{ ...fabStyle, background: 'var(--accent-teal)', color: '#000', border: 'none' }}
+              style={{ ...fabStyle, background: 'var(--accent-teal)', color: 'var(--brand-ink)', border: 'none' }}
             >
               <IconPencil size={14} />
             </button>

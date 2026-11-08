@@ -21,6 +21,9 @@ import {
   formatRecord,
   formatUnits,
   BREAK_EVEN_PCT,
+  DEFAULT_ODDS,
+  oddsOf,
+  unitsFor,
   type Book,
   type PickRecord,
   type RecordSource,
@@ -150,3 +153,38 @@ export const BOOK_LABEL: Record<Book, string> = {
   members: "Members' card",
   free: 'Free picks',
 }
+
+/**
+ * Running units for the headline record, pick by pick, for the chart beside
+ * it. The same rows, the same book, the same date window and the same maths
+ * (unitsFor at the recorded price, -110 when none) as the headline itself, so
+ * the line always ends on the number printed above it.
+ */
+export function headlineSeries(rows: RecordSource[], proof: ProofData): number[] {
+  const h = proof.headline
+  if (!h) return []
+  const sport = h.sport.toUpperCase()
+  const graded = rows
+    .filter(r =>
+      r.show_on_results === true &&
+      bookOf(r) === proof.headlineBook &&
+      String(r.sport ?? '').toUpperCase() === sport &&
+      (!h.from || (r.date ?? '') >= h.from) &&
+      (!h.to || (r.date ?? '') <= h.to) &&
+      ['win', 'loss', 'push'].includes(String(r.result ?? '').toLowerCase())
+    )
+    .sort((a, b) => String(a.date ?? '').localeCompare(String(b.date ?? '')))
+  let u = 0
+  return graded.map(r => {
+    u += unitsFor(String(r.result).toLowerCase(), oddsOf(r) ?? DEFAULT_ODDS)
+    return Math.round(u * 100) / 100
+  })
+}
+
+/** The proof plus its chart series, from one read. */
+export async function loadProofWithSeries(): Promise<{ proof: ProofData; series: number[] }> {
+  const rows = await loadPublishedPicks()
+  const proof = buildProof(rows)
+  return { proof, series: headlineSeries(rows, proof) }
+}
+

@@ -283,7 +283,7 @@ export function renderLifecycleHtml(m: LifecycleMessage): string {
         <tr>
           <td align="center" style="padding-bottom:24px;">
             <a href="${esc(home)}" style="text-decoration:none;">
-              <span style="font-family:${FONT};font-size:19px;font-weight:700;letter-spacing:.5px;color:${C.heading};">EdTheStatMan<span style="display:inline-block;width:9px;height:17px;margin-left:3px;vertical-align:-2px;background-color:${C.brand};">&nbsp;</span></span>
+              <span style="font-family:${FONT};font-size:19px;font-weight:700;letter-spacing:.5px;color:${C.heading};">EdTheStatMan</span>
             </a>
           </td>
         </tr>
@@ -293,7 +293,7 @@ export function renderLifecycleHtml(m: LifecycleMessage): string {
 
             <table role="presentation" cellpadding="0" cellspacing="0" border="0">
               <tr>
-                <td style="background-color:${accent};border-radius:20px;padding:5px 13px;font-family:${FONT};font-size:11px;font-weight:700;letter-spacing:1px;color:${C.bg};">${esc(m.badge)}</td>
+                <td style="background-color:${accent};border-radius:20px;padding:5px 13px;font-family:${FONT};font-size:11px;font-weight:700;letter-spacing:1px;color:${C.onBrand};">${esc(m.badge)}</td>
               </tr>
             </table>
 
@@ -304,7 +304,7 @@ export function renderLifecycleHtml(m: LifecycleMessage): string {
             <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-top:30px;">
               <tr>
                 <td align="center" bgcolor="${C.brand}" style="border-radius:7px;">
-                  <a href="${esc(m.cta.href)}" style="display:inline-block;padding:14px 32px;font-family:${FONT};font-size:15px;font-weight:700;color:${C.bg};text-decoration:none;border-radius:7px;">${esc(m.cta.label)} &rarr;</a>
+                  <a href="${esc(m.cta.href)}" style="display:inline-block;padding:14px 32px;font-family:${FONT};font-size:15px;font-weight:700;color:${C.onBrand};text-decoration:none;border-radius:7px;">${esc(m.cta.label)} &rarr;</a>
                 </td>
               </tr>
             </table>

@@ -40,16 +40,18 @@ export function unsubscribeUrl(token: string): string {
 // Exported so lifecycle mail (lib/notify/lifecycle.ts) looks like the same
 // sender rather than a second brand.
 export const C = {
-  bg: '#0F151B',
-  card: '#18212A',
-  border: '#2B3743',
-  brand: '#F0B44C',
-  sky: '#B8C4CE',
-  down: '#EF6A5F',
-  heading: '#E9EDF0',
-  text: '#C9D2D9',
-  secondary: '#A3B0BB',
-  muted: '#8796A3',
+  bg: '#F4F6F9',
+  card: '#FFFFFF',
+  border: '#D6DDE6',
+  brand: '#1F6FEB',
+  /** Text on a brand, sky or down fill. */
+  onBrand: '#FFFFFF',
+  sky: '#5B6B7E',
+  down: '#D2373C',
+  heading: '#0B1F3A',
+  text: '#243243',
+  secondary: '#415064',
+  muted: '#5C6979',
 }
 
 export const FONT = "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif"
@@ -117,7 +119,7 @@ function html(
         <tr>
           <td align="center" style="padding-bottom:24px;">
             <a href="${url}" style="text-decoration:none;">
-              <span style="font-family:${FONT};font-size:19px;font-weight:700;letter-spacing:.5px;color:${C.heading};">EdTheStatMan<span style="display:inline-block;width:9px;height:17px;margin-left:3px;vertical-align:-2px;background-color:${C.brand};">&nbsp;</span></span>
+              <span style="font-family:${FONT};font-size:19px;font-weight:700;letter-spacing:.5px;color:${C.heading};">EdTheStatMan</span>
             </a>
           </td>
         </tr>
@@ -128,7 +130,7 @@ function html(
 
             <table role="presentation" cellpadding="0" cellspacing="0" border="0">
               <tr>
-                <td style="background-color:${badgeColor};border-radius:20px;padding:5px 13px;font-family:${FONT};font-size:11px;font-weight:700;letter-spacing:1px;color:${C.bg};">${badgeText}</td>
+                <td style="background-color:${badgeColor};border-radius:20px;padding:5px 13px;font-family:${FONT};font-size:11px;font-weight:700;letter-spacing:1px;color:${C.onBrand};">${badgeText}</td>
               </tr>
             </table>
 
@@ -139,7 +141,7 @@ function html(
             <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-top:30px;">
               <tr>
                 <td align="center" bgcolor="${C.brand}" style="border-radius:7px;">
-                  <a href="${url}" style="display:inline-block;padding:14px 32px;font-family:${FONT};font-size:15px;font-weight:700;color:${C.bg};text-decoration:none;border-radius:7px;">${cta} &rarr;</a>
+                  <a href="${url}" style="display:inline-block;padding:14px 32px;font-family:${FONT};font-size:15px;font-weight:700;color:${C.onBrand};text-decoration:none;border-radius:7px;">${cta} &rarr;</a>
                 </td>
               </tr>
             </table>

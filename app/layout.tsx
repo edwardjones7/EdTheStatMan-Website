@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next'
-import { Archivo, JetBrains_Mono } from 'next/font/google'
+import { Barlow, Barlow_Semi_Condensed } from 'next/font/google'
 import './globals.css'
 import Navigation from '@/components/Navigation'
 import Footer from '@/components/Footer'
@@ -16,20 +16,21 @@ import { DEFAULT_TICKER } from '@/lib/site-content'
 import type { TickerContent } from '@/lib/site-content'
 import { Suspense } from 'react'
 
-// Archivo carries the whole site: condensed and heavy for headlines (via its
-// width axis, see --font-heading in globals.css), normal width for body.
-// JetBrains Mono is kept for lines, odds and records only.
-const archivo = Archivo({
+// Barlow carries the whole site (front page, Nov 2026): Semi Condensed and
+// heavy for headlines and section labels, regular width for body text and,
+// with tabular figures, for every line, odd and record. See --font-* in
+// globals.css.
+const barlow = Barlow({
   subsets: ['latin'],
-  axes: ['wdth'],
-  variable: '--font-archivo',
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-barlow',
   display: 'swap',
 })
 
-const jetbrainsMono = JetBrains_Mono({
+const barlowCond = Barlow_Semi_Condensed({
   subsets: ['latin'],
-  weight: ['500', '700'],
-  variable: '--font-jetbrains',
+  weight: ['600', '700', '800'],
+  variable: '--font-barlow-cond',
   display: 'swap',
 })
 
@@ -92,7 +93,7 @@ export default async function RootLayout({
   }
 
   return (
-    <html lang="en" className={`${archivo.variable} ${jetbrainsMono.variable}`}>
+    <html lang="en" className={`${barlow.variable} ${barlowCond.variable}`}>
       <head>
         {/* BotID's invisible challenge. Must be mounted for every route listed
             in BOTID_PROTECTED, because this is what tells the browser to attach

@@ -3,19 +3,16 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { SITE_CONTENT_DEFAULTS } from '@/lib/site-content'
 import type { AllSiteContent } from '@/lib/site-content'
-import HomeHero, { type HeroCta, type HeroCard, type HeroProof } from '@/components/HomeHero'
-import HomeFreePicks from '@/components/HomeFreePicks'
-import { BOOK_LABEL } from '@/lib/proof'
-import { minus } from '@/lib/home-board'
+import type { HeroCta } from '@/components/HomeHero'
+import HomeFront from '@/components/HomeFront'
 import Features from '@/components/Features'
 import CTASection from '@/components/CTASection'
-import SportsBand from '@/components/SportsBand'
 import HomeEditor from '@/components/HomeEditor'
-import TodaysBrief from '@/components/TodaysBrief'
 import { resolveAccess, ACCESS_SELECT } from '@/lib/access'
 import { buildBrief } from '@/lib/brief'
 import type { BriefSource } from '@/lib/brief'
-import { loadProof } from '@/lib/proof'
+import { loadProofWithSeries } from '@/lib/proof'
+import { loadVaultLeaders } from '@/lib/home-front'
 import { loadHomeBoard } from '@/lib/home-board'
 import { loadTrialState } from '@/lib/trial'
 import '@/styles/home.css'
@@ -43,8 +40,10 @@ export const dynamic = 'force-dynamic'
 export default async function Home() {
   // Started first and awaited late: it is an independent read, so it should not
   // add a round trip to the page.
-  const proofPromise = loadProof()
-  const boardPromise = loadHomeBoard()
+  const proofPromise = loadProofWithSeries()
+  // The whole week: the lines strip shows every game, the table the first eight.
+  const boardPromise = loadHomeBoard(new Date(), { maxRows: Infinity })
+  const leadersPromise = loadVaultLeaders()
   const supabase = await createClient()
 
   const { data: contentRows } = await (supabase as any).from('site_content').select('key, value')
@@ -114,67 +113,23 @@ export default async function Home() {
     .from('todays_bets')
     .select('id, date, sport, bet, line, opponent, result, is_active, is_free, is_elite, show_on_results')
   const brief = buildBrief((briefRows ?? []) as BriefSource[], userTier, isAdmin)
-  // The record in the hero comes from lib/proof.ts, not brief.record, so it
-  // splits the two books the way every other surface does.
-  const [proof, board, trial] = await Promise.all([proofPromise, boardPromise, trialPromise])
+  const [{ proof, series }, board, trial, leaders] = await Promise.all([proofPromise, boardPromise, trialPromise, leadersPromise])
   const cta: HeroCta =
     !user || !trial ? { kind: 'signup' }
     : hasDesk ? { kind: 'desk', trialEndsAt: trial.onTrial ? trial.endsAt : null }
     : trial.available ? { kind: 'trial' }
     : { kind: 'plans', expired: membership === 'expired' }
-  const briefNode = <TodaysBrief brief={brief} />
 
-  // The hook above the slogan: what is on the card right now.
-  const card: HeroCard | null = brief.date && brief.total > 0
-    ? {
-        isToday: brief.isToday,
-        total: brief.total,
-        locked: brief.lockedCount,
-        sports: brief.sportCounts.map(c => c.sport),
-      }
-    : null
-
-  // The proof line under the buttons: the best sport beside every whole book,
-  // so a good stretch in one sport never stands in for the whole record.
-  const tone = (v: number) => (v > 0 ? 'up' : v < 0 ? 'down' : 'flat') as HeroProof['tone']
-  const heroProof: HeroProof[] = []
-  if (proof.headline) {
-    heroProof.push({
-      label: `${proof.headline.sport}${proof.headlineInSeason ? ' this season' : ''}`,
-      record: proof.headline.record,
-      units: minus(proof.headline.units),
-      tone: tone(proof.headline.unitsValue),
-    })
-  }
-  if (proof.books.members) {
-    heroProof.push({
-      label: `${BOOK_LABEL.members}, all sports`,
-      record: proof.books.members.record,
-      units: minus(proof.books.members.units),
-      tone: tone(proof.books.members.unitsValue),
-    })
-  }
-  if (proof.books.free) {
-    heroProof.push({
-      label: `${BOOK_LABEL.free}, all sports`,
-      record: proof.books.free.record,
-      units: minus(proof.books.free.units),
-      tone: tone(proof.books.free.unitsValue),
-    })
-  }
-  const heroNode = (
-    <>
-      <HomeHero
-        board={board}
-        cta={cta}
-        title={content.hero.title}
-        accent={content.hero.titleAccent}
-        description={content.hero.description}
-        card={card}
-        proof={heroProof}
-      />
-      {!user && <HomeFreePicks />}
-    </>
+  const front = (
+    <HomeFront
+      board={board}
+      brief={brief}
+      proof={proof}
+      series={series}
+      leaders={leaders}
+      cta={cta}
+      signedOut={!user}
+    />
   )
 
   return (
@@ -182,15 +137,13 @@ export default async function Home() {
       {isAdmin ? (
         // Admin gets the interactive editor with a single pencil FAB
         // (LiveTicker is rendered inside HomeEditor for admins)
-        <HomeEditor content={content} hero={heroNode} brief={briefNode} />
+        <HomeEditor content={content} hero={front} />
       ) : (
         // Everyone else gets static server-rendered sections
         // (the ticker is rendered globally by the root layout)
         <>
-          {heroNode}
-          {briefNode}
+          {front}
           <Features        content={content.features} />
-          <SportsBand />
           <CTASection      content={content.cta_section} membership={membership} />
         </>
       )}

@@ -1,0 +1,270 @@
+import Image from 'next/image'
+import Link from 'next/link'
+import type { HomeBoard } from '@/lib/home-board'
+import type { Brief } from '@/lib/brief'
+import { formatCardDate } from '@/lib/brief'
+import type { ProofData } from '@/lib/proof'
+import { BOOK_LABEL, shortDate } from '@/lib/proof'
+import { minus } from '@/lib/home-board'
+import { TRIAL_DAYS } from '@/lib/offer'
+import {
+  lineMovers, leadStory, stories, upcomingFirst, type VaultLeader,
+} from '@/lib/home-front'
+import type { HeroCta } from './HomeHero'
+import HomeTrialButton from './HomeTrialButton'
+import HomeFreeBox from './HomeFreeBox'
+import { IconLock } from './Icons'
+
+/**
+ * The homepage as a sports front page (Nov 2026): a lines strip like a scores
+ * bar, then three columns of modules. Server-rendered from data that is either
+ * public (lines, moves, Vault records, the graded record) or already gated
+ * (the brief drops locked picks and keeps only a count).
+ */
+export interface HomeFrontProps {
+  board: HomeBoard | null
+  brief: Brief
+  proof: ProofData
+  series: number[]
+  leaders: VaultLeader[]
+  cta: HeroCta
+  signedOut: boolean
+}
+
+/** Units over the headline window, on one scale from zero to a round ceiling. */
+function UnitsChart({ series, last }: { series: number[]; last: number }) {
+  if (series.length < 2) return null
+  const W = 300, H = 120, L = 34, R = 8, T = 8, B = 20
+  const lo = Math.min(0, ...series), hi = Math.max(0, ...series)
+  const step = Math.max(1, Math.ceil((hi - lo) / 3))
+  const min = Math.floor(lo / step) * step
+  const max = Math.ceil(hi / step) * step || step
+  const x = (i: number) => L + (i / (series.length - 1)) * (W - L - R)
+  const y = (v: number) => T + (1 - (v - min) / (max - min)) * (H - T - B)
+  const ticks: number[] = []
+  for (let v = min; v <= max + 1e-9; v += step) ticks.push(v)
+  const pts = series.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`)
+  const tone = last >= 0 ? 'var(--up)' : 'var(--down)'
+  return (
+    <svg className="front-chart" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`Units won pick by pick, ending at ${last >= 0 ? 'plus' : 'minus'} ${Math.abs(last)}`}>
+      <defs>
+        <linearGradient id="front-chart-fill" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor={tone} stopOpacity="0.3" />
+          <stop offset="1" stopColor={tone} stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      {ticks.map(v => (
+        <g key={v}>
+          <line x1={L} x2={W - R} y1={y(v)} y2={y(v)} stroke="rgba(255,255,255,.07)" />
+          <text x={L - 6} y={y(v) + 4} textAnchor="end" fontSize="10" fill="var(--text-muted)">{v > 0 ? `+${v}u` : v < 0 ? `−${-v}u` : '0'}</text>
+        </g>
+      ))}
+      <path d={`M${x(0)},${y(0)} L${pts.join(' L')} L${x(series.length - 1)},${y(0)} Z`} fill="url(#front-chart-fill)" />
+      <polyline points={pts.join(' ')} fill="none" stroke={tone} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+      <circle cx={x(series.length - 1)} cy={y(series[series.length - 1])} r="4" fill={tone} />
+    </svg>
+  )
+}
+
+function Cta({ cta, locked, isToday }: { cta: HeroCta; locked: number; isToday: boolean }) {
+  const trialLabel = locked > 0
+    ? `See ${isToday ? "tonight's" : 'the'} ${locked === 1 ? 'play' : 'plays'} free for ${TRIAL_DAYS} days`
+    : `Try the Research Desk free for ${TRIAL_DAYS} days`
+  return (
+    <section className="front-card front-cta">
+      <h2 className="front-cta__title">
+        {cta.kind === 'desk' ? 'Your Research Desk' : 'The Research Desk'}
+      </h2>
+      <p className="front-cta__sub">
+        Every game, every system and every pick. The Vault and the Portfolio in one plan.
+      </p>
+      {cta.kind === 'desk' && <Link href="/desk" className="front-btn front-btn--primary">Open tonight&rsquo;s board</Link>}
+      {cta.kind === 'signup' && (
+        <Link href={`/signup?next=${encodeURIComponent('/win?trial=1#plan-desk')}`} className="front-btn front-btn--primary">{trialLabel}</Link>
+      )}
+      {cta.kind === 'trial' && <HomeTrialButton label={trialLabel} />}
+      {cta.kind === 'plans' && (
+        <Link href="/win" className="front-btn front-btn--primary">{cta.expired ? 'Renew your access' : 'See membership'}</Link>
+      )}
+      {(cta.kind === 'signup' || cta.kind === 'trial') && <p className="front-cta__note">No card needed. Nothing renews.</p>}
+    </section>
+  )
+}
+
+export default function HomeFront({ board, brief, proof, series, leaders, cta, signedOut }: HomeFrontProps) {
+  const lead = leadStory(board, proof)
+  const cards = stories(board, brief, lead)
+  const movers = lineMovers(board)
+  const rows = board ? upcomingFirst(board.rows) : []
+  const h = proof.headline
+  const cardLabel = brief.date ? (brief.isToday ? "Tonight's card" : 'Latest card') : "Tonight's card"
+
+  return (
+    <div className="front">
+      {board && rows.length > 0 && (
+        <div className="front-strip">
+          <div className="container front-strip__inner">
+            <Link href={board.href} className="front-strip__league">
+              <b>{board.title.replace(/, week/, ' · WK').toUpperCase()}</b>
+              <small>{board.games} games</small>
+            </Link>
+            <div className="front-strip__chips" tabIndex={0} role="region" aria-label={`${board.title} lines`}>
+              {rows.map(r => (
+                <Link key={r.id} href={r.href} className="front-chip">
+                  <span className="front-chip__t"><span>{r.short}</span>{r.broadcast && <span>{r.broadcast.split(',')[0]}</span>}</span>
+                  <span className="front-chip__row"><b>{r.awayAbbrev}</b><span>{r.awayRecord ?? ''}</span></span>
+                  <span className="front-chip__row"><b>{r.homeAbbrev}</b><span>{r.homeRecord ?? ''}</span></span>
+                  <span className="front-chip__row"><span className="front-chip__ln">{r.spread ?? 'Off'}</span><span>{r.total ?? ''}</span></span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="container front-grid">
+        <aside className="front-left" aria-label="Today and the Vault">
+          <section className="front-card">
+            <header className="front-hd">
+              <h2>{cardLabel}</h2>
+              {brief.total > 0 && <Link href="/portfolio">{brief.total} {brief.total === 1 ? 'play' : 'plays'}</Link>}
+            </header>
+            {brief.total === 0 ? (
+              <p className="front-empty">No plays posted yet. They land here the moment Ed posts them.</p>
+            ) : (
+              <ul className="front-list">
+                {brief.date && !brief.isToday && <li className="front-list__note">{formatCardDate(brief.date)}</li>}
+                {brief.visible.map(p => (
+                  <li key={p.id}>
+                    <span className="front-tag">{p.sport}</span>
+                    <span className="front-pick"><b>{p.bet}</b>{p.line && <small>{minus(p.line)}</small>}</span>
+                    {p.result && <span className={`front-res front-res--${p.result.toLowerCase()}`}>{p.result}</span>}
+                  </li>
+                ))}
+                {brief.lockedCount > 0 && (
+                  <li>
+                    <IconLock size={14} />
+                    <span className="front-pick"><b>{brief.lockedCount} members&rsquo; {brief.lockedCount === 1 ? 'play' : 'plays'}</b><small>{brief.sportCounts.map(c => `${c.n} ${c.sport}`).join(' · ')}</small></span>
+                    <Link href="/portfolio" className="front-unlock">Unlock</Link>
+                  </li>
+                )}
+              </ul>
+            )}
+          </section>
+
+          {movers.length > 0 && (
+            <section className="front-card">
+              <header className="front-hd"><h2>Line movers</h2>{board && <Link href={board.href}>Full board</Link>}</header>
+              <ul className="front-list">
+                {movers.map(m => (
+                  <li key={m.key}>
+                    <Link href={m.href} className="front-mv">
+                      <span className="front-pick"><b>{m.matchup}</b><small>{m.detail}</small></span>
+                      <span className={`front-mv__n front-mv__n--${m.tone}`}>{m.value}</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          {leaders.length > 0 && (
+            <section className="front-card">
+              <header className="front-hd"><h2>Vault leaders</h2><Link href="/vault/systems">The Vault</Link></header>
+              <ul className="front-list">
+                {leaders.map(v => (
+                  <li key={v.code}>
+                    <Link href={v.href} className="front-mv">
+                      <span className="front-tag">{v.sport}</span>
+                      <span className="front-pick"><b>{v.code}</b><small>{v.record}</small></span>
+                      <span className="front-mv__n front-mv__n--up">{v.pct.toFixed(1)}%</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+        </aside>
+
+        <div className="front-main">
+          {lead && (
+            <Link href={lead.href} className="front-lead">
+              <Image src={lead.image} alt="" fill priority sizes="(max-width: 760px) 100vw, 680px" />
+              <span className="front-lead__cap">
+                <span className="front-kick">{lead.kicker}</span>
+                <span className="front-lead__title">{lead.title}</span>
+                <span className="front-lead__dek">{lead.dek}</span>
+              </span>
+            </Link>
+          )}
+
+          {cards.length > 0 && (
+            <div className="front-stories">
+              {cards.map(s => (
+                <Link key={s.key} href={s.href} className="front-story">
+                  <span className="front-story__img"><Image src={s.image} alt="" fill sizes="120px" /></span>
+                  <span>
+                    <span className="front-kick">{s.kicker}</span>
+                    <span className="front-story__title">{s.title}</span>
+                    <span className="front-story__dek">{s.dek}</span>
+                  </span>
+                </Link>
+              ))}
+            </div>
+          )}
+
+          {board && rows.length > 0 && (
+            <section className="front-card">
+              <header className="front-hd"><h2>Research Desk · {board.title}</h2><Link href={board.href}>Full board</Link></header>
+              <div className="front-tbl" tabIndex={0} role="region" aria-label={`${board.title} board`}>
+                <table>
+                  <thead><tr><th scope="col">Game</th><th scope="col" className="is-num">Spread</th><th scope="col" className="is-num">Total</th><th scope="col" className="is-num">Opened</th><th scope="col" className="is-num">Research</th></tr></thead>
+                  <tbody>
+                    {rows.slice(0, 8).map(r => (
+                      <tr key={r.id}>
+                        <td><Link href={r.href}><b>{r.matchup}</b></Link><small>{r.when}</small></td>
+                        <td className="is-num">{r.spread ?? '—'}</td>
+                        <td className="is-num">{r.total ?? '—'}</td>
+                        <td className="is-num front-dim">{[r.spreadOpen, r.totalOpen].filter(Boolean).join(' / ') || '—'}</td>
+                        <td className="is-num">{r.research > 0 ? r.research : <span className="front-dim">—</span>}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          )}
+        </div>
+
+        <aside className="front-right" aria-label="Membership and the record">
+          <Cta cta={cta} locked={brief.lockedCount} isToday={brief.isToday} />
+
+          {h && (
+            <section className="front-card">
+              <header className="front-hd"><h2>EdTheStatBot · {h.sport}</h2><Link href="/portfolio/performance">Results</Link></header>
+              <div className="front-rec">
+                <div className="front-rec__big">
+                  <b>{h.record}</b>
+                  <span className={h.unitsValue >= 0 ? 'front-up' : 'front-down'}>{minus(h.units)}</span>
+                </div>
+                <p className="front-rec__meta">
+                  {proof.headlineInSeason ? 'This season' : 'Best sport'}{h.from ? `, since ${shortDate(h.from)}` : ''}. Every pick graded in public.
+                </p>
+                <UnitsChart series={series} last={h.unitsValue} />
+                <div className="front-rec__split">
+                  <div><small>Win rate</small><b>{h.pct.toFixed(1)}%</b></div>
+                  <div><small>Graded</small><b>{h.graded}</b></div>
+                  {proof.books.members && (
+                    <div><small>{BOOK_LABEL.members}, all</small><b>{proof.books.members.record}</b></div>
+                  )}
+                </div>
+              </div>
+            </section>
+          )}
+
+          {signedOut && <HomeFreeBox />}
+        </aside>
+      </div>
+    </div>
+  )
+}

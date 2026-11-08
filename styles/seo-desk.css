@@ -506,7 +506,7 @@ a.game-nav__step:hover { border-color: rgba(var(--teal-rgb), 0.4); }
   border-radius: var(--radius-sm);
   font-size: 0.68rem;
   text-align: center;
-  background: rgba(170, 186, 198, 0.1);
+  background: rgba(var(--overlay-rgb), 0.1);
   color: var(--text-secondary);
 }
 

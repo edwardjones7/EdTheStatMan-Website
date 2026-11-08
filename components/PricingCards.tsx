@@ -96,7 +96,7 @@ export interface RateSheetProps {
   plans: OfferPlan[]
   period: BillingPeriod
   stateOf: (plan: OfferPlan) => 'current' | 'extend' | 'buy' | 'hide'
-  /** Gets the filled (amber) button. The Research Desk stays the lead row regardless. */
+  /** Gets the filled (brand blue) button. The Research Desk stays the lead row regardless. */
   highlight: OfferTierKey
   /** Marked "Your pick" (/win ?plan=). */
   picked?: OfferTierKey | null
@@ -109,7 +109,7 @@ export interface RateSheetProps {
 
 /**
  * One rate sheet, not three cards. The Research Desk is the lead row: first,
- * wider, on the card surface under the amber rule. The others are columns of
+ * wider, on the card surface under the brand-blue rule. The others are columns of
  * the same sheet, split by hairlines. Below 900px the rows stack.
  */
 export function RateSheet({ plans, period, stateOf, highlight, picked, isExpired, extra, idFor }: RateSheetProps) {

@@ -81,7 +81,7 @@ function ItemPreview({ item }: { item: TickerItem }) {
       display: 'inline-flex',
       alignItems: 'center',
       gap: '6px',
-      background: 'rgba(255,255,255,0.04)',
+      background: 'rgba(var(--overlay-rgb),0.04)',
       border: '1px solid var(--border)',
       borderRadius: '20px',
       padding: '4px 12px',
@@ -128,7 +128,7 @@ function TickerItemCard({
 
   return (
     <div style={{
-      background: 'rgba(255,255,255,0.03)',
+      background: 'rgba(var(--overlay-rgb),0.03)',
       border: '1px solid var(--border)',
       borderRadius: '10px',
       overflow: 'hidden',
@@ -139,15 +139,15 @@ function TickerItemCard({
         alignItems: 'center',
         justifyContent: 'space-between',
         padding: '8px 12px',
-        borderBottom: '1px solid rgba(255,255,255,0.06)',
-        background: 'rgba(255,255,255,0.02)',
+        borderBottom: '1px solid rgba(var(--overlay-rgb),0.06)',
+        background: 'rgba(var(--overlay-rgb),0.02)',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
           <span style={{
             fontSize: '0.65rem',
             fontWeight: 700,
             color: 'var(--text-muted)',
-            background: 'rgba(255,255,255,0.06)',
+            background: 'rgba(var(--overlay-rgb),0.06)',
             borderRadius: '4px',
             padding: '2px 6px',
             flexShrink: 0,
@@ -292,7 +292,7 @@ function TickerItemCard({
                       key={preset.label}
                       onClick={() => onPatch({ badge: preset.label, badgeType: preset.type })}
                       style={{
-                        background: item.badge === preset.label ? BADGE_COLORS[preset.type!] : 'rgba(255,255,255,0.04)',
+                        background: item.badge === preset.label ? BADGE_COLORS[preset.type!] : 'rgba(var(--overlay-rgb),0.04)',
                         border: `1px solid ${item.badge === preset.label ? BADGE_TEXT_COLORS[preset.type!] : 'var(--border)'}`,
                         borderRadius: '10px',
                         cursor: 'pointer',
@@ -384,7 +384,7 @@ export default function LiveTicker({ content = DEFAULT_TICKER, editMode, onEdit,
             <span style={{
               fontSize: '0.68rem',
               color: 'var(--text-muted)',
-              background: 'rgba(255,255,255,0.05)',
+              background: 'rgba(var(--overlay-rgb),0.05)',
               borderRadius: '10px',
               padding: '1px 7px',
             }}>
@@ -445,7 +445,7 @@ export default function LiveTicker({ content = DEFAULT_TICKER, editMode, onEdit,
                 disabled={saving || !dirty}
                 style={{
                   background: dirty ? 'var(--accent-teal)' : 'rgba(var(--brand-rgb), 0.25)',
-                  color: dirty ? '#000' : 'var(--text-muted)',
+                  color: dirty ? 'var(--brand-ink)' : 'var(--text-muted)',
                   border: 'none',
                   borderRadius: '6px',
                   cursor: saving || !dirty ? 'default' : 'pointer',

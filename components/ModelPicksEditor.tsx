@@ -84,7 +84,7 @@ export default function ModelPicksEditor({ rows, userTier, headerContent }: Prop
                 onClick={save}
                 disabled={saving}
                 title="Save all changes"
-                style={{ ...fab, background: 'var(--accent-teal)', color: '#000' }}
+                style={{ ...fab, background: 'var(--accent-teal)', color: 'var(--brand-ink)' }}
               >
                 {saving ? '…' : '✓'}
               </button>
@@ -109,7 +109,7 @@ export default function ModelPicksEditor({ rows, userTier, headerContent }: Prop
           <button
             onClick={() => setEditMode(true)}
             title="Edit picks"
-            style={{ ...fab, background: 'var(--accent-teal)', color: '#000' }}
+            style={{ ...fab, background: 'var(--accent-teal)', color: 'var(--brand-ink)' }}
           >
             <IconPencil size={14} />
           </button>

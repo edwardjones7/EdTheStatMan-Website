@@ -112,7 +112,7 @@ export default function HomeEditor({ content, brief, hero }: Props) {
                 onClick={save}
                 disabled={saving}
                 title="Save all changes"
-                style={{ ...fab, background: 'var(--accent-teal)', color: '#000' }}
+                style={{ ...fab, background: 'var(--accent-teal)', color: 'var(--brand-ink)' }}
               >
                 {saving ? '…' : '✓'}
               </button>
@@ -125,9 +125,9 @@ export default function HomeEditor({ content, brief, hero }: Props) {
                 width: dirty ? '40px' : '54px',
                 height: dirty ? '40px' : '54px',
                 fontSize: dirty ? '1rem' : '1.3rem',
-                background: dirty ? 'var(--bg-secondary)' : 'rgba(45,212,191,0.15)',
+                background: dirty ? 'var(--bg-secondary)' : 'rgba(var(--brand-rgb),0.15)',
                 color: dirty ? 'var(--text-muted)' : 'var(--accent-teal)',
-                border: dirty ? '2px solid var(--border)' : '2px solid rgba(45,212,191,0.35)',
+                border: dirty ? '2px solid var(--border)' : '2px solid rgba(var(--brand-rgb),0.35)',
               }}
             >
               ✕
@@ -137,7 +137,7 @@ export default function HomeEditor({ content, brief, hero }: Props) {
           <button
             onClick={() => setEditMode(true)}
             title="Edit page content"
-            style={{ ...fab, background: 'var(--accent-teal)', color: '#000' }}
+            style={{ ...fab, background: 'var(--accent-teal)', color: 'var(--brand-ink)' }}
           >
             <IconPencil size={14} />
           </button>
@@ -160,8 +160,8 @@ export default function HomeEditor({ content, brief, hero }: Props) {
 
         {editMode && !dirty && (
           <span style={{
-            background: 'rgba(45,212,191,0.12)',
-            border: '1px solid rgba(45,212,191,0.25)',
+            background: 'rgba(var(--brand-rgb),0.12)',
+            border: '1px solid rgba(var(--brand-rgb),0.25)',
             color: 'var(--accent-teal)',
             fontSize: '0.68rem',
             fontWeight: 600,
