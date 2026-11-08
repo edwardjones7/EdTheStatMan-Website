@@ -171,7 +171,7 @@ export default async function PickPage({ params }: { params: { slug: string } })
             <div className="picks-signup">
               <div>
                 <h2 className="picks-signup__title">Get Ed&apos;s next free pick</h2>
-                <p className="picks-signup__text">A free account gets an alert when Ed posts a free pick, plus the free systems.</p>
+                <p className="picks-signup__text">A free account gets an alert when Ed posts a free pick, plus a free Research Desk trial.</p>
               </div>
               <Link href={`/signup?next=/picks/${encodeURIComponent(pick.key)}`} className="btn btn--primary">Create a free account</Link>
             </div>

@@ -38,8 +38,8 @@ const LEVELS: {
     tier: 'retail',
     name: 'Public Intelligence',
     price: 'Free',
-    body: 'A curated set of free systems and trends. On everything else you still see the record, the sample size and the win rate — just not the system itself.',
-    features: ['Curated free systems', 'Record and sample size on every locked row', 'Sport filters'],
+    body: 'See the record, the sample size and the win rate on every system and trend — just not the system itself. Start the free Research Desk trial to open all of them.',
+    features: ['Record and sample size on every row', 'Sport filters', 'Free Research Desk trial'],
   },
   {
     tier: 'private',

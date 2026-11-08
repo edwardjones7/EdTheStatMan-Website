@@ -36,7 +36,7 @@ interface AccountClientProps {
 // Labels come from TIER_SHORT_LABEL in lib/access.ts -- tier copy used to be
 // duplicated across four files and drifted. Only the descriptions live here.
 const TIER_DESCRIPTION: Record<SubscriptionTier, string> = {
-  retail: 'A curated set of free systems, trends and picks. Records visible on everything else.',
+  retail: 'Free picks and records on every Vault row. Start the free Research Desk trial to open the rest.',
   portfolio: 'Every EdTheStatBot pick, unlocked, with the full line and number.',
   private: 'The complete systems and trends libraries, filterable.',
   desk: 'Everything: every game on its own page with the research and bets attached, the whole Handicapping Vault, and every Portfolio pick.',

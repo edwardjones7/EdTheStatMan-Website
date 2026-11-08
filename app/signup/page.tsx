@@ -3,39 +3,13 @@ import AuthPanel from '@/components/AuthPanel'
 import { IconCheckCircle } from '@/components/Icons'
 import { safeNext } from '@/lib/safe-redirect'
 import { authErrorMessage } from '@/lib/auth-errors'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { TRIAL_DAYS } from '@/lib/offer'
 import '@/styles/front-door.css'
 
 export const metadata: Metadata = {
   title: 'Create a Free Account – EdTheStatMan.com',
-  description: 'Free picks, free Vault systems and trends, and pick alerts. Sign up with Google or one email link.',
+  description: 'Free picks, a free Research Desk trial, and pick alerts. Sign up with Google or one email link.',
   robots: { index: false, follow: false },
-}
-
-/**
- * How many Vault rows a free account opens, counted live.
- *
- * Live rather than typed, for the reason lib/offer.ts gives about derived copy:
- * a hand-written number survives the next edit to the library and becomes a
- * false claim on the page whose whole job is to be believed. Two head-only
- * counts, so no rows cross the wire.
- *
- * Any failure (min_tier missing, Postgres slow) returns null and the copy drops
- * the number rather than printing a zero.
- */
-async function freeVaultCount(): Promise<number | null> {
-  try {
-    const admin = createAdminClient() as any
-    const count = (table: string) =>
-      admin.from(table).select('id', { count: 'exact', head: true })
-        .eq('is_active', true).eq('min_tier', 'retail')
-    const [systems, trends] = await Promise.all([count('betting_systems'), count('betting_trends')])
-    if (systems.error || trends.error) return null
-    const total = (systems.count ?? 0) + (trends.count ?? 0)
-    return total > 0 ? total : null
-  } catch {
-    return null
-  }
 }
 
 export default async function SignupPage({
@@ -44,7 +18,6 @@ export default async function SignupPage({
   searchParams: { error?: string; next?: string; email?: string }
 }) {
   const next = safeNext(searchParams.next, '/')
-  const freeCount = await freeVaultCount()
 
   // Every line must be true for a free account today -- checked against
   // OFFER_FREE_FEATURES in lib/offer.ts and against lib/notify/audience.ts,
@@ -54,8 +27,8 @@ export default async function SignupPage({
   const perks = [
     { title: 'Free picks', text: 'Every free-tagged model pick, with its result.' },
     {
-      title: freeCount ? `${freeCount} free Vault systems and trends` : 'Free Vault systems and trends',
-      text: 'The full rule and record on every free row, not just a teaser.',
+      title: `A ${TRIAL_DAYS}-day Research Desk trial`,
+      text: 'The whole Desk and Vault, free. No card, and it ends on its own.',
     },
     { title: 'Pick alerts', text: 'An email or a push notification the moment a free pick drops.' },
     { title: 'The public record', text: 'Records and win rates on every locked row, so you can judge before you pay.' },
