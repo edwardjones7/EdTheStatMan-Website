@@ -625,6 +625,144 @@
 .book-card__sport-pct { color: var(--text-secondary); }
 .book-card__sport-u { font-family: var(--font-mono); color: var(--text-muted); }
 
+/* The record breakdown: total -> sport -> season */
+.rb { padding-top: 24px; padding-bottom: 24px; }
+
+.rb-total,
+.rb-sport {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  padding: 22px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.rb-total {
+  max-width: 920px;
+  margin: 0 auto;
+  border-color: rgba(var(--teal-rgb), 0.35);
+}
+
+.rb-total__title {
+  font-size: clamp(1.3rem, 4vw, 1.6rem);
+  margin: 4px 0 0;
+  color: var(--text-heading);
+}
+
+.rb-total__stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+@media (min-width: 600px) {
+  .rb-total__stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+.rb-sport__stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.rb-stat { display: grid; gap: 2px; }
+
+.rb-stat__value {
+  font-family: var(--font-mono);
+  font-weight: 800;
+  font-size: clamp(1rem, 4vw, 1.3rem);
+  color: var(--text-heading);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.rb-total .rb-stat__value { font-size: clamp(1.2rem, 5vw, 1.7rem); }
+
+.rb-stat__value--up { color: var(--accent-teal); }
+.rb-stat__value--even { color: var(--accent-gold); }
+.rb-stat__value--down { color: var(--accent-red); }
+
+.rb-stat__label {
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.rb-meta {
+  margin: 0;
+  font-size: 0.76rem;
+  color: var(--text-muted);
+}
+
+.rb-sports__title {
+  text-align: center;
+  font-size: clamp(1.4rem, 4vw, 1.8rem);
+  margin: 40px 0 20px;
+}
+
+.rb-sports {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  max-width: 920px;
+  margin: 0 auto;
+}
+
+@media (min-width: 760px) {
+  .rb-sports { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+.rb-sport__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.rb-sport__name {
+  font-size: 1.1rem;
+  margin: 0;
+  color: var(--text-heading);
+}
+
+.rb-sport__count { font-size: 0.76rem; color: var(--text-muted); }
+
+.rb-books,
+.rb-seasons {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.rb-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
+  gap: 10px;
+  align-items: baseline;
+  padding: 8px 10px;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.02);
+  border-left: 3px solid var(--border-color);
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.rb-row--up { border-left-color: var(--accent-teal); }
+.rb-row--even { border-left-color: var(--accent-gold); }
+.rb-row--down { border-left-color: var(--accent-red); }
+
+.rb-row__name { font-weight: 700; color: var(--text-heading); overflow-wrap: anywhere; }
+.rb-row__rec { font-family: var(--font-mono); color: var(--text-secondary); }
+.rb-row__pct { color: var(--text-secondary); }
+.rb-row__u { font-family: var(--font-mono); color: var(--text-muted); }
+
 /* The ledger */
 .ledger { padding-top: 40px; }
 

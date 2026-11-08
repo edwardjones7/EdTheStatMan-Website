@@ -25,7 +25,8 @@ function legacyPriceGrant(priceId: string): { tier: OfferTierKey; grant: AccessG
     return { tier: 'desk', grant: { kind: 'days', days: 30 } }
   }
   if (priceId && priceId === process.env.NEXT_PUBLIC_STRIPE_PREMIUM_PRICE_ID) {
-    return { tier: 'private', grant: { kind: 'days', days: 365 } }
+    // Pro Membership Year opened everything, so it maps to the product that still does.
+    return { tier: 'desk', grant: { kind: 'days', days: 365 } }
   }
   if (priceId && priceId === process.env.NEXT_PUBLIC_STRIPE_ELITE_PRICE_ID) {
     return { tier: 'private', grant: { kind: 'until', endsAt: '2027-02-15T12:00:00Z' } }

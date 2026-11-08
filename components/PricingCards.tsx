@@ -200,9 +200,12 @@ export default function PricingCards({
   highlight = 'desk',
   trial = null,
 }: Props) {
-  const [period, setPeriod] = useState<BillingPeriod>('year')
-
   const isPaid = membership === 'active' || membership === 'admin'
+  // Logged-out, free and trial visitors open on 30 days; paying members on 365.
+  const [period, setPeriod] = useState<BillingPeriod>(
+    isPaid && !trial?.onTrial ? 'year' : 'month'
+  )
+
   const isLoggedIn = membership !== 'logged-out'
   const isExpired = membership === 'expired'
   const isAdmin = membership === 'admin'
@@ -219,8 +222,6 @@ export default function PricingCards({
 
   return (
     <div className="rate-wrap">
-      {/* 365 days is the SKU we push: one sale and one dispute window instead
-          of twelve of each. It is the default selection. */}
       <div className="rate-bar">
         <p className="rate-bar__note">One payment for 30 or 365 days. Nothing renews.</p>
         <PeriodToggle period={period} onChange={setPeriod} />

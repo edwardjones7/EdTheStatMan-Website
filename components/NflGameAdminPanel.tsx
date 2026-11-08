@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import { IconPencil } from './Icons'
+import { writeupBetCount } from '@/lib/nfl'
 
 interface LinkableRow {
   id: string
@@ -43,6 +44,7 @@ export default function NflGameAdminPanel({ game, sportLabel, allSystems, allTre
   const [trendIds, setTrendIds] = useState<Set<string>>(new Set(linkedTrendIds))
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
+  const [betCount, setBetCount] = useState(() => writeupBetCount(game.writeup_html))
 
   const closedOn = game.research_closed_at
     ? new Date(game.research_closed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
@@ -52,6 +54,7 @@ export default function NflGameAdminPanel({ game, sportLabel, allSystems, allTre
     immediatelyRender: false,
     extensions: [StarterKit],
     content: game.writeup_html || '<p></p>',
+    onUpdate: ({ editor }) => setBetCount(writeupBetCount(editor.getHTML())),
   })
 
   function toggle(set: Set<string>, id: string, apply: (next: Set<string>) => void) {
@@ -124,6 +127,10 @@ export default function NflGameAdminPanel({ game, sportLabel, allSystems, allTre
         <div className="nfl-writeup-editor">
           <EditorContent editor={editor} />
         </div>
+        <p className="admin-form-hint">
+          Counted on the board: {betCount} {betCount === 1 ? 'bet' : 'bets'}. One bet per line, like
+          &ldquo;OVER Zay Flowers 48.5 receiving yards&rdquo; or &ldquo;Ravens +9.5&rdquo;. Leans are not counted.
+        </p>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '16px', marginBottom: '14px' }}>

@@ -1850,6 +1850,7 @@ html[data-navigating] .nav__progress-fill {
 .sys-stats-chip:nth-child(1)::before { background: var(--accent-gold); }
 .sys-stats-chip:nth-child(2)::before { background: var(--accent-sky); }
 .sys-stats-chip:nth-child(3)::before { background: var(--accent-teal); }
+.sys-stats-chip--vault::before { background: var(--accent-sky); }
 
 .sys-stats-chip__label {
   font-size: 0.72rem;

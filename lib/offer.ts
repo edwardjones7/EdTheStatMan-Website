@@ -160,7 +160,7 @@ export const OFFER_COMPARE_ROWS: { text: string; has: OfferTierKey[] }[] = [
 /** The free account, shown as a comparison strip. */
 export const OFFER_FREE_FEATURES: { text: string; included: boolean }[] = [
   { text: 'Free-tagged model picks', included: true },
-  { text: 'Curated free systems and trends', included: true },
+  { text: `A ${TRIAL_DAYS}-day Research Desk trial, no card`, included: true },
   { text: 'Records and win rates on every locked row', included: true },
   { text: 'X and Discord alerts', included: true },
   { text: 'The picks themselves', included: false },

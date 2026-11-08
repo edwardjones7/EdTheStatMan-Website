@@ -544,8 +544,7 @@ export default async function NflGamePage({ params }: { params: { sport: string;
             />
           )}
 
-          {/* Say so rather than ending the page. Admins see this too -- it is
-              the same signal the board's "No research yet" tag gives them. */}
+          {/* Say so rather than ending the page. Admins see this too. */}
           {!hasResearch && (
             <div className="nfl-game-empty reveal">
               <h2 className="nfl-game-empty__title">No research added yet</h2>
