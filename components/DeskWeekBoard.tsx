@@ -273,21 +273,23 @@ export default function DeskWeekBoard({
 
   // Week header numbers. These are the honest advertisement for the rung: how
   // much research is actually sitting on this week's board.
-  const researched = games.filter(g => {
+  // Total systems + trends attached across the week's games, not the number
+  // of games that carry any (Ed, Nov 2026).
+  const researched = games.reduce((n, g) => {
     const c = linkedCounts[g.id]
-    return c && c.systems + c.trends > 0
-  }).length
+    return n + (c ? c.systems + c.trends : 0)
+  }, 0)
   // Bets, not write-ups (Ed, Nov 2026): he is not writing game write-ups, he
   // is attaching the free and Portfolio picks to each game. "Lines moved" went
   // the same day -- a count of moved lines told nobody anything.
   const bets = games.reduce((n, g) => n + (betCounts[g.id] ?? 0), 0)
-  // A zero is dropped rather than printed. "0 With Systems/Trends / 0 Bets" is cells
+  // A zero is dropped rather than printed. "0 Systems/Trends / 0 Bets" is cells
   // of nothing on most boards most days, and it reads as a broken product
   // rather than an early week. The game count stays: it is the one number
   // that is never noise.
   const summary = [
     { value: games.length, label: games.length === 1 ? 'Game' : 'Games' },
-    { value: researched, label: 'With Systems/Trends', accent: researched > 0 },
+    { value: researched, label: 'Systems/Trends', accent: researched > 0 },
     { value: bets, label: bets === 1 ? 'Bet' : 'Bets', accent: bets > 0 },
   ].filter((s, i) => i === 0 || s.value > 0)
 
