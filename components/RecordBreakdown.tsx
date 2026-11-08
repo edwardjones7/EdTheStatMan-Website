@@ -14,7 +14,7 @@ import { BOOK_LABEL, shortDate } from '@/lib/proof'
 /**
  * The record on /portfolio/performance, top down:
  *   1. the total across every graded pick (members' card + free picks), with
- *      the two books shown beside it so neither can hide inside the blend
+ *      the two books shown beside it once both have graded picks
  *   2. each sport's overall
  *   3. each sport split by season (lib/records.ts seasonOf)
  *
@@ -43,6 +43,9 @@ export default function RecordBreakdown({ rows }: { rows: RecordSource[] }) {
   const total = computeRecord(rows)
   if (graded(total) === 0) return null
   const books = recordsByBook(rows)
+  // A split is only shown when it splits something. With one book graded, its
+  // row is the total again; with one season, the season row is the sport again.
+  const bookKeys = (['members', 'free'] as const).filter(b => graded(books[b]) > 0)
   const sports = sportSeasonBreakdown(rows)
 
   return (
@@ -64,8 +67,9 @@ export default function RecordBreakdown({ rows }: { rows: RecordSource[] }) {
             {total.assumedOdds > 0 ? ` · ${total.assumedOdds} scored at -110 (no recorded price)` : ''}
             {` · break-even at -110 is ${BREAK_EVEN_PCT}%`}
           </p>
+          {bookKeys.length > 1 && (
           <ul className="rb-books">
-            {(['members', 'free'] as const).filter(b => graded(books[b]) > 0).map(b => (
+            {bookKeys.map(b => (
               <li key={b} className={`rb-row rb-row--${tone(books[b].pct)}`}>
                 <span className="rb-row__name">{BOOK_LABEL[b]}</span>
                 <span className="rb-row__rec">{formatRecord(books[b])}</span>
@@ -74,6 +78,7 @@ export default function RecordBreakdown({ rows }: { rows: RecordSource[] }) {
               </li>
             ))}
           </ul>
+          )}
         </article>
 
         {sports.length > 0 && (
@@ -91,6 +96,7 @@ export default function RecordBreakdown({ rows }: { rows: RecordSource[] }) {
                     <Stat value={`${sp.pct.toFixed(1)}%`} label="Win rate" toneClass={tone(sp.pct)} />
                     <Stat value={formatUnits(sp.units)} label="Units" />
                   </div>
+                  {sp.seasons.length > 1 && (
                   <ul className="rb-seasons" aria-label={`${sp.sport} by season`}>
                     {sp.seasons.map(se => (
                       <li key={se.season} className={`rb-row rb-row--${tone(se.pct)}`}>
@@ -101,6 +107,7 @@ export default function RecordBreakdown({ rows }: { rows: RecordSource[] }) {
                       </li>
                     ))}
                   </ul>
+                  )}
                 </article>
               ))}
             </div>
