@@ -4,12 +4,11 @@ import { DEFAULT_RESULTS } from '@/lib/site-content'
 import type { ResultsContent } from '@/lib/site-content'
 import ResultsEditor from '@/components/ResultsEditor'
 import CTASection from '@/components/CTASection'
-import ProofStrip from '@/components/ProofStrip'
-import BookCards from '@/components/BookCards'
+import RecordBreakdown from '@/components/RecordBreakdown'
 import ResultsLedger, { LEDGER_PAGE_SIZE, type LedgerRow } from '@/components/ResultsLedger'
 import type { TodaysBet } from '@/components/TodaysBets'
 import { getAccess } from '@/lib/access-server'
-import { buildProof, loadPublishedPicks } from '@/lib/proof'
+import { loadPublishedPicks } from '@/lib/proof'
 import '@/styles/proof-win.css'
 
 export const metadata: Metadata = {
@@ -61,10 +60,8 @@ export default async function Results({ searchParams }: { searchParams: { page?:
     const supabase = await createClient()
     const { data } = await (supabase as any).from('site_content').select('value').eq('key', 'results').single()
     const content: ResultsContent = { ...DEFAULT_RESULTS, ...((data?.value as object) ?? {}) }
-    return <ResultsEditor content={content} recentPicks={picks} />
+    return <ResultsEditor content={content} recentPicks={picks} breakdown={<RecordBreakdown rows={picks} />} />
   }
-
-  const proof = buildProof(picks)
 
   // Only graded rows are the ledger: a pending row flagged for results has no
   // result to show yet and the record does not count it either.
@@ -88,19 +85,13 @@ export default async function Results({ searchParams }: { searchParams: { page?:
           <span className="section-label">Live Track Record</span>
           <h1 className="page-header__title">Model <span className="text-gradient">Results</span></h1>
           <p className="page-header__subtitle">
-            Every graded pick, win or lose. The members&apos; card and the free picks are kept as
-            two separate records, split by sport, with the full log underneath.
+            Every graded pick, win or lose: the overall record, then each sport, then each
+            sport by season, with the full log underneath.
           </p>
         </div>
       </header>
 
-      <section className="perf-proof" aria-label="Headline record">
-        <div className="container">
-          <ProofStrip proof={proof} showLedgerLink={false} />
-        </div>
-      </section>
-
-      <BookCards proof={proof} rows={picks} />
+      <RecordBreakdown rows={picks} />
 
       <ResultsLedger rows={pageRows} page={page} pageCount={pageCount} total={graded.length} />
 

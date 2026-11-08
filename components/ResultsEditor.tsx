@@ -12,9 +12,11 @@ import { IconPencil } from './Icons'
 interface Props {
   content: ResultsContent
   recentPicks: TodaysBet[]
+  /** Server-rendered record breakdown (total, sport, season). */
+  breakdown?: React.ReactNode
 }
 
-export default function ResultsEditor({ content, recentPicks }: Props) {
+export default function ResultsEditor({ content, recentPicks, breakdown }: Props) {
   const [editMode, setEditMode] = useState(false)
   const [draft, setDraft] = useState<ResultsContent>(content)
   const [dirty, setDirty] = useState(false)
@@ -70,6 +72,7 @@ export default function ResultsEditor({ content, recentPicks }: Props) {
         resetKey={resetKey}
         picks={recentPicks}
       />
+      {breakdown}
       <RecentPicksResults rows={recentPicks} isAdmin={true} editMode={editMode} />
       <ModelPerformance calcStats={{ wins, losses, pushes, winPct }} picks={recentPicks} />
       <CTASection />

@@ -142,6 +142,74 @@ export function recordsBySport(rows: RecordSource[], minDecisions = MIN_DECISION
     .sort((a, b) => (b.w + b.l) - (a.w + a.l))
 }
 
+/** Sports whose season straddles New Year and is named "2025-26". */
+const SPLIT_YEAR = new Set(['NBA', 'NHL', 'CBB', 'NCAAB', 'NCAABB'])
+/** Sports played Aug/Sep to Jan/Feb, named by the year they start. */
+const FALL_YEAR = new Set(['NFL', 'CFB', 'NCAAF'])
+
+/**
+ * The season a pick belongs to, from its sport and YYYY-MM-DD date.
+ *   NBA/NHL/CBB  Aug onward starts the next season: 2026-04-14 -> "2025-26"
+ *   NFL/CFB      Jan-Feb belong to the previous fall: 2027-01-10 -> "2026"
+ *   everything else (WNBA, CFL, MLB...)  the calendar year
+ * Returns null when the date is not a full ISO date.
+ */
+export function seasonOf(sport: string | null, date: string | null): string | null {
+  const m = String(date ?? '').match(/^(\d{4})-(\d{2})-\d{2}/)
+  if (!m) return null
+  const y = Number(m[1]), mo = Number(m[2])
+  const s = String(sport ?? '').trim().toUpperCase()
+  if (SPLIT_YEAR.has(s)) {
+    const start = mo >= 8 ? y : y - 1
+    return `${start}-${String((start + 1) % 100).padStart(2, '0')}`
+  }
+  if (FALL_YEAR.has(s)) return String(mo <= 2 ? y - 1 : y)
+  return String(y)
+}
+
+export interface SeasonRecord extends PickRecord {
+  season: string
+}
+
+export interface SportBreakdown extends SportRecord {
+  /** Newest season first. */
+  seasons: SeasonRecord[]
+}
+
+/**
+ * Every sport with at least one graded pick (no sample floor: this is the full
+ * breakdown, not a headline), largest sample first, each split by season.
+ */
+export function sportSeasonBreakdown(rows: RecordSource[]): SportBreakdown[] {
+  const by = new Map<string, RecordSource[]>()
+  for (const r of rows) {
+    const s = String(r.sport ?? '').trim().toUpperCase()
+    if (!s) continue
+    if (!by.has(s)) by.set(s, [])
+    by.get(s)!.push(r)
+  }
+  const out: SportBreakdown[] = []
+  for (const [sport, rs] of by) {
+    const rec = computeRecord(rs)
+    if (rec.w + rec.l + rec.p === 0) continue
+    const seasons = new Map<string, RecordSource[]>()
+    for (const r of rs) {
+      const key = seasonOf(sport, r.date) ?? 'Undated'
+      if (!seasons.has(key)) seasons.set(key, [])
+      seasons.get(key)!.push(r)
+    }
+    out.push({
+      sport,
+      ...rec,
+      seasons: [...seasons.entries()]
+        .map(([season, srs]) => ({ season, ...computeRecord(srs) }))
+        .filter(x => x.w + x.l + x.p > 0)
+        .sort((a, b) => (a.season === 'Undated' ? 1 : b.season === 'Undated' ? -1 : b.season.localeCompare(a.season))),
+    })
+  }
+  return out.sort((a, b) => (b.w + b.l + b.p) - (a.w + a.l + a.p))
+}
+
 /**
  * The headline: the strongest sport with a real sample that is in season now
  * (graded in the last `recentDays`), falling back to the strongest overall.
