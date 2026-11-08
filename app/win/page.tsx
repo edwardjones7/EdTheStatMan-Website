@@ -142,9 +142,14 @@ export default async function Pricing({
 
   // ?plan=<tier>&period=month|year, from links elsewhere on the site. Only
   // preselects and highlights; it never starts a checkout (that is ?checkout=).
-  // 365 days stays the default: it is the SKU we push. ?trial=1 (back from
-  // signup via the trial button) highlights the Research Desk.
-  const initialPeriod: BillingPeriod = searchParams.period === 'month' ? 'month' : 'year'
+  // Logged-out, free and trial visitors open on 30 days (the lower entry
+  // price); paying members open on 365 days. An explicit ?period= wins.
+  // ?trial=1 (back from signup via the trial button) highlights the Research Desk.
+  const defaultPeriod: BillingPeriod = isPaid && !trial.onTrial ? 'year' : 'month'
+  const initialPeriod: BillingPeriod =
+    searchParams.period === 'month' || searchParams.period === 'year'
+      ? searchParams.period
+      : defaultPeriod
   const selectedPlan: OfferTierKey | null =
     OFFER_PLANS.find(p => p.key === searchParams.plan)?.key ?? (searchParams.trial ? 'desk' : null)
 
