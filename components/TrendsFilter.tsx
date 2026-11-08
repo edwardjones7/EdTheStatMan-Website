@@ -407,17 +407,12 @@ export default function TrendsFilter({ trends, lockedCounts = {}, lockedTeasers 
   const eliteVisibleCount = 0
   const eliteCount = eliteVisibleCount + eliteLockedCount
   const memberCount = activeTrends.length - (freeCount - freeLockedCount) - eliteVisibleCount + lockedCount
-  const totalCount = freeCount + memberCount + eliteCount
 
   return (
     <>
       {/* Summary stats bar */}
       <div className="sys-stats-bar reveal" style={{ marginTop: '32px' }}>
-        <div className="sys-stats-chip">
-          <span className="sys-stats-chip__label">{TIER_SHORT_LABEL.retail} Trends</span>
-          <span className="sys-stats-chip__value">{freeCount}</span>
-        </div>
-        <div className="sys-stats-chip">
+        <div className="sys-stats-chip sys-stats-chip--vault">
           <span className="sys-stats-chip__label">{TIER_SHORT_LABEL.private} Trends</span>
           <span className="sys-stats-chip__value">{memberCount}</span>
         </div>
@@ -427,10 +422,6 @@ export default function TrendsFilter({ trends, lockedCounts = {}, lockedTeasers 
             <span className="sys-stats-chip__value">{eliteCount}</span>
           </div>
         )}
-        <div className="sys-stats-chip">
-          <span className="sys-stats-chip__label">Total Trends</span>
-          <span className="sys-stats-chip__value">{totalCount}</span>
-        </div>
       </div>
 
       {/* Sport tabs */}
