@@ -1,5 +1,5 @@
 import type { MetadataRoute } from 'next'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { createCachedClient, DB_TAGS } from '@/lib/supabase/cached'
 import { DESK_SPORTS } from '@/lib/desk'
 import { gamePath } from '@/lib/nfl'
 import { selectAll } from '@/lib/supabase/select-all'
@@ -13,7 +13,9 @@ const BASE = 'https://edthestatman.com'
 export const revalidate = 3600
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const admin = createAdminClient()
+  // Cached and time-bounded: a sitemap that hangs on the database fails the
+  // whole build (seen 2026-11-12 while Supabase was unreachable).
+  const admin = createCachedClient([DB_TAGS.games, DB_TAGS.content], 3600)
 
   // Games are paged: there are several thousand published rows across the four
   // leagues, and an unpaged read stopped at exactly 1,000 (lib/supabase/select-all.ts).

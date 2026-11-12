@@ -1,5 +1,5 @@
 import type { MetadataRoute } from 'next'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { createCachedClient, DB_TAGS } from '@/lib/supabase/cached'
 import { selectAll } from '@/lib/supabase/select-all'
 import { toPublicPick } from './public'
 
@@ -18,7 +18,7 @@ import { toPublicPick } from './public'
 export async function pickSitemapEntries(base = 'https://edthestatman.com'): Promise<MetadataRoute.Sitemap> {
   const entries: MetadataRoute.Sitemap = []
   try {
-    const admin = createAdminClient() as any
+    const admin = createCachedClient([DB_TAGS.picks], 3600) as any
     const { data } = await selectAll(() => admin.from('todays_bets').select('*').order('id'))
     for (const row of data ?? []) {
       if (row.is_active === false && row.show_on_results !== true) continue

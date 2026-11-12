@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { revalidateTag } from 'next/cache'
 import type { Database } from './types'
+import { boundRead } from './auth-timeout'
 
 /**
  * A service-role client whose READS go through Next's data cache.
@@ -43,7 +44,9 @@ export function createCachedClient(tags: DbTag[], revalidate = DEFAULT_REVALIDAT
   const cachedFetch: typeof fetch = (input, init) => {
     const method = (init?.method ?? 'GET').toUpperCase()
     if (method !== 'GET' && method !== 'HEAD') return fetch(input, init)
-    return fetch(input, { ...init, cache: undefined, next: { revalidate, tags } } as RequestInit)
+    // Bounded: when Supabase is unreachable a read fails in seconds instead of
+    // hanging the page, and Next keeps serving the last cached copy meanwhile.
+    return fetch(input, { ...boundRead(init), cache: undefined, next: { revalidate, tags } } as RequestInit)
   }
 
   return createClient<Database>(

@@ -5,6 +5,22 @@
 // unbounded call hangs the whole request, not just auth.
 export const AUTH_TIMEOUT_MS = 2500
 
+// Ceiling on a single REST read made while rendering a page. On 2026-11-12 the
+// whole project became unreachable (Free plan quota restriction, during a
+// Supabase connection incident) and every read hung for 30-120s, so every page
+// hung with it. A read that fails fast returns an error, which every page
+// already treats as "no rows" and renders around. Writes are not bounded.
+export const REST_READ_TIMEOUT_MS = 6000
+
+/** Adds REST_READ_TIMEOUT_MS to a GET/HEAD; anything else passes through. */
+export function boundRead(init: RequestInit | undefined, ms = REST_READ_TIMEOUT_MS): RequestInit | undefined {
+  const method = (init?.method ?? 'GET').toUpperCase()
+  if (method !== 'GET' && method !== 'HEAD') return init
+  if (typeof AbortSignal.timeout !== 'function') return init
+  const timeout = AbortSignal.timeout(ms)
+  return { ...init, signal: mergeSignals(timeout, init?.signal) }
+}
+
 // The session cookie @supabase/ssr writes (`sb-<project-ref>-auth-token`),
 // including the `.0`/`.1` chunks it splits an oversized session across.
 export const AUTH_COOKIE_PATTERN = /^sb-.+-auth-token(\.\d+)?$/
@@ -33,9 +49,9 @@ export function boundedAuthFetch(): BoundedAuthFetch {
     const url =
       typeof input === 'string' ? input : input instanceof URL ? input.href : input.url
 
-    // Only Auth is bounded. REST stayed healthy right through the outage, and
-    // the admin bulk imports would not survive a 2.5s ceiling.
-    if (!url.includes('/auth/v1/')) return fetch(input, init)
+    // Auth gets the 2.5s abort below. REST reads get the looser
+    // REST_READ_TIMEOUT_MS; REST writes (admin bulk imports) are never bounded.
+    if (!url.includes('/auth/v1/')) return fetch(input, boundRead(init))
 
     return fetch(input, { ...init, signal: mergeSignals(controller.signal, init?.signal) })
   }
