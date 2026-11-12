@@ -1,6 +1,5 @@
 import type { Metadata } from 'next'
-import { createClient } from '@/lib/supabase/server'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { createCachedClient, DB_TAGS } from '@/lib/supabase/cached'
 import { DEFAULT_MODEL_PICKS } from '@/lib/site-content'
 import type { ModelPicksContent } from '@/lib/site-content'
 import type { TodaysBet } from '@/components/TodaysBets'
@@ -33,12 +32,10 @@ export const metadata: Metadata = {
 export const dynamic = 'force-dynamic'
 
 export default async function Portfolio() {
-  const supabase = await createClient()
-  const adminDb = createAdminClient()
-
+  // Cached: shared by every visitor, gated per visitor below.
   const [betsResult, contentResult] = await Promise.all([
-    (adminDb as any).from('todays_bets').select('*').order('created_at', { ascending: false }),
-    (supabase as any).from('site_content').select('key, value').eq('key', 'model_picks'),
+    (createCachedClient([DB_TAGS.picks]) as any).from('todays_bets').select('*').order('created_at', { ascending: false }),
+    (createCachedClient([DB_TAGS.content]) as any).from('site_content').select('key, value').eq('key', 'model_picks'),
   ])
 
   const allBets: TodaysBet[] = betsResult.data ?? []

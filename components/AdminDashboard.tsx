@@ -305,7 +305,7 @@ export default function AdminDashboard({ users, posts, initialTab, initialAnalyt
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [range, weekStart])
 
-  // Live stats — poll every 30s so the dashboard stays current without reloads
+  // Live stats — poll every 2 min so the dashboard stays current without reloads
   useEffect(() => {
     let cancelled = false
     const load = () =>
@@ -314,7 +314,7 @@ export default function AdminDashboard({ users, posts, initialTab, initialAnalyt
         .then(d => { if (!cancelled && typeof d.activeNow === 'number') setLive(d) })
         .catch(() => {})
     load()
-    const id = setInterval(load, 30_000)
+    const id = setInterval(load, 120_000)
     return () => { cancelled = true; clearInterval(id) }
   }, [])
 

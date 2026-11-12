@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { invalidate, DB_TAGS } from '@/lib/supabase/cached'
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 
@@ -40,6 +41,7 @@ export async function PATCH(req: Request) {
     .upsert({ key, value, updated_at: new Date().toISOString() }, { onConflict: 'key' })
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
+  invalidate(DB_TAGS.content)
   revalidatePath('/')
   revalidatePath('/portfolio/performance')
   revalidatePath('/desk/nfl')

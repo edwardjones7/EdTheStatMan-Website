@@ -11,7 +11,7 @@
 // side-by-side is the upgrade argument, and it only stays honest while neither
 // can be hidden (vault Decisions 2026-10-15).
 
-import { createAdminClient } from './supabase/admin'
+import { createCachedClient, DB_TAGS } from './supabase/cached'
 import { selectAll } from './supabase/select-all'
 import {
   recordsByBook,
@@ -127,7 +127,8 @@ export function buildProof(rows: RecordSource[], now: Date = new Date()): ProofD
  * fails the whole read. Only the shaped ProofData leaves the server.
  */
 export async function loadPublishedPicks<T extends RecordSource = RecordSource>(): Promise<T[]> {
-  const admin = createAdminClient() as any
+  // Cached: the homepage and /portfolio/performance read this on every visit.
+  const admin = createCachedClient([DB_TAGS.picks]) as any
   const { data, error } = await selectAll<T>(() =>
     admin.from('todays_bets').select('*').eq('show_on_results', true).order('id', { ascending: true })
   )

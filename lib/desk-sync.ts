@@ -1,4 +1,5 @@
 import { buildGameSlug } from './nfl'
+import { invalidate, DB_TAGS } from './supabase/cached'
 import { fetchWeek, fetchEventOdds, hasOdds, protectStoredOdds, ODDS_COLS, type ParsedGame } from './espn'
 
 /**
@@ -117,7 +118,19 @@ export interface SyncOptions {
   oddsFillCap?: number
 }
 
+/**
+ * Sync, then drop the Desk's cached reads if anything was written, so the
+ * board and game pages (which read through lib/supabase/cached.ts) show the
+ * new scores and lines on their next render. A run that wrote nothing leaves
+ * the cache alone -- that is most runs, and the point of caching.
+ */
 export async function syncTargets(admin: any, opts: SyncOptions): Promise<SyncResult> {
+  const result = await syncTargetsUncached(admin, opts)
+  if ((result.inserted ?? 0) + (result.updated ?? 0) > 0) invalidate(DB_TAGS.games)
+  return result
+}
+
+async function syncTargetsUncached(admin: any, opts: SyncOptions): Promise<SyncResult> {
   const { sport, season, targets, publishNew, oddsFillCap = 400 } = opts
 
   const parsed: ParsedGame[] = []

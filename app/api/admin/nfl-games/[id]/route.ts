@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { invalidate, DB_TAGS } from '@/lib/supabase/cached'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 
@@ -53,6 +54,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     .select('id')
     .single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  invalidate(DB_TAGS.games)
   return NextResponse.json(data)
 }
 
@@ -66,22 +68,23 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
   const trendIds: string[] = Array.isArray(body.trendIds) ? body.trendIds : []
 
   const { error: delSysError } = await admin.from('nfl_game_systems').delete().eq('game_id', params.id)
-  if (delSysError) return NextResponse.json({ error: delSysError.message }, { status: 500 })
+  if (delSysError) { invalidate(DB_TAGS.games); return NextResponse.json({ error: delSysError.message }, { status: 500 }) }
   const { error: delTrendError } = await admin.from('nfl_game_trends').delete().eq('game_id', params.id)
-  if (delTrendError) return NextResponse.json({ error: delTrendError.message }, { status: 500 })
+  if (delTrendError) { invalidate(DB_TAGS.games); return NextResponse.json({ error: delTrendError.message }, { status: 500 }) }
 
   if (systemIds.length > 0) {
     const { error } = await admin
       .from('nfl_game_systems')
       .insert(systemIds.map(id => ({ game_id: params.id, system_id: id })))
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) { invalidate(DB_TAGS.games); return NextResponse.json({ error: error.message }, { status: 500 }) }
   }
   if (trendIds.length > 0) {
     const { error } = await admin
       .from('nfl_game_trends')
       .insert(trendIds.map(id => ({ game_id: params.id, trend_id: id })))
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) { invalidate(DB_TAGS.games); return NextResponse.json({ error: error.message }, { status: 500 }) }
   }
 
+  invalidate(DB_TAGS.games)
   return NextResponse.json({ ok: true })
 }

@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { createCachedClient, DB_TAGS } from '@/lib/supabase/cached'
 import { resolveAccess, ACCESS_SELECT, atLeastTier } from '@/lib/access'
 import { rowMinTier, researchClosedFor, holdsLibrary } from '@/lib/gate'
 import { toPublicPick } from '@/lib/picks/public'
@@ -28,7 +28,7 @@ import { IconLock } from '@/components/Icons'
 export const dynamic = 'force-dynamic'
 
 export async function generateMetadata({ params }: { params: { sport: string; slug: string } }): Promise<Metadata> {
-  const admin = createAdminClient()
+  const admin = createCachedClient([DB_TAGS.games, DB_TAGS.picks, DB_TAGS.vault])
   // Page params arrive percent-encoded; the stored slug is not. See decodeSlugParam.
   const slug = decodeSlugParam(params.slug)
   const { data: game } = await (admin as any)
@@ -91,7 +91,7 @@ function kickoffDisplay(kickoff: string | null, sport: string, tbd?: boolean | n
 }
 
 export default async function NflGamePage({ params }: { params: { sport: string; slug: string } }) {
-  const admin = createAdminClient()
+  const admin = createCachedClient([DB_TAGS.games, DB_TAGS.picks, DB_TAGS.vault])
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
