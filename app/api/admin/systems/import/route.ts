@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { invalidate, DB_TAGS } from '@/lib/supabase/cached'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { TIER_RANK } from '@/lib/access'
@@ -33,6 +34,7 @@ export async function POST(req: Request) {
     r => r?.min_tier !== undefined && r?.min_tier !== null && !(String(r.min_tier) in TIER_RANK)
   )
   if (bad !== -1) {
+    invalidate(DB_TAGS.vault)
     return NextResponse.json(
       { error: `Row ${bad + 1} has an unknown min_tier "${(records as any[])[bad].min_tier}".` },
       { status: 400 }
@@ -49,6 +51,7 @@ export async function POST(req: Request) {
     if (!code) continue
     const first = seen.get(code)
     if (first !== undefined) {
+      invalidate(DB_TAGS.vault)
       return NextResponse.json(
         { error: `Rows ${first + 1} and ${i + 1} both use the System ID "${code}".` },
         { status: 400 }
@@ -63,8 +66,10 @@ export async function POST(req: Request) {
     const message = (error as any).code === '23505'
       ? `One of these IDs is already in the library. Import with "clear first" ticked, or change the duplicate.`
       : error.message
+    invalidate(DB_TAGS.vault)
     return NextResponse.json({ error: message }, { status: 500 })
   }
 
+  invalidate(DB_TAGS.vault)
   return NextResponse.json({ inserted: records.length })
 }

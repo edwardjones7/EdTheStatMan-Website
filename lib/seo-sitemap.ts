@@ -7,7 +7,7 @@
 // thousands of nfl_games rows, and PostgREST stops at 1,000 without a word.
 
 import type { MetadataRoute } from 'next'
-import { createAdminClient } from './supabase/admin'
+import { createCachedClient, DB_TAGS } from './supabase/cached'
 import { selectAll } from './supabase/select-all'
 import { DESK_SPORTS } from './desk'
 import { latestPublishedSeason, teamPath } from './desk-teams'
@@ -24,7 +24,7 @@ type TeamRow = {
 }
 
 export async function seoSitemapEntries(): Promise<MetadataRoute.Sitemap> {
-  const admin = createAdminClient()
+  const admin = createCachedClient([DB_TAGS.games, DB_TAGS.vault], 3600)
   const [teams, systems, trends] = await Promise.all([
     teamEntries(admin),
     vaultEntries(admin, 'systems'),

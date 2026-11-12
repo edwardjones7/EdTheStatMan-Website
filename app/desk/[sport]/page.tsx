@@ -7,6 +7,7 @@ import NflAdminBar from '@/components/NflAdminBar'
 import DeskLiveRefresh from '@/components/DeskLiveRefresh'
 import PricingCards from '@/components/PricingCards'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { createCachedClient, DB_TAGS } from '@/lib/supabase/cached'
 import { getAccess } from '@/lib/access-server'
 import { researchClosedFor, holdsLibrary } from '@/lib/gate'
 import { toPublicGame, currentWeekOf, weekLabel, weekIsOver } from '@/lib/nfl'
@@ -47,7 +48,10 @@ export default async function DeskSport({
   const sport = params.sport.toLowerCase()
   if (!DESK_SPORTS.includes(sport as any)) notFound()
 
-  const admin = createAdminClient()
+  // Cached: the schedule, links and bet counts are the same for every visitor
+  // (gating happens below). The live sync (app/api/desk/refresh) drops this
+  // cache whenever it writes, so scores do not lag behind it.
+  const admin = createCachedClient([DB_TAGS.games, DB_TAGS.picks])
 
   // `nfl_games` is neither one season nor one league. Completed seasons are
   // backfilled into it so the Vault's situational rules have a history to check
@@ -91,7 +95,7 @@ export default async function DeskSport({
   let trial: TrialState = { available: false, onTrial: false, endsAt: null }
   if (!hasDesk && membership !== 'logged-out') {
     const { data: { user } } = await (await createClient()).auth.getUser()
-    trial = await loadTrialState(admin, user?.id)
+    trial = await loadTrialState(createAdminClient(), user?.id)
   }
 
   // The week rail needs every week of the season but none of the payload, so it

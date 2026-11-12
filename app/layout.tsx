@@ -12,6 +12,7 @@ import { SpeedInsights } from '@vercel/speed-insights/next'
 import { BotIdClient } from 'botid/client'
 import { BOTID_PROTECTED } from '@/lib/botid-routes'
 import { createClient } from '@/lib/supabase/server'
+import { createCachedClient, DB_TAGS } from '@/lib/supabase/cached'
 import { DEFAULT_TICKER } from '@/lib/site-content'
 import type { TickerContent } from '@/lib/site-content'
 import { Suspense } from 'react'
@@ -74,7 +75,8 @@ export default async function RootLayout({
   // place from any page via GlobalTicker.
   const supabase = await createClient()
 
-  const { data: tickerRow } = await (supabase as any)
+  // Cached: this runs on every page of the site, crawlers included.
+  const { data: tickerRow } = await (createCachedClient([DB_TAGS.content]) as any)
     .from('site_content')
     .select('value')
     .eq('key', 'ticker')

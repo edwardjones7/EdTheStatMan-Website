@@ -6,14 +6,14 @@
 // rendering the page is entitled to it.
 
 import type { Metadata } from 'next'
-import { createAdminClient } from './supabase/admin'
+import { createCachedClient, DB_TAGS } from './supabase/cached'
 import { SPORT_LABEL, type Sport } from './desk'
 import { codeFromParam, loadVaultRow, vaultRowPath, type VaultKind } from './vault-row'
 
 export async function vaultRowMetadata(kind: VaultKind, rawCode: string): Promise<Metadata> {
   const code = codeFromParam(rawCode)
   const row = code
-    ? await loadVaultRow(createAdminClient(), kind, code, { tier: null, isAdmin: false })
+    ? await loadVaultRow(createCachedClient([DB_TAGS.vault]), kind, code, { tier: null, isAdmin: false })
     : null
   if (!row) return { title: 'Not Found' }
 

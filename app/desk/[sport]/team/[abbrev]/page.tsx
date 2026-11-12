@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { cache } from 'react'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { createCachedClient, DB_TAGS } from '@/lib/supabase/cached'
 import { toPublicGame, gamePath, weekLabel } from '@/lib/nfl'
 import type { PublicNflGame } from '@/lib/nfl'
 import { DESK_SPORTS, deskSportLabel, deskSeasonLabel, weeksFromDates } from '@/lib/desk'
@@ -42,7 +42,7 @@ const loadTeam = cache(async (sportParam: string, abbrevParam: string): Promise<
   const abbrev = abbrevFromParam(abbrevParam)
   if (!abbrev) return null
 
-  const admin = createAdminClient()
+  const admin = createCachedClient([DB_TAGS.games])
   const season = await latestPublishedSeason(admin, sport)
   const rows = await teamSeasonGames(admin, sport, season, abbrev)
   if (rows.length === 0) return null

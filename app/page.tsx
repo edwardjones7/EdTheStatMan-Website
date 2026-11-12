@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { createCachedClient, DB_TAGS } from '@/lib/supabase/cached'
 import { SITE_CONTENT_DEFAULTS } from '@/lib/site-content'
 import type { AllSiteContent } from '@/lib/site-content'
 import type { HeroCta } from '@/components/HomeHero'
@@ -46,7 +46,7 @@ export default async function Home() {
   const leadersPromise = loadVaultLeaders()
   const supabase = await createClient()
 
-  const { data: contentRows } = await (supabase as any).from('site_content').select('key, value')
+  const { data: contentRows } = await (createCachedClient([DB_TAGS.content]) as any).from('site_content').select('key, value')
 
   const raw: Record<string, unknown> = {}
   for (const row of (contentRows ?? []) as { key: string; value: unknown }[]) {
@@ -109,7 +109,7 @@ export default async function Home() {
   // Portfolio page does -- the app's tier logic is the gate, not RLS -- and
   // gated immediately by buildBrief(), which drops locked picks server-side and
   // returns only a count for them.
-  const { data: briefRows } = await (createAdminClient() as any)
+  const { data: briefRows } = await (createCachedClient([DB_TAGS.picks]) as any)
     .from('todays_bets')
     .select('id, date, sport, bet, line, opponent, result, is_active, is_free, is_elite, show_on_results')
   const brief = buildBrief((briefRows ?? []) as BriefSource[], userTier, isAdmin)

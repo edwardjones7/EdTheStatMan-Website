@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import CTASection from '@/components/CTASection'
 import SportTabsSystem from '@/components/SportTabsSystem'
 import PricingCards from '@/components/PricingCards'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { createCachedClient, DB_TAGS } from '@/lib/supabase/cached'
 import { getAccess } from '@/lib/access-server'
 import { compareByCode } from '@/lib/gate'
 import { partitionForVisitor } from '@/lib/vault-visitor'
@@ -29,7 +29,7 @@ export const metadata: Metadata = {
 }
 
 export default async function VaultSystems() {
-  const admin = createAdminClient()
+  const admin = createCachedClient([DB_TAGS.vault])
   const access = await getAccess()
   const { tier: userTier, isAdmin, membership } = access
 

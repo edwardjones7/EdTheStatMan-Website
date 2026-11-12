@@ -15,7 +15,7 @@ interface Props {
 }
 
 /** While something is in progress. Scores and clock move on this scale. */
-const LIVE_INTERVAL_MS = 60_000
+const LIVE_INTERVAL_MS = 180_000
 
 /**
  * Keeps the board it is mounted on current, for as long as it is being looked

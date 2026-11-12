@@ -3,7 +3,7 @@ import Link from 'next/link'
 import CTASection from '@/components/CTASection'
 import PricingCards from '@/components/PricingCards'
 import RecordStrip from '@/components/RecordStrip'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { createCachedClient, DB_TAGS } from '@/lib/supabase/cached'
 import { getAccess } from '@/lib/access-server'
 import { rowMinTier, compareBySample } from '@/lib/gate'
 import { atLeastTier, TIER_SHORT_LABEL, type Tier } from '@/lib/access'
@@ -68,7 +68,7 @@ function pctDisplay(pct: number | null | undefined): string {
 }
 
 export default async function VaultLanding() {
-  const admin = createAdminClient()
+  const admin = createCachedClient([DB_TAGS.vault])
   const access = await getAccess()
   const { tier: userTier, isAdmin, membership } = access
 

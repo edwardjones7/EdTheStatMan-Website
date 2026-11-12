@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { createCachedClient, DB_TAGS } from '@/lib/supabase/cached'
 import { syncTargets } from '@/lib/desk-sync'
 import { currentWeekOf } from '@/lib/nfl'
 import { DESK_SPORTS, defaultDeskSeason } from '@/lib/desk'
@@ -37,11 +38,14 @@ export const maxDuration = 60
 /**
  * How stale the week has to be before a caller actually triggers a sync.
  *
- * 45s rather than the 60s the board polls at, so a client on a 60s timer is
- * never turned away by its own cadence -- with the two equal, ordinary jitter
- * means every other poll no-ops and the real interval becomes two minutes.
+ * 150s rather than the 180s the board polls at, so a client on a 180s timer
+ * is never turned away by its own cadence -- with the two equal, ordinary
+ * jitter means every other poll no-ops and the real interval doubles.
+ * (Was 45s/60s until Nov 2026; live polling at that rate helped push the
+ * project over the Supabase Free plan quota. Three minutes is still live
+ * enough for a betting board.)
  */
-const MIN_INTERVAL_MS = 45_000
+const MIN_INTERVAL_MS = 150_000
 
 /**
  * Cheap protection against a stampede within one instance: several viewers
@@ -78,10 +82,15 @@ export async function POST(req: Request) {
   }
 
   const admin = createAdminClient() as any
+  // The gate below reads the whole season's schedule, and it runs on every
+  // Desk visit. Cached (and dropped by syncTargets whenever it writes), so a
+  // no-op call no longer costs a season-wide read -- that read, times every
+  // visit, was a large share of the Nov 2026 Supabase egress overrun.
+  const reader = createCachedClient([DB_TAGS.games], 60) as any
 
   // The season a visitor is actually looking at: the newest one with published
   // rows. Same rule as the board (app/desk/[sport]/page.tsx).
-  const { data: seasonRow } = await admin
+  const { data: seasonRow } = await reader
     .from('nfl_games')
     .select('season')
     .eq('sport', sport)
@@ -92,7 +101,7 @@ export async function POST(req: Request) {
 
   const season: number = seasonRow?.season ?? defaultDeskSeason(sport)
 
-  const { data: weekRows } = await selectAll(() => admin
+  const { data: weekRows } = await selectAll(() => reader
     .from('nfl_games')
     .select('season_type, week, kickoff, status, updated_at')
     .eq('sport', sport)

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { invalidate, DB_TAGS } from '@/lib/supabase/cached'
 import { createClient } from '@/lib/supabase/server'
 
 async function assertAdmin() {
@@ -16,5 +17,6 @@ export async function POST(req: Request) {
   const body = await req.json()
   const { data, error } = await supabase.from('betting_trends').insert(body).select().single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  invalidate(DB_TAGS.vault)
   return NextResponse.json(data, { status: 201 })
 }
