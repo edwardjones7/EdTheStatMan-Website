@@ -4,6 +4,14 @@ import { notFound } from 'next/navigation'
 import CTASection from '@/components/CTASection'
 import DeskWeekBoard from '@/components/DeskWeekBoard'
 import LiveProvider from '@/components/live/LiveProvider'
+import LiveStrip from '@/components/live/LiveStrip'
+import NextUp from '@/components/live/NextUp'
+import DeskRail from '@/components/DeskRail'
+import { deskMovers, deskStripSeed, deskUpNext } from '@/lib/desk-band'
+// The front page's strip, card and list styles (all scoped under front-*),
+// reused by the band above the board; desk-v2 lays out the board itself.
+import '@/styles/home.css'
+import '@/styles/desk-v2.css'
 import NflAdminBar from '@/components/NflAdminBar'
 import DeskLiveRefresh from '@/components/DeskLiveRefresh'
 import PricingCards from '@/components/PricingCards'
@@ -297,48 +305,63 @@ export default async function DeskSport({
     return new Date(g.kickoff).getTime() - nowMs <= KICKOFF_SOON_MS
   })
 
+  // The band above the board. Pure shaping over rows already read: movers
+  // cover the whole week on screen (not just the day), the strip's server seed
+  // is the board itself until the live feed's first poll lands.
+  const activeLabel = active ? weeks.find(w => w.season_type === active.season_type && w.week === active.week)?.label ?? null : null
+  const movers = deskMovers(sport, weekGames, 5)
+  const upNext = movers.length > 0 ? [] : deskUpNext(sport, boardGames.length > 0 ? boardGames : weekGames, 5)
+  const hasRail = movers.length > 0 || upNext.length > 0
+  const stripSeed = deskStripSeed(sport, boardGames)
+  const stripTitle = `${label} ${seasonLabel}${activeLabel ? `, ${activeLabel}` : ''}`
+
   return (
-    <main>
-      <section className="section" style={{ paddingBottom: '40px' }}>
-        <div className="container">
-          <div className="reveal" style={{ textAlign: 'center' }}>
-            <span className="section-label">The Research Desk</span>
-            <h1 className="section-title">{label} {seasonLabel}</h1>
-            <p className="section-subtitle" style={{ margin: '0 auto' }}>
-              The whole season on one board. Every game, the line and how it has moved,
-              and the trends we have pulled for that specific matchup.
-            </p>
-          </div>
+    <main className="dk">
+      <LiveProvider sports={[sport]}>
+        <LiveStrip
+          seed={stripSeed}
+          seedTitle={stripTitle}
+          seedHref={`/desk/${sport}`}
+          seedGames={boardGames.length}
+        />
 
-          {/* Keeps this board current while it is open. Renders a status line
-              only when something is actually live; otherwise it does one
-              catch-up sync on arrival and shows nothing. */}
-          <DeskLiveRefresh sport={sport} live={weekIsLive} />
+        <section className="dk-body">
+          <div className="container">
+            <header className="dk-head">
+              <div className="dk-head__title">
+                <span className="dk-head__kicker">The Research Desk</span>
+                <h1>{label} <span>{seasonLabel}</span></h1>
+              </div>
+              {DESK_SPORTS.length > 1 && (
+                <nav className="dk-leagues" aria-label="League">
+                  {DESK_SPORTS.map(s => (
+                    <Link
+                      key={s}
+                      href={`/desk/${s}`}
+                      className={`dk-league${s === sport ? ' is-active' : ''}`}
+                      aria-current={s === sport ? 'page' : undefined}
+                    >
+                      {deskSportLabel(s)}
+                    </Link>
+                  ))}
+                </nav>
+              )}
+            </header>
 
-          {DESK_SPORTS.length > 1 && (
-            <div className="desk-sports">
-              {DESK_SPORTS.map(s => (
-                <Link
-                  key={s}
-                  href={`/desk/${s}`}
-                  className={`desk-sport-pill${s === sport ? ' is-active' : ''}`}
-                >
-                  {deskSportLabel(s)}
-                </Link>
-              ))}
-            </div>
-          )}
+            {/* Keeps this board current while it is open. Renders a status line
+                only when something is actually live; otherwise it does one
+                catch-up sync on arrival and shows nothing. */}
+            <DeskLiveRefresh sport={sport} live={weekIsLive} />
 
-          {isAdmin && (
-            <NflAdminBar sport={sport} season={season} seasonLabel={seasonLabel} seasonType={active?.season_type} week={active?.week} />
-          )}
+            {isAdmin && (
+              <NflAdminBar sport={sport} season={season} seasonLabel={seasonLabel} seasonType={active?.season_type} week={active?.week} />
+            )}
 
-          {weeks.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '64px 0', color: 'var(--text-muted)' }}>
-              The {seasonLabel} {label} schedule lands here soon — check back before {startWord(sport)}.
-            </div>
-          ) : (
-            <LiveProvider sports={[sport]}>
+            {weeks.length === 0 ? (
+              <div className="dk-empty dk-empty--season">
+                The {seasonLabel} {label} schedule lands here soon. Check back before {startWord(sport)}.
+              </div>
+            ) : (
               <DeskWeekBoard
                 sport={sport}
                 games={boardGames}
@@ -352,11 +375,13 @@ export default async function DeskSport({
                 hasWriteups={access.hasElite}
                 isAdmin={isAdmin}
                 researchClosed={researchClosed}
+                aside={hasRail ? <DeskRail movers={movers} upNext={upNext} weekLabel={activeLabel} /> : null}
+                band={hasRail ? null : <NextUp />}
               />
-            </LiveProvider>
-          )}
-        </div>
-      </section>
+            )}
+          </div>
+        </section>
+      </LiveProvider>
 
       {!hasDesk && (
         <section className="section" style={{ background: 'var(--bg-secondary)' }} id="pricing">

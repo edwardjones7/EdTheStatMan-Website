@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback, useTransition } from 'react'
+import { useState, useEffect, useRef, useCallback, useTransition, type ReactNode } from 'react'
 import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
 import { useLive } from './live/LiveProvider'
@@ -10,6 +10,7 @@ import { IconLock, IconArrowRight, IconChevronLeft, IconChevronRight } from './I
 import { teamLogoUrl } from '@/lib/logos'
 import { atsTag, ouTag } from '@/lib/ats'
 import '@/styles/seo-desk.css'
+import '@/styles/desk-v2.css'
 import { CFB_SCHOOLS } from '@/lib/teams-cfb'
 import { CBB_SCHOOLS } from '@/lib/teams-cbb'
 import {
@@ -53,6 +54,13 @@ interface Props {
    * current day (or week) it is holding back. Null where the filter is not offered.
    */
   lineFilter?: { on: boolean; hidden: number } | null
+  /**
+   * The side rail (next up, line movers), rendered beside the games on a wide
+   * screen and above them on a narrow one. Built on the server by the page.
+   */
+  aside?: ReactNode
+  /** Rendered above the games when there is no rail (e.g. the NextUp bar). */
+  band?: ReactNode
 }
 
 interface DayOption {
@@ -76,6 +84,11 @@ function kickoffDisplay(kickoff: string | null, tbd?: boolean | null): string {
   })
 }
 
+/** "today" / "tomorrow" / "on Thu Nov 13", from the server's day labels. */
+function dayPhrase(label: string, sub?: string): string {
+  if (label === 'Today' || label === 'Tomorrow' || label === 'Yesterday') return label.toLowerCase()
+  return sub ? `on ${label} ${sub}` : `on ${label}`
+}
 
 /**
  * What the card calls a team.
@@ -102,7 +115,7 @@ function teamName(sport: string, team: string, abbrev: string): string {
 
 export default function DeskWeekBoard({
   sport, games, weeks, active, linkedCounts, betCounts = {}, hasDesk, hasWriteups, isAdmin, researchClosed,
-  days = null, lineFilter = null,
+  days = null, lineFilter = null, aside = null, band = null,
 }: Props) {
   // Live scores and clock from the front page's feed (/api/live, CDN-cached),
   // between the Desk's own syncs. Empty outside a LiveProvider.
@@ -299,6 +312,15 @@ export default function DeskWeekBoard({
 
   // When nothing on the board carries research, one quiet line says so. Cards
   // with nothing attached carry no tag: an empty foot reads better than "none".
+  // For the lead line and the empty day: the next matchup still to play (by
+  // status, never by clock, so server and browser agree), and the next day in
+  // the strip that has games on it.
+  const nextGame = games.find(g => g.status === 'pre') ?? null
+  const activeDayLabel = days?.options.find(d => d.date === days.active)?.label ?? ''
+  const nextDay = days && days.active
+    ? days.options.find(d => d.date > days.active! && d.count > 0) ?? null
+    : null
+
   const anyResearch = games.some(g => (betCounts[g.id] ?? 0) > 0 || (linkedCounts[g.id]?.systems ?? 0) + (linkedCounts[g.id]?.trends ?? 0) > 0)
 
   return (
@@ -402,6 +424,10 @@ export default function DeskWeekBoard({
         </div>
       )}
 
+      <div className={`dk-layout${aside ? ' has-rail' : ''}`}>
+      <div className="dk-main">
+      {band}
+
       {games.length > 0 && (
         <div className="desk-summary">
           {summary.map(s => (
@@ -415,22 +441,52 @@ export default function DeskWeekBoard({
 
       {lineFilter && lineFilter.on && lineFilter.hidden > 0 && (
         <p className="desk-quiet">
-          {lineFilter.hidden} game{lineFilter.hidden === 1 ? '' : 's'} without a line hidden.{' '}
+          Showing the {games.length} priced game{games.length === 1 ? '' : 's'}, plus {lineFilter.hidden} more without a posted line.{' '}
           <button type="button" className="desk-quiet__link" onClick={toggleLines}>Show all</button>
         </p>
       )}
 
       {games.length > 0 && !anyResearch && (
-        <p className="desk-quiet">No research attached to {days?.active ? 'this day' : 'this week'} yet.</p>
+        // Never a "nothing here" line (Ed, Nov 2026): say what IS on the board
+        // and point at the next matchup page, which is open to everyone.
+        <p className="desk-quiet dk-lead">
+          {games.length} {games.length === 1 ? 'game' : 'games'} {days?.active ? dayPhrase(activeDayLabel) : 'this week'}, lines and matchup pages inside.
+          {nextGame && (
+            <>
+              {' '}Up next:{' '}
+              <Link href={gamePath(sport, nextGame.slug)} className="dk-lead__link">
+                {nextGame.away_abbrev} @ {nextGame.home_abbrev}
+                {nextGame.kickoff && <span className="dk-lead__when">, {kickoffDisplay(nextGame.kickoff, nextGame.kickoff_tbd)}</span>}
+              </Link>
+            </>
+          )}
+        </p>
       )}
 
       {slate.length === 0 && (
-        <div className="desk-empty">
-          {lineFilter?.on && lineFilter.hidden > 0
-            ? 'No lines posted for these games yet.'
-            : days?.active
-              ? 'No games scheduled for this day.'
-              : 'No games scheduled for this week yet.'}
+        <div className="desk-empty dk-empty">
+          {lineFilter?.on && lineFilter.hidden > 0 ? (
+            <>
+              {lineFilter.hidden} {lineFilter.hidden === 1 ? 'game is' : 'games are'} on the board, waiting on a posted line.{' '}
+              <button type="button" className="desk-quiet__link" onClick={toggleLines}>Show all games</button>
+            </>
+          ) : days?.active ? (
+            nextDay ? (
+              <>
+                The slate picks up {dayPhrase(nextDay.label, nextDay.sub)} with {nextDay.count} {nextDay.count === 1 ? 'game' : 'games'}.{' '}
+                <button type="button" className="desk-quiet__link" onClick={() => selectDay(nextDay.date)}>Go to {nextDay.label}</button>
+                {' · '}
+                <button type="button" className="desk-quiet__link" onClick={() => selectDay(null)}>Whole week</button>
+              </>
+            ) : (
+              <>
+                An off night on the schedule.{' '}
+                <button type="button" className="desk-quiet__link" onClick={() => selectDay(null)}>See the whole week</button>
+              </>
+            )
+          ) : (
+            "This week's schedule is on its way. Pick another week above to browse the board."
+          )}
         </div>
       )}
 
@@ -654,6 +710,9 @@ export default function DeskWeekBoard({
           reference only. If gambling stops being fun, call 1-800-GAMBLER.
         </p>
       )}
+      </div>
+      {aside && <aside className="dk-side" aria-label="Line movers and next up">{aside}</aside>}
+      </div>
     </div>
   )
 }

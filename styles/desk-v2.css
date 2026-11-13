@@ -1,0 +1,265 @@
+/* ==========================================================================
+   Research Desk board, v2 (Nov 2026).
+
+   Same visual language as the front page (styles/home.css, front-*): full
+   width, dense, dark hairline cards, condensed uppercase labels. Everything is
+   scoped under .dk (the board's <main>) so the old rules in app/globals.css
+   and styles/seo-desk.css still serve any other page that uses desk-* classes.
+
+   Layout: scores strip (full bleed) / compact header bar / week rail / day
+   strip / [games | side rail with next up + line movers].
+   ========================================================================== */
+
+.dk {
+  /* The nav is fixed above the page; the root layout's .ticker-spacer already
+     reserves the ticker, so only the nav is added (same as .front). */
+  padding-top: var(--nav-height);
+  background: var(--bg-primary);
+}
+
+/* Full width like the front page. Scoped to the board's own containers: the
+   pricing and CTA sections further down this <main> keep the site column. */
+.dk .front-strip .container,
+.dk-body > .container {
+  max-width: none;
+  padding-left: 24px;
+  padding-right: 24px;
+}
+
+.dk-body { padding: 14px 0 40px; }
+
+/* ---------- Header bar: title + league tabs on one row ---------- */
+.dk-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-color);
+}
+.dk-head__title { display: grid; gap: 2px; min-width: 0; }
+.dk-head__kicker {
+  font-family: var(--font-heading);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--brand-text);
+}
+.dk-head h1 {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: 1.7rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--text-heading);
+}
+.dk-head h1 span { color: var(--text-muted); font-weight: 700; }
+
+.dk-leagues {
+  display: flex;
+  gap: 2px;
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 3px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+}
+.dk-leagues::-webkit-scrollbar { display: none; }
+.dk-league {
+  flex: none;
+  padding: 7px 12px;
+  border-radius: 3px;
+  color: var(--text-muted);
+  font-family: var(--font-heading);
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.dk-league:hover { color: var(--text-heading); background: var(--bg-card-hover); }
+.dk-league.is-active { background: var(--brand); color: var(--brand-ink); }
+.dk-league:focus-visible { outline: 2px solid var(--brand-text); outline-offset: 1px; }
+
+/* ---------- Week rail and day strip, tightened ---------- */
+.dk .desk-board { margin-top: 12px; }
+
+.dk .desk-week-pill {
+  padding: 6px 12px;
+  border-radius: 3px;
+  font-family: var(--font-heading);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.dk .desk-week-pill:hover { border-color: var(--border-strong, var(--border-color)); color: var(--text-heading); }
+.dk .desk-week-pill.is-active {
+  background: rgba(var(--brand-rgb), 0.14);
+  border-color: var(--brand);
+  color: var(--brand-text);
+}
+.dk .desk-weeks-nav { width: 28px; height: 28px; border-radius: 3px; }
+.dk .desk-weeks-nav:hover:not(:disabled) { color: var(--brand-text); border-color: var(--brand); }
+
+.dk .desk-days-bar { margin-top: 10px; justify-content: flex-start; }
+/* Left-aligned under the week rail rather than centred on the page. */
+.dk .desk-days > :first-child { margin-left: 0; }
+.dk .desk-days > :last-child { margin-right: 0; }
+.dk .desk-days { padding: 2px 4px; }
+.dk .desk-day-pill { border-radius: var(--radius-lg); padding: 6px 10px; min-width: 66px; }
+.dk .desk-day-pill.is-active {
+  background: rgba(var(--brand-rgb), 0.14);
+  border-color: var(--brand);
+  color: var(--brand-text);
+}
+.dk .desk-day-pill__count { background: rgba(var(--brand-rgb), 0.12); color: var(--brand-text); }
+.dk .desk-line-toggle { border-radius: 3px; }
+
+/* ---------- Games beside the rail ---------- */
+.dk-layout { margin-top: 14px; }
+.dk-layout.has-rail {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 18px;
+  align-items: start;
+}
+.dk-main { min-width: 0; }
+.dk-side { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.dk-main > .front-next { margin-bottom: 12px; }
+
+.dk-rail-card__note { color: var(--text-muted); font-size: 0.76rem; white-space: nowrap; }
+.dk-rail-card__line { font-size: 0.95rem; }
+
+/* Stat bar: one compact row of numbers, not a band of big tiles. */
+.dk .desk-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  margin-top: 0;
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+}
+.dk .desk-summary__cell {
+  flex: 0 1 auto;
+  flex-direction: row;
+  align-items: baseline;
+  gap: 8px;
+  padding: 9px 16px;
+  border-right: 1px solid var(--border-color);
+  background: transparent;
+}
+.dk .desk-summary__cell:last-child { border-right: 0; }
+.dk .desk-summary__value { font-family: var(--font-heading); font-size: 1.25rem; font-weight: 800; }
+.dk .desk-summary__value.is-accent { color: var(--brand-text); }
+.dk .desk-summary__label {
+  font-family: var(--font-heading);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.dk .desk-quiet { margin-top: 10px; }
+.dk .desk-quiet__link { color: var(--brand-text); }
+.dk-lead { color: var(--text-secondary); font-size: 0.86rem; }
+.dk-lead__link { color: var(--brand-text); font-weight: 700; text-decoration: none; }
+.dk-lead__link:hover { text-decoration: underline; text-underline-offset: 2px; }
+.dk-lead__when { font-weight: 500; color: var(--text-secondary); }
+
+.dk-empty,
+.dk .desk-empty {
+  margin-top: 14px;
+  padding: 18px 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  color: var(--text-secondary);
+  text-align: left;
+  font-size: 0.92rem;
+}
+.dk-empty--season { margin-top: 18px; }
+
+/* ---------- Day sections and the card grid ---------- */
+.dk .desk-day { margin-top: 22px; }
+.dk .desk-day:first-of-type { margin-top: 14px; }
+.dk .desk-day__label {
+  padding-bottom: 8px;
+  font-family: var(--font-heading);
+  font-size: 0.85rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-heading);
+}
+.dk .desk-day__count { background: rgba(var(--brand-rgb), 0.12); color: var(--brand-text); }
+
+/* Fills the width: as many ~300px cards as fit. min() keeps a 320px phone from
+   being pushed sideways by the 300px floor. */
+.dk .desk-day__grid {
+  grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+/* Hairline cards, no lift: the front page's rule. */
+.dk .desk-card { border-radius: var(--radius-lg); }
+.dk .desk-card:hover {
+  transform: none;
+  box-shadow: none;
+  border-color: rgba(var(--brand-rgb), 0.5);
+  background: var(--bg-card-hover);
+}
+
+/* ---------- Responsive ---------- */
+
+/* Sticky rail only when it sits beside the games. */
+@media (min-width: 1101px) {
+  .dk-side {
+    position: sticky;
+    top: calc(var(--nav-height) + var(--ticker-height) + 12px);
+  }
+}
+
+/* The rail moves above the games, side by side while there is room. */
+@media (max-width: 1100px) {
+  .dk-layout.has-rail { grid-template-columns: minmax(0, 1fr); }
+  .dk-side {
+    order: -1;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr));
+    align-items: start;
+  }
+}
+
+@media (max-width: 768px) {
+  /* The mobile .ticker-spacer adds 30px for interior headings; the strip
+     needs none of it (same as .front). */
+  .dk { margin-top: -30px; }
+  .dk .front-strip .container,
+  .dk-body > .container { padding-left: 16px; padding-right: 16px; }
+  .dk-body { padding-top: 12px; }
+  .dk-head { align-items: flex-start; }
+  .dk-head h1 { font-size: 1.4rem; }
+  .dk .desk-summary__cell { padding: 8px 12px; }
+  .dk .desk-summary__value { font-size: 1.1rem; }
+  .dk .desk-day__grid { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 480px) {
+  .dk-head { flex-direction: column; gap: 10px; }
+  .dk-leagues { align-self: stretch; }
+  .dk-league { padding: 7px 10px; font-size: 0.74rem; }
+  .dk .desk-week-pill { padding: 6px 10px; font-size: 0.72rem; }
+  /* Three movers are enough above the games on a phone. */
+  .dk-side .front-list > li:nth-child(n + 4) { display: none; }
+  .dk-rail-card__note { display: none; }
+  .dk .desk-summary__cell { flex: 1 1 auto; justify-content: center; }
+}
