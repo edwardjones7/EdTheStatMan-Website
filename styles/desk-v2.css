@@ -312,3 +312,16 @@
    at the left. min-width keeps them tappable; under that the rail scrolls. */
 .dk .desk-weeks-rail { width: 100%; }
 .dk .desk-week-pill { flex: 1 0 auto; min-width: 64px; justify-content: center; text-align: center; }
+
+/* Basketball day strip spans the row like the week rail; the CBB
+   "has a line" toggle keeps its place at the right end. */
+.dk .desk-days-bar { flex-wrap: nowrap; align-items: center; gap: 10px; }
+.dk .desk-days-wrap { flex: 1 1 auto; }
+.dk .desk-days > :first-child { margin-left: 0; }
+.dk .desk-day-pill { flex: 1 0 auto; }
+@media (max-width: 640px) {
+  .dk .desk-days-bar { flex-wrap: wrap; }
+}
+/* The days now fill the row, so the toggle goes back into the flow at the
+   right end instead of floating over the last day. */
+.dk .desk-line-toggle { position: static; transform: none; flex: none; }
