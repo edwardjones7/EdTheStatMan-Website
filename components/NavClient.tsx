@@ -92,6 +92,7 @@ const NAV_LINKS: NavLink[] = [
       { href: '/portfolio/performance', label: 'Results' },
     ],
   },
+  { href: '/news', label: 'The Wire' },
   { href: '/win', label: 'Membership', offer: true },
 ]
 

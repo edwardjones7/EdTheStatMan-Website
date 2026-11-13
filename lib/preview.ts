@@ -90,7 +90,7 @@ function lastGame(sport: string, rows: NflGame[], abbrev: string): string | null
 function injuryLine(team: string, list: Injury[], plural: boolean): string | null {
   const key = list.filter(i => (i.status === 'Out' || i.status === 'Doubtful') && isKeyPosition(i.pos)).slice(0, 3)
   if (key.length === 0) return null
-  const parts = key.map(i => `${i.pos} ${i.name}${i.detail ? ` (${i.detail.toLowerCase()})` : ''} ${i.status === 'Out' ? 'out' : 'doubtful'}`)
+  const parts = key.map(i => `${i.pos} ${i.name}${i.detail ? ` (${i.detail.toLowerCase()})` : ''} ${i.status === 'Out' ? 'out' : 'doubtful'}`.replace(/\((coach's decision|personal|rest)\) (out|doubtful)/i, '$2 ($1)'))
   const last = parts.pop()!
   return `${team} ${plural ? 'list' : 'lists'} ${parts.length ? `${parts.join(', ')} and ${last}` : last}.`
 }

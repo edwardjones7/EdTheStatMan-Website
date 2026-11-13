@@ -57,11 +57,15 @@ function injuryItem(g: UpcomingGame, teamFull: string, i: Injury): WireItem {
   const t = team(g.sport, isHome ? g.home_abbrev : g.away_abbrev, teamFull)
   const opp = isHome ? team(g.sport, g.away_abbrev, g.away_team) : team(g.sport, g.home_abbrev, g.home_team)
   const status = i.status === 'Out' ? 'out' : 'doubtful'
-  const part = i.detail ? ` (${i.detail.toLowerCase()})` : ''
+  // A body part reads after the name ("Parsons (knee)"); a reason that is not
+  // an injury reads as the reason ("out, coach's decision").
+  const reason = i.detail && /coach|decision|personal|rest|suspen|not injury|load/i.test(i.detail)
+  const part = i.detail && !reason ? ` (${i.detail.toLowerCase()})` : ''
+  const why = reason ? `, ${i.detail!.toLowerCase()},` : ''
   const headline = i.status === 'Out'
     ? `${t} ${i.pos} ${i.name} out for ${day(g.kickoff)} vs. ${opp}`
     : `${t} ${i.pos} ${i.name} doubtful for ${day(g.kickoff)} vs. ${opp}`
-  const body = `${i.name}${part} is listed as ${status} for ${team(g.sport, g.away_abbrev, g.away_team)} at ${team(g.sport, g.home_abbrev, g.home_team)}. ${marketLine(g)} Both teams' full injury reports are on the game page.`
+  const body = `${i.name}${part} is listed as ${status}${why} for ${team(g.sport, g.away_abbrev, g.away_team)} at ${team(g.sport, g.home_abbrev, g.home_team)}. ${marketLine(g)} Both teams' full injury reports are on the game page.`
   return {
     id: `inj-${g.id}-${i.name}`,
     kind: 'injury',

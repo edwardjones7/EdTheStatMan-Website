@@ -41,6 +41,7 @@ export default function Footer({ signedIn }: { signedIn: boolean }) {
               <Link href="/portfolio" className="footer__link">Model Picks</Link>
               <Link href="/vault/systems" className="footer__link">Betting Systems</Link>
               <Link href="/vault/trends" className="footer__link">Betting Trends</Link>
+              <Link href="/news" className="footer__link">The Wire</Link>
               <Link href="/blog" className="footer__link">Blog</Link>
             </div>
           </div>
