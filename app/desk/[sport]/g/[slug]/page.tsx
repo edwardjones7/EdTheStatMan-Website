@@ -554,6 +554,11 @@ export default async function NflGamePage({ params }: { params: { sport: string;
             awayTeam={game.away_team}
             homeAbbrev={game.home_abbrev}
             awayAbbrev={game.away_abbrev}
+            game={game}
+            homeSeason={homeSeason}
+            awaySeason={awaySeason}
+            linkedCount={linkedCount}
+            betsCount={bets.length}
           />
 
           {/* Say so rather than ending the page. Admins see this too. */}

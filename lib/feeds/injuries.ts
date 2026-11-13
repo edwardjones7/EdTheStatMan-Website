@@ -20,7 +20,9 @@ export interface Injury {
   name: string
   pos: string | null
   status: 'Out' | 'Doubtful' | 'Questionable' | 'Day-To-Day'
-  note: string | null
+  /** Body part ("Knee", "Hamstring"). A fact, unlike ESPN's written notes,
+   *  which are their prose and are deliberately not carried. */
+  detail: string | null
   date: string | null
 }
 
@@ -59,12 +61,12 @@ async function fetchReport(sport: LiveSport): Promise<InjuryReport> {
     for (const i of (team?.injuries ?? []) as any[]) {
       const st = status(i?.status)
       if (!st || !KEEP.includes(st)) continue
-      const note = typeof i?.shortComment === 'string' ? i.shortComment.trim() : ''
+      const part = String(i?.details?.type ?? '').trim()
       list.push({
         name: String(i?.athlete?.displayName ?? '').trim(),
         pos: i?.athlete?.position?.abbreviation ?? null,
         status: st,
-        note: note ? (note.length > 160 ? `${note.slice(0, 159).replace(/\s+\S*$/, '')}…` : note) : null,
+        detail: part && !/^(not specified|other)$/i.test(part) ? part : null,
         date: i?.date ?? null,
       })
     }
@@ -87,7 +89,7 @@ const cached = unstable_cache(
       return {} as InjuryReport
     }
   },
-  ['espn-injuries-v1'],
+  ['espn-injuries-v2'],
   { revalidate: 1800, tags: ['feed:injuries'] }
 )
 

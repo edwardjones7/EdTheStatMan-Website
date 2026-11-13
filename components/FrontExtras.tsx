@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import type { InjuryGame } from '@/lib/home-feeds'
 import type { MatchupNotes } from '@/lib/home-notes'
+import type { WireItem } from '@/lib/wire'
 import { LIVE_SPORT_LABEL } from '@/lib/live/types'
 
 /** Games in the next three days with a key player out or doubtful. */
@@ -19,9 +20,9 @@ export function InjuryCard({ games }: { games: InjuryGame[] }) {
             </Link>
             <ul className="front-inj__list">
               {g.players.map(p => (
-                <li key={`${p.team}-${p.name}`} title={p.note ?? undefined}>
+                <li key={`${p.team}-${p.name}`}>
                   <span className={`front-inj__st front-inj__st--${p.status.toLowerCase()}`}>{p.status === 'Doubtful' ? 'DBT' : 'OUT'}</span>
-                  <span>{p.team} {p.pos} <b>{p.name}</b></span>
+                  <span>{p.team} {p.pos} <b>{p.name}</b>{p.detail ? ` (${p.detail})` : ''}</span>
                 </li>
               ))}
             </ul>
@@ -49,6 +50,29 @@ export function NotesCard({ games, href }: { games: MatchupNotes[]; href: string
           </Link>
         ))}
       </div>
+    </section>
+  )
+}
+
+/** The most newsworthy few briefs from The Wire (lib/wire.ts), all on-site. */
+export function WireCard({ items }: { items: WireItem[] }) {
+  if (items.length === 0) return null
+  return (
+    <section className="front-card">
+      <header className="front-hd"><h2>The Wire</h2><Link href="/news">All briefs</Link></header>
+      <ul className="front-list">
+        {items.map(w => (
+          <li key={w.id}>
+            <Link href={w.href} className="front-mv">
+              <span className="front-tag">{w.sportLabel}</span>
+              <span className="front-pick">
+                <b>{w.headline}</b>
+                <small>{w.kind === 'injury' ? 'Injury' : 'Line move'} · open the game</small>
+              </span>
+            </Link>
+          </li>
+        ))}
+      </ul>
     </section>
   )
 }

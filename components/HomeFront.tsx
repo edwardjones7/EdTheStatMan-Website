@@ -20,7 +20,8 @@ import NextUp from './live/NextUp'
 import { LiveWhen, LiveLine, JustMoved } from './live/LiveCells'
 import type { PickTrack } from '@/lib/live/types'
 import NewsCard from './live/NewsCard'
-import { InjuryCard, NotesCard } from './FrontExtras'
+import { InjuryCard, NotesCard, WireCard } from './FrontExtras'
+import type { WireItem } from '@/lib/wire'
 import type { NewsEntry, InjuryGame } from '@/lib/home-feeds'
 import type { MatchupNotes } from '@/lib/home-notes'
 
@@ -43,6 +44,7 @@ export interface HomeFrontProps {
   news: NewsEntry[]
   injuries: InjuryGame[]
   notes: MatchupNotes[]
+  wire: WireItem[]
 }
 
 /** Units over the headline window, on one scale from zero to a round ceiling. */
@@ -105,7 +107,7 @@ function Cta({ cta, locked, isToday }: { cta: HeroCta; locked: number; isToday: 
   )
 }
 
-export default function HomeFront({ board, brief, proof, series, leaders, cta, signedOut, tracks, news, injuries, notes }: HomeFrontProps) {
+export default function HomeFront({ board, brief, proof, series, leaders, cta, signedOut, tracks, news, injuries, notes, wire }: HomeFrontProps) {
   const lead = leadStory(board, proof)
   const cards = stories(board, brief, lead)
   const movers = lineMovers(board)
@@ -159,6 +161,8 @@ export default function HomeFront({ board, brief, proof, series, leaders, cta, s
               </ul>
             </section>
           )}
+
+          <WireCard items={wire} />
 
           <InjuryCard games={injuries} />
 

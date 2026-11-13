@@ -18,7 +18,9 @@ export interface UpcomingGame {
   away_team: string
   home_abbrev: string
   away_abbrev: string
+  spread_open: number | null
   spread_current: number | null
+  total_open: number | null
   total_current: number | null
 }
 
@@ -33,7 +35,7 @@ export async function loadUpcoming(sports: LiveSport[], days = 7): Promise<Upcom
     const lists = await Promise.all(sports.map(async sport => {
       const { data } = await db
         .from('nfl_games')
-        .select('id, sport, slug, kickoff, status, home_team, away_team, home_abbrev, away_abbrev, spread_current, total_current')
+        .select('id, sport, slug, kickoff, status, home_team, away_team, home_abbrev, away_abbrev, spread_open, spread_current, total_open, total_current')
         .eq('sport', sport)
         .eq('is_published', true)
         .gte('kickoff', from)

@@ -58,17 +58,25 @@ export default function NewsCard({ news }: { news: NewsEntry[] }) {
       <ul className="front-news">
         {list.map(n => (
           <li key={n.id}>
-            <a href={n.url} target="_blank" rel="noopener noreferrer" className="front-news__link">
-              <span className="front-news__meta">
-                <span className="front-tag">{LIVE_SPORT_LABEL[n.sport]}</span>
-                {now != null && <span>{ago(n.published, now)}</span>}
-              </span>
-              <b>{n.headline}</b>
-              {n.description && <span className="front-news__dek">{n.description}</span>}
-            </a>
+            {(() => {
+              const inner = (
+                <>
+                  <span className="front-news__meta">
+                    <span className="front-tag">{LIVE_SPORT_LABEL[n.sport]}</span>
+                    {now != null && <span>{ago(n.published, now)}</span>}
+                  </span>
+                  <b>{n.headline}</b>
+                  {n.description && <span className="front-news__dek">{n.description}</span>}
+                </>
+              )
+              // A story about a Desk game opens that game here; the source is a footnote.
+              return n.game
+                ? <Link href={n.game.href} className="front-news__link">{inner}</Link>
+                : <a href={n.url} target="_blank" rel="noopener noreferrer" className="front-news__link">{inner}</a>
+            })()}
             <span className="front-news__foot">
-              <span className="front-dim">via ESPN</span>
               {n.game && <Link href={n.game.href} className="front-news__game">{n.game.label} · Research Desk</Link>}
+              <a href={n.url} target="_blank" rel="noopener noreferrer" className="front-dim">{n.game ? 'Full story at ESPN' : 'via ESPN'}</a>
             </span>
           </li>
         ))}

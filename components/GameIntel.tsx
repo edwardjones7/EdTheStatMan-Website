@@ -2,6 +2,8 @@ import { LIVE_SPORTS, type LiveSport } from '@/lib/live/types'
 import { loadInjuries, type InjuryReport, type Injury } from '@/lib/feeds/injuries'
 import { loadNews } from '@/lib/feeds/news'
 import { loadLiveFeed } from '@/lib/live/scoreboard'
+import { buildPreview } from '@/lib/preview'
+import type { NflGame } from '@/lib/nfl'
 import '@/styles/game-intel.css'
 
 interface Props {
@@ -12,6 +14,12 @@ interface Props {
   awayTeam: string
   homeAbbrev: string
   awayAbbrev: string
+  /** For the written preview (lib/preview.ts). */
+  game: NflGame
+  homeSeason: NflGame[]
+  awaySeason: NflGame[]
+  linkedCount: number
+  betsCount: number
 }
 
 function when(iso: string | null): string {
@@ -44,9 +52,28 @@ export default async function GameIntel(p: Props) {
     .filter(n => n.teams.includes(p.homeTeam) || n.teams.includes(p.awayTeam))
     .slice(0, 4)
 
-  if (teams.length === 0 && !weather && stories.length === 0) return null
+  const preview = buildPreview({
+    game: p.game,
+    homeSeason: p.homeSeason,
+    awaySeason: p.awaySeason,
+    homeInjuries: injuries[p.homeTeam] ?? [],
+    awayInjuries: injuries[p.awayTeam] ?? [],
+    weather,
+    linkedCount: p.linkedCount,
+    betsCount: p.betsCount,
+  })
+
+  if (preview.length === 0 && teams.length === 0 && !weather && stories.length === 0) return null
 
   return (
+    <>
+    {preview.length > 0 && (
+      <article className="game-preview reveal" aria-label="Game preview">
+        <h2 className="game-intel__title">Game preview</h2>
+        {preview.map((para, i) => <p key={i}>{para}</p>)}
+      </article>
+    )}
+    {(teams.length > 0 || weather || stories.length > 0) && (
     <section className="game-intel reveal" aria-label="Injuries, weather and news">
       <h2 className="game-intel__title">Before {sport === 'nba' || sport === 'cbb' ? 'tip-off' : 'kickoff'}</h2>
 
@@ -71,7 +98,7 @@ export default async function GameIntel(p: Props) {
                 {t.list.slice(0, 8).map((i: Injury) => (
                   <li key={i.name}>
                     <span className={`game-intel__st game-intel__st--${String(i.status).toLowerCase().replace(/[^a-z]/g, '')}`}>{i.status}</span>
-                    <span><b>{i.name}</b>{i.pos ? ` ${i.pos}` : ''}{i.note && <small>{i.note}</small>}</span>
+                    <span><b>{i.name}</b>{i.pos ? ` ${i.pos}` : ''}{i.detail && <small>{i.detail}</small>}</span>
                   </li>
                 ))}
               </ul>
@@ -96,5 +123,7 @@ export default async function GameIntel(p: Props) {
 
       <p className="game-intel__src">Injuries and news via ESPN{weather ? '; forecast via the National Weather Service or ESPN' : ''}.</p>
     </section>
+    )}
+    </>
   )
 }

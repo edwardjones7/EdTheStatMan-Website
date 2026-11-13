@@ -31,3 +31,11 @@
 .game-intel__news a:hover { color: var(--brand-text); }
 .game-intel__news small { color: var(--text-muted); font-size: 0.76rem; }
 .game-intel__src { margin: 8px 0 0; color: var(--text-muted); font-size: 0.74rem; }
+.game-preview {
+  margin-top: 28px;
+  padding: 18px 20px 6px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+}
+.game-preview p { margin: 0 0 12px; color: var(--text-secondary); font-size: 0.98rem; line-height: 1.6; }
