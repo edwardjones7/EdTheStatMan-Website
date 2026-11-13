@@ -17,6 +17,7 @@ import type { PickTrack } from '@/lib/live/types'
 import { gamePath } from '@/lib/nfl'
 import LiveProvider from '@/components/live/LiveProvider'
 import PortfolioCard from '@/components/portfolio/PortfolioCard'
+import UnitsChart from '@/components/UnitsChart'
 import '@/styles/portfolio-v2.css'
 
 export const metadata: Metadata = {
@@ -133,7 +134,16 @@ export default async function Portfolio() {
     }
   }
 
-  const history = buildHistory(rows, canSee, r => unitsFor(String(r.result).toLowerCase(), oddsOf(r) ?? DEFAULT_ODDS))
+  // Graded picks are public: the results ledger shows every one, bet and all,
+  // to every visitor. So the recent list is the same for everyone.
+  const history = buildHistory(rows, () => true, r => unitsFor(String(r.result).toLowerCase(), oddsOf(r) ?? DEFAULT_ODDS))
+
+  // Running units on the members' card, for the chart in the rail.
+  let run = 0
+  const membersSeries = rows
+    .filter(r => r.show_on_results === true && !(r as any).is_free && ['win', 'loss', 'push'].includes(String(r.result ?? '').toLowerCase()))
+    .sort((a, b) => String(a.date ?? '').localeCompare(String(b.date ?? '')))
+    .map(r => (run = Math.round((run + unitsFor(String(r.result).toLowerCase(), oddsOf(r) ?? DEFAULT_ODDS)) * 100) / 100))
   const proof = buildProof(rows as any)
   const books = (['members', 'free'] as const).map(k => ({ key: k, stat: proof.books[k] })).filter(b => b.stat)
 
@@ -157,20 +167,10 @@ export default async function Portfolio() {
                     : 'The card goes up the night before. Alerts go out by email, push and Discord when it does.'}
                 </p>
               </div>
-              {books.length > 0 && (
-                <dl className="pf-rec">
-                  {books.map(({ key, stat }) => (
-                    <div key={key}>
-                      <dt>{BOOK_LABEL[key]}</dt>
-                      <dd><b>{stat!.record}</b> <span className={stat!.unitsValue >= 0 ? 'pf-up' : 'pf-down'}>{minus(stat!.units)}</span></dd>
-                      <dd className="pf-rec__sub">{stat!.pct.toFixed(1)}% · {stat!.graded} graded</dd>
-                    </div>
-                  ))}
-                  <div className="pf-rec__link"><Link href="/portfolio/performance">Full results</Link></div>
-                </dl>
-              )}
             </header>
 
+            <div className="pf-layout">
+            <div className="pf-main">
             {days.length > 0 ? (
               <PortfolioCard days={days} tracks={tracks} />
             ) : (
@@ -191,7 +191,6 @@ export default async function Portfolio() {
               </section>
             )}
 
-            <div className="pf-lower">
               <section className="pf-panel">
                 <header className="pf-panel__hd">
                   <h2>Recent results</h2>
@@ -199,9 +198,7 @@ export default async function Portfolio() {
                 </header>
                 {history.length === 0 ? (
                   <p className="pf-empty__line">
-                    {isMember
-                      ? 'No graded picks to show yet.'
-                      : <>The plays you can see have no graded results yet. Every graded members&rsquo; pick is on the <Link href="/portfolio/performance">results page</Link>.</>}
+                    No graded picks yet. Every one lands here and on the <Link href="/portfolio/performance">results page</Link>, win or lose.
                   </p>
                 ) : (
                   <>
@@ -224,7 +221,29 @@ export default async function Portfolio() {
                   </>
                 )}
               </section>
+            </div>
 
+            <aside className="pf-rail" aria-label="Record and alerts">
+              {books.length > 0 && (
+                <section className="pf-panel pf-recpanel">
+                  <header className="pf-panel__hd"><h2>The record</h2><Link href="/portfolio/performance">Full results</Link></header>
+                  <dl className="pf-rec">
+                    {books.map(({ key, stat }) => (
+                      <div key={key}>
+                        <dt>{BOOK_LABEL[key]}</dt>
+                        <dd><b>{stat!.record}</b> <span className={stat!.unitsValue >= 0 ? 'pf-up' : 'pf-down'}>{minus(stat!.units)}</span></dd>
+                        <dd className="pf-rec__sub">{stat!.pct.toFixed(1)}% · {stat!.graded} graded</dd>
+                      </div>
+                    ))}
+                  </dl>
+                  {membersSeries.length > 1 && (
+                    <div className="pf-chart">
+                      <UnitsChart series={membersSeries} last={membersSeries[membersSeries.length - 1]} gradientId="pf-chart-fill" className="pf-chart__svg" />
+                      <p className="pf-rec__sub">Members&rsquo; card, units pick by pick.</p>
+                    </div>
+                  )}
+                </section>
+              )}
               <section className="pf-panel">
                 <header className="pf-panel__hd"><h2>How the card works</h2></header>
                 <ul className="pf-how">
@@ -234,6 +253,14 @@ export default async function Portfolio() {
                   <li><b>Backed by the Vault.</b> The plays come out of the <Link href="/vault/systems">systems</Link> and <Link href="/vault/trends">trends</Link> on the Research Desk.</li>
                 </ul>
               </section>
+              <section className="pf-panel">
+                <header className="pf-panel__hd"><h2>Never miss a play</h2></header>
+                <div className="pf-alerts">
+                  <a href="https://discord.gg/rXBZkSPcJb" target="_blank" rel="noopener" className="pf-alerts__row"><b>Discord</b><span>Pinged the second a play drops</span></a>
+                  <a href="https://x.com/EdTheStatMan" target="_blank" rel="noopener" className="pf-alerts__row"><b>X</b><span>Follow for the card and results</span></a>
+                </div>
+              </section>
+            </aside>
             </div>
           </div>
         </main>
@@ -246,7 +273,9 @@ export default async function Portfolio() {
           <ModelPicksEditor rows={allBets.filter(canSee as any)} userTier={userTier} headerContent={headerContent} />
         </section>
       )}
-      <NeverMissAPick userTier={userTier} />
+      {/* The full alerts block (browser push toggle) is for signed-in readers;
+          visitors get the compact alerts card in the rail. */}
+      {userTier && <NeverMissAPick userTier={userTier} />}
     </>
   )
 }

@@ -434,3 +434,54 @@
   .rs-cal__tot { margin-left: 0; width: 100%; }
 }
 .pf-empty__line a { color: var(--brand-text); }
+
+/* ---------- Layout v2: main column + rail ----------
+   One play no longer sits alone in a wide empty row: plays are full-width
+   rows in the main column, and the record, how it works and alerts live in
+   a rail beside them. */
+.pf-layout { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 20px; align-items: start; }
+.pf-main { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+.pf-rail { display: flex; flex-direction: column; gap: 18px; min-width: 0; position: sticky; top: 140px; }
+.pf-rail .pf-rec { display: grid; gap: 12px; margin: 0; padding: 14px; }
+.pf-rail .pf-rec > div { display: grid; gap: 2px; }
+.pf-rail .pf-rec dt { color: var(--text-muted); font-size: 0.72rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
+.pf-rail .pf-rec dd { margin: 0; }
+.pf-rail .pf-rec b { font-family: var(--font-heading); font-size: 1.5rem; font-weight: 800; color: var(--text-heading); }
+.pf-chart { padding: 0 14px 14px; }
+.pf-chart__svg { width: 100%; height: auto; display: block; }
+.pf-alerts { display: grid; }
+.pf-alerts__row { display: grid; gap: 2px; padding: 11px 14px; border-top: 1px solid var(--border-color); color: inherit; text-decoration: none; }
+.pf-alerts__row:first-child { border-top: 0; }
+.pf-alerts__row:hover { background: var(--bg-card-hover); color: inherit; }
+.pf-alerts__row b { color: var(--text-heading); }
+.pf-alerts__row span { color: var(--text-muted); font-size: 0.84rem; }
+
+/* Plays as rows on wide screens: when and tags | matchup | the play | action. */
+@media (min-width: 900px) {
+  .pf-tiles { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  .pf-tile {
+    display: grid;
+    grid-template-columns: 150px minmax(200px, 300px) minmax(0, 1fr) auto;
+    grid-auto-flow: dense;
+    align-items: center;
+    column-gap: 20px;
+    row-gap: 4px;
+    padding: 14px 18px;
+  }
+  .pf-tile > .pf-tile__top { grid-column: 1; grid-row: 1 / span 4; flex-wrap: wrap; align-self: center; }
+  .pf-tile > .pf-tile__top .pf-badge,
+  .pf-tile > .pf-tile__top .pf-lock { margin-left: 0; }
+  .pf-tile > .pf-matchup { grid-column: 2; grid-row: 1 / span 4; }
+  .pf-tile > .pf-bet,
+  .pf-tile > .pf-meta,
+  .pf-tile > .pf-track,
+  .pf-tile > .pf-note { grid-column: 3; }
+  .pf-tile > .pf-note { border-top: 0; padding-top: 0; }
+  .pf-tile > .pf-tile__link,
+  .pf-tile > .pf-unlock { grid-column: 4; grid-row: 1 / span 4; margin-top: 0; white-space: nowrap; }
+}
+
+@media (max-width: 1100px) {
+  .pf-layout { grid-template-columns: minmax(0, 1fr); }
+  .pf-rail { position: static; }
+}
