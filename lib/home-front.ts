@@ -5,7 +5,7 @@
 // this module sees them). Headlines are written from the numbers, never typed
 // by hand, so a stale story cannot outlive the line it describes.
 
-import { createAdminClient } from './supabase/admin'
+import { createCachedClient, DB_TAGS } from './supabase/cached'
 import { vaultRowPath } from './vault-row'
 import type { BoardRow, HomeBoard } from './home-board'
 import type { Brief } from './brief'
@@ -13,6 +13,8 @@ import type { ProofData } from './proof'
 
 export interface Mover {
   key: string
+  /** nfl_games.id, so the live layer can flag a move made since the last sync. */
+  gameId: string
   href: string
   matchup: string
   /** "Spread: NYG −3, opened PHI −5.5" */
@@ -70,14 +72,14 @@ export function lineMovers(board: HomeBoard | null, limit = 4): Mover[] {
     if (r.played) continue
     if (r.spreadSwing > 0 && r.spread && r.spreadOpen) {
       out.push({
-        key: `${r.id}-s`, href: r.href, matchup: r.matchup,
+        key: `${r.id}-s`, gameId: r.id, href: r.href, matchup: r.matchup,
         detail: `Spread: ${r.spread}, opened ${r.spreadOpen}`,
         value: `${fmt(r.spreadSwing)} pts`, tone: 'move', size: r.spreadSwing,
       })
     }
     if (r.totalDelta !== 0 && r.total && r.totalOpen) {
       out.push({
-        key: `${r.id}-t`, href: r.href, matchup: r.matchup,
+        key: `${r.id}-t`, gameId: r.id, href: r.href, matchup: r.matchup,
         detail: `Total: ${r.total}, opened ${r.totalOpen}`,
         value: signed(r.totalDelta), tone: r.totalDelta > 0 ? 'up' : 'down', size: Math.abs(r.totalDelta),
       })
@@ -170,7 +172,7 @@ export function stories(board: HomeBoard | null, brief: Brief, lead: Story | nul
  */
 export async function loadVaultLeaders(limit = 6, minDecisions = 300): Promise<VaultLeader[]> {
   try {
-    const admin = createAdminClient() as any
+    const admin = createCachedClient([DB_TAGS.vault]) as any
     const { data, error } = await admin
       .from('betting_systems')
       .select('code, sport, w, l, t, pct, is_active')

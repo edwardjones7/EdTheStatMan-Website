@@ -13,7 +13,12 @@ import {
 import type { HeroCta } from './HomeHero'
 import HomeTrialButton from './HomeTrialButton'
 import HomeFreeBox from './HomeFreeBox'
-import { IconLock } from './Icons'
+import LiveProvider from './live/LiveProvider'
+import LiveStrip from './live/LiveStrip'
+import LivePicks from './live/LivePicks'
+import NextUp from './live/NextUp'
+import { LiveWhen, LiveLine, JustMoved } from './live/LiveCells'
+import type { PickTrack } from '@/lib/live/types'
 
 /**
  * The homepage as a sports front page (Nov 2026): a lines strip like a scores
@@ -29,6 +34,8 @@ export interface HomeFrontProps {
   leaders: VaultLeader[]
   cta: HeroCta
   signedOut: boolean
+  /** Live tracking for the visible picks (lib/live/track.ts). */
+  tracks: PickTrack[]
 }
 
 /** Units over the headline window, on one scale from zero to a round ceiling. */
@@ -91,7 +98,7 @@ function Cta({ cta, locked, isToday }: { cta: HeroCta; locked: number; isToday: 
   )
 }
 
-export default function HomeFront({ board, brief, proof, series, leaders, cta, signedOut }: HomeFrontProps) {
+export default function HomeFront({ board, brief, proof, series, leaders, cta, signedOut, tracks }: HomeFrontProps) {
   const lead = leadStory(board, proof)
   const cards = stories(board, brief, lead)
   const movers = lineMovers(board)
@@ -100,27 +107,14 @@ export default function HomeFront({ board, brief, proof, series, leaders, cta, s
   const cardLabel = brief.date ? (brief.isToday ? "Tonight's card" : 'Latest card') : "Tonight's card"
 
   return (
+    <LiveProvider>
     <div className="front">
-      {board && rows.length > 0 && (
-        <div className="front-strip">
-          <div className="container front-strip__inner">
-            <Link href={board.href} className="front-strip__league">
-              <b>{board.title.replace(/, week/, ' · WK').toUpperCase()}</b>
-              <small>{board.games} games</small>
-            </Link>
-            <div className="front-strip__chips" tabIndex={0} role="region" aria-label={`${board.title} lines`}>
-              {rows.map(r => (
-                <Link key={r.id} href={r.href} className="front-chip">
-                  <span className="front-chip__t"><span>{r.short}</span>{r.broadcast && <span>{r.broadcast.split(',')[0]}</span>}</span>
-                  <span className="front-chip__row"><b>{r.awayAbbrev}</b><span>{r.awayRecord ?? ''}</span></span>
-                  <span className="front-chip__row"><b>{r.homeAbbrev}</b><span>{r.homeRecord ?? ''}</span></span>
-                  <span className="front-chip__row"><span className="front-chip__ln">{r.spread ?? 'Off'}</span><span>{r.total ?? ''}</span></span>
-                </Link>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
+      <LiveStrip
+        seed={rows}
+        seedTitle={board?.title ?? ''}
+        seedHref={board?.href ?? '/desk'}
+        seedGames={board?.games ?? 0}
+      />
 
       <div className="container front-grid">
         <aside className="front-left" aria-label="Today and the Vault">
@@ -132,23 +126,14 @@ export default function HomeFront({ board, brief, proof, series, leaders, cta, s
             {brief.total === 0 ? (
               <p className="front-empty">No plays posted yet. They land here the moment Ed posts them.</p>
             ) : (
-              <ul className="front-list">
-                {brief.date && !brief.isToday && <li className="front-list__note">{formatCardDate(brief.date)}</li>}
-                {brief.visible.map(p => (
-                  <li key={p.id}>
-                    <span className="front-tag">{p.sport}</span>
-                    <span className="front-pick"><b>{p.bet}</b>{p.line && <small>{minus(p.line)}</small>}</span>
-                    {p.result && <span className={`front-res front-res--${p.result.toLowerCase()}`}>{p.result}</span>}
-                  </li>
-                ))}
-                {brief.lockedCount > 0 && (
-                  <li>
-                    <IconLock size={14} />
-                    <span className="front-pick"><b>{brief.lockedCount} members&rsquo; {brief.lockedCount === 1 ? 'play' : 'plays'}</b><small>{brief.sportCounts.map(c => `${c.n} ${c.sport}`).join(' · ')}</small></span>
-                    <Link href="/portfolio" className="front-unlock">Unlock</Link>
-                  </li>
-                )}
-              </ul>
+              <LivePicks
+                picks={brief.visible}
+                tracks={tracks}
+                lockedGameIds={brief.lockedGameIds}
+                lockedCount={brief.lockedCount}
+                lockedSports={brief.sportCounts.map(c => `${c.n} ${c.sport}`).join(' · ')}
+                dateNote={brief.date && !brief.isToday ? formatCardDate(brief.date) : null}
+              />
             )}
           </section>
 
@@ -159,7 +144,7 @@ export default function HomeFront({ board, brief, proof, series, leaders, cta, s
                 {movers.map(m => (
                   <li key={m.key}>
                     <Link href={m.href} className="front-mv">
-                      <span className="front-pick"><b>{m.matchup}</b><small>{m.detail}</small></span>
+                      <span className="front-pick"><b>{m.matchup} <JustMoved gameId={m.gameId} /></b><small>{m.detail}</small></span>
                       <span className={`front-mv__n front-mv__n--${m.tone}`}>{m.value}</span>
                     </Link>
                   </li>
@@ -187,6 +172,7 @@ export default function HomeFront({ board, brief, proof, series, leaders, cta, s
         </aside>
 
         <div className="front-main">
+          <NextUp />
           {lead && (
             <Link href={lead.href} className="front-lead">
               <Image src={lead.image} alt="" fill priority sizes="(max-width: 760px) 100vw, 680px" />
@@ -222,9 +208,9 @@ export default function HomeFront({ board, brief, proof, series, leaders, cta, s
                   <tbody>
                     {rows.slice(0, 8).map(r => (
                       <tr key={r.id}>
-                        <td><Link href={r.href}><b>{r.matchup}</b></Link><small>{r.when}</small></td>
-                        <td className="is-num">{r.spread ?? '—'}</td>
-                        <td className="is-num">{r.total ?? '—'}</td>
+                        <td><Link href={r.href}><b>{r.matchup}</b></Link><LiveWhen gameId={r.id} fallback={r.when} /></td>
+                        <td className="is-num">{r.spread ? <LiveLine gameId={r.id} kind="spread" fallback={r.spread} /> : '—'}</td>
+                        <td className="is-num">{r.total ? <LiveLine gameId={r.id} kind="total" fallback={r.total} /> : '—'}</td>
                         <td className="is-num front-dim">{[r.spreadOpen, r.totalOpen].filter(Boolean).join(' / ') || '—'}</td>
                         <td className="is-num">{r.research > 0 ? r.research : <span className="front-dim">—</span>}</td>
                       </tr>
@@ -266,5 +252,6 @@ export default function HomeFront({ board, brief, proof, series, leaders, cta, s
         </aside>
       </div>
     </div>
+    </LiveProvider>
   )
 }

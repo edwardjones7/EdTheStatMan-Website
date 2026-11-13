@@ -27,6 +27,8 @@ export interface BriefSource {
   is_elite?: boolean | null
   min_tier?: string | null
   show_on_results?: boolean | null
+  /** nfl_games.id, when the pick is linked to a Desk game (pricing_01). */
+  game_id?: string | null
 }
 
 /** Exactly what a card renders. Nothing else crosses the wire. */
@@ -37,6 +39,8 @@ export interface BriefPick {
   line: string | null
   opponent: string | null
   result: string | null
+  /** The Desk game this pick is on, for the live board. */
+  gameId: string | null
 }
 
 export interface BriefRecord {
@@ -56,6 +60,9 @@ export interface Brief {
   visible: BriefPick[]
   /** How many picks on this card are locked to them. */
   lockedCount: number
+  /** Desk games that carry a locked pick. Game only, never side or number:
+   *  the Desk board already shows per-game bet counts publicly. */
+  lockedGameIds: string[]
   /** Every pick on the card, locked included, counted by sport. */
   sportCounts: { sport: string; n: number }[]
   /** Size of the whole card, locked included. */
@@ -126,13 +133,14 @@ export function buildBrief(
   const record = publishedRecord(rows)
 
   if (!date) {
-    return { date: null, isToday: false, visible: [], lockedCount: 0, sportCounts: [], total: 0, record }
+    return { date: null, isToday: false, visible: [], lockedCount: 0, lockedGameIds: [], sportCounts: [], total: 0, record }
   }
 
   const slate = rows.filter(r => r.date === date && r.is_active !== false)
 
   const visible: BriefPick[] = []
   let lockedCount = 0
+  const lockedGameIds: string[] = []
   const bySport = new Map<string, number>()
 
   for (const row of slate) {
@@ -148,9 +156,11 @@ export function buildBrief(
         line: row.line,
         opponent: row.opponent,
         result: row.result,
+        gameId: row.game_id ?? null,
       })
     } else {
       lockedCount++
+      if (row.game_id && !lockedGameIds.includes(row.game_id)) lockedGameIds.push(row.game_id)
     }
   }
 
@@ -162,6 +172,7 @@ export function buildBrief(
     isToday: date === today,
     visible,
     lockedCount,
+    lockedGameIds,
     sportCounts,
     total: slate.length,
     record,

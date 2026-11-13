@@ -106,6 +106,9 @@ export const config = {
     // withBotId() in next.config.js. It is fetched on every page load of a
     // protected route and carries no session, so running the Supabase round
     // trip on it would be pure latency on the challenge itself.
-    '/((?!api/stripe/webhook|149e9513-01fa-4fb0-aad4-566afd725d1b|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    //
+    // api/live is the front page's live-scores poll: public, CDN-cached and
+    // hit every 30s per open tab, so it must not cost an Auth round trip each.
+    '/((?!api/stripe/webhook|api/live|149e9513-01fa-4fb0-aad4-566afd725d1b|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }

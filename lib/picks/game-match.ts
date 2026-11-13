@@ -90,7 +90,7 @@ function norm(text: string): string {
  * How strongly `text` names this team. 0 = not at all. Longer names score
  * higher so "Michigan State" beats "Michigan" for a Spartans bet.
  */
-function teamScore(text: string, full: string, abbrev: string): number {
+export function teamScore(text: string, full: string, abbrev: string): number {
   const t = norm(text)
   const f = norm(full).trim()
   if (!f) return 0

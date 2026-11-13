@@ -8,7 +8,7 @@
 // Everything is shaped into display strings here so the hero is a plain server
 // component with no row data in the browser.
 
-import { createAdminClient } from './supabase/admin'
+import { createCachedClient, DB_TAGS } from './supabase/cached'
 import { selectAll } from './supabase/select-all'
 import { latestPublishedSeason } from './desk-teams'
 import { deskSportLabel } from './desk'
@@ -174,7 +174,7 @@ export async function loadHomeBoard(
   { maxRows = MAX_ROWS }: { maxRows?: number } = {}
 ): Promise<HomeBoard | null> {
   try {
-    const admin = createAdminClient() as any
+    const admin = createCachedClient([DB_TAGS.games]) as any
     const season = await latestPublishedSeason(admin, SPORT)
     const all = await seasonRows(admin, season)
     const active = currentWeekOf(all, now)

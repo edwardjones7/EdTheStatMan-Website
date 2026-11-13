@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { createCachedClient, DB_TAGS } from '@/lib/supabase/cached'
 import { SITE_CONTENT_DEFAULTS } from '@/lib/site-content'
 import type { AllSiteContent } from '@/lib/site-content'
@@ -15,6 +16,8 @@ import { loadProofWithSeries } from '@/lib/proof'
 import { loadVaultLeaders } from '@/lib/home-front'
 import { loadHomeBoard } from '@/lib/home-board'
 import { loadTrialState } from '@/lib/trial'
+import { trackPick, type TrackGame } from '@/lib/live/track'
+import type { PickTrack } from '@/lib/live/types'
 import '@/styles/home.css'
 
 export const metadata: Metadata = {
@@ -109,10 +112,28 @@ export default async function Home() {
   // Portfolio page does -- the app's tier logic is the gate, not RLS -- and
   // gated immediately by buildBrief(), which drops locked picks server-side and
   // returns only a count for them.
-  const { data: briefRows } = await (createCachedClient([DB_TAGS.picks]) as any)
-    .from('todays_bets')
-    .select('id, date, sport, bet, line, opponent, result, is_active, is_free, is_elite, show_on_results')
+  const BRIEF_COLS = 'id, date, sport, bet, line, opponent, result, is_active, is_free, is_elite, show_on_results'
+  const picksDb = createCachedClient([DB_TAGS.picks]) as any
+  // game_id arrives with pricing_01; naming a missing column fails the read.
+  let { data: briefRows, error: briefError } = await picksDb.from('todays_bets').select(`${BRIEF_COLS}, game_id`)
+  if (briefError) ({ data: briefRows } = await picksDb.from('todays_bets').select(BRIEF_COLS))
   const brief = buildBrief((briefRows ?? []) as BriefSource[], userTier, isAdmin)
+
+  // Live tracking for the picks this visitor can see (lib/live/track.ts). Built
+  // here so a locked pick's side and number never reach the browser.
+  const trackedIds = Array.from(new Set(brief.visible.map(p => p.gameId).filter(Boolean))) as string[]
+  const tracks: PickTrack[] = []
+  if (trackedIds.length > 0) {
+    const { data: trackGames } = await (createCachedClient([DB_TAGS.games]) as any)
+      .from('nfl_games')
+      .select('id, sport, home_team, home_abbrev, away_team, away_abbrev')
+      .in('id', trackedIds)
+    const byId = new Map(((trackGames ?? []) as TrackGame[]).map(g => [g.id, g]))
+    for (const p of brief.visible) {
+      const g = p.gameId ? byId.get(p.gameId) : undefined
+      if (g) tracks.push(trackPick({ id: p.id, gameId: p.gameId, bet: p.bet, line: p.line }, g))
+    }
+  }
   const [{ proof, series }, board, trial, leaders] = await Promise.all([proofPromise, boardPromise, trialPromise, leadersPromise])
   const cta: HeroCta =
     !user || !trial ? { kind: 'signup' }
@@ -129,6 +150,7 @@ export default async function Home() {
       leaders={leaders}
       cta={cta}
       signedOut={!user}
+      tracks={tracks}
     />
   )
 
