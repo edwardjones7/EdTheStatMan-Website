@@ -55,7 +55,32 @@ function passwordOk(password: string): boolean {
  * the callback ignores anything it does not recognise.
  */
 function callbackUrl(next: string, via: 'magic' | 'password'): string {
-  return `${siteUrl()}/auth/callback?next=${encodeURIComponent(next)}&via=${via}`
+  return `${authOrigin()}/auth/callback?next=${encodeURIComponent(next)}&via=${via}`
+}
+
+/**
+ * Where an auth link should bring the person back to: the site they started
+ * on. siteUrl() prefers NEXT_PUBLIC_SITE_URL, which is the production domain on
+ * Vercel and localhost:3000 in .env.local, so a sign-in begun on a preview or
+ * on a second local port came back to a different site (the live one, or
+ * another checkout). The request's own host fixes that everywhere.
+ *
+ * Trusting the Host header is safe here: Supabase only redirects to hosts on
+ * its allow-list and sends anything else to its Site URL.
+ */
+function authOrigin(): string {
+  try {
+    const h = headers()
+    const host = h.get('x-forwarded-host') ?? h.get('host')
+    if (host) {
+      const proto = h.get('x-forwarded-proto')?.split(',')[0]
+        ?? (/^(localhost|127\.0\.0\.1)(:|$)/.test(host) ? 'http' : 'https')
+      return `${proto}://${host}`
+    }
+  } catch {
+    // Outside a request: fall through.
+  }
+  return siteUrl()
 }
 
 /**
@@ -210,7 +235,7 @@ export async function signup(formData: FormData) {
     email: formData.get('email') as string,
     password,
     options: {
-      emailRedirectTo: `${siteUrl()}/auth/callback?next=${encodeURIComponent(next)}`,
+      emailRedirectTo: `${authOrigin()}/auth/callback?next=${encodeURIComponent(next)}`,
     },
   })
 
@@ -228,7 +253,7 @@ export async function loginWithGoogle() {
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: `${siteUrl()}/auth/callback`,
+      redirectTo: `${authOrigin()}/auth/callback`,
     },
   })
 
@@ -256,7 +281,7 @@ export async function forgotPassword(formData: FormData) {
 
   const supabase = await createClient()
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${siteUrl()}/auth/callback?next=/reset-password`,
+    redirectTo: `${authOrigin()}/auth/callback?next=/reset-password`,
   })
 
   if (error) {
