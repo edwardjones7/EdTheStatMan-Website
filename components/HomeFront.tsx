@@ -20,6 +20,7 @@ import NextUp from './live/NextUp'
 import { LiveWhen, LiveLine, JustMoved } from './live/LiveCells'
 import type { PickTrack } from '@/lib/live/types'
 import NewsCard from './live/NewsCard'
+import UnitsChart from './UnitsChart'
 import { InjuryCard, NotesCard, WireCard } from './FrontExtras'
 import type { WireItem } from '@/lib/wire'
 import type { NewsEntry, InjuryGame } from '@/lib/home-feeds'
@@ -47,41 +48,6 @@ export interface HomeFrontProps {
   injuries: InjuryGame[]
   notes: MatchupNotes[]
   wire: WireItem[]
-}
-
-/** Units over the headline window, on one scale from zero to a round ceiling. */
-function UnitsChart({ series, last }: { series: number[]; last: number }) {
-  if (series.length < 2) return null
-  const W = 300, H = 120, L = 34, R = 8, T = 8, B = 20
-  const lo = Math.min(0, ...series), hi = Math.max(0, ...series)
-  const step = Math.max(1, Math.ceil((hi - lo) / 3))
-  const min = Math.floor(lo / step) * step
-  const max = Math.ceil(hi / step) * step || step
-  const x = (i: number) => L + (i / (series.length - 1)) * (W - L - R)
-  const y = (v: number) => T + (1 - (v - min) / (max - min)) * (H - T - B)
-  const ticks: number[] = []
-  for (let v = min; v <= max + 1e-9; v += step) ticks.push(v)
-  const pts = series.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`)
-  const tone = last >= 0 ? 'var(--up)' : 'var(--down)'
-  return (
-    <svg className="front-chart" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`Units won pick by pick, ending at ${last >= 0 ? 'plus' : 'minus'} ${Math.abs(last)}`}>
-      <defs>
-        <linearGradient id="front-chart-fill" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor={tone} stopOpacity="0.3" />
-          <stop offset="1" stopColor={tone} stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      {ticks.map(v => (
-        <g key={v}>
-          <line x1={L} x2={W - R} y1={y(v)} y2={y(v)} stroke="rgba(255,255,255,.07)" />
-          <text x={L - 6} y={y(v) + 4} textAnchor="end" fontSize="10" fill="var(--text-muted)">{v > 0 ? `+${v}u` : v < 0 ? `−${-v}u` : '0'}</text>
-        </g>
-      ))}
-      <path d={`M${x(0)},${y(0)} L${pts.join(' L')} L${x(series.length - 1)},${y(0)} Z`} fill="url(#front-chart-fill)" />
-      <polyline points={pts.join(' ')} fill="none" stroke={tone} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
-      <circle cx={x(series.length - 1)} cy={y(series[series.length - 1])} r="4" fill={tone} />
-    </svg>
-  )
 }
 
 function Cta({ cta, locked, isToday }: { cta: HeroCta; locked: number; isToday: boolean }) {

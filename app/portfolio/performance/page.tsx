@@ -5,11 +5,15 @@ import type { ResultsContent } from '@/lib/site-content'
 import ResultsEditor from '@/components/ResultsEditor'
 import CTASection from '@/components/CTASection'
 import RecordBreakdown from '@/components/RecordBreakdown'
+import ResultsOverview from '@/components/results/ResultsOverview'
 import ResultsLedger, { LEDGER_PAGE_SIZE, type LedgerRow } from '@/components/ResultsLedger'
 import type { TodaysBet } from '@/components/TodaysBets'
 import { getAccess } from '@/lib/access-server'
 import { loadPublishedPicks } from '@/lib/proof'
+import { nyToday } from '@/lib/brief'
+import { parseMonth } from '@/lib/results'
 import '@/styles/proof-win.css'
+import '@/styles/portfolio-v2.css'
 
 export const metadata: Metadata = {
   title: 'Model Results',
@@ -45,7 +49,7 @@ function sortKey(r: Pick<TodaysBet, 'date' | 'created_at'>): number {
   return Number.isNaN(c) ? 0 : c
 }
 
-export default async function Results({ searchParams }: { searchParams: { page?: string } }) {
+export default async function Results({ searchParams }: { searchParams: { page?: string; month?: string; sport?: string } }) {
   const access = await getAccess()
 
   // Paged past PostgREST's silent 1,000-row cap (lib/supabase/select-all.ts).
@@ -78,20 +82,12 @@ export default async function Results({ searchParams }: { searchParams: { page?:
       opponent: p.opponent, result: p.result, is_free: p.is_free, odds: p.odds ?? null,
     }))
 
-  return (
-    <main>
-      <header className="page-header perf-header">
-        <div className="container">
-          <span className="section-label">Live Track Record</span>
-          <h1 className="page-header__title">Model <span className="text-gradient">Results</span></h1>
-          <p className="page-header__subtitle">
-            Every graded pick, win or lose: the overall record, then each sport, then each
-            sport by season, with the full log underneath.
-          </p>
-        </div>
-      </header>
+  const month = parseMonth(searchParams.month, nyToday().slice(0, 7))
+  const sport = searchParams.sport ? String(searchParams.sport).toUpperCase().slice(0, 12) : null
 
-      <RecordBreakdown rows={picks} />
+  return (
+    <main className="rs">
+      <ResultsOverview rows={picks} month={month} sport={sport} />
 
       <ResultsLedger rows={pageRows} page={page} pageCount={pageCount} total={graded.length} />
 
