@@ -216,10 +216,25 @@ export function recentResults(rows: RecordSource[], proof: ProofData, n = 10): R
     }))
 }
 
-/** The proof plus its chart series and latest results, from one read. */
-export async function loadProofWithSeries(): Promise<{ proof: ProofData; series: number[]; recent: RecentResult[] }> {
+/**
+ * The proof plus its chart series and latest results, from one read.
+ *
+ * `pin` fixes the headline to one sport instead of the strongest in-season
+ * one (the home page always shows the NFL, Eddie's call, Nov 2026). It falls
+ * back to the normal headline when that sport has no graded sample yet. The
+ * recent-results strip follows the same sport.
+ */
+export async function loadProofWithSeries(pin?: string): Promise<{ proof: ProofData; series: number[]; recent: RecentResult[] }> {
   const rows = await loadPublishedPicks()
-  const proof = buildProof(rows)
-  return { proof, series: headlineSeries(rows, proof), recent: recentResults(rows, proof) }
+  let proof = buildProof(rows)
+  const pinned = pin ? proof.sports.find(s => s.sport.toUpperCase() === pin.toUpperCase()) : undefined
+  if (pinned) {
+    const cutoff = new Date(Date.now() - HEADLINE_RECENT_DAYS * 864e5).toISOString().slice(0, 10)
+    proof = { ...proof, headline: pinned, headlineInSeason: !!pinned.to && pinned.to >= cutoff }
+  }
+  const recent = recentResults(rows, proof, pinned ? 40 : 10)
+    .filter(r => !pinned || r.sport === pinned.sport.toUpperCase())
+    .slice(0, 10)
+  return { proof, series: headlineSeries(rows, proof), recent }
 }
 

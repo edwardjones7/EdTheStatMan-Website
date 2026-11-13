@@ -46,7 +46,7 @@ export const dynamic = 'force-dynamic'
 export default async function Home() {
   // Started first and awaited late: it is an independent read, so it should not
   // add a round trip to the page.
-  const proofPromise = loadProofWithSeries()
+  const proofPromise = loadProofWithSeries('NFL')
   // The whole week: the lines strip shows every game, the table the first eight.
   const boardPromise = loadHomeBoard(new Date(), { maxRows: Infinity })
   const leadersPromise = loadVaultLeaders()
