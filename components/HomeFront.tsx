@@ -202,28 +202,6 @@ export default function HomeFront({ board, brief, proof, series, recent, leaders
           <NotesCard games={notes} href={board?.href ?? '/desk/nfl'} />
 
           <NewsCard news={news} />
-
-          {board && rows.length > 0 && (
-            <section className="front-card">
-              <header className="front-hd"><h2>Research Desk · {board.title}</h2><Link href={board.href}>Full board</Link></header>
-              <div className="front-tbl" tabIndex={0} role="region" aria-label={`${board.title} board`}>
-                <table>
-                  <thead><tr><th scope="col">Game</th><th scope="col" className="is-num">Spread</th><th scope="col" className="is-num">Total</th><th scope="col" className="is-num">Opened</th><th scope="col" className="is-num">Research</th></tr></thead>
-                  <tbody>
-                    {rows.slice(0, 8).map(r => (
-                      <tr key={r.id}>
-                        <td><Link href={r.href}><b>{r.matchup}</b></Link><LiveWhen gameId={r.id} fallback={r.when} /></td>
-                        <td className="is-num">{r.spread ? <LiveLine gameId={r.id} kind="spread" fallback={r.spread} /> : '—'}</td>
-                        <td className="is-num">{r.total ? <LiveLine gameId={r.id} kind="total" fallback={r.total} /> : '—'}</td>
-                        <td className="is-num front-dim">{[r.spreadOpen, r.totalOpen].filter(Boolean).join(' / ') || '—'}</td>
-                        <td className="is-num">{r.research > 0 ? r.research : <span className="front-dim">—</span>}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </section>
-          )}
         </div>
 
         <aside className="front-right" aria-label="Membership and the record">
@@ -295,6 +273,30 @@ export default function HomeFront({ board, brief, proof, series, recent, leaders
             <a href="https://discord.gg/rXBZkSPcJb" className="front-btn front-discord__btn" target="_blank" rel="noopener">Join</a>
           </section>
         </aside>
+
+        {/* Below all three columns and spanning them, so neither rail is left
+            with empty space beside the table. */}
+        {board && rows.length > 0 && (
+          <section className="front-card front-board">
+            <header className="front-hd"><h2>Research Desk · {board.title}</h2><Link href={board.href}>Full board</Link></header>
+            <div className="front-tbl" tabIndex={0} role="region" aria-label={`${board.title} board`}>
+              <table>
+                <thead><tr><th scope="col">Game</th><th scope="col" className="is-num">Spread</th><th scope="col" className="is-num">Total</th><th scope="col" className="is-num">Opened</th><th scope="col" className="is-num">Research</th></tr></thead>
+                <tbody>
+                  {rows.slice(0, 8).map(r => (
+                    <tr key={r.id}>
+                      <td><Link href={r.href}><b>{r.matchup}</b></Link><LiveWhen gameId={r.id} fallback={r.when} /></td>
+                      <td className="is-num">{r.spread ? <LiveLine gameId={r.id} kind="spread" fallback={r.spread} /> : '—'}</td>
+                      <td className="is-num">{r.total ? <LiveLine gameId={r.id} kind="total" fallback={r.total} /> : '—'}</td>
+                      <td className="is-num front-dim">{[r.spreadOpen, r.totalOpen].filter(Boolean).join(' / ') || '—'}</td>
+                      <td className="is-num">{r.research > 0 ? r.research : <span className="front-dim">—</span>}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        )}
       </div>
     </div>
     </LiveProvider>

@@ -865,6 +865,9 @@
 .front-rec__split small { display: block; color: var(--text-muted); font-size: 0.72rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .front-rec__split b { font-family: var(--font-heading); font-size: 1.05rem; font-weight: 700; color: var(--text-heading); font-variant-numeric: tabular-nums; }
 
+/* The week's board runs under all three columns (see HomeFront). */
+.front-board { grid-column: 1 / -1; }
+
 /* Last graded: one W/L/P chip per pick, newest on the left. */
 .front-last { list-style: none; margin: 0; padding: 12px 14px 14px; display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 5px; }
 .front-last__r {
