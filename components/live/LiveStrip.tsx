@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useMemo, useState } from 'react'
 import { LIVE_SPORTS, LIVE_SPORT_LABEL, type LiveGame, type LiveSport } from '@/lib/live/types'
 import { useLive } from './LiveProvider'
-import { spreadText, stateText } from './format'
+import { spreadText, stateText, weatherShort } from './format'
 
 /** What the server renders before the first poll lands (this week's NFL board). */
 export interface StripSeed {
@@ -49,7 +49,9 @@ function Chip({ g }: { g: LiveGame }) {
           {live && <i className="front-live__dot" aria-hidden />}
           {stateText(g)}
         </span>
-        {g.broadcast && g.state === 'pre' && <span>{g.broadcast}</span>}
+        {g.state === 'pre' && g.weatherFlag && g.weather
+          ? <span className="front-wx" title={`Kickoff forecast: ${weatherShort(g.weather)}`}>{weatherShort(g.weather)}</span>
+          : g.broadcast && g.state === 'pre' && <span>{g.broadcast}</span>}
       </span>
       {(['away', 'home'] as const).map(side => {
         const t = g[side]

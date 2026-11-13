@@ -1,3 +1,4 @@
+import GameIntel from '@/components/GameIntel'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
@@ -543,6 +544,17 @@ export default async function NflGamePage({ params }: { params: { sport: string;
               closed={researchClosed}
             />
           )}
+
+          {/* Free context: injuries, kickoff forecast, headlines. */}
+          <GameIntel
+            sport={params.sport}
+            gameId={game.id}
+            status={game.status}
+            homeTeam={game.home_team}
+            awayTeam={game.away_team}
+            homeAbbrev={game.home_abbrev}
+            awayAbbrev={game.away_abbrev}
+          />
 
           {/* Say so rather than ending the page. Admins see this too. */}
           {!hasResearch && (

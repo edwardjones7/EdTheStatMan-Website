@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { LIVE_SPORT_LABEL } from '@/lib/live/types'
 import { useLive } from './LiveProvider'
-import { countdown, spreadText } from './format'
+import { countdown, spreadText, weatherShort } from './format'
 
 /**
  * "Next up" bar: how many games are live right now and a countdown to the
@@ -37,6 +37,7 @@ export default function NextUp() {
       <b>{LIVE_SPORT_LABEL[next.sport]} · {next.away.abbrev} at {next.home.abbrev}</b>
       <span className="front-next__cd">{countdown(new Date(next.kickoff!).getTime() - now)}</span>
       {line && <span className="front-next__ln">{line}</span>}
+      {next.weather && <span className={next.weatherFlag ? 'front-wx' : 'front-dim'}>{weatherShort(next.weather)}</span>}
       {next.broadcast && <span className="front-dim">{next.broadcast}</span>}
     </>
   )

@@ -19,6 +19,10 @@ import LivePicks from './live/LivePicks'
 import NextUp from './live/NextUp'
 import { LiveWhen, LiveLine, JustMoved } from './live/LiveCells'
 import type { PickTrack } from '@/lib/live/types'
+import NewsCard from './live/NewsCard'
+import { InjuryCard, NotesCard } from './FrontExtras'
+import type { NewsEntry, InjuryGame } from '@/lib/home-feeds'
+import type { MatchupNotes } from '@/lib/home-notes'
 
 /**
  * The homepage as a sports front page (Nov 2026): a lines strip like a scores
@@ -36,6 +40,9 @@ export interface HomeFrontProps {
   signedOut: boolean
   /** Live tracking for the visible picks (lib/live/track.ts). */
   tracks: PickTrack[]
+  news: NewsEntry[]
+  injuries: InjuryGame[]
+  notes: MatchupNotes[]
 }
 
 /** Units over the headline window, on one scale from zero to a round ceiling. */
@@ -98,7 +105,7 @@ function Cta({ cta, locked, isToday }: { cta: HeroCta; locked: number; isToday: 
   )
 }
 
-export default function HomeFront({ board, brief, proof, series, leaders, cta, signedOut, tracks }: HomeFrontProps) {
+export default function HomeFront({ board, brief, proof, series, leaders, cta, signedOut, tracks, news, injuries, notes }: HomeFrontProps) {
   const lead = leadStory(board, proof)
   const cards = stories(board, brief, lead)
   const movers = lineMovers(board)
@@ -153,6 +160,8 @@ export default function HomeFront({ board, brief, proof, series, leaders, cta, s
             </section>
           )}
 
+          <InjuryCard games={injuries} />
+
           {leaders.length > 0 && (
             <section className="front-card">
               <header className="front-hd"><h2>Vault leaders</h2><Link href="/vault/systems">The Vault</Link></header>
@@ -198,6 +207,10 @@ export default function HomeFront({ board, brief, proof, series, leaders, cta, s
               ))}
             </div>
           )}
+
+          <NotesCard games={notes} href={board?.href ?? '/desk/nfl'} />
+
+          <NewsCard news={news} />
 
           {board && rows.length > 0 && (
             <section className="front-card">

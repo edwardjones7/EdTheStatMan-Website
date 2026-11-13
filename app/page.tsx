@@ -17,6 +17,8 @@ import { loadVaultLeaders } from '@/lib/home-front'
 import { loadHomeBoard } from '@/lib/home-board'
 import { loadTrialState } from '@/lib/trial'
 import { trackPick, type TrackGame } from '@/lib/live/track'
+import { loadFrontFeeds } from '@/lib/home-feeds'
+import { loadMatchupNotes } from '@/lib/home-notes'
 import type { PickTrack } from '@/lib/live/types'
 import '@/styles/home.css'
 
@@ -47,6 +49,8 @@ export default async function Home() {
   // The whole week: the lines strip shows every game, the table the first eight.
   const boardPromise = loadHomeBoard(new Date(), { maxRows: Infinity })
   const leadersPromise = loadVaultLeaders()
+  const feedsPromise = loadFrontFeeds()
+  const notesPromise = loadMatchupNotes()
   const supabase = await createClient()
 
   const { data: contentRows } = await (createCachedClient([DB_TAGS.content]) as any).from('site_content').select('key, value')
@@ -134,7 +138,7 @@ export default async function Home() {
       if (g) tracks.push(trackPick({ id: p.id, gameId: p.gameId, bet: p.bet, line: p.line }, g))
     }
   }
-  const [{ proof, series }, board, trial, leaders] = await Promise.all([proofPromise, boardPromise, trialPromise, leadersPromise])
+  const [{ proof, series }, board, trial, leaders, feeds, notes] = await Promise.all([proofPromise, boardPromise, trialPromise, leadersPromise, feedsPromise, notesPromise])
   const cta: HeroCta =
     !user || !trial ? { kind: 'signup' }
     : hasDesk ? { kind: 'desk', trialEndsAt: trial.onTrial ? trial.endsAt : null }
@@ -151,6 +155,9 @@ export default async function Home() {
       cta={cta}
       signedOut={!user}
       tracks={tracks}
+      news={feeds.news}
+      injuries={feeds.injuries}
+      notes={notes}
     />
   )
 

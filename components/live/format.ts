@@ -33,6 +33,15 @@ export function scoreText(g: LiveGame): string {
   return `${g.away.abbrev} ${g.away.score ?? 0}, ${g.home.abbrev} ${g.home.score ?? 0}`
 }
 
+/** "38°F · wind 18 mph · Rain" */
+export function weatherShort(w: NonNullable<LiveGame['weather']>): string {
+  return [
+    w.tempF != null ? `${w.tempF}°` : null,
+    w.windMph != null ? `${w.windMph} mph` : null,
+    w.sky && /rain|snow|storm|thunder|shower/i.test(w.sky) ? w.sky.replace(/^(Chance|Slight Chance) /, '') : null,
+  ].filter(Boolean).join(' · ')
+}
+
 /** "1h 42m" / "12m" / "48s" */
 export function countdown(ms: number): string {
   if (ms <= 0) return 'now'

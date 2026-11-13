@@ -11,6 +11,7 @@ import { createCachedClient, DB_TAGS } from '../supabase/cached'
 import { parseOdds } from '../espn'
 import { gamePath } from '../nfl'
 import type { LiveFeed, LiveGame, LiveSport, LiveState } from './types'
+import { gameWeather, weatherMatters } from '../feeds/weather'
 
 const CDN = 'https://cdn.espn.com/core'
 
@@ -50,7 +51,13 @@ function score(v: unknown): number | null {
   return v === undefined || v === null || v === '' || !Number.isFinite(n) ? null : n
 }
 
-function parse(event: any, sport: LiveSport): Omit<LiveGame, 'id' | 'href' | 'spreadOpen' | 'totalOpen' | 'spreadJustMoved' | 'totalJustMoved'> | null {
+type Parsed = Omit<LiveGame, 'id' | 'href' | 'spreadOpen' | 'totalOpen' | 'spreadJustMoved' | 'totalJustMoved' | 'weather' | 'weatherFlag'> & {
+  venueCity: string | null
+  indoor: boolean
+  espnWeather: any
+}
+
+function parse(event: any, sport: LiveSport): Parsed | null {
   const comp = event?.competitions?.[0]
   const teams: any[] = comp?.competitors ?? []
   const home = teams.find(t => t.homeAway === 'home')
@@ -85,6 +92,9 @@ function parse(event: any, sport: LiveSport): Omit<LiveGame, 'id' | 'href' | 'sp
     spread: odds.spread_current,
     total: odds.total_current,
     broadcast: comp?.broadcasts?.[0]?.names?.[0] ?? comp?.geoBroadcasts?.[0]?.media?.shortName ?? null,
+    venueCity: comp?.venue?.address?.city ?? null,
+    indoor: Boolean(comp?.venue?.indoor),
+    espnWeather: event?.weather ?? null,
   }
 }
 
@@ -104,7 +114,7 @@ async function fetchSport(sport: LiveSport): Promise<LiveGame[]> {
     return []
   }
 
-  const parsed = events.map(e => parse(e, sport)).filter(Boolean) as NonNullable<ReturnType<typeof parse>>[]
+  const parsed = events.map(e => parse(e, sport)).filter(Boolean) as Parsed[]
   if (parsed.length === 0) return []
 
   // Join to the Desk: one cached read per sport, keyed by ESPN's event id.
@@ -124,12 +134,25 @@ async function fetchSport(sport: LiveSport): Promise<LiveGame[]> {
     console.error(`[live] ${sport} desk join failed: ${(e as Error).message}`)
   }
 
+  // Weather only for football that has not kicked off, within NWS's window.
+  const SIX_DAYS = 6 * 24 * 3600 * 1000
+  const weather = await Promise.all(parsed.map(g =>
+    (sport === 'nfl' || sport === 'cfb') && g.state === 'pre' && g.kickoff &&
+      Date.parse(g.kickoff) - Date.now() < SIX_DAYS && (!f.deskOnly || desk.has(g.espnId))
+      ? gameWeather({ sport, homeAbbrev: g.home.abbrev, venueCity: g.venueCity, indoor: g.indoor, kickoff: g.kickoff, espn: g.espnWeather })
+      : Promise.resolve(null)
+  ))
+
   const out: LiveGame[] = []
-  for (const g of parsed) {
+  for (const [i, g] of parsed.entries()) {
     const row = desk.get(g.espnId)
     if (f.deskOnly && !row) continue
+    const { venueCity: _c, indoor: _i, espnWeather: _w, ...rest } = g
+    const w = weather[i]
     out.push({
-      ...g,
+      ...rest,
+      weather: w ? { tempF: w.tempF, windMph: w.windMph, sky: w.sky, precipPct: w.precipPct } : null,
+      weatherFlag: weatherMatters(w),
       id: row?.id ?? null,
       href: row ? gamePath(sport, row.slug) : null,
       spreadOpen: row?.spread_open ?? null,

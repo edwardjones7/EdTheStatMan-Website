@@ -50,6 +50,10 @@ export interface LiveGame {
   spreadJustMoved: boolean
   totalJustMoved: boolean
   broadcast: string | null
+  /** Kickoff weather for outdoor football that has not started (lib/feeds/weather.ts). */
+  weather: { tempF: number | null; windMph: number | null; sky: string | null; precipPct: number | null } | null
+  /** Worth showing on a chip: strong wind, likely rain or snow, or bitter cold. */
+  weatherFlag: boolean
 }
 
 export interface LiveFeed {
