@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import CTASection from '@/components/CTASection'
 import DeskWeekBoard from '@/components/DeskWeekBoard'
+import LiveProvider from '@/components/live/LiveProvider'
 import NflAdminBar from '@/components/NflAdminBar'
 import DeskLiveRefresh from '@/components/DeskLiveRefresh'
 import PricingCards from '@/components/PricingCards'
@@ -337,20 +338,22 @@ export default async function DeskSport({
               The {seasonLabel} {label} schedule lands here soon — check back before {startWord(sport)}.
             </div>
           ) : (
-            <DeskWeekBoard
-              sport={sport}
-              games={boardGames}
-              days={dated ? { options: dayOptions, active: activeDay } : null}
-              lineFilter={sport === 'cbb' ? { on: lineFilterOn, hidden: hiddenByLine } : null}
-              weeks={weeks}
-              active={active}
-              linkedCounts={linkedCounts}
-              betCounts={betCounts}
-              hasDesk={hasDesk}
-              hasWriteups={access.hasElite}
-              isAdmin={isAdmin}
-              researchClosed={researchClosed}
-            />
+            <LiveProvider sports={[sport]}>
+              <DeskWeekBoard
+                sport={sport}
+                games={boardGames}
+                days={dated ? { options: dayOptions, active: activeDay } : null}
+                lineFilter={sport === 'cbb' ? { on: lineFilterOn, hidden: hiddenByLine } : null}
+                weeks={weeks}
+                active={active}
+                linkedCounts={linkedCounts}
+                betCounts={betCounts}
+                hasDesk={hasDesk}
+                hasWriteups={access.hasElite}
+                isAdmin={isAdmin}
+                researchClosed={researchClosed}
+              />
+            </LiveProvider>
           )}
         </div>
       </section>

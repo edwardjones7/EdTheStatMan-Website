@@ -75,7 +75,7 @@ export default async function GameIntel(p: Props) {
     )}
     {(teams.length > 0 || weather || stories.length > 0) && (
     <section className="game-intel reveal" aria-label="Injuries, weather and news">
-      <h2 className="game-intel__title">Before {sport === 'nba' || sport === 'cbb' ? 'tip-off' : 'kickoff'}</h2>
+      <h2 className="game-intel__title">{upcoming ? `Before ${sport === 'nba' || sport === 'cbb' ? 'tip-off' : 'kickoff'}` : 'Around this game'}</h2>
 
       {weather && (
         <p className="game-intel__wx">

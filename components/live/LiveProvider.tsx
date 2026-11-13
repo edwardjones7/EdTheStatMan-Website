@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import type { LiveFeed, LiveGame } from '@/lib/live/types'
+import '@/styles/live.css'
 
 /**
  * One poll of /api/live for the whole front page; every live widget reads it
@@ -33,7 +34,9 @@ function busy(games: LiveGame[], now: number): boolean {
   )
 }
 
-export default function LiveProvider({ children }: { children: React.ReactNode }) {
+export default function LiveProvider({ children, sports }: { children: React.ReactNode; sports?: string[] }) {
+  // One league on a Desk page; every league on the front page.
+  const url = sports && sports.length ? `/api/live?sports=${[...sports].sort().join(',')}` : '/api/live'
   const [feed, setFeed] = useState<LiveFeed | null>(null)
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -49,7 +52,7 @@ export default function LiveProvider({ children }: { children: React.ReactNode }
     async function load() {
       if (document.visibilityState !== 'visible') return
       try {
-        const res = await fetch('/api/live')
+        const res = await fetch(url)
         if (!res.ok) throw new Error(String(res.status))
         const next = (await res.json()) as LiveFeed
         if (cancelled) return
@@ -70,7 +73,7 @@ export default function LiveProvider({ children }: { children: React.ReactNode }
       if (timer.current) clearTimeout(timer.current)
       document.removeEventListener('visibilitychange', onVisible)
     }
-  }, [])
+  }, [url])
 
   const value = useMemo<LiveCtx>(() => {
     const games = feed?.games ?? []

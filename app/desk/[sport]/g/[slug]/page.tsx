@@ -1,3 +1,5 @@
+import LiveProvider from '@/components/live/LiveProvider'
+import LiveGameScore from '@/components/live/LiveGameScore'
 import GameIntel from '@/components/GameIntel'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
@@ -438,13 +440,18 @@ export default async function NflGamePage({ params }: { params: { sport: string;
               {game.away_team} <span className="nfl-game-header__at">at</span> {game.home_team}
             </h1>
             <p className="nfl-game-header__kickoff">{kickoffDisplay(game.kickoff, params.sport, game.kickoff_tbd)}</p>
-            {showScore && (
-              <div className="nfl-game-header__score">
-                <span>{game.away_abbrev} {game.away_score}</span>
-                <span className="nfl-game-header__score-sep">—</span>
-                <span>{game.home_abbrev} {game.home_score}</span>
-              </div>
-            )}
+            {/* Live from /api/live while it is played; the stored score otherwise.
+                Upcoming games render nothing until the feed says they started. */}
+            <LiveProvider sports={[sportKey]}>
+              <LiveGameScore
+                gameId={game.id}
+                awayAbbrev={game.away_abbrev}
+                homeAbbrev={game.home_abbrev}
+                awayScore={showScore ? game.away_score : null}
+                homeScore={showScore ? game.home_score : null}
+                status={game.status}
+              />
+            </LiveProvider>
             {(ats || ou) && (
               <div className="ats-tags ats-tags--header" aria-label="Result against the closing line">
                 {ats && <span className={`ats-tag ats-tag--${ats.side === 'push' ? 'push' : 'cover'}`}>{ats.label}</span>}

@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback, useTransition } from 'react'
 import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
+import { useLive } from './live/LiveProvider'
 import type { PublicNflGame } from '@/lib/nfl'
 import { spreadLabel, moneylineLabel, lineMove, groupSlate, gamePath } from '@/lib/nfl'
 import { IconLock, IconArrowRight, IconChevronLeft, IconChevronRight } from './Icons'
@@ -103,6 +104,9 @@ export default function DeskWeekBoard({
   sport, games, weeks, active, linkedCounts, betCounts = {}, hasDesk, hasWriteups, isAdmin, researchClosed,
   days = null, lineFilter = null,
 }: Props) {
+  // Live scores and clock from the front page's feed (/api/live, CDN-cached),
+  // between the Desk's own syncs. Empty outside a LiveProvider.
+  const { byId: liveById } = useLive()
   const router = useRouter()
   const pathname = usePathname()
 
@@ -458,9 +462,14 @@ export default function DeskWeekBoard({
               const spread = spreadLabel(g.spread_current, g.home_abbrev, g.away_abbrev)
               const move = lineMove(g.spread_open, g.spread_current)
               const totalMove = lineMove(g.total_open, g.total_current)
-              const status = STATUS_LABEL[g.status] ?? ''
-              const final = g.status === 'post'
-              const live = g.status === 'in'
+              // The live feed wins while it has the game; the stored row otherwise.
+              const lg = liveById.get(g.id)
+              const state = lg?.state ?? g.status
+              const awayScore = lg && lg.state !== 'pre' ? lg.away.score : g.away_score
+              const homeScore = lg && lg.state !== 'pre' ? lg.home.score : g.home_score
+              const final = state === 'post'
+              const live = state === 'in'
+              const status = live && lg?.detail ? lg.detail : STATUS_LABEL[state] ?? ''
               const unlocked = hasDesk || isAdmin
               // Graded against the closing line; both null until final and priced.
               const ats = atsTag(g)
@@ -476,20 +485,22 @@ export default function DeskWeekBoard({
                   abbrev: g.away_abbrev,
                   team: g.away_team,
                   record: g.away_record,
-                  score: g.away_score,
+                  score: awayScore,
                   fav: awayFav,
+                  poss: lg?.possession === 'away',
                 },
                 {
                   key: 'home',
                   abbrev: g.home_abbrev,
                   team: g.home_team,
                   record: g.home_record,
-                  score: g.home_score,
+                  score: homeScore,
                   fav: homeFav,
+                  poss: lg?.possession === 'home',
                 },
               ]
-              const winner = final && g.home_score !== null && g.away_score !== null
-                ? (g.home_score > g.away_score ? 'home' : g.away_score > g.home_score ? 'away' : null)
+              const winner = final && homeScore != null && awayScore != null
+                ? (homeScore > awayScore ? 'home' : awayScore > homeScore ? 'away' : null)
                 : null
 
               return (
@@ -540,8 +551,11 @@ export default function DeskWeekBoard({
                           <span className="desk-card__name">{teamName(sport, side.team, side.abbrev)}</span>
                           {side.record && <span className="desk-card__rec">{side.record}</span>}
                         </span>
-                        {final && side.score !== null && (
-                          <span className="desk-card__score">{side.score}</span>
+                        {(final || live) && side.score != null && (
+                          <span className={`desk-card__score${live ? ' is-live' : ''}`}>
+                            {side.poss && <span className="desk-card__poss" aria-label="has the ball" />}
+                            {side.score}
+                          </span>
                         )}
                       </div>
                     ))}

@@ -1,0 +1,38 @@
+/* Shared by every page that shows live scores (front page, Desk board, game
+   pages). Loaded by components/live/LiveProvider.tsx. */
+.front-live__dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--down);
+  flex: none;
+  animation: live-pulse 1.6s ease-out infinite;
+}
+@keyframes live-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(var(--down-rgb), 0.55); }
+  70% { box-shadow: 0 0 0 6px rgba(var(--down-rgb), 0); }
+  100% { box-shadow: 0 0 0 0 rgba(var(--down-rgb), 0); }
+}
+.desk-card__poss {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin: 0 6px;
+  border-radius: 50%;
+  background: var(--brand-text);
+  vertical-align: middle;
+}
+.desk-card__score.is-live { color: var(--text-heading); font-weight: 800; }
+.nfl-game-header__score.is-live { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; }
+.nfl-game-header__live {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--down);
+  font-size: 0.85rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+.nfl-game-header__dd { flex-basis: 100%; color: var(--text-muted); font-size: 0.85rem; font-weight: 600; }
+@media (prefers-reduced-motion: reduce) { .front-live__dot { animation: none; } }
