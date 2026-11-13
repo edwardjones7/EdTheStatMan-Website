@@ -868,6 +868,16 @@
 /* The week's board runs under all three columns (see HomeFront). */
 .front-board { grid-column: 1 / -1; }
 
+/* Flush bottoms: the grid row is as tall as the tallest column, and the last
+   card in each column grows to fill it. Only while columns sit side by side
+   (on a phone it all stacks); on tablet the left column is a grid, where
+   flex-grow does nothing. */
+@media (min-width: 769px) {
+  .front-left > :last-child,
+  .front-main > :last-child,
+  .front-right > :last-child { flex-grow: 1; }
+}
+
 /* Last graded: one W/L/P chip per pick, newest on the left. */
 .front-last { list-style: none; margin: 0; padding: 12px 14px 14px; display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 5px; }
 .front-last__r {
