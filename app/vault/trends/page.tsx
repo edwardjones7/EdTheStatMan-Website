@@ -1,4 +1,6 @@
 import type { Metadata } from 'next'
+import Link from 'next/link'
+import '@/styles/vault-list.css'
 import CTASection from '@/components/CTASection'
 import TrendsFilter from '@/components/TrendsFilter'
 import PricingCards from '@/components/PricingCards'
@@ -61,17 +63,23 @@ export default async function VaultTrends() {
   const freeTotal = Object.values(freeLockedCounts).reduce((a, b) => a + b, 0)
 
   return (
-    <main>
-      <section className="section" style={{ paddingBottom: '40px' }}>
-        <div className="container">
-          <div className="reveal">
-            <span className="section-label">The Vault</span>
-            <h2 className="section-title">Team Trends</h2>
-            <p className="section-subtitle">
-              Situational edges by team, with the full record and win percentage on
-              every row. Filter by sport to narrow the list.
-            </p>
-          </div>
+    <main className="vl-page">
+      <section style={{ paddingBottom: '40px' }}>
+        <div className="container vl-full"><div className="vl-wide">
+          <header className="vl-head reveal">
+            <div className="vl-head__text">
+              <span className="vl-kick">The Vault</span>
+              <h1 className="vl-title">Team Trends</h1>
+              <p className="vl-sub">
+              Situational edges by team, with the full record and win percentage on every row.
+              The four Research Desk leagues up front; older leagues are kept under Archive.
+              </p>
+            </div>
+            <nav className="vl-switch" aria-label="Vault library">
+              <Link href="/vault/systems">Systems</Link>
+              <Link href="/vault/trends" aria-current="page">Trends</Link>
+            </nav>
+          </header>
           {loggedOut && freeTotal > 0 && (
             <div style={{ marginTop: '24px' }}>
               <SignupPrompt
@@ -96,7 +104,7 @@ export default async function VaultTrends() {
             freeLockedCounts={freeLockedCounts}
             freeTeasers={freeTeasers}
           />
-        </div>
+        </div></div>
       </section>
 
       {!canSeeAll && (

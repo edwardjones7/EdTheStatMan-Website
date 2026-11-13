@@ -3,10 +3,13 @@ import Link from 'next/link'
 import CTASection from '@/components/CTASection'
 import PricingCards from '@/components/PricingCards'
 import RecordStrip from '@/components/RecordStrip'
+import LockedTeaserCard from '@/components/LockedTeaserCard'
+import { ARCHIVE_SPORTS } from '@/lib/vault-tabs'
+import '@/styles/vault-list.css'
 import { createCachedClient, DB_TAGS } from '@/lib/supabase/cached'
 import { getAccess } from '@/lib/access-server'
 import { rowMinTier, compareBySample } from '@/lib/gate'
-import { atLeastTier, TIER_SHORT_LABEL, type Tier } from '@/lib/access'
+import { atLeastTier, type Tier } from '@/lib/access'
 import { planByKey } from '@/lib/offer'
 import { SPORT_LABEL, SPORT_SHORT, type Sport } from '@/lib/desk'
 import { IconLock, IconChartBar, IconTarget, IconArrowRight, IconCheckCircle } from '@/components/Icons'
@@ -119,6 +122,7 @@ export default async function VaultLanding() {
       sport,
       count,
       label: SPORT_LABEL[sport as Sport] ?? sport.toUpperCase(),
+      archived: ARCHIVE_SPORTS.has(sport),
     }))
 
   // A sample of what is actually in here, biggest sample size first.
@@ -130,15 +134,19 @@ export default async function VaultLanding() {
   // server. The code is a label, not the rule, so it rides along either way.
   // Field-by-field on purpose: the source query is select('*') and a spread
   // would ship every present and future column.
-  const all = [...systems, ...trends]
+  const all = [
+    ...systems.map(r => ({ r, kind: 'system' as const })),
+    ...trends.map(r => ({ r, kind: 'trend' as const })),
+  ]
   const preview = [...all]
-    .sort(compareBySample)
-    .slice(0, 6)
-    .map(r => {
+    .sort((a, b) => compareBySample(a.r, b.r))
+    .slice(0, 8)
+    .map(({ r, kind }) => {
       const required = rowMinTier(r, 'private')
       const open = isAdmin || atLeastTier(userTier, required)
       return {
         id: r.id as string,
+        kind,
         sport: (r.sport ?? '') as string,
         open,
         required,
@@ -151,111 +159,128 @@ export default async function VaultLanding() {
       }
     })
   const lockedTotal = all.filter(
-    r => !(isAdmin || atLeastTier(userTier, rowMinTier(r, 'private')))
+    ({ r }) => !(isAdmin || atLeastTier(userTier, rowMinTier(r, 'private')))
   ).length
 
   return (
-    <main>
-      <section className="section vault-hero">
-        <div className="container">
-          <div className="reveal vault-hero__head">
-            <span className="section-label">The Vault</span>
-            <h1 className="section-title">Where the data lives</h1>
-            <p className="section-subtitle" style={{ margin: '0 auto' }}>
+    <main className="vl-page">
+      <div className="container vl-full"><div className="vl-wide">
+        <header className="vl-head reveal">
+          <div className="vl-head__text">
+            <span className="vl-kick">The Vault</span>
+            <h1 className="vl-title">Where the data lives</h1>
+            <p className="vl-sub">
               Every betting system and team trend we track, in one place, with the full
               record attached to each one. The Research Desk and The Portfolio are both
               built on top of it.
             </p>
           </div>
+          <nav className="vl-switch" aria-label="Vault library">
+            <Link href="/vault/systems">Systems</Link>
+            <Link href="/vault/trends">Trends</Link>
+          </nav>
+        </header>
 
-          <div className="vault-doors reveal">
-            {doors.map(door => (
-              <Link href={door.href} className="vault-door" key={door.href}>
-                <span className="vault-door__icon">{door.icon}</span>
-                <span className="vault-door__count">{door.total.toLocaleString()}</span>
-                <span className="vault-door__name">{door.name}</span>
-                <p className="vault-door__desc">{door.desc}</p>
-                <span className="vault-door__foot">
-                  <span className="vault-door__free">{door.free} open to free</span>
-                  <span className="vault-door__go">
-                    Browse <IconArrowRight size={14} />
-                  </span>
+        <div className="vault-doors reveal vl-doors">
+          {doors.map(door => (
+            <Link href={door.href} className="vault-door" key={door.href}>
+              <span className="vault-door__icon">{door.icon}</span>
+              <span className="vault-door__count">{door.total.toLocaleString()}</span>
+              <span className="vault-door__name">{door.name}</span>
+              <p className="vault-door__desc">{door.desc}</p>
+              <span className="vault-door__foot">
+                <span className="vault-door__free">{door.free} open to free</span>
+                <span className="vault-door__go">
+                  Browse <IconArrowRight size={14} />
                 </span>
-              </Link>
-            ))}
-          </div>
-
-          {coverage.length > 0 && (
-            <div className="vault-coverage reveal">
-              <span className="vault-coverage__label">Leagues covered</span>
-              <div className="vault-coverage__list">
-                {coverage.map(c => (
-                  <span className="vault-coverage__pill" key={c.sport}>
-                    {c.label}
-                    <span className="vault-coverage__n">{c.count}</span>
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
+              </span>
+            </Link>
+          ))}
         </div>
-      </section>
 
-      {preview.length > 0 && (
-        <section className="section vault-peek-section">
-          <div className="container">
-            <div className="reveal" style={{ textAlign: 'center' }}>
-              <span className="section-label">Inside</span>
-              <h2 className="section-title">Deepest samples on file</h2>
-              <p className="section-subtitle" style={{ margin: '0 auto' }}>
-                The longest-running rows in the library, biggest sample first. Locked rows
-                still show you the record — you just don&apos;t get the rule.
-              </p>
-            </div>
-
-            <ul className="vault-peek reveal">
-              {preview.map(row => (
-                <li className={`vault-peek__row${row.open ? '' : ' is-locked'}`} key={row.id}>
-                  <span className={`vault-peek__sport sport-${row.sport}`}>
-                    {SPORT_SHORT[row.sport as Sport] ?? row.sport.toUpperCase()}
-                  </span>
-                  <span className="vault-peek__desc">
-                    {row.open ? (
-                      <>
-                        <span>{row.description || 'Untitled system'}</span>
-                        {row.code && <span className="vault-peek__line">{row.code}</span>}
-                      </>
-                    ) : (
-                      <span className="vault-peek__redacted">
-                        <IconLock size={12} />
-                        Rule locked · {TIER_SHORT_LABEL[row.required]}
-                      </span>
-                    )}
-                  </span>
-                  <span className="vault-peek__record">
-                    <span className="vault-peek__wl">
-                      {row.w}-{row.l}{row.t ? `-${row.t}` : ''}
-                    </span>
-                    <RecordStrip w={row.w} l={row.l} t={row.t} />
-                  </span>
-                  <span className="vault-peek__pct">{pctDisplay(row.pct)}</span>
-                </li>
+        {coverage.length > 0 && (
+          <section className="vl-card vl-section reveal" aria-label="Leagues covered">
+            <header className="vl-hd">
+              <h2>Leagues covered</h2>
+              <small>Rows in the library</small>
+            </header>
+            <div className="vl-cover">
+              {coverage.filter(c => !c.archived).map(c => (
+                <span className="vl-cover__pill" key={c.sport}>
+                  {c.label}
+                  <b>{c.count.toLocaleString()}</b>
+                </span>
               ))}
-            </ul>
+              {coverage.some(c => c.archived) && (
+                <span className="vl-cover__archive">
+                  Archive, not on the Research Desk:{' '}
+                  {coverage.filter(c => c.archived).map(c => `${c.label} ${c.count}`).join(' · ')}
+                </span>
+              )}
+            </div>
+          </section>
+        )}
+
+        {preview.length > 0 && (
+          <section className="vl-card vl-section reveal" aria-labelledby="vl-peek-title">
+            <header className="vl-hd">
+              <h2 id="vl-peek-title">Deepest samples on file</h2>
+              <small>Biggest sample first</small>
+            </header>
+            <p className="vl-card__note">
+              The longest-running rows in the library. Locked rows still show you the
+              record, the sample and the win rate; you just don&apos;t get the rule.
+            </p>
+            <div className="vl-peek">
+              {preview.map(row => row.open ? (
+                <div className={`sys-row-card sys-row-card--${row.sport} vl-open`} key={row.id}>
+                  <div className="vl-lock__body">
+                    <span className="sys-row-card__sport-badge vl-lock__sport">
+                      {SPORT_SHORT[row.sport as Sport] ?? row.sport.toUpperCase()}
+                    </span>
+                    <span className="vl-lock__main">
+                      <span className="vl-open__desc">{row.description || 'Untitled system'}</span>
+                      {row.code && <span className="vl-lock__meta">{row.code}</span>}
+                    </span>
+                    <span className="vl-lock__stat">
+                      <span className="vl-lock__key">Record</span>
+                      <span className={`vl-lock__rec vl-lock__rec--${row.w > row.l ? 'win' : row.w < row.l ? 'loss' : 'flat'}`}>
+                        {row.w}-{row.l}{row.t ? `-${row.t}` : ''}
+                      </span>
+                    </span>
+                    <span className="vl-lock__stat vl-lock__stat--pct">
+                      <span className="vl-lock__key">Win %</span>
+                      <span className={`vl-lock__pct${row.w > row.l ? ' is-win' : ''}`}>{pctDisplay(row.pct)}</span>
+                      <RecordStrip w={row.w} l={row.l} t={row.t} />
+                    </span>
+                    <span />
+                  </div>
+                </div>
+              ) : (
+                <LockedTeaserCard
+                  key={row.id}
+                  teaser={{ id: row.id, sport: row.sport, w: row.w, l: row.l, t: row.t, pct: row.pct }}
+                  sportLabel={SPORT_SHORT[row.sport as Sport] ?? row.sport.toUpperCase()}
+                  sportClass={row.sport}
+                  requiredTier={row.required}
+                  noun={row.kind}
+                />
+              ))}
+            </div>
 
             {lockedTotal > 0 && (
-              <Link href="/win" className="vault-peek__locked">
+              <Link href="/win" className="vl-card__foot">
                 <IconLock size={14} />
                 <span>
-                  <strong>{lockedTotal.toLocaleString()}</strong> more rows are locked — and
+                  <strong>{lockedTotal.toLocaleString()}</strong> more rows are locked, and
                   you can see every one of their records today.
                 </span>
                 <IconArrowRight size={14} />
               </Link>
             )}
-          </div>
-        </section>
-      )}
+          </section>
+        )}
+      </div></div>
 
       <section className="section" style={{ background: 'var(--bg-secondary)' }}>
         <div className="container">

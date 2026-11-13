@@ -27,6 +27,7 @@ import LockedTeaserCard from '@/components/LockedTeaserCard'
 import SignupPrompt from '@/components/SignupPrompt'
 import RecordStrip from '@/components/RecordStrip'
 import { IconLock } from '@/components/Icons'
+import CopyLineButton from '@/components/CopyLineButton'
 
 export const dynamic = 'force-dynamic'
 
@@ -57,9 +58,10 @@ export async function generateMetadata({ params }: { params: { sport: string; sl
       description,
       url,
       siteName: 'EdTheStatMan',
-      images: [{ url: '/og-cover.jpg', width: 1200, height: 630 }],
+      // The image is the matchup card in ./opengraph-image.tsx (and
+      // ./twitter-image.tsx), which Next attaches to this route.
     },
-    twitter: { card: 'summary_large_image', title, description, images: ['/og-cover.jpg'] },
+    twitter: { card: 'summary_large_image', title, description },
   }
 }
 
@@ -334,6 +336,12 @@ export default async function NflGamePage({ params }: { params: { sport: string;
   const awayMl = moneylineLabel(publicGame.ml_away_current ?? publicGame.ml_away_open)
   const homeMl = moneylineLabel(publicGame.ml_home_current ?? publicGame.ml_home_open)
   const hasMarket = Boolean(spreadText || totalNow !== null || awayMl || homeMl)
+  // "WSH @ NYG · NYG −1.5 · O/U 40.5" for the Copy line button.
+  const copyText = [
+    `${game.away_abbrev} @ ${game.home_abbrev}`,
+    spreadText ? spreadText.replace(/-/g, '−') : null,
+    totalNow !== null ? `O/U ${totalNow}` : null,
+  ].filter(Boolean).join(' · ')
   const linkedCount =
     systems.visible.length + systems.locked.length + systems.lockedElite.length +
     trends.visible.length + trends.locked.length + trends.lockedElite.length
@@ -507,11 +515,14 @@ export default async function NflGamePage({ params }: { params: { sport: string;
                   </span>
                 </span>
               </div>
-              {publicGame.odds_provider && (
-                <p className="nfl-game-market__attrib">
-                  Lines via {publicGame.odds_provider}. Odds shown for reference only.
-                </p>
-              )}
+              <div className="gs-market-foot">
+                {publicGame.odds_provider ? (
+                  <p className="nfl-game-market__attrib">
+                    Lines via {publicGame.odds_provider}. Odds shown for reference only.
+                  </p>
+                ) : <span />}
+                {(spreadText || totalNow !== null) && <CopyLineButton text={copyText} />}
+              </div>
             </section>
           )}
 

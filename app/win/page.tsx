@@ -13,6 +13,8 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { loadTrialState } from '@/lib/trial'
 import { resolveAccess, ACCESS_SELECT, TIER_SHORT_LABEL } from '@/lib/access'
 import { loadProof } from '@/lib/proof'
+import { loadWinLive } from '@/lib/win-live'
+import WinLiveStrip from '@/components/WinLiveStrip'
 import '@/styles/proof-win.css'
 
 // Title and description are the ladder's, not the pre-v3 offer's. Both used to
@@ -127,9 +129,10 @@ export default async function Pricing({
     access = resolveAccess(profile as any, true)
   }
   const { tier: userTier, isPaid, membership, expiresAt } = access
-  const [proof, trial] = await Promise.all([
+  const [proof, trial, live] = await Promise.all([
     loadProof(),
     loadTrialState(createAdminClient(), user?.id),
+    loadWinLive(),
   ])
 
   const resumePlan = user && (!isPaid || trial.onTrial) ? planByKey(searchParams.checkout ?? '') : undefined
@@ -205,6 +208,10 @@ export default async function Pricing({
               <Link href="/account">View account</Link>
             </div>
           )}
+
+          {/* What is on the Desk this week, and the sports that are up, above the
+              plans; the full record still sits under them. */}
+          <WinLiveStrip live={live} proof={proof} />
 
           <WinPlans
             membership={trial.onTrial ? 'free' : membership}

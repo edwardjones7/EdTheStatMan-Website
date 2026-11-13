@@ -1,0 +1,30 @@
+/* Desk game page: the "Copy line" button in the market section. */
+.gs-market-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  margin-top: 10px;
+}
+.gs-market-foot .nfl-game-market__attrib { margin: 0; }
+.gs-copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-family: var(--font-heading);
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.gs-copy:hover { color: var(--text-heading); background: var(--bg-card-hover); }
+.gs-copy:focus-visible { outline: 2px solid var(--brand-text); outline-offset: 2px; }
+.gs-copy.is-copied { color: var(--up); border-color: var(--up); }

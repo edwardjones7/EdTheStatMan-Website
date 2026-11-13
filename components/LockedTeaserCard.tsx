@@ -2,8 +2,13 @@
 
 // A client component since it records the click on a free row's signup link.
 // Every prop is plain data, so the server-rendered Desk page can still use it.
+//
+// Built to read as a real row, not a hole: the sport, the record, the win rate
+// as a bar and the sample size are all on it, with a lock where the rule would
+// be and an Unlock button at the end. Every one of those numbers is already in
+// the LockedTeaser (lib/teaser.ts); nothing here may need more than that type
+// carries, and the rule itself never reaches the browser.
 import Link from 'next/link'
-import RecordStrip from './RecordStrip'
 import { IconLock } from './Icons'
 import type { LockedTeaser } from '@/lib/teaser'
 import type { Tier } from '@/lib/access'
@@ -11,6 +16,7 @@ import { unlockHref } from '@/lib/unlock'
 import { trackEvent } from '@/lib/track-client'
 import PaywallView from './PaywallView'
 import '@/styles/front-door.css'
+import '@/styles/vault-list.css'
 
 interface Props {
   /** Narrow type on purpose: a full row must never be passable here. */
@@ -32,6 +38,8 @@ interface Props {
   freeWithAccount?: boolean
   /** Signup's `next` for a freeWithAccount card. Required with it. */
   signupNext?: string
+  /** What the row is, for the label and the screen-reader text. */
+  noun?: 'system' | 'trend'
 }
 
 function pctDisplay(pct: number | null) {
@@ -39,54 +47,60 @@ function pctDisplay(pct: number | null) {
   return `${Math.round(pct * 100)}%`
 }
 
-export default function LockedTeaserCard({ teaser, sportLabel, sportClass, variant = 'members', requiredTier, freeWithAccount = false, signupNext = '/' }: Props) {
+export default function LockedTeaserCard({ teaser, sportLabel, sportClass, variant = 'members', requiredTier, freeWithAccount = false, signupNext = '/', noun = 'system' }: Props) {
   const winning = teaser.w > teaser.l
   const elite = variant === 'elite' && !freeWithAccount
   const tier: Tier | undefined = freeWithAccount ? 'retail' : requiredTier ?? (elite ? 'private' : undefined)
   const href = freeWithAccount ? `/signup?next=${encodeURIComponent(signupNext)}` : unlockHref(tier)
-  const hint = freeWithAccount
-    ? 'Free with an account — sign up to see it'
-    : elite ? 'Highest-conviction — unlock with the Vault' : 'Unlock to see the system'
+  const sample = teaser.w + teaser.l + teaser.t
+  const decided = teaser.w + teaser.l
+  // The bar is the share of decided games won; the stored pct when present.
+  const share = teaser.pct ?? (decided > 0 ? teaser.w / decided : null)
+  const width = share === null ? 0 : Math.max(0, Math.min(100, share * 100))
+  const kind = freeWithAccount
+    ? `Free ${noun}`
+    : elite ? `Highest-conviction ${noun}` : `Vault ${noun}`
+  const cta = freeWithAccount ? 'Sign up free' : 'Unlock'
 
   return (
     <Link
       href={href}
       onClick={freeWithAccount ? () => trackEvent('signup_prompt_click', { context: 'vault_free_row', variant: 'lock' }) : undefined}
-      className={`sys-row-card sys-row-card--${sportClass} sys-row-card--teaser${elite ? ' sys-row-card--elite-teaser' : ''}${freeWithAccount ? ' sys-row-card--free-teaser' : ''}`}
-      aria-label={`Locked ${elite ? 'highest-conviction ' : freeWithAccount ? 'free ' : ''}system — ${sportLabel}, record ${teaser.w}-${teaser.l}-${teaser.t}. ${freeWithAccount ? 'Create a free account to see it.' : 'Unlock to see the system.'}`}
+      className={`sys-row-card sys-row-card--${sportClass} sys-row-card--teaser vl-lock${elite ? ' sys-row-card--elite-teaser vl-lock--elite' : ''}${freeWithAccount ? ' sys-row-card--free-teaser vl-lock--free' : ''}`}
+      aria-label={`Locked ${kind.toLowerCase()}, ${sportLabel}, record ${teaser.w}-${teaser.l}-${teaser.t} over ${sample} games. ${freeWithAccount ? 'Create a free account to see it.' : `Unlock to see the ${noun}.`}`}
     >
       {/* Once per page per gate kind, however many cards render (PaywallView). */}
       <PaywallView gate={freeWithAccount ? 'vault_free_row' : 'vault_row'} tier={tier ?? null} />
-      <div className="sys-row-card__body">
-        <div className="sys-row-card__sport-col">
-          <span className="sys-row-card__sport-badge">{sportLabel}</span>
-        </div>
+      <div className="vl-lock__body">
+        <span className="sys-row-card__sport-badge vl-lock__sport">{sportLabel}</span>
 
-        <div className="sys-row-card__desc-col">
-          {/* Decorative only — the description never reaches the client. */}
-          <span className="sys-row-card__redacted" aria-hidden="true" />
-          <span className={`sys-row-card__teaser-hint${elite ? ' sys-row-card__teaser-hint--elite' : ''}`}>
-            <IconLock size={12} /> {hint}
+        <span className="vl-lock__main">
+          <span className="vl-lock__kind">
+            <IconLock size={12} /> {kind}
           </span>
-        </div>
+          <span className="vl-lock__meta">
+            <b>{sample.toLocaleString()}</b> {sample === 1 ? 'game' : 'games'} on record · rule hidden
+          </span>
+        </span>
 
-        <div className="sys-row-card__field">
-          <span className="sys-row-card__field-label">Record</span>
-          <span
-            className={`sys-row-card__record sys-row-card__record--${
-              winning ? 'win' : teaser.w < teaser.l ? 'loss' : 'neutral'
-            }`}
-          >
-            {teaser.w}-{teaser.l}-{teaser.t}
+        <span className="vl-lock__stat">
+          <span className="vl-lock__key">Record</span>
+          <span className={`vl-lock__rec vl-lock__rec--${winning ? 'win' : teaser.w < teaser.l ? 'loss' : 'flat'}`}>
+            {teaser.w}-{teaser.l}{teaser.t ? `-${teaser.t}` : ''}
           </span>
-        </div>
+        </span>
 
-        <div className="sys-row-card__pct-col">
-          <span className={`sys-row-card__pct sys-row-card__pct--${winning ? 'win' : 'neutral'}`}>
-            {pctDisplay(teaser.pct)}
+        <span className="vl-lock__stat vl-lock__stat--pct">
+          <span className="vl-lock__key">Win %</span>
+          <span className={`vl-lock__pct${winning ? ' is-win' : ''}`}>{pctDisplay(share)}</span>
+          <span className="vl-lock__bar" aria-hidden="true">
+            <span className={`vl-lock__fill${winning ? ' is-win' : ''}`} style={{ width: `${width}%` }} />
           </span>
-          <RecordStrip w={teaser.w} l={teaser.l} t={teaser.t} />
-        </div>
+        </span>
+
+        <span className="vl-lock__cta">
+          <IconLock size={12} /> {cta}
+        </span>
       </div>
     </Link>
   )

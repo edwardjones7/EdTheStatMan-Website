@@ -11,8 +11,10 @@ import { nextCode, compareCode, codeKey } from '@/lib/codes'
 import { IconLock, IconPencil } from './Icons'
 import RecordStrip from './RecordStrip'
 import { unlockHref } from '@/lib/unlock'
+import VaultSportTabs from './VaultSportTabs'
+import { parseVaultTab, inVaultTab, countForTab, isSportTab, vaultTabLabel, ARCHIVE_SPORTS, type VaultTab } from '@/lib/vault-tabs'
 
-type Sport = 'all' | 'nfl' | 'nflpre' | 'cfl' | 'cfb' | 'nba' | 'wnba' | 'cbb'
+type Sport = VaultTab
 
 interface Props {
   systems: BettingSystem[]
@@ -30,17 +32,6 @@ interface Props {
   freeLockedCounts?: Record<string, number>
   freeTeasers?: LockedTeaser[]
 }
-
-const TABS: { label: string; value: Sport }[] = [
-  { label: 'All Sports', value: 'all' },
-  { label: 'NFL', value: 'nfl' },
-  { label: 'NFL Preseason', value: 'nflpre' },
-  { label: 'CFL', value: 'cfl' },
-  { label: 'College Football', value: 'cfb' },
-  { label: 'NBA', value: 'nba' },
-  { label: 'WNBA', value: 'wnba' },
-  { label: 'College Basketball', value: 'cbb' },
-]
 
 const SPORT_STYLE: Record<string, { bg: string; color: string; label: string }> = {
   nba: { bg: 'rgba(var(--sport-nba), 0.1)', color: 'rgb(var(--sport-nba))', label: 'NBA' },
@@ -126,8 +117,7 @@ export default function SportTabsSystem({ systems, lockedCounts = {}, lockedTeas
   // The selected sport lives in the URL (?sport=nfl) so it survives a
   // router.refresh() after add/edit/delete — and any remount — instead of
   // snapping back to "All Sports".
-  const sportParam = searchParams.get('sport') as Sport | null
-  const activeTab: Sport = sportParam && TABS.some(t => t.value === sportParam) ? sportParam : 'all'
+  const activeTab: Sport = parseVaultTab(searchParams.get('sport'))
 
   function selectTab(value: Sport) {
     const params = new URLSearchParams(searchParams.toString())
@@ -172,21 +162,20 @@ export default function SportTabsSystem({ systems, lockedCounts = {}, lockedTeas
   // search. While one is active the locked blocks are hidden rather than shown
   // as results that ignored what was typed.
   const searching = query.trim().length > 0
-  const lockedForTab = isAdmin || searching ? [] : lockedTeasers.filter(t => activeTab === 'all' || t.sport === activeTab)
-  const lockedCount = activeTab === 'all' ? totalLocked : (lockedCounts[activeTab] ?? 0)
+  const lockedForTab = isAdmin || searching ? [] : lockedTeasers.filter(t => inVaultTab(t.sport, activeTab))
+  const lockedCount = countForTab(lockedCounts, activeTab)
 
   // Elite-locked rows exist for everyone below elite, members included.
   const totalEliteLocked = Object.values(eliteLockedCounts).reduce((a, b) => a + b, 0)
-  const eliteLockedForTab = isAdmin || searching ? [] : eliteTeasers.filter(t => activeTab === 'all' || t.sport === activeTab)
-  const eliteLockedCount = activeTab === 'all' ? totalEliteLocked : (eliteLockedCounts[activeTab] ?? 0)
+  const eliteLockedForTab = isAdmin || searching ? [] : eliteTeasers.filter(t => inVaultTab(t.sport, activeTab))
+  const eliteLockedCount = countForTab(eliteLockedCounts, activeTab)
 
   // Free rows a logged-out visitor cannot open yet. Kept apart from the paid
   // locks so they are counted as free and their locks go to signup, not /win.
-  const totalFreeLocked = Object.values(freeLockedCounts).reduce((a, b) => a + b, 0)
-  const freeLockedCount = activeTab === 'all' ? totalFreeLocked : (freeLockedCounts[activeTab] ?? 0)
-  const freeLockedForTab = isAdmin || searching ? [] : freeTeasers.filter(t => activeTab === 'all' || t.sport === activeTab)
+  const freeLockedCount = countForTab(freeLockedCounts, activeTab)
+  const freeLockedForTab = isAdmin || searching ? [] : freeTeasers.filter(t => inVaultTab(t.sport, activeTab))
 
-  const activeTabLabel = TABS.find(t => t.value === activeTab)!.label
+  const activeTabLabel = vaultTabLabel(activeTab)
 
   // Sport tab first, then the search box. Codes are compared as codeKey(),
   // which collapses padding and punctuation, so "cfbs 1", "CFBS0001" and
@@ -194,7 +183,7 @@ export default function SportTabsSystem({ systems, lockedCounts = {}, lockedTeas
   const q = query.trim().toLowerCase()
   const qCode = codeKey(query)
   const allVisible = systems
-    .filter(s => activeTab === 'all' || s.sport === activeTab)
+    .filter(s => inVaultTab(s.sport, activeTab))
     .filter(s => {
       if (!q) return true
       if (qCode && codeKey(s.code).includes(qCode)) return true
@@ -214,7 +203,7 @@ export default function SportTabsSystem({ systems, lockedCounts = {}, lockedTeas
     // Default a new row to the sport you're currently viewing, so adding while
     // on the NFL tab creates an NFL system (not the blank default), and suggest
     // the next free code for that sport from the rows already on the page.
-    const sport = activeTab !== 'all' ? activeTab : BLANK.sport
+    const sport = isSportTab(activeTab) ? activeTab : BLANK.sport
     setForm({ ...BLANK, sport, code: nextCode(sport, 'S', systems.map(s => s.code)) })
     setEditId(null)
     setFormMode('add')
@@ -427,17 +416,11 @@ export default function SportTabsSystem({ systems, lockedCounts = {}, lockedTeas
       </div>
 
       {/* Sport tabs */}
-      <div className="sport-tabs reveal">
-        {TABS.map(tab => (
-          <button
-            key={tab.value}
-            className={`sport-tab${activeTab === tab.value ? ' active' : ''}`}
-            onClick={() => selectTab(tab.value)}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
+      <VaultSportTabs
+        active={activeTab}
+        onSelect={selectTab}
+        archiveCount={systems.filter(r => ARCHIVE_SPORTS.has(r.sport)).length + countForTab(lockedCounts, 'archive') + countForTab(freeLockedCounts, 'archive') + countForTab(eliteLockedCounts, 'archive')}
+      />
 
       {/* Admin toolbar */}
       {isAdmin && editMode && (
