@@ -307,3 +307,8 @@
   .dk .desk-card__foot { justify-content: flex-end; padding-right: 14px; }
 }
 .dk .desk-card__foot * { white-space: nowrap; }
+
+/* Week rail spans the full width: pills share the row instead of bunching
+   at the left. min-width keeps them tappable; under that the rail scrolls. */
+.dk .desk-weeks-rail { width: 100%; }
+.dk .desk-week-pill { flex: 1 0 auto; min-width: 64px; justify-content: center; text-align: center; }
