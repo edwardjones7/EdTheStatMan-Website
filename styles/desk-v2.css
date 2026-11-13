@@ -271,7 +271,8 @@
   .dk .desk-day__grid { grid-template-columns: minmax(0, 1fr); gap: 6px; }
   .dk .desk-card {
     display: grid;
-    grid-template-columns: 170px minmax(0, 1fr) minmax(300px, 380px) 150px;
+    /* Teams capped so the lines sit beside the names, not across a gap. */
+    grid-template-columns: 150px minmax(240px, 420px) minmax(0, 1fr) 140px;
     align-items: center;
   }
   .dk .desk-card:hover { transform: none; }
@@ -291,3 +292,18 @@
   .dk .desk-card__foot { border-top: 0; border-left: 1px solid var(--border-color); height: 100%; }
   .dk .ats-tags { grid-column: 2; padding: 0 16px 8px; }
 }
+
+/* Week rail: slimmer pills so the rail is one quiet line. */
+.dk .desk-week-pill { min-height: 28px; padding: 4px 10px; font-size: 0.72rem; }
+.dk .desk-weeks-nav { height: 26px; }
+
+/* "Live, updating automatically" sits at the left under the header instead
+   of floating alone in the middle of the page. */
+.dk .desk-live { margin: 8px 0 0; justify-content: flex-start; }
+
+/* Market chips share the wide middle column evenly in row mode. */
+@media (min-width: 1100px) {
+  .dk .desk-card__market { grid-template-columns: repeat(3, minmax(0, 1fr)); border-bottom: 0; align-self: stretch; }
+  .dk .desk-card__foot { justify-content: flex-end; padding-right: 14px; }
+}
+.dk .desk-card__foot * { white-space: nowrap; }
