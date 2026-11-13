@@ -4,6 +4,7 @@ import './globals.css'
 import Navigation from '@/components/Navigation'
 import Footer from '@/components/Footer'
 import BackToTop from '@/components/BackToTop'
+import RouteProgress from '@/components/RouteProgress'
 import ClientScripts from '@/components/ClientScripts'
 import PageViewTracker from '@/components/PageViewTracker'
 import GlobalTicker from '@/components/GlobalTicker'
@@ -163,6 +164,9 @@ export default async function RootLayout({
       <body>
         {/* First focusable element on every page. */}
         <a href="#main" className="skip-link">Skip to content</a>
+        {/* Suspense: useSearchParams() would otherwise opt every page out of
+            static rendering. */}
+        <Suspense><RouteProgress /></Suspense>
         <Suspense>
           <Navigation />
         </Suspense>
