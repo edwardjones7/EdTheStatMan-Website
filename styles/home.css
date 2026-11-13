@@ -1000,3 +1000,22 @@ a.front-next__game:hover b { color: var(--brand-text); }
 @media (prefers-reduced-motion: reduce) {
   .front-live__dot, .front-chip__ln.is-moved, .front-moved, .front-list > li.is-final { animation: none; }
 }
+
+/* ---------- Wide layout ----------
+   The front page is a dense sports page, not a reading column: it runs
+   wider than the site's --container-width so big screens are not mostly
+   gutter. The strip and the grid share the width so their edges line up. */
+.front .container { max-width: none; padding-left: 24px; padding-right: 24px; }
+.front-grid { grid-template-columns: 320px minmax(0, 1fr) 360px; gap: 20px; }
+@media (max-width: 1100px) {
+  .front-grid { grid-template-columns: minmax(0, 1fr) 300px; }
+}
+@media (max-width: 768px) {
+  .front .container { padding-left: 16px; padding-right: 16px; }
+  .front-grid { grid-template-columns: minmax(0, 1fr); }
+}
+/* Full width makes the main column wide, and a 16:9 lead would then push the
+   stories below the fold. Cap its height; the photo crops from the centre. */
+@media (min-width: 769px) {
+  .front-lead { aspect-ratio: auto; height: clamp(320px, 30vw, 440px); }
+}
