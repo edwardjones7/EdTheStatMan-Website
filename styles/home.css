@@ -865,6 +865,15 @@
 .front-rec__split small { display: block; color: var(--text-muted); font-size: 0.72rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .front-rec__split b { font-family: var(--font-heading); font-size: 1.05rem; font-weight: 700; color: var(--text-heading); font-variant-numeric: tabular-nums; }
 
+/* Discord: one compact row in the right rail. #5865F2 is Discord's own blurple. */
+.front-discord { display: flex; align-items: center; gap: 12px; padding: 12px 14px; }
+.front-discord__icon { flex: none; width: 28px; height: 28px; color: #5865F2; }
+.front-discord__text { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.front-discord__text b { color: var(--text-heading); font-size: 0.95rem; }
+.front-discord__text small { color: var(--text-muted); font-size: 0.8rem; }
+.front-discord__btn { flex: none; min-height: 36px; padding: 8px 14px; background: #5865F2; color: #fff; }
+.front-discord__btn:hover { background: #4752c4; color: #fff; }
+
 .front-free { padding: 14px; display: grid; gap: 10px; }
 .front-free p { margin: 0; color: var(--text-secondary); font-size: 0.9rem; }
 .front-free p strong { color: var(--text-heading); }

@@ -22,6 +22,38 @@ export interface WireItem {
   at: string | null
   /** Bigger is more newsworthy; used to pick the front-page few. */
   weight: number
+  /** Short line above the headline: "Giants · CB" / "Oregon State at Boise State". */
+  kicker: string
+  /** The few numbers that tell the story, shown as chips instead of prose. */
+  chips: { label: string; tone: 'down' | 'warn' | 'move' | 'plain' }[]
+  /** For the card art: the matchup's logos over one of our own sport photos. */
+  awayAbbrev: string
+  homeAbbrev: string
+  image: string
+  /** The game, for the card footer: "Sun 1:00 PM". */
+  when: string
+}
+
+/** Our own licensed photo library (public/images/sports), by sport and story type. */
+const PHOTOS: Record<LiveSport, { injury: string[]; line: string[] }> = {
+  nfl: { injury: ['nfl-qb', 'nfl-defense', 'nfl'], line: ['nfl-stadium', 'nfl-redzone', 'nfl'] },
+  // cfb-stadium is left out: its scoreboard names Michigan Stadium.
+  cfb: { injury: ['cfb-action', 'cfb'], line: ['cfb', 'cfb-action'] },
+  nba: { injury: ['nba-dunk', 'nba-shot', 'nba'], line: ['nba-arena', 'nba'] },
+  cbb: { injury: ['cbb-madness', 'cbb'], line: ['cbb-arena', 'cbb'] },
+}
+
+function photo(sport: LiveSport, kind: 'injury' | 'line', seed: string, pos?: string | null): string {
+  if (sport === 'nfl' && kind === 'injury' && pos === 'QB') return '/images/sports/nfl-qb.jpg'
+  const list = PHOTOS[sport][kind]
+  let h = 0
+  for (const c of seed) h = (h * 31 + c.charCodeAt(0)) >>> 0
+  return `/images/sports/${list[h % list.length]}.jpg`
+}
+
+function whenText(iso: string | null): string {
+  if (!iso) return 'Time TBD'
+  return new Date(iso).toLocaleString('en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York' })
 }
 
 const n = (x: number) => {
@@ -63,11 +95,23 @@ function injuryItem(g: UpcomingGame, teamFull: string, i: Injury): WireItem {
   const part = i.detail && !reason ? ` (${i.detail.toLowerCase()})` : ''
   const why = reason ? `, ${i.detail!.toLowerCase()},` : ''
   const headline = i.status === 'Out'
-    ? `${t} ${i.pos} ${i.name} out for ${day(g.kickoff)} vs. ${opp}`
-    : `${t} ${i.pos} ${i.name} doubtful for ${day(g.kickoff)} vs. ${opp}`
+    ? `${i.name} out vs. ${opp}`
+    : `${i.name} doubtful vs. ${opp}`
   const body = `${i.name}${part} is listed as ${status}${why} for ${team(g.sport, g.away_abbrev, g.away_team)} at ${team(g.sport, g.home_abbrev, g.home_team)}. ${marketLine(g)} Both teams' full injury reports are on the game page.`
+  const now = spreadLabel(g.spread_current, g.home_abbrev, g.away_abbrev)
+  const id = `inj-${g.id}-${i.name}`
   return {
-    id: `inj-${g.id}-${i.name}`,
+    id,
+    kicker: `${t} · ${i.pos ?? ''}`.replace(/ · $/, ''),
+    chips: [
+      { label: i.status === 'Out' ? 'Out' : 'Doubtful', tone: i.status === 'Out' ? 'down' : 'warn' },
+      ...(i.detail ? [{ label: i.detail, tone: 'plain' as const }] : []),
+      ...(now ? [{ label: minus(now), tone: 'move' as const }] : []),
+    ],
+    awayAbbrev: g.away_abbrev,
+    homeAbbrev: g.home_abbrev,
+    image: photo(g.sport, 'injury', id, i.pos),
+    when: whenText(g.kickoff),
     kind: 'injury',
     sport: g.sport,
     sportLabel: LIVE_SPORT_LABEL[g.sport],
@@ -81,6 +125,7 @@ function injuryItem(g: UpcomingGame, teamFull: string, i: Injury): WireItem {
 
 function lineItem(g: UpcomingGame): WireItem | null {
   const items: string[] = []
+  const chips: WireItem['chips'] = []
   let weight = 0
   let headline = ''
   const away = team(g.sport, g.away_abbrev, g.away_team)
@@ -91,20 +136,29 @@ function lineItem(g: UpcomingGame): WireItem | null {
     const d = Math.abs(g.spread_current - g.spread_open)
     const toward = g.spread_current > g.spread_open ? away : home
     const the = g.sport === 'nfl' || g.sport === 'nba' ? 'the ' : ''
-    headline = `${away} at ${home}: spread moves ${n(d)} points toward ${the}${toward}`
+    headline = `Spread swings ${n(d)} toward ${the}${toward}`
+    chips.push({ label: `${minus(spreadLabel(g.spread_open, g.home_abbrev, g.away_abbrev))} → ${minus(spreadLabel(g.spread_current, g.home_abbrev, g.away_abbrev))}`, tone: 'move' })
     items.push(`The spread opened ${minus(spreadLabel(g.spread_open, g.home_abbrev, g.away_abbrev))} and is now ${minus(spreadLabel(g.spread_current, g.home_abbrev, g.away_abbrev))}.`)
     weight += d
   }
   const tbig = g.sport === 'cbb' ? 6 : g.sport === 'nba' ? 5 : 3
   if (g.total_open != null && g.total_current != null && Math.abs(g.total_current - g.total_open) >= tbig) {
     const d = g.total_current - g.total_open
-    if (!headline) headline = `${away} at ${home}: total ${d > 0 ? 'climbs' : 'drops'} ${n(Math.abs(d))} to ${n(g.total_current)}`
+    if (!headline) headline = `Total ${d > 0 ? 'climbs' : 'drops'} ${n(Math.abs(d))} to ${n(g.total_current)}`
+    chips.push({ label: `O/U ${n(g.total_open)} → ${n(g.total_current)}`, tone: d > 0 ? 'move' : 'down' })
     items.push(`The total opened ${n(g.total_open)} and sits at ${n(g.total_current)}.`)
     weight += Math.abs(d) * 0.6
   }
   if (!headline) return null
+  const id = `line-${g.id}`
   return {
-    id: `line-${g.id}`,
+    id,
+    kicker: `${away} at ${home}`,
+    chips,
+    awayAbbrev: g.away_abbrev,
+    homeAbbrev: g.home_abbrev,
+    image: photo(g.sport, 'line', id),
+    when: whenText(g.kickoff),
     kind: 'line',
     sport: g.sport,
     sportLabel: LIVE_SPORT_LABEL[g.sport],
