@@ -98,23 +98,53 @@ function parse(event: any, sport: LiveSport): Parsed | null {
   }
 }
 
-async function fetchSport(sport: LiveSport): Promise<LiveGame[]> {
+/** Daily-slate sports: ESPN's default board is one day, so a light night
+ *  leaves the strip half empty. Below this many games we pull the next days. */
+const FILL_TO = 8
+const FILL_DAYS = 3
+/** Future days don't change minute to minute: reuse them for 10 minutes. */
+const AHEAD_TTL = 600
+
+async function fetchEvents(sport: LiveSport, date: string | null, revalidate: number): Promise<any[]> {
   const f = FEED[sport]
-  let events: any[] = []
   try {
-    const res = await fetch(`${CDN}/${f.path}/scoreboard?xhr=1${f.query}`, {
-      next: { revalidate: LIVE_TTL },
+    const res = await fetch(`${CDN}/${f.path}/scoreboard?xhr=1${f.query}${date ? `&date=${date}` : ''}`, {
+      next: { revalidate },
       signal: AbortSignal.timeout(6000),
     })
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
     const json = await res.json()
-    events = json?.content?.sbData?.events ?? []
+    return json?.content?.sbData?.events ?? []
   } catch (e) {
-    console.error(`[live] ${sport} scoreboard failed: ${(e as Error).message}`)
+    console.error(`[live] ${sport} scoreboard${date ? ` ${date}` : ''} failed: ${(e as Error).message}`)
     return []
   }
+}
 
-  const parsed = events.map(e => parse(e, sport)).filter(Boolean) as Parsed[]
+/** ESPN dates its boards by US Eastern day: "20261113". */
+function etDay(ms: number): string {
+  const p = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' })
+    .formatToParts(new Date(ms))
+  const v = (t: string) => p.find(x => x.type === t)?.value ?? ''
+  return `${v('year')}${v('month')}${v('day')}`
+}
+
+async function fetchSport(sport: LiveSport): Promise<LiveGame[]> {
+  const f = FEED[sport]
+  let parsed = (await fetchEvents(sport, null, LIVE_TTL)).map(e => parse(e, sport)).filter(Boolean) as Parsed[]
+
+  // Thin night on a daily sport: add the next game days as upcoming games.
+  // Weekly boards (NFL, CFB) already carry the whole week.
+  if ((sport === 'nba' || sport === 'cbb') && parsed.length < FILL_TO) {
+    const last = Math.max(Date.now(), ...parsed.map(g => (g.kickoff ? Date.parse(g.kickoff) : 0)))
+    const days = Array.from({ length: FILL_DAYS }, (_, i) => etDay(last + (i + 1) * 864e5))
+    const seen = new Set(parsed.map(g => g.espnId))
+    for (const d of days) {
+      if (parsed.length >= FILL_TO) break
+      const more = (await fetchEvents(sport, d, AHEAD_TTL)).map(e => parse(e, sport)).filter(Boolean) as Parsed[]
+      for (const g of more) if (g.state === 'pre' && !seen.has(g.espnId)) { seen.add(g.espnId); parsed.push(g) }
+    }
+  }
   if (parsed.length === 0) return []
 
   // Join to the Desk: one cached read per sport, keyed by ESPN's event id.
