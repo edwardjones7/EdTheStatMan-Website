@@ -190,8 +190,15 @@ export default function HomeFront({ board, brief, proof, series, recent, leaders
                 <div className="front-rec__split">
                   <div><small>Win rate</small><b>{h.pct.toFixed(1)}%</b></div>
                   <div><small>Graded</small><b>{h.graded}</b></div>
+                  {/* The headline is the best sport this season; the whole
+                      members' record sits right beside it, units and all, so
+                      the page that says "every pick graded in public" shows
+                      the full picture, not only the best slice of it. */}
                   {proof.books.members && (
-                    <div><small>{BOOK_LABEL.members}, all</small><b>{proof.books.members.record}</b></div>
+                    <div title={`${BOOK_LABEL.members}, every sport, all time`}>
+                      <small>All sports, all time</small>
+                      <b>{proof.books.members.record} <span className={proof.books.members.unitsValue >= 0 ? 'front-up' : 'front-down'}>{minus(proof.books.members.units)}</span></b>
+                    </div>
                   )}
                 </div>
               </div>

@@ -829,10 +829,10 @@ function LinkedSection({ title, visible, locked, lockedElite, href, closed }: {
           </div>
         ))}
         {lockedElite.map(t => (
-          <LockedTeaserCard key={t.id} teaser={t} sportLabel={sportBadge(t.sport)} sportClass={t.sport} variant="elite" />
+          <LockedTeaserCard key={t.id} teaser={t} sportLabel={sportBadge(t.sport)} sportClass={t.sport} variant="elite" noun={href.includes('trend') ? 'trend' : 'system'} />
         ))}
         {locked.map(t => (
-          <LockedTeaserCard key={t.id} teaser={t} sportLabel={sportBadge(t.sport)} sportClass={t.sport} />
+          <LockedTeaserCard key={t.id} teaser={t} sportLabel={sportBadge(t.sport)} sportClass={t.sport} noun={href.includes('trend') ? 'trend' : 'system'} />
         ))}
       </div>
       <p style={{ marginTop: '12px' }}>
