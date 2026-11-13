@@ -182,10 +182,44 @@ export function headlineSeries(rows: RecordSource[], proof: ProofData): number[]
   })
 }
 
-/** The proof plus its chart series, from one read. */
-export async function loadProofWithSeries(): Promise<{ proof: ProofData; series: number[] }> {
+export interface RecentResult {
+  id: string
+  result: 'win' | 'loss' | 'push'
+  sport: string
+  bet: string
+  date: string
+}
+
+/**
+ * The last `n` graded picks in the headline's book, newest first, every sport.
+ * Graded picks are already public on /portfolio/performance, so the bet text
+ * is safe to show.
+ */
+export function recentResults(rows: RecordSource[], proof: ProofData, n = 10): RecentResult[] {
+  return rows
+    .filter(r =>
+      r.show_on_results === true &&
+      bookOf(r) === proof.headlineBook &&
+      ['win', 'loss', 'push'].includes(String(r.result ?? '').toLowerCase())
+    )
+    .sort((a, b) =>
+      String(b.date ?? '').localeCompare(String(a.date ?? '')) ||
+      Number((b as any).id ?? 0) - Number((a as any).id ?? 0)
+    )
+    .slice(0, n)
+    .map(r => ({
+      id: String((r as any).id ?? `${r.date}-${(r as any).bet}`),
+      result: String(r.result).toLowerCase() as RecentResult['result'],
+      sport: String(r.sport ?? '').toUpperCase(),
+      bet: String((r as any).bet ?? ''),
+      date: String(r.date ?? ''),
+    }))
+}
+
+/** The proof plus its chart series and latest results, from one read. */
+export async function loadProofWithSeries(): Promise<{ proof: ProofData; series: number[]; recent: RecentResult[] }> {
   const rows = await loadPublishedPicks()
   const proof = buildProof(rows)
-  return { proof, series: headlineSeries(rows, proof) }
+  return { proof, series: headlineSeries(rows, proof), recent: recentResults(rows, proof) }
 }
 

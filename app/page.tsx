@@ -140,7 +140,7 @@ export default async function Home() {
       if (g) tracks.push(trackPick({ id: p.id, gameId: p.gameId, bet: p.bet, line: p.line }, g))
     }
   }
-  const [{ proof, series }, board, trial, leaders, feeds, notes, wireAll] = await Promise.all([proofPromise, boardPromise, trialPromise, leadersPromise, feedsPromise, notesPromise, wirePromise])
+  const [{ proof, series, recent }, board, trial, leaders, feeds, notes, wireAll] = await Promise.all([proofPromise, boardPromise, trialPromise, leadersPromise, feedsPromise, notesPromise, wirePromise])
   const cta: HeroCta =
     !user || !trial ? { kind: 'signup' }
     : hasDesk ? { kind: 'desk', trialEndsAt: trial.onTrial ? trial.endsAt : null }
@@ -153,6 +153,7 @@ export default async function Home() {
       brief={brief}
       proof={proof}
       series={series}
+      recent={recent}
       leaders={leaders}
       cta={cta}
       signedOut={!user}

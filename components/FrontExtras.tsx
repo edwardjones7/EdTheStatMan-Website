@@ -45,7 +45,7 @@ export function NotesCard({ games, href }: { games: MatchupNotes[]; href: string
           <Link key={g.id} href={g.href} className="front-note">
             <span className="front-note__hd"><b>{g.matchup}</b><small>{g.when}</small></span>
             <ul>
-              {g.notes.map((n, i) => <li key={i} className={`front-note__i front-note__i--${n.tone}`}>{n.text}</li>)}
+              {g.notes.slice(0, 2).map((n, i) => <li key={i} className={`front-note__i front-note__i--${n.tone}`}>{n.text}</li>)}
             </ul>
           </Link>
         ))}

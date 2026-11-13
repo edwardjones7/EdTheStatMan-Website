@@ -4,7 +4,7 @@ import type { HomeBoard } from '@/lib/home-board'
 import type { Brief } from '@/lib/brief'
 import { formatCardDate } from '@/lib/brief'
 import type { ProofData } from '@/lib/proof'
-import { BOOK_LABEL, shortDate } from '@/lib/proof'
+import { BOOK_LABEL, shortDate, type RecentResult } from '@/lib/proof'
 import { minus } from '@/lib/home-board'
 import { TRIAL_DAYS } from '@/lib/offer'
 import {
@@ -36,6 +36,8 @@ export interface HomeFrontProps {
   brief: Brief
   proof: ProofData
   series: number[]
+  /** Last graded picks, newest first (lib/proof.ts recentResults). */
+  recent: RecentResult[]
   leaders: VaultLeader[]
   cta: HeroCta
   signedOut: boolean
@@ -107,7 +109,9 @@ function Cta({ cta, locked, isToday }: { cta: HeroCta; locked: number; isToday: 
   )
 }
 
-export default function HomeFront({ board, brief, proof, series, leaders, cta, signedOut, tracks, news, injuries, notes, wire }: HomeFrontProps) {
+const RESULT_MARK = { win: 'W', loss: 'L', push: 'P' } as const
+
+export default function HomeFront({ board, brief, proof, series, recent, leaders, cta, signedOut, tracks, news, injuries, notes, wire }: HomeFrontProps) {
   const lead = leadStory(board, proof)
   const cards = stories(board, brief, lead)
   const movers = lineMovers(board)
@@ -165,23 +169,6 @@ export default function HomeFront({ board, brief, proof, series, leaders, cta, s
           <WireCard items={wire} />
 
           <InjuryCard games={injuries} />
-
-          {leaders.length > 0 && (
-            <section className="front-card">
-              <header className="front-hd"><h2>Vault leaders</h2><Link href="/vault/systems">The Vault</Link></header>
-              <ul className="front-list">
-                {leaders.map(v => (
-                  <li key={v.code}>
-                    <Link href={v.href} className="front-mv">
-                      <span className="front-tag">{v.sport}</span>
-                      <span className="front-pick"><b>{v.code}</b><small>{v.record}</small></span>
-                      <span className="front-mv__n front-mv__n--up">{v.pct.toFixed(1)}%</span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
         </aside>
 
         <div className="front-main">
@@ -262,6 +249,36 @@ export default function HomeFront({ board, brief, proof, series, leaders, cta, s
                   )}
                 </div>
               </div>
+            </section>
+          )}
+
+          {recent.length > 0 && (
+            <section className="front-card">
+              <header className="front-hd"><h2>Last {recent.length} graded</h2><Link href="/portfolio/performance">All results</Link></header>
+              <ol className="front-last" aria-label="Most recent first">
+                {recent.map(r => (
+                  <li key={r.id} className={`front-last__r front-last__r--${r.result}`} title={`${r.sport} · ${r.bet} · ${shortDate(r.date)}`}>
+                    {RESULT_MARK[r.result]}
+                  </li>
+                ))}
+              </ol>
+            </section>
+          )}
+
+          {leaders.length > 0 && (
+            <section className="front-card">
+              <header className="front-hd"><h2>Vault leaders</h2><Link href="/vault/systems">The Vault</Link></header>
+              <ul className="front-list">
+                {leaders.map(v => (
+                  <li key={v.code}>
+                    <Link href={v.href} className="front-mv">
+                      <span className="front-tag">{v.sport}</span>
+                      <span className="front-pick"><b>{v.code}</b><small>{v.record}</small></span>
+                      <span className="front-mv__n front-mv__n--up">{v.pct.toFixed(1)}%</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
             </section>
           )}
 

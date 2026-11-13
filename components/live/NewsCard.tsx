@@ -66,7 +66,6 @@ export default function NewsCard({ news }: { news: NewsEntry[] }) {
                     {now != null && <span>{ago(n.published, now)}</span>}
                   </span>
                   <b>{n.headline}</b>
-                  {n.description && <span className="front-news__dek">{n.description}</span>}
                 </>
               )
               // A story about a Desk game opens that game here; the source is a footnote.

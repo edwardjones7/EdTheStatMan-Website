@@ -865,6 +865,16 @@
 .front-rec__split small { display: block; color: var(--text-muted); font-size: 0.72rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .front-rec__split b { font-family: var(--font-heading); font-size: 1.05rem; font-weight: 700; color: var(--text-heading); font-variant-numeric: tabular-nums; }
 
+/* Last graded: one W/L/P chip per pick, newest on the left. */
+.front-last { list-style: none; margin: 0; padding: 12px 14px 14px; display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 5px; }
+.front-last__r {
+  display: grid; place-items: center; aspect-ratio: 1; border-radius: var(--radius-sm);
+  font-family: var(--font-heading); font-weight: 800; font-size: 0.85rem; cursor: default;
+}
+.front-last__r--win  { background: color-mix(in srgb, var(--up) 22%, transparent); color: var(--up); }
+.front-last__r--loss { background: color-mix(in srgb, var(--down) 22%, transparent); color: var(--down); }
+.front-last__r--push { background: rgba(255,255,255,.07); color: var(--text-muted); }
+
 /* Discord: one compact row in the right rail. #5865F2 is Discord's own blurple. */
 .front-discord { display: flex; align-items: center; gap: 12px; padding: 12px 14px; }
 .front-discord__icon { flex: none; width: 28px; height: 28px; color: #5865F2; }
