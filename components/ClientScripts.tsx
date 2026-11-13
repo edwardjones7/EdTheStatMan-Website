@@ -22,7 +22,41 @@ function animateCounter(element: HTMLElement) {
   requestAnimationFrame(update)
 }
 
+const REVEAL = '.reveal, .reveal-left, .reveal-right, .reveal-scale, .stagger-children'
+
+/** On screen now (or above it), so it must never be hidden to animate in. */
+function inView(el: Element): boolean {
+  const r = el.getBoundingClientRect()
+  return r.top < window.innerHeight && r.bottom > -1
+}
+
+/**
+ * Blank first paint, fixed (Nov 2026). `.reveal` used to be opacity 0 in plain
+ * CSS, so /vault and /desk painted empty until this script hydrated and the
+ * observer fired -- and with no JavaScript at all, stayed empty. Now the hiding
+ * rules apply only under html.reveal-on, which is added here, AFTER everything
+ * already on screen has been marked .visible. So: no JS, nothing hidden; above
+ * the fold, visible from the first paint and never faded; below the fold, the
+ * scroll animation as before. Reduced motion never turns it on.
+ */
+function revealInView(root: ParentNode) {
+  const els: Element[] = []
+  if (root instanceof Element && root.matches(REVEAL)) els.push(root)
+  root.querySelectorAll(REVEAL).forEach(el => els.push(el))
+  for (const el of els) if (!el.classList.contains('visible') && inView(el)) el.classList.add('visible')
+}
+
+function enableReveal() {
+  const html = document.documentElement
+  if (html.classList.contains('reveal-on')) return
+  if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return
+  revealInView(document)
+  html.classList.add('reveal-on')
+}
+
 function init() {
+  enableReveal()
+
   // Scroll reveal animations
   const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
@@ -33,7 +67,7 @@ function init() {
     })
   }, { root: null, rootMargin: '0px 0px -80px 0px', threshold: 0.1 })
 
-  document.querySelectorAll('.reveal, .reveal-left, .reveal-right, .reveal-scale, .stagger-children').forEach(el => {
+  document.querySelectorAll(REVEAL).forEach(el => {
     observer.observe(el)
   })
 
@@ -105,7 +139,7 @@ function init() {
   // Keeping the registration live rather than one-shot fixes it wherever it
   // happens, and re-observing an element is a no-op, so overlap is harmless.
   const groups: [string, IntersectionObserver][] = [
-    ['.reveal, .reveal-left, .reveal-right, .reveal-scale, .stagger-children', observer],
+    [REVEAL, observer],
     ['.system-card__bar-fill, .perf-winbar__fill, .perf-ratio__seg', barObserver],
     ['[data-count]', counterObserver],
   ]
@@ -114,6 +148,10 @@ function init() {
     for (const record of records) {
       for (const node of record.addedNodes) {
         if (!(node instanceof Element)) continue
+        // A page arriving by client navigation: whatever lands on screen is
+        // shown before the browser paints (mutation callbacks run first), so
+        // it never flashes empty while the observer catches up.
+        revealInView(node)
         for (const [selector, io] of groups) {
           if (node.matches(selector)) io.observe(node)
           node.querySelectorAll(selector).forEach(el => io.observe(el))

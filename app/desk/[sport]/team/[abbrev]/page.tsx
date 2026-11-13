@@ -17,6 +17,7 @@ import { loadInjuries, type Injury } from '@/lib/feeds/injuries'
 import { loadWire, type WireItem } from '@/lib/wire'
 import { buildPreview } from '@/lib/preview'
 import { LIVE_SPORTS, type LiveSport } from '@/lib/live/types'
+import FollowStar from '@/components/FollowStar'
 import '@/styles/seo-desk.css'
 import '@/styles/team-hub.css'
 
@@ -261,6 +262,9 @@ export default async function DeskTeamPage({ params }: { params: { sport: string
             <p className="th-sub">
               Records, recent results against the spread, injuries and the next game for the {seasonLabel} season.
             </p>
+            <div className="follow-row">
+              <FollowStar team={{ sport, abbrev, name: t.shortName, logo }} label="team" />
+            </div>
           </div>
           <div className="th-stats" role="list">
             {stats.map(st => (

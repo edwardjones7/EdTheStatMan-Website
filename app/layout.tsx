@@ -16,6 +16,7 @@ import { createCachedClient, DB_TAGS } from '@/lib/supabase/cached'
 import { DEFAULT_TICKER } from '@/lib/site-content'
 import type { TickerContent } from '@/lib/site-content'
 import { Suspense } from 'react'
+import { loadTickerExtras } from '@/lib/ticker-live'
 
 // Barlow carries the whole site (front page, Nov 2026): Semi Condensed and
 // heavy for headlines and section labels, regular width for body text and,
@@ -76,11 +77,14 @@ export default async function RootLayout({
   const supabase = await createClient()
 
   // Cached: this runs on every page of the site, crawlers included.
-  const { data: tickerRow } = await (createCachedClient([DB_TAGS.content]) as any)
-    .from('site_content')
-    .select('value')
-    .eq('key', 'ticker')
-    .single()
+  const [{ data: tickerRow }, tickerExtras] = await Promise.all([
+    (createCachedClient([DB_TAGS.content]) as any)
+      .from('site_content')
+      .select('value')
+      .eq('key', 'ticker')
+      .single(),
+    loadTickerExtras(),
+  ])
   const ticker: TickerContent = { ...DEFAULT_TICKER, ...((tickerRow?.value as object) ?? {}) }
 
   let isAdmin = false
@@ -162,7 +166,7 @@ export default async function RootLayout({
         <Suspense>
           <Navigation />
         </Suspense>
-        <GlobalTicker content={ticker} isAdmin={isAdmin} />
+        <GlobalTicker content={ticker} isAdmin={isAdmin} extras={tickerExtras} />
         {/* Reserve flow space for the fixed ticker so page content clears it. */}
         <div className="ticker-spacer" aria-hidden />
         {/* A div, not <main>: pages already render their own <main>, and

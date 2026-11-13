@@ -19,14 +19,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // Games are paged: there are several thousand published rows across the four
   // leagues, and an unpaged read stopped at exactly 1,000 (lib/supabase/select-all.ts).
-  const [{ data: posts }, { data: allGames }] = await Promise.all([
-    (admin as any).from('posts').select('slug, updated_at').eq('published', true),
-    selectAll(() => (admin as any)
-      .from('nfl_games')
-      .select('slug, sport, updated_at, spread_current, total_current')
-      .eq('is_published', true)
-      .order('id')),
-  ])
+  const { data: allGames } = await selectAll(() => (admin as any)
+    .from('nfl_games')
+    .select('slug, sport, updated_at, spread_current, total_current')
+    .eq('is_published', true)
+    .order('id'))
 
   // A college basketball week is 250 to 470 games, most of them small-school
   // matchups ESPN never prices. Without a line the page is a schedule entry and
@@ -58,21 +55,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.9,
     })),
 
-    { url: `${BASE}/blog`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
     { url: `${BASE}/win`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.7 },
-    { url: `${BASE}/news`, lastModified: new Date(), changeFrequency: 'hourly', priority: 0.6 },
+    { url: `${BASE}/news`, lastModified: new Date(), changeFrequency: 'hourly', priority: 0.8 },
     { url: `${BASE}/contact`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.5 },
     { url: `${BASE}/responsible-gaming`, lastModified: new Date(), changeFrequency: 'yearly', priority: 0.3 },
     { url: `${BASE}/terms`, lastModified: new Date(), changeFrequency: 'yearly', priority: 0.2 },
     { url: `${BASE}/privacy`, lastModified: new Date(), changeFrequency: 'yearly', priority: 0.2 },
   ]
-
-  const blogRoutes: MetadataRoute.Sitemap = (posts ?? []).map((post: any) => ({
-    url: `${BASE}/blog/${post.slug}`,
-    lastModified: post.updated_at ? new Date(post.updated_at) : new Date(),
-    changeFrequency: 'monthly' as const,
-    priority: 0.7,
-  }))
 
   // A game lives under its own league's board. Emitting every row under /nfl
   // both published a dead path (the v3 rename moved it to /desk/[sport]/g) and,
@@ -90,5 +79,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // /picks and every public pick page (lib/picks/sitemap.ts).
   const pickRoutes = await pickSitemapEntries(BASE)
 
-  return [...staticRoutes, ...blogRoutes, ...gameRoutes, ...seoRoutes, ...pickRoutes]
+  return [...staticRoutes, ...gameRoutes, ...seoRoutes, ...pickRoutes]
 }

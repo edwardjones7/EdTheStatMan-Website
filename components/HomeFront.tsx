@@ -17,6 +17,7 @@ import LiveProvider from './live/LiveProvider'
 import LiveStrip from './live/LiveStrip'
 import LivePicks from './live/LivePicks'
 import NextUp from './live/NextUp'
+import MyTeams from './MyTeams'
 import { LiveWhen, LiveLine, JustMoved } from './live/LiveCells'
 import type { PickTrack } from '@/lib/live/types'
 import NewsCard from './live/NewsCard'
@@ -138,6 +139,7 @@ export default function HomeFront({ board, brief, proof, series, recent, leaders
         </aside>
 
         <div className="front-main">
+          <MyTeams />
           <NextUp />
           {lead && (
             <Link href={lead.href} className="front-lead">

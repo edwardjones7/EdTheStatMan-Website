@@ -28,6 +28,8 @@ import SignupPrompt from '@/components/SignupPrompt'
 import RecordStrip from '@/components/RecordStrip'
 import { IconLock } from '@/components/Icons'
 import CopyLineButton from '@/components/CopyLineButton'
+import FollowStar from '@/components/FollowStar'
+import { teamLogoUrl } from '@/lib/logos'
 
 export const dynamic = 'force-dynamic'
 
@@ -467,6 +469,22 @@ export default async function NflGamePage({ params }: { params: { sport: string;
               </div>
             )}
             <p className="nfl-game-header__brief">{game.brief || brief}</p>
+            <div className="follow-row">
+              {[
+                { abbrev: game.away_abbrev, full: game.away_team },
+                { abbrev: game.home_abbrev, full: game.home_team },
+              ].filter(t => t.abbrev).map(t => (
+                <FollowStar
+                  key={t.abbrev}
+                  team={{
+                    sport: sportKey,
+                    abbrev: t.abbrev,
+                    name: teamShortName(sportKey, t.abbrev, t.full),
+                    logo: teamLogoUrl(sportKey, t.abbrev),
+                  }}
+                />
+              ))}
+            </div>
           </header>
 
           {hasMarket && (

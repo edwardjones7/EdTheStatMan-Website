@@ -31,6 +31,10 @@ const nextConfig = {
       { source: '/picks', destination: '/portfolio/performance', permanent: false },
       { source: '/nfl', destination: '/desk/nfl', permanent: true },
       { source: '/nfl/games/:slug', destination: '/desk/nfl/g/:slug', permanent: true },
+      // The blog is retired from the public site (Nov 2026); The Wire is the
+      // news surface now. Posts stay in the `posts` table for the admin.
+      { source: '/blog', destination: '/news', permanent: true },
+      { source: '/blog/:slug*', destination: '/news', permanent: true },
     ]
   },
 }

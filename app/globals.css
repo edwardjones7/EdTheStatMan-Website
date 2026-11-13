@@ -309,9 +309,15 @@ input, textarea, select {
   justify-content: space-between;
   gap: 20px;
   width: 100%;
-  max-width: 1460px;
-  margin: 0 auto;
-  padding: 0 28px;
+  /* Full width (Nov 2026): the logo lines up with the full-width front page
+     (.front .container in styles/home.css: 24px, 16px on a phone). */
+  max-width: none;
+  margin: 0;
+  padding: 0 24px;
+}
+
+@media (max-width: 768px) {
+  .nav__inner { padding: 0 16px; gap: 12px; }
 }
 
 .nav__logo {
@@ -3785,53 +3791,57 @@ textarea.form-input {
   color: var(--text-muted);
 }
 
-/* ---------- Scroll Animations ---------- */
-.reveal {
+/* ---------- Scroll Animations ----------
+   Hidden ONLY under html.reveal-on, which ClientScripts adds after marking
+   everything already on screen .visible. Without JavaScript nothing is ever
+   hidden, and above-the-fold content is visible from the first paint (the
+   blank-/vault-and-/desk-on-load bug, Nov 2026). */
+.reveal-on .reveal {
   opacity: 0;
   transform: translateY(30px);
   transition: all 0.8s var(--ease-out-expo);
 }
 
-.reveal.visible {
+.reveal-on .reveal.visible {
   opacity: 1;
   transform: translateY(0);
 }
 
-.reveal-left {
+.reveal-on .reveal-left {
   opacity: 0;
   transform: translateX(-40px);
   transition: all 0.8s var(--ease-out-expo);
 }
 
-.reveal-left.visible {
+.reveal-on .reveal-left.visible {
   opacity: 1;
   transform: translateX(0);
 }
 
-.reveal-right {
+.reveal-on .reveal-right {
   opacity: 0;
   transform: translateX(40px);
   transition: all 0.8s var(--ease-out-expo);
 }
 
-.reveal-right.visible {
+.reveal-on .reveal-right.visible {
   opacity: 1;
   transform: translateX(0);
 }
 
-.reveal-scale {
+.reveal-on .reveal-scale {
   opacity: 0;
   transform: scale(0.9);
   transition: all 0.8s var(--ease-out-expo);
 }
 
-.reveal-scale.visible {
+.reveal-on .reveal-scale.visible {
   opacity: 1;
   transform: scale(1);
 }
 
 /* Stagger children */
-.stagger-children > * {
+.reveal-on .stagger-children > * {
   opacity: 0;
   transform: translateY(20px);
   transition: all 0.6s var(--ease-out-expo);
@@ -3840,16 +3850,17 @@ textarea.form-input {
 /* Every child becomes visible; only the first six get their own delay. The
    rules used to exist for children 1-6 alone, so the seventh card of any grid
    (homepage card 07, blog posts 7-12) stayed at opacity 0 forever. */
-.stagger-children.visible > * { opacity: 1; transform: translateY(0); transition-delay: 600ms; }
-.stagger-children.visible > *:nth-child(1) { transition-delay: 0ms; }
-.stagger-children.visible > *:nth-child(2) { transition-delay: 100ms; }
-.stagger-children.visible > *:nth-child(3) { transition-delay: 200ms; }
-.stagger-children.visible > *:nth-child(4) { transition-delay: 300ms; }
-.stagger-children.visible > *:nth-child(5) { transition-delay: 400ms; }
-.stagger-children.visible > *:nth-child(6) { transition-delay: 500ms; }
+.reveal-on .stagger-children.visible > * { opacity: 1; transform: translateY(0); transition-delay: 600ms; }
+.reveal-on .stagger-children.visible > *:nth-child(1) { transition-delay: 0ms; }
+.reveal-on .stagger-children.visible > *:nth-child(2) { transition-delay: 100ms; }
+.reveal-on .stagger-children.visible > *:nth-child(3) { transition-delay: 200ms; }
+.reveal-on .stagger-children.visible > *:nth-child(4) { transition-delay: 300ms; }
+.reveal-on .stagger-children.visible > *:nth-child(5) { transition-delay: 400ms; }
+.reveal-on .stagger-children.visible > *:nth-child(6) { transition-delay: 500ms; }
 
 /* Reduced motion: nothing fades or slides in, so nothing waits on JavaScript
-   to appear, and the ticker holds still. */
+   to appear, and the ticker holds still. (ClientScripts never adds reveal-on
+   here either; this is the belt to that brace.) */
 @media (prefers-reduced-motion: reduce) {
   .reveal, .reveal-left, .reveal-right, .reveal-scale,
   .stagger-children > * {
