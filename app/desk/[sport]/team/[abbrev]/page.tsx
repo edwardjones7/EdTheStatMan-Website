@@ -12,6 +12,7 @@ import {
 import type { TeamSeasonSummary } from '@/lib/ats'
 import { abbrevFromParam, latestPublishedSeason, teamSeasonGames, teamShortName, teamPath } from '@/lib/desk-teams'
 import { teamLogoUrl } from '@/lib/logos'
+import FollowStar from '@/components/FollowStar'
 import '@/styles/seo-desk.css'
 
 export const dynamic = 'force-dynamic'
@@ -166,6 +167,9 @@ export default async function DeskTeamPage({ params }: { params: { sport: string
               <p className="team-head__sub">
                 Schedule, closing lines and results against the spread for the {seasonLabel} season.
               </p>
+              <div className="follow-row">
+                <FollowStar team={{ sport, abbrev, name: t.shortName, logo }} label="team" />
+              </div>
             </div>
           </header>
 

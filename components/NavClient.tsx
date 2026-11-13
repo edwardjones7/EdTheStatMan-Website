@@ -10,6 +10,7 @@ import type { SubscriptionTier } from '@/lib/supabase/types'
 import { DESK_SPORTS } from '@/lib/desk'
 import { DESK_SPORT_COOKIE } from '@/lib/desk-place'
 import BrandMark from '@/components/BrandMark'
+import HeaderSearch from '@/components/HeaderSearch'
 
 interface NavClientProps {
   membership: Membership
@@ -43,9 +44,9 @@ interface NavLink {
 }
 
 // Ed's order (Nov 2026): Research Desk, Vault, Portfolio -- the Desk is the
-// top product and holds the other two. The Blog left the bar the same day:
-// Ed is not writing it, so it lives in the footer only, and the posts and
-// /blog itself are untouched in case it comes back.
+// top product and holds the other two. The Blog left the bar the same day,
+// and later that month left the site: /blog 308s to The Wire (next.config.js).
+// The posts table and the admin editor are untouched in case it comes back.
 //
 // Four products, not eight links. The bar was full; Contact moved to the
 // footer and the two EdTheStatBot entries collapsed into The Portfolio.
@@ -394,6 +395,8 @@ export default function NavClient({ user, membership = 'logged-out' }: NavClient
               )
             })}
           </div>
+
+          <HeaderSearch />
 
           <div className="nav__actions">
             {compactX ? (

@@ -4,6 +4,8 @@ import { loadWire, type WireItem } from '@/lib/wire'
 import { loadUpcoming } from '@/lib/feeds/upcoming'
 import { teamLogoUrl } from '@/lib/logos'
 import { LIVE_SPORTS, LIVE_SPORT_LABEL, type LiveSport } from '@/lib/live/types'
+import WireFollowSort from '@/components/WireFollowSort'
+import { followKey } from '@/lib/follows'
 import '@/styles/wire.css'
 
 export const metadata: Metadata = {
@@ -98,7 +100,7 @@ export default async function WirePage({ searchParams }: { searchParams: { sport
 
             <ul className="wire-grid">
               {rest.map(w => (
-                <li key={w.id}>
+                <li key={w.id} data-teams={`${followKey(w.sport, w.awayAbbrev)} ${followKey(w.sport, w.homeAbbrev)}`}>
                   <Link href={w.href} className="wire-card">
                     <Art w={w} size={46} />
                     <span className="wire-card__body">
@@ -111,6 +113,8 @@ export default async function WirePage({ searchParams }: { searchParams: { sport
                 </li>
               ))}
             </ul>
+            {/* Followed teams' stories first, on this device only. */}
+            <WireFollowSort selector=".wire-grid" />
           </>
         )}
 
