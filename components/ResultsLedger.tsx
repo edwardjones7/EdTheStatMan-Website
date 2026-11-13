@@ -50,6 +50,13 @@ interface Props {
   total: number
 }
 
+/** "Wed, Nov 11" from a stored YYYY-MM-DD; anything else as it is. */
+function ledgerDate(d: string | null): string {
+  if (!d) return '—'
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) return d
+  return new Date(`${d}T12:00:00Z`).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC' })
+}
+
 export default function ResultsLedger({ rows, page, pageCount, total }: Props) {
   const first = (page - 1) * LEDGER_PAGE_SIZE + 1
   const last = first + rows.length - 1
@@ -88,8 +95,8 @@ export default function ResultsLedger({ rows, page, pageCount, total }: Props) {
                 const u = unitsCell(row)
                 return (
                   <tr key={row.id}>
-                    <td data-label="Date" className="ledger__date">{row.date ?? '—'}</td>
-                    <td data-label="Sport" className="ledger__sport">{row.sport ?? '—'}</td>
+                    <td data-label="Date" className="ledger__date">{ledgerDate(row.date)}</td>
+                    <td data-label="Sport" className="ledger__sport"><span className="ledger__tag">{row.sport ?? '—'}</span></td>
                     <td data-label="Pick" className="ledger__pick">{row.bet ?? '—'}</td>
                     <td data-label="Line" className="ledger__mono">{row.line ?? '—'}</td>
                     <td data-label="Closing" className="ledger__mono">{row.vig ?? '—'}</td>

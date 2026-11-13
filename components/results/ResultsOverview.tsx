@@ -169,6 +169,9 @@ export default function ResultsOverview({ rows, month, sport }: { rows: Row[]; m
         </aside>
       </div>
 
+      {/* Chart and calendar side by side on wide screens: each used to take
+          a full screen of its own. */}
+      <div className="rs-pair">
       <section className="pf-panel rs-chart" id="units" aria-labelledby="rs-chart-hd">
         <header className="pf-panel__hd">
           <h2 id="rs-chart-hd">Units over time · {chartSport ?? 'All sports'}</h2>
@@ -239,6 +242,7 @@ export default function ResultsOverview({ rows, month, sport }: { rows: Row[]; m
           </div>
         </div>
       </section>
+      </div>
     </div>
   )
 }
