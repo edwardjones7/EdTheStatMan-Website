@@ -1,0 +1,295 @@
+/* ==========================================================================
+   The Vault lists (Nov 2026): /vault, /vault/systems, /vault/trends.
+
+   Same visual language as the front page (styles/home.css, .front-*):
+   full-width, hairline-bordered modules, condensed uppercase labels, mono
+   numbers. Everything here is prefixed vl- so it cannot reach another page,
+   except the locked-row card, which the Desk game page also renders.
+   ========================================================================== */
+
+/* ---------- Page frame ---------- */
+.vl-page {
+  padding-top: calc(var(--nav-height) + 28px);
+  padding-bottom: 48px;
+  background: var(--bg-primary);
+}
+.vl-full { max-width: none; padding-left: 24px; padding-right: 24px; }
+.vl-page .vl-wide { max-width: 1600px; margin: 0 auto; }
+
+.vl-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px 32px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--border-color);
+}
+.vl-head__text { min-width: 0; max-width: 760px; display: grid; gap: 8px; }
+.vl-kick {
+  font-family: var(--font-heading);
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--brand-text);
+}
+.vl-title {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: clamp(1.9rem, 3.2vw, 2.7rem);
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  color: var(--text-heading);
+}
+.vl-sub { margin: 0; color: var(--text-secondary); font-size: 1rem; line-height: 1.5; }
+
+/* Systems / Trends switch in the header. */
+.vl-switch { display: inline-flex; border: 1px solid var(--border-color); border-radius: var(--radius-lg); overflow: hidden; }
+.vl-switch a {
+  padding: 9px 16px;
+  font-family: var(--font-heading);
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  text-decoration: none;
+}
+.vl-switch a + a { border-left: 1px solid var(--border-color); }
+.vl-switch a:hover { color: var(--text-heading); background: var(--bg-card-hover); }
+.vl-switch a[aria-current='page'] { background: var(--brand); color: var(--brand-ink); }
+
+.vl-section { margin-top: 28px; }
+.vl-section > .front-hd, .vl-hd {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border-color);
+}
+.vl-hd h2 {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-heading);
+}
+.vl-hd a, .vl-hd small { color: var(--brand-text); font-size: 0.82rem; font-weight: 600; white-space: nowrap; }
+.vl-hd small { color: var(--text-muted); font-weight: 500; }
+.vl-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  min-width: 0;
+}
+
+/* The list components keep their own markup; give them room. */
+.vl-page .sys-stats-bar { margin-top: 20px !important; }
+.vl-page .sys-card-grid { gap: 8px; }
+
+/* ---------- Sport tabs ---------- */
+.vl-tabs { margin-top: 18px; display: grid; gap: 8px; }
+.vl-tabs__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  min-width: 0;
+}
+.vl-tabs__row--sub {
+  padding: 8px 10px;
+  border: 1px dashed var(--border-color);
+  border-radius: var(--radius-lg);
+}
+.vl-tabs__note { color: var(--text-muted); font-size: 0.8rem; margin-right: 4px; }
+.vl-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-family: var(--font-heading);
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.vl-tab:hover { color: var(--text-heading); background: var(--bg-card-hover); }
+.vl-tab:focus-visible { outline: 2px solid var(--brand-text); outline-offset: 2px; }
+.vl-tab.is-active { background: var(--brand); border-color: var(--brand); color: var(--brand-ink); }
+.vl-tab--archive { margin-left: auto; border-style: dashed; color: var(--text-muted); }
+.vl-tab--archive.is-active { border-style: solid; }
+.vl-tab--sub { padding: 6px 12px; font-size: 0.74rem; }
+.vl-tab__n {
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--bg-card-hover);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0;
+}
+.vl-tab.is-active .vl-tab__n { background: rgba(255, 255, 255, 0.2); color: inherit; }
+
+/* ---------- Locked row ----------
+   Reads as a real row: sport, what it is, sample, record, a win-rate bar and
+   an Unlock button. Only numbers already in the LockedTeaser are shown. */
+.sys-row-card.vl-lock {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  border-style: solid;
+  opacity: 1;
+}
+.sys-row-card.vl-lock:hover { background: var(--bg-card-hover); }
+.vl-lock__body {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr) 96px minmax(120px, 170px) auto;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 16px;
+  min-height: 68px;
+}
+.vl-lock__sport { justify-self: start; }
+.vl-lock__main { display: grid; gap: 3px; min-width: 0; }
+.vl-lock__kind {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-heading);
+  font-weight: 650;
+  font-size: 0.92rem;
+}
+.vl-lock__kind svg { color: var(--brand-text); flex: none; }
+.vl-lock__meta { color: var(--text-muted); font-size: 0.8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vl-lock__meta b { color: var(--text-primary); font-family: var(--font-mono); font-weight: 700; }
+.vl-lock__stat { display: grid; gap: 3px; min-width: 0; }
+.vl-lock__key {
+  font-family: var(--font-heading);
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.vl-lock__rec, .vl-lock__pct {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 1.02rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-heading);
+  white-space: nowrap;
+}
+.vl-lock__rec--win, .vl-lock__pct.is-win { color: var(--up); }
+.vl-lock__rec--loss { color: var(--down); }
+.vl-lock__bar {
+  position: relative;
+  display: block;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--bg-card-hover);
+  overflow: hidden;
+}
+/* Break-even at -110 is 52.4%; the tick shows where a row starts to pay. */
+.vl-lock__bar::after {
+  content: '';
+  position: absolute;
+  left: 52.4%;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--text-muted);
+}
+.vl-lock__fill { display: block; height: 100%; background: var(--text-muted); border-radius: 3px; }
+.vl-lock__fill.is-win { background: var(--up); }
+.vl-lock__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: var(--radius-sm, 6px);
+  background: var(--brand);
+  color: var(--brand-ink);
+  font-weight: 650;
+  font-size: 0.84rem;
+  white-space: nowrap;
+}
+.vl-lock:hover .vl-lock__cta { background: var(--brand-hover, var(--brand)); }
+.vl-lock--free .vl-lock__cta { background: transparent; color: var(--brand-text); border: 1px solid var(--brand-text); }
+.vl-lock--free .vl-lock__kind svg { color: var(--up); }
+.vl-lock--elite .vl-lock__kind svg { color: var(--accent-gold); }
+
+@media (max-width: 768px) {
+  .vl-page { padding-top: calc(var(--nav-height) + 8px); }
+  .vl-full { padding-left: 16px; padding-right: 16px; }
+  .vl-head { align-items: flex-start; }
+  .vl-tab--archive { margin-left: 0; }
+  .vl-lock__body {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      'sport main cta'
+      'rec   pct  pct';
+    gap: 10px 12px;
+    padding: 12px;
+  }
+  .vl-lock__sport { grid-area: sport; }
+  .vl-lock__main { grid-area: main; }
+  .vl-lock__cta { grid-area: cta; padding: 7px 10px; }
+  .vl-lock__stat:not(.vl-lock__stat--pct) { grid-area: rec; }
+  .vl-lock__stat--pct { grid-area: pct; }
+  .vl-lock__meta { white-space: normal; }
+}
+
+/* ---------- /vault landing ---------- */
+.vl-doors { margin-top: 24px; }
+.vl-cover { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 14px; }
+.vl-cover__pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  color: var(--text-heading);
+  font-weight: 600;
+  font-size: 0.88rem;
+}
+.vl-cover__pill b { font-family: var(--font-mono); color: var(--brand-text); }
+.vl-cover__archive { flex-basis: 100%; color: var(--text-muted); font-size: 0.8rem; margin-top: 4px; }
+.vl-card__note { margin: 0; padding: 12px 14px 0; color: var(--text-secondary); font-size: 0.9rem; }
+.vl-peek { display: grid; gap: 8px; padding: 12px 14px 14px; }
+.vl-open { display: block; }
+.vl-open__desc {
+  color: var(--text-heading);
+  font-size: 0.92rem;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.vl-card__foot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-top: 1px solid var(--border-color);
+  color: var(--brand-text);
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+.vl-card__foot:hover { background: var(--bg-card-hover); }
+.vl-card__foot span { flex: 1; min-width: 0; color: var(--text-secondary); }
+.vl-card__foot strong { color: var(--text-heading); }

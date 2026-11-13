@@ -1,0 +1,60 @@
+/* /win: the live strip above the plans (components/WinLiveStrip.tsx).
+   Front-page language: one hairline module, condensed uppercase labels,
+   mono numbers. wl- prefix. */
+
+.wl {
+  margin: 0 0 28px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+.wl-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+  padding: 12px 16px;
+  min-width: 0;
+}
+.wl-row + .wl-row { border-top: 1px solid var(--border-color); }
+.wl-kick {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+  font-family: var(--font-heading);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--brand-text);
+}
+.wl-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--up); }
+.wl-items { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 4px; min-width: 0; }
+.wl-items > li + li::before { content: '·'; color: var(--text-muted); margin: 0 8px 0 4px; }
+.wl-items > li { display: inline-flex; align-items: center; }
+.wl-item { display: inline-flex; align-items: baseline; gap: 6px; color: var(--text-secondary); text-decoration: none; }
+.wl-item:hover span { color: var(--text-heading); text-decoration: underline; }
+.wl-item b {
+  font-family: var(--font-mono);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-heading);
+  font-variant-numeric: tabular-nums;
+}
+.wl-item small { margin-left: 6px; color: var(--text-muted); font-size: 0.78rem; }
+.wl-sports { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 18px; min-width: 0; }
+.wl-sports li { color: var(--text-secondary); font-size: 0.9rem; white-space: nowrap; }
+.wl-sports b { color: var(--text-heading); }
+.wl-rec { font-family: var(--font-mono); color: var(--text-primary); }
+.wl-units { font-family: var(--font-mono); color: var(--up); font-weight: 700; }
+.wl-ledger { margin-left: auto; color: var(--brand-text); font-size: 0.84rem; font-weight: 600; white-space: nowrap; }
+
+@media (max-width: 768px) {
+  .wl-row { padding: 12px; align-items: flex-start; }
+  .wl-kick { flex-basis: 100%; }
+  .wl-items { flex-direction: column; gap: 6px; }
+  .wl-items > li + li::before { content: none; }
+  .wl-ledger { margin-left: 0; }
+}
