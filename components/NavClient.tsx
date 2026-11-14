@@ -10,7 +10,8 @@ import type { SubscriptionTier } from '@/lib/supabase/types'
 import { DESK_SPORTS } from '@/lib/desk'
 import { DESK_SPORT_COOKIE } from '@/lib/desk-place'
 import BrandMark from '@/components/BrandMark'
-import HeaderSearch from '@/components/HeaderSearch'
+// Ticker styles live here; the nav is on every page.
+import '@/styles/chrome.css'
 
 interface NavClientProps {
   membership: Membership
@@ -395,8 +396,6 @@ export default function NavClient({ user, membership = 'logged-out' }: NavClient
               )
             })}
           </div>
-
-          <HeaderSearch />
 
           <div className="nav__actions">
             {compactX ? (

@@ -1,4 +1,4 @@
-// Shapes returned by /api/search, shared by the route and the header search.
+// Shapes returned by /api/search, shared by the route and the My teams strip.
 // Types only: safe to import from either side.
 
 export interface SearchTeam {
