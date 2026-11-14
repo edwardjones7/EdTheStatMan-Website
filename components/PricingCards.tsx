@@ -6,7 +6,7 @@ import '@/styles/proof-win.css'
 import '@/styles/rate-sheet.css'
 import CheckoutButton from './CheckoutButton'
 import TrialButton from './TrialButton'
-import { OFFER_PLANS, OFFER_FREE_FEATURES } from '@/lib/offer'
+import { OFFER_PLANS, OFFER_FREE_FEATURES, TRIAL_DAYS } from '@/lib/offer'
 import type { OfferPlan, OfferTierKey, BillingPeriod } from '@/lib/offer'
 import { normalizeTier, type Membership, type Tier } from '@/lib/access'
 
@@ -105,6 +105,11 @@ export interface RateSheetProps {
   extra?: (plan: OfferPlan) => ReactNode
   /** id on each row, for ?plan= scrolling on /win. */
   idFor?: (plan: OfferPlan) => string
+  /**
+   * The free trial is on offer: it leads the Research Desk row (above the buy
+   * button, in brand blue) and the buy button steps down to outline.
+   */
+  trialLeads?: boolean
 }
 
 /**
@@ -112,7 +117,7 @@ export interface RateSheetProps {
  * wider, on the card surface under the brand-blue rule. The others are columns of
  * the same sheet, split by hairlines. Below 900px the rows stack.
  */
-export function RateSheet({ plans, period, stateOf, highlight, picked, isExpired, extra, idFor }: RateSheetProps) {
+export function RateSheet({ plans, period, stateOf, highlight, picked, isExpired, extra, idFor, trialLeads = false }: RateSheetProps) {
   const cols = plans.map(p => (p.key === 'desk' ? '1.3fr' : '1fr')).join(' ')
   const days = period === 'month' ? 30 : 365
   return (
@@ -121,6 +126,7 @@ export function RateSheet({ plans, period, stateOf, highlight, picked, isExpired
         const sku = period === 'month' ? plan.month : plan.year
         const state = stateOf(plan)
         const lead = plan.key === 'desk'
+        const trialFirst = lead && trialLeads
         const saving = annualSavingsDollars(plan)
         return (
           <section
@@ -133,7 +139,11 @@ export function RateSheet({ plans, period, stateOf, highlight, picked, isExpired
               <h3 id={`rs-name-${plan.key}`} className="rate-sheet__name">{plan.name}</h3>
               {plan.key === picked
                 ? <span className="rate-sheet__tag">Your pick</span>
-                : lead && <span className="rate-sheet__tag">Includes everything</span>}
+                : lead && (
+                  <span className={`rate-sheet__tag${trialFirst ? ' rate-sheet__tag--trial' : ''}`}>
+                    {trialFirst ? `Free for ${TRIAL_DAYS} days` : 'Includes everything'}
+                  </span>
+                )}
             </div>
 
             <div className="rate-sheet__price">
@@ -155,7 +165,8 @@ export function RateSheet({ plans, period, stateOf, highlight, picked, isExpired
               {plan.features.map(f => <li key={f}>{f}</li>)}
             </ul>
 
-            <div className="rate-sheet__actions">
+            <div className={`rate-sheet__actions${trialFirst ? ' rate-sheet__actions--trial' : ''}`}>
+              {trialFirst && extra?.(plan)}
               {state === 'current' ? (
                 <button className="btn btn--outline" style={{ width: '100%', justifyContent: 'center' }} disabled>
                   Current Plan
@@ -166,10 +177,10 @@ export function RateSheet({ plans, period, stateOf, highlight, picked, isExpired
                   tierKey={plan.key}
                   period={sku.period}
                   label={state === 'extend' ? 'Add 365 Days' : isExpired ? `Renew — ${sku.price}` : sku.ctaLabel}
-                  variant={plan.key === highlight ? 'primary' : 'outline'}
+                  variant={plan.key === highlight && !trialFirst ? 'primary' : 'outline'}
                 />
               )}
-              {extra?.(plan)}
+              {!trialFirst && extra?.(plan)}
             </div>
           </section>
         )
@@ -215,6 +226,9 @@ export default function PricingCards({
   // A member already holding the top product, or an admin, has nothing to be
   // sold. The anti-downgrade rule would otherwise leave one lonely row.
   const nothingToSell = isAdmin || offered.every(plan => stateOf(plan) === 'current')
+  // TrialButton renders for logged-out visitors (to signup) and for members
+  // who have never trialled; when it renders, it is the lead action.
+  const trialOffered = !!trial && !isPaid && (!isLoggedIn || trial.available)
 
   if (nothingToSell) {
     return <div className="rate-wrap"><ToppedOut isAdmin={isAdmin} /></div>
@@ -233,8 +247,9 @@ export default function PricingCards({
         stateOf={stateOf}
         highlight={highlight}
         isExpired={isExpired}
-        extra={plan => (plan.key === 'desk' && trial && !isPaid
-          ? <TrialButton available={trial.available} loggedIn={isLoggedIn} />
+        trialLeads={trialOffered}
+        extra={plan => (plan.key === 'desk' && trialOffered
+          ? <TrialButton available={trial!.available} loggedIn={isLoggedIn} primary />
           : null)}
       />
 

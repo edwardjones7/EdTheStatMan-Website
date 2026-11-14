@@ -70,6 +70,9 @@ export default function WinPlans({ membership, currentTier, initialPeriod, selec
   const isAdmin = membership === 'admin'
   const isLoggedIn = membership !== 'logged-out'
   const isExpired = membership === 'expired'
+  // The free trial leads the Research Desk row whenever TrialButton renders:
+  // logged out (to signup) or logged in and never trialled.
+  const trialOffered = !isPaid && (!isLoggedIn || trialAvailable)
 
   const state = (plan: OfferPlan) => cardState(currentTier, isPaid, plan, period, onTrial)
   const cards = OFFER_PLANS.filter(p => state(p) !== 'hide')
@@ -135,9 +138,10 @@ export default function WinPlans({ membership, currentTier, initialPeriod, selec
           picked={selectedPlan}
           isExpired={isExpired}
           idFor={plan => `plan-${plan.key}`}
+          trialLeads={trialOffered}
           extra={plan => plan.key === 'desk' ? (
             <>
-              {!isPaid && <TrialButton available={trialAvailable} loggedIn={isLoggedIn} />}
+              {!isPaid && <TrialButton available={trialAvailable} loggedIn={isLoggedIn} primary={trialOffered} />}
               {onTrial && (
                 <p className="rate-sheet__note">You are on the free trial. Buying ends it and starts your paid days.</p>
               )}

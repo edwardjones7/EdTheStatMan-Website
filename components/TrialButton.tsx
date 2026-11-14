@@ -12,7 +12,17 @@ import { TRIAL_DAYS } from '@/lib/offer'
  * Logged out: to signup, and back to the plans after. Logged in but not
  * eligible (already trialled): renders nothing.
  */
-export default function TrialButton({ available, loggedIn }: { available: boolean; loggedIn: boolean }) {
+export default function TrialButton({
+  available,
+  loggedIn,
+  primary = false,
+}: {
+  available: boolean
+  loggedIn: boolean
+  /** The lead action on the card (brand blue) rather than the secondary one. */
+  primary?: boolean
+}) {
+  const btnClass = `btn ${primary ? 'btn--primary' : 'btn--secondary'}`
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
@@ -25,7 +35,7 @@ export default function TrialButton({ available, loggedIn }: { available: boolea
       <div className="trial-cta">
         <Link
           href={`/signup?next=${encodeURIComponent('/win?trial=1#plan-desk')}`}
-          className="btn btn--secondary"
+          className={btnClass}
           style={{ width: '100%', justifyContent: 'center' }}
         >
           {label}
@@ -58,7 +68,7 @@ export default function TrialButton({ available, loggedIn }: { available: boolea
     <div className="trial-cta">
       <button
         type="button"
-        className="btn btn--secondary"
+        className={btnClass}
         style={{ width: '100%', justifyContent: 'center' }}
         onClick={start}
         disabled={loading}

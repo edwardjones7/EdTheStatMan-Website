@@ -122,6 +122,15 @@
   color: var(--brand-text);
 }
 
+/* "Free for 7 days": a filled chip, so the trial reads before the price. */
+.rate-sheet__tag--trial {
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--brand);
+  color: #fff;
+  font-weight: 650;
+}
+
 .rate-sheet__price {
   display: flex;
   flex-wrap: wrap;
@@ -221,6 +230,12 @@
 .rate-sheet__actions .btn[disabled] { opacity: 0.7; cursor: default; }
 
 .rate-sheet__actions .trial-cta { margin-top: 0; }
+
+/* Trial first: its fine print sits between the trial and the buy button. */
+.rate-sheet__actions--trial .trial-cta__fine {
+  margin: 8px 0 4px;
+  color: var(--text-secondary);
+}
 
 .rate-sheet__actions .trial-cta__fine,
 .rate-sheet__note {
