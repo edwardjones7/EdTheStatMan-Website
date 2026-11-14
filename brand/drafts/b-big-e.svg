@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="500" viewBox="0 0 1500 500"><defs>
+  <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0A101B"/><stop offset="1" stop-color="#060A12"/></linearGradient>
+  <linearGradient id="blue" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#4C9BFF"/><stop offset="1" stop-color="#38BDF8"/></linearGradient>
+  <linearGradient id="blueD" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4C9BFF"/><stop offset="1" stop-color="#38BDF8"/></linearGradient>
+  <radialGradient id="glowR" cx="0.82" cy="0.2" r="0.55"><stop offset="0" stop-color="#2F7BFF" stop-opacity="0.20"/><stop offset="1" stop-color="#2F7BFF" stop-opacity="0"/></radialGradient></defs>
+    <rect width="1500" height="500" fill="url(#bg)"/><rect width="1500" height="500" fill="url(#glowR)"/><g stroke="#111A28" stroke-width="1"><path d="M0 100H1500M0 200H1500M0 300H1500M0 400H1500"/><path d="M100 0V500M200 0V500M300 0V500M400 0V500M500 0V500M600 0V500M700 0V500M800 0V500M900 0V500M1000 0V500M1100 0V500M1200 0V500M1300 0V500M1400 0V500"/></g>
+    <circle cx="1270" cy="250" r="0"/>
+    <svg x="1090" y="40" width="360" height="422" viewBox="24 16 58 68"><path d="M24 16H82L76 30H40V43H72L66 57H40V70H82L76 84H24Z" fill="url(#blueD)"/></svg>
+    <circle cx="1270" cy="250" r="260" fill="#2F7BFF" fill-opacity="0.07"/>
+    <rect width="1500" height="4" fill="url(#blue)"/>
+    <g font-family="Barlow" font-weight="600" font-size="19" fill="#6AA5FF" letter-spacing="3.5"><text x="64" y="118">THE RESEARCH DESK FOR SPORTS BETTORS</text></g>
+    <g font-family="Barlow Semi Condensed" font-weight="800" font-size="92" fill="#F2F6FB">
+      <text x="58" y="210">Bet with the</text>
+      <text x="58" y="300">numbers, <tspan fill="url(#blue)">not a hunch.</tspan></text>
+    </g>
+    <g font-family="Barlow" font-weight="500" font-size="24" fill="#B3C0D1"><text x="500" y="356">NFL  ·  College Football  ·  NBA  ·  College Basketball</text></g>
+    <g transform="translate(500 382)"><rect width="232" height="46" rx="2" fill="#2F7BFF"/><text x="116" y="31" text-anchor="middle" font-family="Barlow" font-weight="600" font-size="21" fill="#FFFFFF">edthestatman.com</text></g></svg>
