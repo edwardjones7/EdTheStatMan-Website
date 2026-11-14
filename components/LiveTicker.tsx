@@ -1,12 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
-import Link from 'next/link'
-import type { TickerExtras } from '@/lib/ticker-live'
-import type { LiveGame } from '@/lib/live/types'
-import { LIVE_SPORT_LABEL } from '@/lib/live/types'
-import { useLiveFeed } from './live/useLiveFeed'
-import '@/styles/chrome.css'
+import { useState } from 'react'
 import type { ComponentType } from 'react'
 import type { TickerContent, TickerItem } from '@/lib/site-content'
 import { DEFAULT_TICKER } from '@/lib/site-content'
@@ -41,8 +35,6 @@ function TickerIcon({ icon, size = 17 }: { icon?: string; size?: number }) {
 
 interface Props {
   content?: TickerContent
-  /** Wire headlines and the latest card's record, loaded by the root layout. */
-  extras?: TickerExtras
   editMode?: boolean
   onEdit?: (updates: Partial<TickerContent>) => void
   // Optional save/cancel controls rendered in the editor header (used by GlobalTicker).
@@ -350,7 +342,7 @@ function TickerItemCard({
   )
 }
 
-export default function LiveTicker({ content = DEFAULT_TICKER, extras, editMode, onEdit, onSave, onCancel, saving, dirty, error }: Props) {
+export default function LiveTicker({ content = DEFAULT_TICKER, editMode, onEdit, onSave, onCancel, saving, dirty, error }: Props) {
   if (editMode && onEdit) {
     function patchItem(i: number, updates: Partial<TickerItem>) {
       const items = content.items.map((it, j) => j === i ? { ...it, ...updates } : it)
@@ -498,107 +490,23 @@ export default function LiveTicker({ content = DEFAULT_TICKER, extras, editMode,
     )
   }
 
-  return <TickerScroll items={content.items} extras={extras} />
-}
-
-/** A ticker entry built on the client or the server, ahead of the saved items. */
-interface LiveItem {
-  key: string
-  kind: 'live' | 'final' | 'wire' | 'record'
-  tag: string
-  text: string
-  href: string | null
-  badge?: { label: string; tone: 'up' | 'down' | 'neutral' }
-}
-
-const MAX_SCORES = 12
-
-function scoreItems(games: LiveGame[]): LiveItem[] {
-  const live = games.filter(g => g.state === 'in')
-  const finals = games.filter(g => g.state === 'post').slice(0, 6)
-  return [...live, ...finals].slice(0, MAX_SCORES).map(g => ({
-    key: `s-${g.espnId}`,
-    kind: g.state === 'in' ? 'live' as const : 'final' as const,
-    tag: `${LIVE_SPORT_LABEL[g.sport]} · ${g.detail}`,
-    text: `${g.away.abbrev} ${g.away.score ?? 0}  ${g.home.abbrev} ${g.home.score ?? 0}`,
-    href: g.href,
-  }))
-}
-
-function TickerEntry({ item, dup }: { item: LiveItem; dup: boolean }) {
-  const body = (
-    <>
-      {item.kind === 'live' && <span className="ticker__live-dot" aria-hidden="true" />}
-      <span className="ticker__sport">{item.tag}</span>
-      <span className="ticker__record">{item.text}</span>
-      {item.badge && (
-        <span className={`ticker__trend ${BADGE_CLASS[item.badge.tone] ?? ''}`}>{item.badge.label}</span>
-      )}
-    </>
-  )
-  const cls = `ticker__item ticker__item--${item.kind}`
-  return item.href
-    // The second copy exists only for the seamless loop: hidden from screen
-    // readers and out of the tab order, so each link is reachable once.
-    ? <Link href={item.href} className={cls} prefetch={false} tabIndex={dup ? -1 : undefined} aria-hidden={dup || undefined}>{body}</Link>
-    : <div className={cls} aria-hidden={dup || undefined}>{body}</div>
-}
-
-// Ticker speed per item. The saved 14 items ran at 110s, ~7.9s each; holding
-// that rate keeps the speed the same however many live items join.
-const SECONDS_PER_ITEM = 7.9
-
-/**
- * The scrolling bar. Live scores (polled from /api/live), then the Wire's
- * latest headlines and the latest card's record (from the layout), then the
- * admin's saved items. Items are doubled in JSX for the seamless loop.
- */
-function TickerScroll({ items, extras }: { items: TickerItem[]; extras?: TickerExtras }) {
-  const feed = useLiveFeed()
-  const scores = useMemo(() => scoreItems(feed?.games ?? []), [feed])
-
-  const head: LiveItem[] = useMemo(() => {
-    const out: LiveItem[] = [...scores]
-    if (extras?.record) {
-      out.push({
-        key: 'record',
-        kind: 'record',
-        tag: `Record · ${extras.record.label}`,
-        text: extras.record.text,
-        href: extras.record.href,
-        badge: { label: extras.record.up ? '▲ Up' : '▼ Down', tone: extras.record.up ? 'up' : 'down' },
-      })
-    }
-    for (const [i, w] of (extras?.wire ?? []).entries()) {
-      out.push({ key: `w-${i}`, kind: 'wire', tag: `The Wire · ${w.sport}`, text: w.headline, href: w.href })
-    }
-    return out
-  }, [scores, extras])
-
-  const count = head.length + items.length
-  const duration = `${Math.max(40, Math.round(count * SECONDS_PER_ITEM))}s`
-
-  const copy = (n: number) => [
-    ...head.map(it => <TickerEntry key={`${n}-${it.key}`} item={it} dup={n === 1} />),
-    ...items.map((item, i) => (
-      <div key={`${n}-saved-${i}`} className="ticker__item" aria-hidden={n === 1 || undefined}>
-        <TickerIcon icon={item.icon} />
-        <span className="ticker__sport">{item.tag}</span>
-        <span className="ticker__record">{item.text}</span>
-        {item.badge && (
-          <span className={`ticker__trend ${BADGE_CLASS[item.badgeType ?? 'up'] ?? ''}`}>
-            {item.badge}
-          </span>
-        )}
-      </div>
-    )),
-  ]
-
+  // ── Normal scrolling ticker — admin-edited items, doubled in JSX for a seamless loop ──
+  const doubled = [...content.items, ...content.items]
   return (
     <div className="ticker">
-      <div className="ticker__track" style={{ animationDuration: duration }}>
-        {copy(0)}
-        {copy(1)}
+      <div className="ticker__track">
+        {doubled.map((item, i) => (
+          <div key={i} className="ticker__item" aria-hidden={i >= content.items.length || undefined}>
+            <TickerIcon icon={item.icon} />
+            <span className="ticker__sport">{item.tag}</span>
+            <span className="ticker__record">{item.text}</span>
+            {item.badge && (
+              <span className={`ticker__trend ${BADGE_CLASS[item.badgeType ?? 'up'] ?? ''}`}>
+                {item.badge}
+              </span>
+            )}
+          </div>
+        ))}
       </div>
     </div>
   )

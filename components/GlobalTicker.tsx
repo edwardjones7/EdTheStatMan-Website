@@ -4,14 +4,11 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import LiveTicker from './LiveTicker'
 import type { TickerContent } from '@/lib/site-content'
-import type { TickerExtras } from '@/lib/ticker-live'
 import { IconPencil } from './Icons'
 
 interface Props {
   content: TickerContent
   isAdmin: boolean
-  /** Live items shown ahead of the saved ones; never part of what is edited. */
-  extras?: TickerExtras
 }
 
 /**
@@ -20,7 +17,7 @@ interface Props {
  * `ticker` site_content key and the page re-renders via router.refresh()
  * (no full reload, so scroll position and React state are preserved).
  */
-export default function GlobalTicker({ content, isAdmin, extras }: Props) {
+export default function GlobalTicker({ content, isAdmin }: Props) {
   const router = useRouter()
   const [editMode, setEditMode] = useState(false)
   const [draft, setDraft] = useState<TickerContent>(content)
@@ -39,7 +36,7 @@ export default function GlobalTicker({ content, isAdmin, extras }: Props) {
   }, [content, editMode])
 
   if (!isAdmin) {
-    return <LiveTicker content={content} extras={extras} />
+    return <LiveTicker content={content} />
   }
 
   function patch(updates: Partial<TickerContent>) {
@@ -94,7 +91,7 @@ export default function GlobalTicker({ content, isAdmin, extras }: Props) {
 
   return (
     <>
-      <LiveTicker content={content} extras={extras} />
+      <LiveTicker content={content} />
       <button
         onClick={() => { setDraft(content); setDirty(false); setError(null); setEditMode(true) }}
         title="Edit ticker"
