@@ -10,11 +10,16 @@
  * Supabase's own CAPTCHA closes that path AND direct calls to the Auth API
  * with the public anon key, which no check on our server can see.
  *
- * HOW IT SWITCHES ON. With NEXT_PUBLIC_TURNSTILE_SITE_KEY unset this renders
- * nothing and getToken() resolves null, so the forms behave exactly as before.
- * Order of rollout: deploy with the key set, THEN enable CAPTCHA in Supabase
- * (Authentication > Attack Protection) with the secret. The other way round
- * rejects every sign-in.
+ * THE KEY. The site key below is public by design (it ships to every
+ * browser); NEXT_PUBLIC_TURNSTILE_SITE_KEY overrides it. The SECRET lives only
+ * in Supabase (Authentication > Attack Protection), never in this repo.
+ * Order of rollout: deploy this, THEN enable CAPTCHA in Supabase. The other way
+ * round rejects every sign-in.
+ *
+ * The widget is registered for edthestatman.com only, so on localhost it
+ * errors and sends no token. Once Supabase CAPTCHA is on, signing in from a
+ * local dev server fails; set NEXT_PUBLIC_TURNSTILE_SITE_KEY to Cloudflare's
+ * test key 1x00000000000000000000AA to exercise the widget locally.
  *
  * "Managed" mode with appearance interaction-only: most people never see it;
  * it only shows a checkbox when Cloudflare is unsure.
@@ -22,7 +27,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-export const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || ''
+export const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '0x4AAAAAAGBP4dygBc4GmJW4'
 
 declare global {
   interface Window {
