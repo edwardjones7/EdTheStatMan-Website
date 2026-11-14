@@ -13,7 +13,7 @@ const JOB_STATE_CLASS = {
  * is something checked in the code; delete it when the fix lands.
  */
 const LIMITS: { area: string; text: string }[] = [
-  { area: 'Traffic history', text: 'Counting rules changed on Nov 14 2026. A Singapore crawler’s 5,905 views (Nov 10-14) were deleted, but before Nov 14 local dev servers and admin browsing were still counted and visitor ids reset daily, so older ranges run a little high.' },
+  { area: 'Traffic history', text: 'Cleaned on Nov 14 2026: 16,393 fake views deleted (admin and dev browsing, launch-day testing, two crawlers, the signup bot and bot user agents). Before Nov 14 visitor ids reset daily, so older visitor totals still run a little high.' },
   { area: 'Visitors', text: 'A person is one anonymous id per browser. The same person on a phone and a laptop counts twice; clearing browser data starts a new id.' },
   { area: 'Page views', text: 'A view counts once the visitor scrolls, moves the pointer, taps or types. Someone who opens a page and leaves without touching it is not counted.' },
   { area: 'Bots', text: 'Crawlers that never interact are left out, plus known bot user agents and automated browsers. A bot built to fake mouse movement would still count.' },
