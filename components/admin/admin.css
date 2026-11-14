@@ -150,3 +150,189 @@
 
 /* The shared admin cards predate the redesign's flat corners. */
 .admin-container .admin-breakdown-card { border-radius: var(--radius-lg, 20px); }
+
+/* ---------- App shell: sidebar + main (Nov 2026) ----------
+   The site header and ticker stay on top; the sidebar sits under them and
+   sticks while the main column scrolls. Below 900px the sidebar becomes a
+   scrolling row of sections above the content, so the page never scrolls
+   sideways. */
+.admin-page.adm-app {
+  display: flex;
+  align-items: flex-start;
+  gap: 0;
+  padding: calc(var(--nav-height) + 40px) 0 72px;
+}
+
+.adm-side {
+  position: sticky;
+  top: calc(var(--nav-height) + 48px);
+  flex: 0 0 236px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: calc(100vh - var(--nav-height) - 64px);
+  overflow-y: auto;
+  padding: 0 14px 16px 18px;
+  border-right: 1px solid var(--border-color);
+}
+
+.adm-side__head {
+  padding: 2px 10px 10px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.adm-side__group { display: flex; flex-direction: column; gap: 2px; }
+.adm-side__label {
+  padding: 14px 10px 6px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.adm-nav {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: var(--radius-sm, 2px);
+  background: transparent;
+  color: var(--text-secondary);
+  font: 500 0.92rem var(--font-body);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--transition-fast), color var(--transition-fast);
+}
+.adm-nav svg { flex: none; color: var(--text-muted); }
+.adm-nav:hover { background: var(--bg-card); color: var(--text-heading); }
+.adm-nav.is-on { background: var(--bg-card-hover); color: var(--text-heading); box-shadow: inset 3px 0 0 var(--brand); }
+.adm-nav.is-on svg { color: var(--brand-text); }
+.adm-nav:focus-visible { outline: 2px solid var(--brand); outline-offset: 1px; }
+
+.adm-nav__count {
+  margin-left: auto;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--border-color);
+  color: var(--text-primary);
+  font-size: 0.74rem;
+  font-variant-numeric: tabular-nums;
+}
+.adm-nav__count.is-warn { background: #4A2A12; color: #FFB86B; }
+
+.adm-side__foot {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 18px;
+  padding: 14px 10px 0;
+  border-top: 1px solid var(--border-color);
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+.adm-side__foot a { color: var(--brand-text); text-decoration: none; }
+.adm-side__foot a:hover { color: var(--text-heading); }
+
+.adm-main.admin-container {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 1280px;
+  margin: 0;
+  padding: 0 32px;
+  gap: 20px;
+}
+
+.adm-main .admin-header { align-items: flex-end; margin-bottom: 4px; }
+.adm-sub { margin: 4px 0 0; color: var(--text-muted); font-size: 0.9rem; }
+
+/* Figures: the source line is how every number says where it comes from. */
+.adm-kpis { grid-template-columns: repeat(auto-fit, minmax(176px, 1fr)); }
+.adm-kpi { border-radius: var(--radius-sm, 2px); padding: 16px 16px 14px; }
+.adm-kpi__label { font-size: 0.82rem; font-weight: 500; }
+.adm-kpi__value { color: var(--text-heading); }
+.adm-kpi__src {
+  margin-top: auto;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-faint);
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  line-height: 1.4;
+}
+.adm-kpi__delta + .adm-kpi__src,
+.adm-kpi__sub + .adm-kpi__src,
+.adm-kpi__value + .adm-kpi__src { margin-top: 6px; }
+
+.adm-rule {
+  margin: 0;
+  padding: 12px 16px;
+  border: 1px solid #1B4A36;
+  background: #0B1C16;
+  border-radius: var(--radius-sm, 2px);
+  color: #A8E9CB;
+  font-size: 0.88rem;
+}
+
+/* Who has what: one bar, every account in exactly one segment. */
+.adm-mix {
+  display: flex;
+  gap: 2px;
+  height: 30px;
+  border-radius: var(--radius-sm, 2px);
+  overflow: hidden;
+  background: var(--border-faint);
+}
+.adm-mix span { flex-basis: 0; min-width: 4px; }
+.adm-mix-legend { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 12px; }
+.adm-mix-key {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 32px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.adm-mix-key:hover { color: var(--text-heading); }
+.adm-mix-key i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; }
+.adm-mix-key strong { color: var(--text-heading); font-variant-numeric: tabular-nums; }
+
+.adm-gap-top { margin-top: 14px; }
+.adm-big { margin: 0; font-size: 1.6rem; font-weight: 700; color: var(--text-heading); }
+
+.adm-limits { display: flex; flex-direction: column; gap: 10px; margin: 0; padding: 0; list-style: none; font-size: 0.86rem; color: var(--text-secondary); line-height: 1.5; }
+.adm-limits strong { display: inline-block; min-width: 96px; margin-right: 10px; color: var(--text-heading); font-weight: 600; }
+
+@media (max-width: 900px) {
+  .admin-page.adm-app { flex-direction: column; padding-top: calc(var(--nav-height) + 28px); }
+  .adm-side {
+    position: static;
+    flex: none;
+    flex-direction: row;
+    align-items: center;
+    width: 100%;
+    max-height: none;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 0 16px 10px;
+    border-right: 0;
+    border-bottom: 1px solid var(--border-color);
+    scrollbar-width: none;
+  }
+  .adm-side__head, .adm-side__label, .adm-side__foot { display: none; }
+  .adm-side__group { flex-direction: row; gap: 4px; }
+  .adm-nav { width: auto; flex: none; white-space: nowrap; }
+  .adm-nav.is-on { box-shadow: inset 0 -2px 0 var(--brand); }
+  .adm-main.admin-container { width: 100%; padding: 18px 16px 0; }
+}

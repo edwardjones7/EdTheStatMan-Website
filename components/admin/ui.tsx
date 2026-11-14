@@ -48,11 +48,13 @@ export function Delta({ now, prev, format = String }: {
   )
 }
 
-export function Kpi({ label, value, delta, sub }: {
+export function Kpi({ label, value, delta, sub, source }: {
   label: string
   value: string | number
   delta?: ReactNode
   sub?: ReactNode
+  /** Where the number comes from and what it leaves out, in a few words. */
+  source?: ReactNode
 }) {
   return (
     <div className="adm-kpi">
@@ -60,8 +62,48 @@ export function Kpi({ label, value, delta, sub }: {
       <div className="adm-kpi__value">{value}</div>
       {delta && <div className="adm-kpi__delta">{delta}</div>}
       {sub && <div className="adm-kpi__sub">{sub}</div>}
+      {source && <div className="adm-kpi__src">{source}</div>}
     </div>
   )
+}
+
+/**
+ * What somebody holds today, as one label. Every account lands in exactly one,
+ * so counts by membership always add up to the number of accounts.
+ */
+export type Membership =
+  | 'desk' | 'private' | 'portfolio' | 'trial' | 'comp' | 'lapsed' | 'free' | 'admin'
+
+export const MEMBERSHIP_LABEL: Record<Membership, string> = {
+  desk: 'Research Desk', private: 'Vault', portfolio: 'Portfolio', trial: 'Free trial',
+  comp: 'Comp', lapsed: 'Lapsed', free: 'Free', admin: 'Admin',
+}
+
+/** Bar and dot colours, in the order the membership bar draws them. */
+export const MEMBERSHIP_ORDER: Membership[] = ['desk', 'private', 'portfolio', 'trial', 'comp', 'lapsed', 'free']
+export const MEMBERSHIP_COLOR: Record<Membership, string> = {
+  desk: 'var(--brand)', private: '#8FBBFF', portfolio: '#5B8DEF', trial: 'var(--up)',
+  comp: '#B58BFF', lapsed: '#FFB86B', free: '#3A4A63', admin: '#3A4A63',
+}
+
+export function membershipOf(p: { status: string; tier: string }): Membership {
+  switch (p.status) {
+    case 'admin': return 'admin'
+    case 'trial': return 'trial'
+    case 'comp': return 'comp'
+    case 'lapsed':
+    case 'trial_ended': return 'lapsed'
+    case 'paying':
+      return p.tier === 'desk' || p.tier === 'private' || p.tier === 'portfolio' ? p.tier : 'free'
+    default: return 'free'
+  }
+}
+
+export function Badge({ tone = 'muted', children }: {
+  tone?: 'green' | 'blue' | 'gold' | 'red' | 'yellow' | 'purple' | 'muted'
+  children: ReactNode
+}) {
+  return <span className={`admin-badge admin-badge--${tone}`}>{children}</span>
 }
 
 export function Panel({ title, note, children }: { title: string; note?: ReactNode; children: ReactNode }) {

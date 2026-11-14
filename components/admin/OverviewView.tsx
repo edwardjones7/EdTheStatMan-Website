@@ -8,7 +8,7 @@ import {
 import type { Ops } from '@/lib/admin-people-server'
 import { TIER_SHORT_LABEL } from '@/lib/access'
 import type { AnalyticsData, Go, Range } from './types'
-import { Delta, Empty, fmtMoney, fmtShort, Kpi, Panel, timeAgo } from './ui'
+import { Delta, Empty, fmtMoney, fmtShort, Kpi, Panel } from './ui'
 
 const PRIOR: Record<Range, string> = { week: 'prior 7 days', month: 'prior 30 days', year: 'prior year' }
 
@@ -16,11 +16,6 @@ type Metric = 'views' | 'signups' | 'revenue'
 const METRIC_LABEL: Record<Metric, string> = { views: 'Page views', signups: 'Signups', revenue: 'Revenue' }
 
 const TRIAL_WARNING_MS = 3 * DAY_MS
-
-const JOB_STATE_LABEL = { ok: 'OK', failed: 'Failed', late: 'Late', waiting: 'Waiting for first run' }
-const JOB_STATE_CLASS = {
-  ok: 'admin-badge--green', failed: 'admin-badge--red', late: 'admin-badge--yellow', waiting: 'admin-badge--muted',
-}
 
 interface Alert { key: string; text: string; onClick: () => void }
 
@@ -40,15 +35,15 @@ function buildAlerts(people: Person[], ops: Ops, go: Go): Alert[] {
       key: 'ungraded', text: `${plural(ops.ungradedPicks, 'pick')} still ungraded after 2 days`, onClick: () => go('content'),
     },
     endingSoon > 0 && {
-      key: 'trials', text: `${plural(endingSoon, 'trial')} ending within 3 days`, onClick: () => go('audience', 'trial'),
+      key: 'trials', text: `${plural(endingSoon, 'trial')} ending within 3 days`, onClick: () => go('users', 'trial'),
     },
     pastDue > 0 && {
-      key: 'pastdue', text: `${plural(pastDue, 'failed payment')}`, onClick: () => go('audience', 'paying'),
+      key: 'pastdue', text: `${plural(pastDue, 'failed payment')}`, onClick: () => go('users', 'paying'),
     },
     badJobs.length > 0 && {
       key: 'jobs',
-      text: `Daily job problem: ${badJobs.map(j => j.job).join(', ')}`,
-      onClick: () => document.getElementById('adm-jobs')?.scrollIntoView({ behavior: 'smooth' }),
+      text: `Scheduled job problem: ${badJobs.map(j => j.job).join(', ')}`,
+      onClick: () => go('system'),
     },
   ]
   return alerts.filter((a): a is Alert => !!a)
@@ -126,29 +121,34 @@ export default function OverviewView({ people, purchases, peopleFailed, ops, ana
           value={peopleFailed ? '—' : fmtMoney(now.revenueCents)}
           delta={<><Delta now={now.revenueCents} prev={before.revenueCents} format={fmtMoney} /> vs {PRIOR[range]}</>}
           sub={`${now.sales} sale${now.sales === 1 ? '' : 's'} · ${fmtMoney(allTimeRevenue)} all time`}
+          source="Purchases ledger, from Aug 11 2026"
         />
         <Kpi
           label="Signups"
           value={peopleFailed ? '—' : now.signups}
           delta={<><Delta now={now.signups} prev={before.signups} /> vs {PRIOR[range]}</>}
           sub={`${now.trials} trial${now.trials === 1 ? '' : 's'} started`}
+          source="Confirmed email only · imports and admins excluded"
         />
         <Kpi
           label="Page views"
           value={viewsFailed ? '—' : analytics.viewsInRange.toLocaleString()}
           delta={viewsFailed ? undefined : <><Delta now={analytics.viewsInRange} prev={analytics.prevViews} format={n => n.toLocaleString()} /> vs {PRIOR[range]}</>}
           sub={`${analytics.uniqueVisitors.toLocaleString()} visitors`}
+          source="Our tracker · visitor ids reset daily, so visitors run high"
         />
         <Kpi
           label="Paying members"
           value={peopleFailed ? '—' : counts.paying}
           sub={`${counts.trial} on trial · ${counts.comp} comped`}
+          source="Live paid pass today · comps and trials excluded"
         />
         <Kpi
           label="Email subscribers"
           value={peopleFailed ? '—' : counts.subscribers}
           delta={<>+{now.newSubscribers} new{unsubscribed !== null && <> · {unsubscribed} left</>}</>}
           sub={`${counts.unconfirmed} unconfirmed, not counted`}
+          source="Confirmed accounts with email on"
         />
       </div>
 
@@ -199,7 +199,7 @@ export default function OverviewView({ people, purchases, peopleFailed, ops, ana
         )}
       </Panel>
 
-      <div className="adm-grid-3">
+      <div className="adm-grid-2">
         <Panel title="Latest signups">
           {recentSignups.length === 0 ? <Empty>No signups yet.</Empty> : (
             <ul className="adm-list">
@@ -227,26 +227,6 @@ export default function OverviewView({ people, purchases, peopleFailed, ops, ana
             </ul>
           )}
         </Panel>
-
-        <div id="adm-jobs">
-          <Panel title="Daily jobs">
-            {ops.jobsState === 'missing' && <Empty>Not set up yet. Needs the admin_01_dashboard migration.</Empty>}
-            {ops.jobsState === 'failed' && <Empty>Couldn&rsquo;t load job history.</Empty>}
-            {ops.jobs && (
-              <ul className="adm-list">
-                {ops.jobs.map(j => (
-                  <li key={j.job} title={j.error ?? undefined}>
-                    <span className="adm-list__main adm-mono">{j.job}</span>
-                    <span className="adm-list__side">
-                      <span className={`admin-badge ${JOB_STATE_CLASS[j.state]}`}>{JOB_STATE_LABEL[j.state]}</span>
-                      {j.lastRun && <> {timeAgo(j.lastRun)}</>}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </Panel>
-        </div>
       </div>
     </>
   )

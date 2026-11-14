@@ -3,7 +3,9 @@ import type { AudienceFilter } from '@/lib/admin-people'
 
 export type AnalyticsData = RangeAnalytics & GlobalTotals
 
-export type View = 'overview' | 'growth' | 'audience' | 'content'
+export type View =
+  | 'today' | 'traffic' | 'funnel' | 'revenue'
+  | 'users' | 'subscribers' | 'content' | 'system'
 export type Range = 'week' | 'month' | 'year'
 
 export interface AdminPost {
@@ -17,5 +19,5 @@ export interface AdminPost {
   created_at: string
 }
 
-/** Jumps from an alert on the Overview to the place that deals with it. */
+/** Jumps from an alert on Today to the place that deals with it. */
 export type Go = (view: View, filter?: AudienceFilter) => void

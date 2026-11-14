@@ -173,13 +173,13 @@ export function buildPeople(
 // ── Audience filters ─────────────────────────────────────────────────────────
 
 export const AUDIENCE_FILTERS = [
-  'all', 'subscribers', 'paying', 'trial', 'comp', 'lapsed', 'wordpress', 'unconfirmed', 'admin',
+  'all', 'subscribers', 'paying', 'trial', 'comp', 'lapsed', 'free', 'wordpress', 'unconfirmed', 'admin',
 ] as const
 export type AudienceFilter = (typeof AUDIENCE_FILTERS)[number]
 
 export const AUDIENCE_LABEL: Record<AudienceFilter, string> = {
-  all: 'All', subscribers: 'Subscribers', paying: 'Paying', trial: 'Trial', comp: 'Comp',
-  lapsed: 'Lapsed', wordpress: 'WordPress', unconfirmed: 'Unconfirmed', admin: 'Admin',
+  all: 'All', subscribers: 'Subscribers', paying: 'Paying', trial: 'Free trial', comp: 'Comp',
+  lapsed: 'Lapsed', free: 'Free', wordpress: 'WordPress', unconfirmed: 'Unconfirmed', admin: 'Admin',
 }
 
 export function matchesFilter(p: Person, filter: AudienceFilter): boolean {
@@ -190,6 +190,7 @@ export function matchesFilter(p: Person, filter: AudienceFilter): boolean {
     case 'trial': return p.status === 'trial'
     case 'comp': return p.status === 'comp'
     case 'lapsed': return p.status === 'lapsed' || p.status === 'trial_ended'
+    case 'free': return p.status === 'free' && p.confirmed
     case 'wordpress': return p.imported
     case 'unconfirmed': return !p.confirmed
     case 'admin': return p.is_admin
