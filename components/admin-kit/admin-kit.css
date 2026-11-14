@@ -309,3 +309,8 @@ body.has-admin-bar { --admin-bar-h: 44px; }
 
 /* The homepage's editable sections while editing. */
 .akit-editable-zone { outline: 1px dashed #22406F; outline-offset: -1px; scroll-margin-top: calc(var(--nav-height) + var(--ticker-height, 0px) + var(--admin-bar-h, 0px) + 16px); }
+
+/* A scrolling flex row drops its own end padding, which clipped the last
+   button against the window edge. Pad the last group instead. */
+.akit-bar__right { padding-right: 16px; }
+.akit-bar { padding-right: 0; }

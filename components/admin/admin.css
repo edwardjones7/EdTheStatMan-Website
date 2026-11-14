@@ -244,7 +244,8 @@
 .adm-main.admin-container {
   flex: 1 1 auto;
   min-width: 0;
-  max-width: 1280px;
+  /* Fill the screen: the Users table has nine columns and was clipped at 1280. */
+  max-width: 1680px;
   margin: 0;
   padding: 0 32px;
   gap: 20px;
@@ -336,3 +337,12 @@
   .adm-nav.is-on { box-shadow: inset 0 -2px 0 var(--brand); }
   .adm-main.admin-container { width: 100%; padding: 18px 16px 0; }
 }
+
+/* Tables in the dashboard: square corners like everything else, tighter cells,
+   dates and labels on one line. Wide tables scroll inside their card. */
+.adm-main .admin-section,
+.adm-main .admin-breakdown-card { border-radius: var(--radius-sm, 2px); }
+.adm-main .admin-table th { padding: 12px 14px; white-space: nowrap; }
+.adm-main .admin-table td { padding: 12px 14px; white-space: nowrap; }
+.adm-main .admin-table td .admin-comp--open { white-space: normal; }
+.adm-main .admin-table-wrap { scrollbar-width: thin; }
