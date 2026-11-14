@@ -88,6 +88,30 @@ const drafts = {
     </g>
     <g font-family="Barlow" font-weight="500" font-size="24" fill="#B3C0D1"><text x="600" y="336">Every game, system, trend and pick for a week. Nothing to cancel.</text></g>
     ${url(600, 362)}`),
+
+  // 5. The first banner's copy and units line, with the hoop fading in on the right.
+  'e-hoop-graded': svg(`
+    ${ground}${grid}
+    <linearGradient id="fadeIn5" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset="0.4" stop-color="#fff" stop-opacity="0.55"/><stop offset="1" stop-color="#fff" stop-opacity="0.92"/></linearGradient>
+    <mask id="photoFade5"><rect x="1110" width="390" height="500" fill="url(#fadeIn5)"/></mask>
+    <image href="${photo('nba')}" x="1110" y="0" width="390" height="500" preserveAspectRatio="xMidYMid slice" mask="url(#photoFade5)"/>
+    ${topRule}
+    <linearGradient id="area5" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2F7BFF" stop-opacity="0.32"/><stop offset="1" stop-color="#2F7BFF" stop-opacity="0"/></linearGradient>
+    <g transform="translate(80 44)">
+      <path d="M0 230 L40 214 L80 222 L120 196 L160 204 L200 172 L240 180 L280 146 L320 154 L360 118 L400 92 L400 260 L0 260 Z" fill="url(#area5)"/>
+      <path d="M0 230 L40 214 L80 222 L120 196 L160 204 L200 172 L240 180 L280 146 L320 154 L360 118 L400 92" fill="none" stroke="url(#blue)" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+      <circle cx="400" cy="92" r="9" fill="#38BDF8"/><circle cx="400" cy="92" r="18" fill="#38BDF8" fill-opacity="0.18"/>
+      <path d="M0 260H400" stroke="#1F2B3D" stroke-width="2"/>
+      <text x="0" y="40" font-family="Barlow" font-weight="600" font-size="15" fill="#8C9CB1" letter-spacing="2">UNITS, EVERY PICK GRADED IN PUBLIC</text>
+    </g>
+    <g font-family="Barlow" font-weight="600" font-size="18" fill="#6AA5FF" letter-spacing="3"><text x="580" y="98">THE RESEARCH DESK  ·  THE VAULT  ·  THE PORTFOLIO</text></g>
+    <g font-family="Barlow Semi Condensed" font-weight="800" font-size="68" fill="#F2F6FB">
+      <text x="576" y="168">Every game.</text>
+      <text x="576" y="238">Every system.</text>
+      <text x="576" y="308">Every pick, <tspan fill="url(#blue)">graded.</tspan></text>
+    </g>
+    <g font-family="Barlow" font-weight="500" font-size="23" fill="#B3C0D1"><text x="580" y="352">NFL  ·  College Football  ·  NBA  ·  College Basketball</text></g>
+    ${url(580, 372)}`),
 }
 
 const avatar = readFileSync(join(repo, 'brand/x-avatar.png')).toString('base64')
