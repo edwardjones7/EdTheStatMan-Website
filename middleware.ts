@@ -106,6 +106,9 @@ export const config = {
     // withBotId() in next.config.js. It is fetched on every page load of a
     // protected route and carries no session, so running the Supabase round
     // trip on it would be pure latency on the challenge itself.
-    '/((?!api/stripe/webhook|149e9513-01fa-4fb0-aad4-566afd725d1b|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    //
+    // api/track and api/nav fire on every page view and resolve the user
+    // themselves; running the session refresh on them doubled the Auth calls.
+    '/((?!api/stripe/webhook|api/track|api/nav|149e9513-01fa-4fb0-aad4-566afd725d1b|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }

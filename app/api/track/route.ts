@@ -35,9 +35,19 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true })
     }
 
+    // Only the production deployment writes. Local dev servers share the
+    // production database, and their sessions were landing in page_views.
+    if (process.env.VERCEL_ENV !== 'production') {
+      return NextResponse.json({ ok: true, skipped: 'not production' })
+    }
+
     const country   = req.headers.get('x-vercel-ip-country') ?? null
     const device    = getDeviceType(ua)
-    const visitorId = hashVisitor(getClientIp(req), ua)
+    // The browser's anonymous id when it sent one (lib/track-client.ts), so a
+    // person counts once across days; the daily hash only as a fallback for a
+    // browser with storage blocked.
+    const vid       = typeof body.vid === 'string' && /^[0-9a-f-]{36}$/.test(body.vid) ? body.vid : null
+    const visitorId = vid ?? hashVisitor(getClientIp(req), ua)
     const admin     = createAdminClient() as any
 
     // Resolve logged-in user (best-effort)
@@ -47,6 +57,19 @@ export async function POST(req: NextRequest) {
       const { data: { user } } = await authClient.auth.getUser()
       if (user) userId = user.id
     } catch {}
+
+    // Read once: it decides whether to count this at all (admins are never
+    // traffic), and feeds last-seen and attribution below.
+    let profile: { last_seen_at: string | null; attributed_at: string | null; is_admin: boolean } | null = null
+    if (userId) {
+      const { data } = await admin
+        .from('profiles')
+        .select('last_seen_at, attributed_at, is_admin')
+        .eq('id', userId)
+        .single()
+      profile = data ?? null
+      if (profile?.is_admin) return NextResponse.json({ ok: true, skipped: 'admin' })
+    }
 
     const eventType = typeof body.event === 'string' ? body.event : null
     if (eventType) {
@@ -79,12 +102,6 @@ export async function POST(req: NextRequest) {
 
     let stamped = false
     if (userId) {
-      const { data: profile } = await admin
-        .from('profiles')
-        .select('last_seen_at, attributed_at')
-        .eq('id', userId)
-        .single()
-
       // Update last_seen_at — throttled to once per 5 minutes
       const lastSeen   = profile?.last_seen_at ? new Date(profile.last_seen_at) : null
       const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000)

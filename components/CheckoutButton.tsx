@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { getFirstTouch } from '@/lib/attribution'
+import { trackEvent } from '@/lib/track-client'
 import type { OfferTierKey, BillingPeriod } from '@/lib/offer'
 
 interface Props {
@@ -25,15 +26,7 @@ export default function CheckoutButton({ priceId, label, variant, className, tie
     setLoading(true)
     setError(null)
     // Funnel event, fire-and-forget — must never block checkout.
-    fetch('/api/track', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        path: window.location.pathname,
-        event: 'checkout_click',
-        meta: tierKey ? { tier: tierKey } : null,
-      }),
-    }).catch(() => {})
+    trackEvent('checkout_click', tierKey ? { tier: tierKey } : null)
     try {
       const res = await fetch('/api/stripe/checkout', {
         method: 'POST',

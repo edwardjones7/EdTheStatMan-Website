@@ -8,6 +8,7 @@ import BackToTop from '@/components/BackToTop'
 import ClientScripts from '@/components/ClientScripts'
 import PageViewTracker from '@/components/PageViewTracker'
 import GlobalTicker from '@/components/GlobalTicker'
+import AdminBrowserFlag from '@/components/AdminBrowserFlag'
 import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import { BotIdClient } from 'botid/client'
@@ -167,6 +168,7 @@ export default async function RootLayout({
           <Navigation />
         </Suspense>
         <GlobalTicker content={ticker} isAdmin={isAdmin} />
+        {isAdmin && <AdminBrowserFlag />}
         {/* Reserve flow space for the fixed ticker so page content clears it. */}
         <div className="ticker-spacer" aria-hidden />
         {/* A div, not <main>: pages already render their own <main>, and
