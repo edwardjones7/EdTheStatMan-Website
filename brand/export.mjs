@@ -38,8 +38,13 @@ const appleTile = tile.replace('rx="22" ', '')
 // Android notification badge: solid white silhouette on transparent, mark ~75% wide.
 const badge = `<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="12 8 82 84"><path d="${E}" fill="#FFFFFF"/></svg>`
 
+// href="photo:<name>" in a brand SVG means public/images/sports/<name>.jpg,
+// inlined here so the SVG sources stay small and readable.
+const inlinePhotos = (svg) => svg.replace(/href="photo:([\w-]+)"/g, (_, n) =>
+  `href="data:image/jpeg;base64,${readFileSync(join(root, 'public/images/sports', `${n}.jpg`)).toString('base64')}"`)
+
 function png(svg, size, out) {
-  const r = new Resvg(svg, {
+  const r = new Resvg(inlinePhotos(svg), {
     fitTo: size ? { mode: 'width', value: size } : { mode: 'original' },
     font: { fontFiles, loadSystemFonts: false, defaultFontFamily: 'Archivo Text' },
   })

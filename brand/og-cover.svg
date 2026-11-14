@@ -1,17 +1,68 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <!-- The link-preview card (1200x630), matching the X header
+       brand/drafts/g-hoop-max: near-black navy, Barlow, the Clean E's blue,
+       the mirrored hoop with the ball dropping through and a "Graded · Win"
+       callout on it. Shown small in feeds, so: bigger type, the mark and name
+       top-left, no chart. No figures (a record baked in goes stale).
+       href="photo:nba" is inlined by export.mjs from public/images/sports/nba.jpg
+       (Unsplash, no faces). -->
   <defs>
-    <linearGradient id="eg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4C9BFF"/><stop offset="1" stop-color="#38BDF8"/></linearGradient>
-    <linearGradient id="tg" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#5AA2FF"/><stop offset="1" stop-color="#38BDF8"/></linearGradient>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0A101B"/><stop offset="1" stop-color="#060A12"/></linearGradient>
+    <linearGradient id="blue" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#4C9BFF"/><stop offset="1" stop-color="#38BDF8"/></linearGradient>
+    <linearGradient id="blueD" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4C9BFF"/><stop offset="1" stop-color="#38BDF8"/></linearGradient>
+    <radialGradient id="back" cx="0.84" cy="0.18" r="0.42"><stop offset="0" stop-color="#4C9BFF" stop-opacity="0.45"/><stop offset="0.6" stop-color="#2F7BFF" stop-opacity="0.12"/><stop offset="1" stop-color="#2F7BFF" stop-opacity="0"/></radialGradient>
+    <filter id="cool"><feColorMatrix type="saturate" values="0.8"/></filter>
+    <linearGradient id="fadeIn" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset="0.45" stop-color="#fff" stop-opacity="0.75"/><stop offset="1" stop-color="#fff" stop-opacity="1"/></linearGradient>
+    <mask id="photoFade"><rect x="660" width="540" height="630" fill="url(#fadeIn)"/></mask>
+    <radialGradient id="vig" cx="0.5" cy="0.45" r="0.8"><stop offset="0.6" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity="0.42"/></radialGradient>
+    <filter id="grain" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="11"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.05 0"/>
+    </filter>
   </defs>
-  <rect width="1200" height="630" fill="#0B1F3A"/>
-  <g fill="#12294A"><rect x="100" y="0" width="1" height="630"/><rect x="200" y="0" width="1" height="630"/><rect x="300" y="0" width="1" height="630"/><rect x="400" y="0" width="1" height="630"/><rect x="500" y="0" width="1" height="630"/><rect x="600" y="0" width="1" height="630"/><rect x="700" y="0" width="1" height="630"/><rect x="800" y="0" width="1" height="630"/><rect x="900" y="0" width="1" height="630"/><rect x="1000" y="0" width="1" height="630"/><rect x="1100" y="0" width="1" height="630"/></g>
-  <svg x="80" y="72" width="46" height="54" viewBox="24 16 58 68"><path d="M24 16H82L76 30H40V43H72L66 57H40V70H82L76 84H24Z" fill="url(#eg)"/></svg>
-  <text x="142" y="112" font-family="Archivo Headline" font-size="40" fill="#FFFFFF">EdTheStatMan</text>
-  <g font-family="Archivo Headline" font-size="104" letter-spacing="-1">
-    <text x="80" y="300" fill="#FFFFFF">Winning Trends.</text>
-    <text x="80" y="408" fill="url(#tg)">Proven Systems.</text>
+
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <g stroke="#111A28" stroke-width="1">
+    <path d="M0 105H1200M0 210H1200M0 315H1200M0 420H1200M0 525H1200"/>
+    <path d="M100 0V630M200 0V630M300 0V630M400 0V630M500 0V630M600 0V630M700 0V630M800 0V630M900 0V630M1000 0V630M1100 0V630"/>
   </g>
-  <text x="80" y="478" font-family="Archivo Text" font-size="30" fill="#A9B8CA">NFL, college football, NBA and college basketball research, posted daily.</text>
-  <text x="80" y="560" font-family="JetBrains Mono Label" font-size="26" fill="#91A3B8">EVERY PICK GRADED IN PUBLIC</text>
-  <text x="1120" y="560" text-anchor="end" font-family="Archivo Link" font-size="28" fill="#5AA2FF">edthestatman.com</text>
+  <rect width="1200" height="630" fill="url(#back)"/>
+
+  <!-- The photo, mirrored: net about x 730-1090, ball about x 995-1175, y 350-525. -->
+  <g mask="url(#photoFade)">
+    <g transform="translate(1350 0) scale(-1 1)">
+      <image href="photo:nba" x="0" y="0" width="1120" height="630" filter="url(#cool)"/>
+    </g>
+    <rect x="660" width="540" height="630" fill="#2F7BFF" fill-opacity="0.16" style="mix-blend-mode:overlay"/>
+  </g>
+  <rect width="1200" height="630" fill="url(#vig)"/>
+  <rect width="1200" height="5" fill="url(#blue)"/>
+
+  <!-- Mark and name. -->
+  <svg x="64" y="54" width="36" height="42" viewBox="24 16 58 68"><path d="M24 16H82L76 30H40V43H72L66 57H40V70H82L76 84H24Z" fill="url(#blueD)"/></svg>
+  <text x="112" y="88" font-family="Barlow Semi Condensed" font-weight="700" font-size="34" fill="#F2F6FB">EdTheStatMan</text>
+
+  <g font-family="Barlow" font-weight="600" font-size="18" fill="#6AA5FF" letter-spacing="3"><text x="66" y="196">THE RESEARCH DESK  ·  THE VAULT  ·  THE PORTFOLIO</text></g>
+  <g font-family="Barlow Semi Condensed" font-weight="800" font-size="82" fill="#F2F6FB">
+    <text x="62" y="282">Every game.</text>
+    <text x="62" y="364">Every system.</text>
+    <text x="62" y="446">Every pick, <tspan fill="url(#blue)">graded.</tspan></text>
+  </g>
+  <g font-family="Barlow" font-weight="500" font-size="25" fill="#B3C0D1"><text x="66" y="504">NFL  ·  College Football  ·  NBA  ·  College Basketball</text></g>
+  <g transform="translate(66 530)">
+    <rect width="262" height="52" rx="2" fill="#2F7BFF"/>
+    <text x="131" y="35" text-anchor="middle" font-family="Barlow" font-weight="600" font-size="24" fill="#FFFFFF">edthestatman.com</text>
+  </g>
+
+  <!-- The pick cashing: a callout on the ball. -->
+  <path d="M1004 579 C1030 579 1046 566 1056 530" fill="none" stroke="#35C98A" stroke-width="2.5" stroke-opacity="0.85"/>
+  <circle cx="1056" cy="527" r="5" fill="#35C98A"/>
+  <g transform="translate(790 556)">
+    <rect width="214" height="46" rx="23" fill="#0B1C16" fill-opacity="0.92" stroke="#1E6B4C"/>
+    <circle cx="24" cy="23" r="13" fill="#0F3326" stroke="#35C98A"/>
+    <path d="M18 23l4.5 4.5 8-9" fill="none" stroke="#7FE0B4" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="46" y="30" font-family="Barlow" font-weight="600" font-size="17" fill="#CFF5E2" letter-spacing="1.5">GRADED  ·  WIN</text>
+  </g>
+
+  <rect width="1200" height="630" filter="url(#grain)"/>
 </svg>
