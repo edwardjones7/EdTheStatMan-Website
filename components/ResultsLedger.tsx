@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { PickRowActions } from '@/components/admin-kit/PickTools'
 import '@/styles/proof-win.css'
 import { bookOf, oddsOf, unitsFor, DEFAULT_ODDS } from '@/lib/records'
 import { BOOK_LABEL } from '@/lib/proof'
@@ -48,6 +49,8 @@ interface Props {
   page: number
   pageCount: number
   total: number
+  /** Adds a column of edit / W / L / P / delete to every row. */
+  admin?: boolean
 }
 
 /** "Wed, Nov 11" from a stored YYYY-MM-DD; anything else as it is. */
@@ -57,7 +60,7 @@ function ledgerDate(d: string | null): string {
   return new Date(`${d}T12:00:00Z`).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC' })
 }
 
-export default function ResultsLedger({ rows, page, pageCount, total }: Props) {
+export default function ResultsLedger({ rows, page, pageCount, total, admin = false }: Props) {
   const first = (page - 1) * LEDGER_PAGE_SIZE + 1
   const last = first + rows.length - 1
   const href = (p: number) => (p <= 1 ? '/portfolio/performance#ledger' : `/portfolio/performance?page=${p}#ledger`)
@@ -87,6 +90,7 @@ export default function ResultsLedger({ rows, page, pageCount, total }: Props) {
                 <th scope="col">Book</th>
                 <th scope="col">Result</th>
                 <th scope="col" className="ledger__num">Units</th>
+                {admin && <th scope="col"><span className="sr-only">Admin</span></th>}
               </tr>
             </thead>
             <tbody>
@@ -110,6 +114,7 @@ export default function ResultsLedger({ rows, page, pageCount, total }: Props) {
                     <td data-label="Units" className="ledger__num ledger__mono">
                       {u ? <>{u.text}{u.assumed && <span title="No recorded price; scored at -110">†</span>}</> : '—'}
                     </td>
+                    {admin && <td data-label="Admin"><PickRowActions id={String(row.id)} compact /></td>}
                   </tr>
                 )
               })}

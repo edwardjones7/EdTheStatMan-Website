@@ -4,7 +4,7 @@ import { createCachedClient, DB_TAGS } from '@/lib/supabase/cached'
 import { DEFAULT_MODEL_PICKS } from '@/lib/site-content'
 import type { ModelPicksContent } from '@/lib/site-content'
 import type { TodaysBet } from '@/components/TodaysBets'
-import ModelPicksEditor from '@/components/ModelPicksEditor'
+import { PicksAdmin } from '@/components/admin-kit/PickTools'
 import NeverMissAPick from '@/components/NeverMissAPick'
 import { getAccess } from '@/lib/access-server'
 import { atLeastTier } from '@/lib/access'
@@ -266,13 +266,9 @@ export default async function Portfolio() {
         </main>
       </LiveProvider>
 
-      {/* Admins keep the editor exactly as before (rows, header text, notify),
-          under the public view so the card can be checked as visitors see it. */}
-      {isAdmin && (
-        <section className="pf-admin" aria-label="Edit the card">
-          <ModelPicksEditor rows={allBets.filter(canSee as any)} userTier={userTier} headerContent={headerContent} />
-        </section>
-      )}
+      {/* Admins edit in place: post, grade and all-picks live in the admin bar,
+          and every tile on the card carries its own edit / W / L / P / delete. */}
+      {isAdmin && <PicksAdmin rows={allBets} />}
       {/* The full alerts block (browser push toggle) is for signed-in readers;
           visitors get the compact alerts card in the rail. */}
       {userTier && <NeverMissAPick userTier={userTier} />}

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import LiveTicker from './LiveTicker'
 import type { TickerContent } from '@/lib/site-content'
 import { IconPencil } from './Icons'
+import { AdminActions } from './admin-kit/AdminKit'
 
 interface Props {
   content: TickerContent
@@ -92,29 +93,16 @@ export default function GlobalTicker({ content, isAdmin }: Props) {
   return (
     <>
       <LiveTicker content={content} />
-      <button
-        onClick={() => { setDraft(content); setDirty(false); setError(null); setEditMode(true) }}
-        title="Edit ticker"
-        style={{
-          position: 'fixed',
-          top: 'calc(var(--nav-height) + var(--ticker-height) + 6px)',
-          right: '14px',
-          zIndex: 1000,
-          background: 'rgba(var(--brand-rgb), 0.12)',
-          color: 'var(--accent-teal)',
-          border: '1px solid rgba(var(--brand-rgb), 0.35)',
-          borderRadius: '6px',
-          cursor: 'pointer',
-          fontFamily: 'inherit',
-          fontSize: '0.7rem',
-          fontWeight: 700,
-          padding: '3px 9px',
-          letterSpacing: '0.03em',
-          lineHeight: 1.4,
-        }}
-      >
-        <IconPencil size={13} /> Ticker
-      </button>
+      {/* In the admin bar with every other admin action, not floating over pages. */}
+      <AdminActions global>
+        <button
+          type="button"
+          className="akit-btn"
+          onClick={() => { setDraft(content); setDirty(false); setError(null); setEditMode(true) }}
+        >
+          <IconPencil size={13} /> Edit ticker
+        </button>
+      </AdminActions>
     </>
   )
 }

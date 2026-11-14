@@ -1,0 +1,284 @@
+/* The admin kit (components/admin-kit). Admins only, so none of this reaches
+   a visitor's page. Namespaced akit-* so it collides with nothing. */
+
+:root { --admin-bar-h: 0px; }
+body.has-admin-bar { --admin-bar-h: 44px; }
+/* Flow space for the fixed bar, the same way .ticker-spacer clears the ticker. */
+.akit-spacer { height: var(--admin-bar-h); }
+
+/* ---------- The bar: same place on every page, under the ticker ---------- */
+.akit-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: calc(var(--nav-height) + var(--ticker-height, 0px));
+  z-index: 990;
+  height: var(--admin-bar-h);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 16px;
+  background: #0E1A2E;
+  border-bottom: 1px solid #22406F;
+  font-family: var(--font-body);
+  font-size: 0.86rem;
+  color: var(--text-secondary);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.akit-bar::-webkit-scrollbar { display: none; }
+
+.akit-bar__who {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  flex: none;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--brand-text);
+}
+.akit-bar__who i { width: 7px; height: 7px; border-radius: 50%; background: var(--brand); }
+.akit-bar__page { flex: none; color: var(--text-heading); font-weight: 600; padding-right: 6px; border-right: 1px solid #22406F; margin-right: 2px; }
+.akit-bar__actions { display: flex; align-items: center; gap: 6px; flex: none; }
+.akit-bar__actions:empty { display: none; }
+.akit-bar__right { display: flex; align-items: center; gap: 6px; margin-left: auto; flex: none; }
+
+/* ---------- Buttons ---------- */
+.akit-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 30px;
+  padding: 4px 12px;
+  border: 1px solid #2A3B57;
+  border-radius: var(--radius-sm, 2px);
+  background: var(--bg-card);
+  color: var(--text-heading);
+  font: 600 0.82rem var(--font-body);
+  white-space: nowrap;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color var(--transition-fast), border-color var(--transition-fast);
+}
+.akit-btn:hover { background: var(--bg-card-hover); border-color: #3A4A63; color: var(--text-heading); }
+.akit-btn:disabled { opacity: 0.55; cursor: default; }
+.akit-btn:focus-visible, .akit-icon:focus-visible, .akit-chip:focus-visible { outline: 2px solid var(--brand); outline-offset: 1px; }
+.akit-btn--primary { background: var(--brand); border-color: var(--brand); color: #fff; }
+.akit-btn--primary:hover { background: #4A8DFF; border-color: #4A8DFF; color: #fff; }
+.akit-btn--danger { background: #5A1D1D; border-color: #8A2B2B; color: #FFD0D0; }
+.akit-btn--danger:hover { background: #742424; border-color: #A33; color: #fff; }
+.akit-btn--ghost { background: transparent; border-color: transparent; color: var(--brand-text); }
+.akit-btn--ghost:hover { background: transparent; border-color: transparent; color: var(--text-heading); }
+.akit-btn__n {
+  min-width: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: #4A2A12;
+  color: #FFB86B;
+  font-size: 0.72rem;
+  line-height: 18px;
+  text-align: center;
+}
+
+.akit-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: var(--radius-sm, 2px);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.akit-icon:hover { background: var(--bg-card-hover); color: var(--text-heading); }
+
+/* ---------- Side panel ---------- */
+.akit-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  justify-content: flex-end;
+  background: rgba(3, 6, 12, 0.55);
+}
+.akit-scrim--center { align-items: center; justify-content: center; z-index: 1300; padding: 16px; }
+
+.akit-panel {
+  display: flex;
+  flex-direction: column;
+  width: min(460px, 100vw);
+  height: 100%;
+  background: var(--bg-secondary);
+  border-left: 1px solid var(--border-color);
+  box-shadow: -18px 0 48px rgba(0, 0, 0, 0.45);
+  animation: akit-in 160ms ease-out;
+}
+.akit-panel--wide { width: min(720px, 100vw); }
+@keyframes akit-in { from { transform: translateX(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .akit-panel { animation: none; } }
+
+.akit-panel__hd {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--border-color);
+}
+.akit-panel__hd h2 { margin: 0; font-size: 1.15rem; font-weight: 700; color: var(--text-heading); }
+.akit-panel__body { flex: 1; overflow-y: auto; padding: 18px; display: flex; flex-direction: column; gap: 16px; }
+
+/* ---------- Confirm dialog ---------- */
+.akit-dialog {
+  width: min(420px, 100%);
+  padding: 20px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm, 2px);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
+}
+.akit-dialog h2 { margin: 0 0 8px; font-size: 1.1rem; color: var(--text-heading); }
+.akit-dialog__body { color: var(--text-secondary); font-size: 0.92rem; line-height: 1.5; }
+.akit-dialog__actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; }
+
+/* ---------- Toasts ---------- */
+.akit-toasts {
+  position: fixed;
+  left: 50%;
+  bottom: 20px;
+  z-index: 1400;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  transform: translateX(-50%);
+  pointer-events: none;
+  width: min(520px, calc(100vw - 32px));
+}
+.akit-toast {
+  pointer-events: auto;
+  padding: 10px 16px;
+  border-radius: var(--radius-sm, 2px);
+  background: #0B1C16;
+  border: 1px solid #1B4A36;
+  color: #CFF5E2;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+.akit-toast--error { background: #2A1010; border-color: #6B2222; color: #FFD0D0; }
+.akit-toast--info { background: var(--bg-card); border-color: var(--border-color); color: var(--text-primary); }
+
+/* ---------- Forms in the panel ---------- */
+.akit-form { display: flex; flex-direction: column; gap: 14px; }
+.akit-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.akit-field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.akit-field--full { grid-column: 1 / -1; }
+.akit-field > span { font-size: 0.74rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-muted); }
+.akit-field input,
+.akit-field select,
+.akit-field textarea {
+  width: 100%;
+  min-height: 38px;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm, 2px);
+  color: var(--text-heading);
+  font: 0.92rem var(--font-body);
+}
+.akit-field textarea { min-height: 96px; resize: vertical; line-height: 1.5; }
+.akit-field input:focus, .akit-field select:focus, .akit-field textarea:focus { outline: none; border-color: var(--brand); }
+.akit-field small { color: var(--text-muted); font-size: 0.76rem; }
+
+.akit-switches { display: flex; flex-direction: column; gap: 10px; }
+.akit-switch { display: flex; align-items: flex-start; gap: 10px; font-size: 0.9rem; color: var(--text-primary); cursor: pointer; }
+.akit-switch input { margin-top: 3px; accent-color: var(--brand); width: 16px; height: 16px; }
+.akit-switch small { display: block; color: var(--text-muted); font-size: 0.78rem; }
+
+.akit-form__error { margin: 0; padding: 10px 12px; background: #2A1010; border: 1px solid #6B2222; color: #FFD0D0; font-size: 0.86rem; }
+.akit-form__foot {
+  position: sticky;
+  bottom: -18px;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 4px -18px -18px;
+  padding: 14px 18px;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border-color);
+}
+.akit-form__foot > div { display: flex; gap: 8px; }
+
+/* ---------- Inline row controls ---------- */
+.akit-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.akit-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 30px;
+  height: 28px;
+  padding: 0 8px;
+  border: 1px solid #2A3B57;
+  border-radius: var(--radius-sm, 2px);
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  font: 700 0.76rem var(--font-body);
+  cursor: pointer;
+}
+.akit-chip:hover { border-color: #3A4A63; color: var(--text-heading); background: var(--bg-card-hover); }
+.akit-chip:disabled { opacity: 0.5; cursor: default; }
+.akit-chip.is-on.is-win { background: #0F3326; border-color: #1E6B4C; color: #7FE0B4; }
+.akit-chip.is-on.is-loss { background: #3A1515; border-color: #7A2A2A; color: #FF9C9C; }
+.akit-chip.is-on.is-push { background: #1F2B3D; border-color: #3A4A63; color: var(--text-heading); }
+.akit-chip.is-hint { box-shadow: 0 0 0 2px rgba(255, 184, 107, 0.55); }
+.akit-chip--danger:hover { border-color: #8A2B2B; color: #FF9C9C; }
+
+/* Tile-level strip on the Portfolio card. */
+.akit-tilebar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed #22406F;
+}
+.akit-tilebar__label { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--brand-text); }
+
+/* ---------- Lists inside panels ---------- */
+.akit-list { display: flex; flex-direction: column; border: 1px solid var(--border-color); }
+.akit-list__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border-faint);
+}
+.akit-list__row:last-child { border-bottom: 0; }
+.akit-list__main { min-width: 0; }
+.akit-list__main b { display: block; color: var(--text-heading); font-size: 0.92rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.akit-list__main span { color: var(--text-muted); font-size: 0.78rem; }
+.akit-empty { margin: 0; padding: 18px; text-align: center; color: var(--text-muted); font-size: 0.9rem; border: 1px dashed var(--border-color); }
+.akit-search { width: 100%; min-height: 38px; box-sizing: border-box; padding: 8px 10px; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: var(--radius-sm, 2px); color: var(--text-heading); font: 0.92rem var(--font-body); }
+.akit-group { margin: 0; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); }
+.akit-group span { color: var(--text-heading); margin-left: 4px; }
+.akit-note { margin: 0; color: var(--text-muted); font-size: 0.82rem; line-height: 1.5; }
+
+@media (max-width: 640px) {
+  .akit-grid { grid-template-columns: 1fr; }
+  .akit-bar { gap: 8px; padding: 0 10px; }
+  .akit-bar__who { display: none; }
+}

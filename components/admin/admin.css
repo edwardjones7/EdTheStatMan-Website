@@ -165,12 +165,12 @@
 
 .adm-side {
   position: sticky;
-  top: calc(var(--nav-height) + 48px);
+  top: calc(var(--nav-height) + 48px + var(--admin-bar-h, 0px));
   flex: 0 0 236px;
   display: flex;
   flex-direction: column;
   gap: 2px;
-  max-height: calc(100vh - var(--nav-height) - 64px);
+  max-height: calc(100vh - var(--nav-height) - 64px - var(--admin-bar-h, 0px));
   overflow-y: auto;
   padding: 0 14px 16px 18px;
   border-right: 1px solid var(--border-color);

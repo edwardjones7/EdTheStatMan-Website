@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import ResultsEditor from '@/components/ResultsEditor'
+import { PicksAdmin } from '@/components/admin-kit/PickTools'
 import CTASection from '@/components/CTASection'
 import ResultsOverview from '@/components/results/ResultsOverview'
 import ResultsLedger, { LEDGER_PAGE_SIZE, type LedgerRow } from '@/components/ResultsLedger'
@@ -76,14 +76,11 @@ export default async function Results({ searchParams }: { searchParams: { page?:
     <main className="rs">
       <ResultsOverview rows={picks} month={month} sport={sport} />
 
-      <ResultsLedger rows={pageRows} page={page} pageCount={pageCount} total={graded.length} />
+      <ResultsLedger rows={pageRows} page={page} pageCount={pageCount} total={graded.length} admin={access.isAdmin} />
 
-      {/* Admins see the public page above, then the grading tools. */}
-      {access.isAdmin && (
-        <section className="pf-admin" aria-label="Edit results">
-          <ResultsEditor recentPicks={picks} />
-        </section>
-      )}
+      {/* Admins edit in place: each ledger row carries edit / W / L / P /
+          delete, and the bar holds post, grade and all picks. */}
+      {access.isAdmin && <PicksAdmin rows={picks} />}
 
       <CTASection membership={access.membership} />
     </main>

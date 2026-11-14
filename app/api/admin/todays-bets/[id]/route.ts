@@ -82,6 +82,35 @@ export async function PUT(req: Request, context: { params: Promise<{ id: string 
   return NextResponse.json(data)
 }
 
+const RESULTS = ['pending', 'win', 'loss', 'push'] as const
+
+/**
+ * Grade a pick: the result and, optionally, whether it counts on the public
+ * record. Nothing else is touched. PUT rewrites every column from the body, so
+ * a grade sent through it by a form that did not carry min_tier silently
+ * reopened a members' pick to everyone (the old Results editor did exactly
+ * that). This is the only path the inline grade buttons use.
+ */
+export async function PATCH(req: Request, context: { params: Promise<{ id: string }> | { id: string } }) {
+  const { ok, admin } = await assertAdmin()
+  if (!ok) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+
+  const { id } = await Promise.resolve(context.params)
+  const body = await req.json().catch(() => ({}))
+  const result = String(body?.result ?? '').toLowerCase()
+  if (!(RESULTS as readonly string[]).includes(result)) {
+    return NextResponse.json({ error: `Unknown result "${body?.result}".` }, { status: 400 })
+  }
+
+  const patch: Record<string, unknown> = { result, updated_at: new Date().toISOString() }
+  if (typeof body?.show_on_results === 'boolean') patch.show_on_results = body.show_on_results
+
+  const { data, error } = await admin.from('todays_bets').update(patch).eq('id', id).select().single()
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  revalidatePublicPicks()
+  return NextResponse.json(data)
+}
+
 export async function DELETE(_req: Request, context: { params: Promise<{ id: string }> | { id: string } }) {
   const { ok, admin } = await assertAdmin()
   if (!ok) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })

@@ -8,6 +8,7 @@ import RouteProgress from '@/components/RouteProgress'
 import ClientScripts from '@/components/ClientScripts'
 import PageViewTracker from '@/components/PageViewTracker'
 import GlobalTicker from '@/components/GlobalTicker'
+import { AdminKitProvider } from '@/components/admin-kit/AdminKit'
 import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import { BotIdClient } from 'botid/client'
@@ -166,15 +167,30 @@ export default async function RootLayout({
         <Suspense>
           <Navigation />
         </Suspense>
-        <GlobalTicker content={ticker} isAdmin={isAdmin} />
-        {/* Reserve flow space for the fixed ticker so page content clears it. */}
-        <div className="ticker-spacer" aria-hidden />
-        {/* A div, not <main>: pages already render their own <main>, and
-            nesting two would give screen readers two main landmarks.
-            tabIndex -1 lets the skip link move focus here, not just scroll. */}
-        <div id="main" tabIndex={-1}>
-          {children}
-        </div>
+        {isAdmin ? (
+          // Admins get one bar under the ticker, a side panel, toasts and a
+          // confirm dialog, shared by every page they can edit from.
+          <AdminKitProvider>
+            <GlobalTicker content={ticker} isAdmin />
+            <div className="ticker-spacer" aria-hidden />
+            <div className="akit-spacer" aria-hidden />
+            <div id="main" tabIndex={-1}>
+              {children}
+            </div>
+          </AdminKitProvider>
+        ) : (
+          <>
+            <GlobalTicker content={ticker} isAdmin={false} />
+            {/* Reserve flow space for the fixed ticker so page content clears it. */}
+            <div className="ticker-spacer" aria-hidden />
+            {/* A div, not <main>: pages already render their own <main>, and
+                nesting two would give screen readers two main landmarks.
+                tabIndex -1 lets the skip link move focus here, not just scroll. */}
+            <div id="main" tabIndex={-1}>
+              {children}
+            </div>
+          </>
+        )}
         <Footer signedIn={!!user} />
         <BackToTop />
         <ClientScripts />

@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import type { CardDay, CardPick, LockedPick, PortfolioGame, VisiblePick } from '@/lib/portfolio'
 import type { LiveGame, PickTrack } from '@/lib/live/types'
+import { PickRowActions } from '@/components/admin-kit/PickTools'
 import { pickStatus, type LiveStatus } from '@/lib/live/cover'
 import { teamLogoUrl } from '@/lib/logos'
 import { useLive } from '@/components/live/LiveProvider'
@@ -99,6 +100,8 @@ function VisibleTile({ pick, live, status }: { pick: VisiblePick; live: LiveGame
       <Tracker status={status} graded={!!pick.result} />
       {pick.note && <p className="pf-note">{pick.note}</p>}
       {pick.game?.href && <Link href={pick.game.href} className="pf-tile__link">Game research</Link>}
+      {/* Admins only: renders nothing for anyone else. */}
+      <PickRowActions id={pick.id} hint={provisional} />
     </article>
   )
 }
