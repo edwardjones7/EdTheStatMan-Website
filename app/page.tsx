@@ -49,7 +49,8 @@ export default async function Home() {
   const proofPromise = loadProofWithSeries('NFL')
   // The whole week: the lines strip shows every game, the table the first eight.
   const boardPromise = loadHomeBoard(new Date(), { maxRows: Infinity })
-  const leadersPromise = loadVaultLeaders()
+  // More than fit by default: FillList shows as many as the right column has room for.
+  const leadersPromise = loadVaultLeaders(20)
   const feedsPromise = loadFrontFeeds()
   const notesPromise = loadMatchupNotes()
   const wirePromise = loadWire(3)

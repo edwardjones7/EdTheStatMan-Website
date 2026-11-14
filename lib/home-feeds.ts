@@ -23,6 +23,9 @@ export interface InjuryGame {
   href: string
   sport: LiveSport
   matchup: string
+  /** Abbreviations, for the team logos beside the matchup. */
+  away: string
+  home: string
   when: string
   players: (Injury & { team: string })[]
 }
@@ -79,10 +82,13 @@ export async function loadFrontFeeds(): Promise<{ news: NewsEntry[]; injuries: I
       href: g.href,
       sport: g.sport,
       matchup: `${g.away_abbrev} at ${g.home_abbrev}`,
+      away: g.away_abbrev,
+      home: g.home_abbrev,
       when: when(g.kickoff),
       players: players.slice(0, 3),
     })
   }
 
-  return { news, injuries: injuries.slice(0, 6) }
+  // More than the card shows by default: FillList fills whatever space the column has.
+  return { news, injuries: injuries.slice(0, 15) }
 }

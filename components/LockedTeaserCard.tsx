@@ -13,7 +13,7 @@ import { IconLock } from './Icons'
 import type { LockedTeaser } from '@/lib/teaser'
 import type { Tier } from '@/lib/access'
 import { unlockHref } from '@/lib/unlock'
-import { trackEvent } from '@/lib/track-client'
+import { trackPromptClick } from '@/lib/track-client'
 import PaywallView from './PaywallView'
 import '@/styles/front-door.css'
 import '@/styles/vault-list.css'
@@ -65,7 +65,7 @@ export default function LockedTeaserCard({ teaser, sportLabel, sportClass, varia
   return (
     <Link
       href={href}
-      onClick={freeWithAccount ? () => trackEvent('signup_prompt_click', { context: 'vault_free_row', variant: 'lock' }) : undefined}
+      onClick={freeWithAccount ? () => trackPromptClick('vault_free_row', 'lock') : undefined}
       className={`sys-row-card sys-row-card--${sportClass} sys-row-card--teaser vl-lock${elite ? ' sys-row-card--elite-teaser vl-lock--elite' : ''}${freeWithAccount ? ' sys-row-card--free-teaser vl-lock--free' : ''}`}
       aria-label={`Locked ${kind.toLowerCase()}, ${sportLabel}, record ${teaser.w}-${teaser.l}-${teaser.t} over ${sample} games. ${freeWithAccount ? 'Create a free account to see it.' : `Unlock to see the ${noun}.`}`}
     >

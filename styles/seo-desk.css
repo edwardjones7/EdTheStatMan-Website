@@ -651,3 +651,7 @@ a.game-bets__bet:hover {
   font-size: 0.85rem;
   color: var(--text-muted);
 }
+
+/* Signed-out ask on a game's locked picks. */
+.game-bets__ask { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.game-bets__ask span { color: var(--text-muted); font-size: 0.82rem; }

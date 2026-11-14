@@ -320,6 +320,7 @@ export default async function DeskSport({
       <LiveProvider sports={[sport]}>
         <LiveStrip
           seed={stripSeed}
+          seedSport={sport}
           seedTitle={stripTitle}
           seedHref={`/desk/${sport}`}
           seedGames={boardGames.length}

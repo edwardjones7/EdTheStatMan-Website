@@ -1,0 +1,55 @@
+/* Phone-only signup bar (components/StickySignup.tsx). */
+.sticky-signup { display: none; }
+
+@media (max-width: 768px) {
+  .sticky-signup {
+    position: fixed;
+    left: 10px;
+    right: 10px;
+    bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+    z-index: 900;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 8px 10px 14px;
+    border-radius: 12px;
+    background: var(--bg-secondary);
+    border: 1px solid rgba(var(--brand-rgb), 0.45);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55);
+    transform: translateY(140%);
+    opacity: 0;
+    pointer-events: none;
+    transition: transform 0.28s ease, opacity 0.28s ease;
+  }
+  .sticky-signup.is-shown { transform: none; opacity: 1; pointer-events: auto; }
+  .sticky-signup__text { flex: 1; min-width: 0; margin: 0; display: grid; gap: 1px; line-height: 1.25; }
+  .sticky-signup__text b { color: var(--text-heading); font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sticky-signup__text span { color: var(--text-muted); font-size: 0.75rem; }
+  .sticky-signup__cta {
+    flex: none;
+    padding: 9px 16px;
+    border-radius: 8px;
+    background: var(--accent-teal);
+    color: var(--brand-ink);
+    font-weight: 700;
+    font-size: 0.88rem;
+    text-decoration: none;
+  }
+  .sticky-signup__x {
+    flex: none;
+    width: 30px;
+    height: 30px;
+    border: 0;
+    background: none;
+    color: var(--text-muted);
+    font-size: 1.3rem;
+    line-height: 1;
+    cursor: pointer;
+  }
+  /* Keep the back-to-top button clear of the bar while it shows. */
+  body:has(.sticky-signup.is-shown) .back-to-top { bottom: 92px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sticky-signup { transition: none; }
+}

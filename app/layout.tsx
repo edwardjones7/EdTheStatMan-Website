@@ -4,6 +4,7 @@ import './globals.css'
 import Navigation from '@/components/Navigation'
 import Footer from '@/components/Footer'
 import BackToTop from '@/components/BackToTop'
+import StickySignup from '@/components/StickySignup'
 import RouteProgress from '@/components/RouteProgress'
 import ClientScripts from '@/components/ClientScripts'
 import PageViewTracker from '@/components/PageViewTracker'
@@ -193,6 +194,7 @@ export default async function RootLayout({
         )}
         <Footer signedIn={!!user} />
         <BackToTop />
+        {!user && <StickySignup />}
         <ClientScripts />
         <Suspense><PageViewTracker /></Suspense>
         <Analytics />

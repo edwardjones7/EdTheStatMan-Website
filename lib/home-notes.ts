@@ -26,6 +26,9 @@ export interface MatchupNotes {
   id: string
   href: string
   matchup: string
+  sport: string
+  away: string
+  home: string
   when: string
   notes: MatchupNote[]
 }
@@ -201,6 +204,9 @@ export async function loadMatchupNotes(now: Date = new Date(), limit = 6): Promi
         id: g.id,
         href: gamePath(SPORT, g.slug),
         matchup: `${mascot(g.away_team)} at ${mascot(g.home_team)}`,
+        sport: SPORT,
+        away: g.away_abbrev,
+        home: g.home_abbrev,
         when: g.kickoff
           ? new Date(g.kickoff).toLocaleString('en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York' })
           : 'Time TBD',

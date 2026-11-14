@@ -1,7 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import TeamLogo from '../TeamLogo'
 import { LIVE_SPORTS, LIVE_SPORT_LABEL, type LiveGame, type LiveSport } from '@/lib/live/types'
 import { useLive } from './LiveProvider'
 import { spreadText, stateText, weatherShort } from './format'
@@ -22,12 +23,27 @@ export interface StripSeed {
 
 interface Props {
   seed: StripSeed[]
+  /** The seed board's sport, for its logos. */
+  seedSport: string
   seedTitle: string
   seedHref: string
   seedGames: number
 }
 
 const RANK = { in: 0, pre: 1, post: 2 } as const
+
+/**
+ * A score that flashes when it changes. Not on first render: a page load is
+ * not news, a touchdown is.
+ */
+function Score({ value }: { value: number }) {
+  const prev = useRef(value)
+  const [flash, setFlash] = useState(0)
+  useEffect(() => {
+    if (prev.current !== value) { prev.current = value; setFlash(f => f + 1) }
+  }, [value])
+  return <span key={flash} className={`front-chip__sc${flash ? ' is-new' : ''}`}>{value}</span>
+}
 
 function order(games: LiveGame[]): LiveGame[] {
   const t = (g: LiveGame) => (g.kickoff ? new Date(g.kickoff).getTime() : Number.MAX_SAFE_INTEGER)
@@ -58,10 +74,11 @@ function Chip({ g }: { g: LiveGame }) {
         return (
           <span key={side} className={`front-chip__row${g.state === 'post' && lead && lead !== side ? ' is-lost' : ''}`}>
             <b>
+              <TeamLogo sport={g.sport} abbrev={t.abbrev} size={14} />
               {t.abbrev}
               {g.possession === side && <i className="front-poss" aria-label="has the ball" />}
             </b>
-            <span className={t.score != null ? 'front-chip__sc' : undefined}>{t.score ?? t.record ?? ''}</span>
+            {t.score != null ? <Score value={t.score} /> : <span>{t.record ?? ''}</span>}
           </span>
         )
       })}
@@ -84,7 +101,7 @@ function Chip({ g }: { g: LiveGame }) {
  * they play, the line before and after. Server-renders this week's NFL board
  * and swaps to the live feed on the first poll.
  */
-export default function LiveStrip({ seed, seedTitle, seedHref, seedGames }: Props) {
+export default function LiveStrip({ seed, seedSport, seedTitle, seedHref, seedGames }: Props) {
   const { games, ready } = useLive()
   const bySport = useMemo(() => {
     const m = new Map<LiveSport, LiveGame[]>()
@@ -114,8 +131,8 @@ export default function LiveStrip({ seed, seedTitle, seedHref, seedGames }: Prop
             {seed.map(r => (
               <Link key={r.id} href={r.href} className="front-chip">
                 <span className="front-chip__t"><span>{r.short}</span>{r.broadcast && <span>{r.broadcast.split(',')[0]}</span>}</span>
-                <span className="front-chip__row"><b>{r.awayAbbrev}</b><span>{r.awayRecord ?? ''}</span></span>
-                <span className="front-chip__row"><b>{r.homeAbbrev}</b><span>{r.homeRecord ?? ''}</span></span>
+                <span className="front-chip__row"><b><TeamLogo sport={seedSport} abbrev={r.awayAbbrev} size={14} />{r.awayAbbrev}</b><span>{r.awayRecord ?? ''}</span></span>
+                <span className="front-chip__row"><b><TeamLogo sport={seedSport} abbrev={r.homeAbbrev} size={14} />{r.homeAbbrev}</b><span>{r.homeRecord ?? ''}</span></span>
                 <span className="front-chip__row"><span className="front-chip__ln">{r.spread ?? 'Off'}</span><span>{r.total ?? ''}</span></span>
               </Link>
             ))}

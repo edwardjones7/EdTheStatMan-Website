@@ -2,8 +2,8 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import type { ReactNode } from 'react'
-import { trackEvent } from '@/lib/track-client'
+import { useEffect, useRef, type ReactNode } from 'react'
+import { trackPromptClick, trackPromptView } from '@/lib/track-client'
 import '@/styles/front-door.css'
 
 /**
@@ -25,6 +25,24 @@ import '@/styles/front-door.css'
 
 export function signupHref(next: string): string {
   return `/signup?next=${encodeURIComponent(next)}`
+}
+
+/**
+ * Record `signup_prompt_view` the first time this ask is actually on screen,
+ * so the admin funnel can show views → clicks → signups per placement.
+ */
+export function usePromptView<T extends Element>(context: string) {
+  const ref = useRef<T>(null)
+  useEffect(() => {
+    const el = ref.current
+    if (!el || typeof IntersectionObserver === 'undefined') return
+    const io = new IntersectionObserver(entries => {
+      if (entries.some(e => e.isIntersecting)) { trackPromptView(context); io.disconnect() }
+    }, { threshold: 0.5 })
+    io.observe(el)
+    return () => io.disconnect()
+  }, [context])
+  return ref
 }
 
 interface Props {
@@ -50,11 +68,12 @@ export default function SignupPrompt({
   const pathname = usePathname()
   const target = next ?? pathname ?? '/'
   const href = signupHref(target)
-  const onClick = () => trackEvent('signup_prompt_click', { context, variant })
+  const onClick = () => trackPromptClick(context, variant)
+  const seen = usePromptView<HTMLDivElement>(context)
 
   if (variant === 'banner') {
     return (
-      <div className={`signup-prompt signup-prompt--banner ${className}`.trim()}>
+      <div ref={seen} className={`signup-prompt signup-prompt--banner ${className}`.trim()}>
         <p className="signup-prompt__banner-text">
           <strong>{title}</strong> <span>{body}</span>
         </p>
@@ -66,7 +85,7 @@ export default function SignupPrompt({
   }
 
   return (
-    <div className={`signup-prompt signup-prompt--card ${className}`.trim()}>
+    <div ref={seen} className={`signup-prompt signup-prompt--card ${className}`.trim()}>
       <span className="signup-prompt__eyebrow">Free</span>
       <h2 className="signup-prompt__title">{title}</h2>
       <p className="signup-prompt__body">{body}</p>
@@ -99,11 +118,13 @@ export function SignupLink({
   children: ReactNode
 }) {
   const pathname = usePathname()
+  const seen = usePromptView<HTMLAnchorElement>(context)
   return (
     <Link
+      ref={seen}
       href={signupHref(next ?? pathname ?? '/')}
       className={className}
-      onClick={() => trackEvent('signup_prompt_click', { context, variant: 'link' })}
+      onClick={() => trackPromptClick(context, 'link')}
     >
       {children}
     </Link>

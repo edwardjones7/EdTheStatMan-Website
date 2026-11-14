@@ -17,6 +17,10 @@ export interface Mover {
   gameId: string
   href: string
   matchup: string
+  /** For the team logos beside the matchup. */
+  sport: string
+  away: string
+  home: string
   /** "Spread: NYG −3, opened PHI −5.5" */
   detail: string
   /** "8.5 pts" / "+7" / "−6" */
@@ -73,6 +77,7 @@ export function lineMovers(board: HomeBoard | null, limit = 4): Mover[] {
     if (r.spreadSwing > 0 && r.spread && r.spreadOpen) {
       out.push({
         key: `${r.id}-s`, gameId: r.id, href: r.href, matchup: r.matchup,
+        sport: board.sport, away: r.awayAbbrev, home: r.homeAbbrev,
         detail: `Spread: ${r.spread}, opened ${r.spreadOpen}`,
         value: `${fmt(r.spreadSwing)} pts`, tone: 'move', size: r.spreadSwing,
       })
@@ -80,6 +85,7 @@ export function lineMovers(board: HomeBoard | null, limit = 4): Mover[] {
     if (r.totalDelta !== 0 && r.total && r.totalOpen) {
       out.push({
         key: `${r.id}-t`, gameId: r.id, href: r.href, matchup: r.matchup,
+        sport: board.sport, away: r.awayAbbrev, home: r.homeAbbrev,
         detail: `Total: ${r.total}, opened ${r.totalOpen}`,
         value: signed(r.totalDelta), tone: r.totalDelta > 0 ? 'up' : 'down', size: Math.abs(r.totalDelta),
       })

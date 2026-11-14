@@ -24,7 +24,8 @@ import { toTeaser } from '@/lib/teaser'
 import type { LockedTeaser } from '@/lib/teaser'
 import NflGameAdminPanel from '@/components/NflGameAdminPanel'
 import LockedTeaserCard from '@/components/LockedTeaserCard'
-import SignupPrompt from '@/components/SignupPrompt'
+import SignupPrompt, { SignupLink } from '@/components/SignupPrompt'
+import { TRIAL_DAYS } from '@/lib/offer'
 import RecordStrip from '@/components/RecordStrip'
 import { IconLock } from '@/components/Icons'
 import CopyLineButton from '@/components/CopyLineButton'
@@ -557,7 +558,7 @@ export default async function NflGamePage({ params }: { params: { sport: string;
           {/* Write-ups are retired (Ed, Nov 2026): the locked "breakdown is
               inside" card is gone. An old write-up still renders above for
               the readers who can open it. The bets take its place. */}
-          {bets.length > 0 && <BetsSection bets={bets} />}
+          {bets.length > 0 && <BetsSection bets={bets} signedOut={!user} next={gamePath(params.sport, game.slug)} />}
 
           {/* Linked systems & trends */}
           {(systems.visible.length + systems.locked.length + systems.lockedElite.length > 0) && (
@@ -728,7 +729,7 @@ function oddsText(odds: number | null): string | null {
 }
 
 /** What is being bet on this game: Ed's free picks and the Portfolio picks. */
-function BetsSection({ bets }: { bets: GameBet[] }) {
+function BetsSection({ bets, signedOut, next }: { bets: GameBet[]; signedOut: boolean; next: string }) {
   const anyLocked = bets.some(b => b.locked)
   return (
     <div className="nfl-linked-section game-bets reveal">
@@ -754,7 +755,17 @@ function BetsSection({ bets }: { bets: GameBet[] }) {
           </li>
         ))}
       </ul>
-      {anyLocked && (
+      {anyLocked && signedOut && (
+        // Signed out: the lock is the ask. A free account carries the Desk
+        // trial, which includes the Portfolio picks.
+        <p className="game-bets__more game-bets__ask">
+          <SignupLink context="desk_game_locked" next={next} className="btn btn--primary btn--sm">
+            See {bets.filter(b => b.locked).length === 1 ? 'this pick' : 'these picks'} free &rarr;
+          </SignupLink>
+          <span>{TRIAL_DAYS}-day free trial with a free account. No card.</span>
+        </p>
+      )}
+      {anyLocked && !signedOut && (
         <p className="game-bets__more">
           Portfolio picks open with the <Link href="/win?plan=portfolio">EdTheStatBot Portfolio</Link> or
           the <Link href="/win?plan=desk">Research Desk</Link>.

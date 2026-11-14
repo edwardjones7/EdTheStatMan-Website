@@ -1,5 +1,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
+import TeamLogo from './TeamLogo'
+import FillList from './FillList'
 import type { HomeBoard } from '@/lib/home-board'
 import type { Brief } from '@/lib/brief'
 import { formatCardDate } from '@/lib/brief'
@@ -91,6 +93,7 @@ export default function HomeFront({ board, brief, proof, series, recent, leaders
     <div className="front">
       <LiveStrip
         seed={rows}
+        seedSport={board?.sport ?? 'nfl'}
         seedTitle={board?.title ?? ''}
         seedHref={board?.href ?? '/desk'}
         seedGames={board?.games ?? 0}
@@ -113,6 +116,7 @@ export default function HomeFront({ board, brief, proof, series, recent, leaders
                 lockedCount={brief.lockedCount}
                 lockedSports={brief.sportCounts.map(c => `${c.n} ${c.sport}`).join(' · ')}
                 dateNote={brief.date && !brief.isToday ? formatCardDate(brief.date) : null}
+                signedOut={signedOut}
               />
             )}
           </section>
@@ -124,8 +128,12 @@ export default function HomeFront({ board, brief, proof, series, recent, leaders
                 {movers.map(m => (
                   <li key={m.key}>
                     <Link href={m.href} className="front-mv">
+                      <span className="front-mv__logos"><TeamLogo sport={m.sport} abbrev={m.away} size={18} /><TeamLogo sport={m.sport} abbrev={m.home} size={18} /></span>
                       <span className="front-pick"><b>{m.matchup} <JustMoved gameId={m.gameId} /></b><small>{m.detail}</small></span>
-                      <span className={`front-mv__n front-mv__n--${m.tone}`}>{m.value}</span>
+                      <span className={`front-mv__n front-mv__n--${m.tone}`}>
+                        {m.tone !== 'move' && <span className="front-mv__arrow" aria-label={m.tone === 'up' ? 'total up' : 'total down'}>{m.tone === 'up' ? '▲' : '▼'}</span>}
+                        {m.value}
+                      </span>
                     </Link>
                   </li>
                 ))}
@@ -140,7 +148,7 @@ export default function HomeFront({ board, brief, proof, series, recent, leaders
 
         <div className="front-main">
           <MyTeams />
-          <NextUp />
+          <NextUp lockedGameIds={brief.lockedGameIds} signedOut={signedOut} />
           {lead && (
             <Link href={lead.href} className="front-lead">
               <Image src={lead.image} alt="" fill priority sizes="(max-width: 760px) 100vw, 680px" />
@@ -196,12 +204,16 @@ export default function HomeFront({ board, brief, proof, series, recent, leaders
           )}
 
           {recent.length > 0 && (
-            <section className="front-card">
+            <section className="front-card front-card--tips">
               <header className="front-hd"><h2>Last {recent.length} graded</h2><Link href="/portfolio/performance">All results</Link></header>
               <ol className="front-last" aria-label="Most recent first">
                 {recent.map(r => (
-                  <li key={r.id} className={`front-last__r front-last__r--${r.result}`} title={`${r.sport} · ${r.bet} · ${shortDate(r.date)}`}>
+                  <li key={r.id} className={`front-last__r front-last__r--${r.result}`} tabIndex={0} aria-label={`${r.result}: ${r.sport} ${r.bet}, ${shortDate(r.date)}`}>
                     {RESULT_MARK[r.result]}
+                    <span className="front-last__tip" role="tooltip">
+                      <small>{r.sport} · {shortDate(r.date)}</small>
+                      <b>{r.bet}</b>
+                    </span>
                   </li>
                 ))}
               </ol>
@@ -224,19 +236,19 @@ export default function HomeFront({ board, brief, proof, series, recent, leaders
           {/* Last on purpose: the last card in each column stretches to make the
               three columns end flush (home.css), and a list stretches cleanly. */}
           {leaders.length > 0 && (
-            <section className="front-card">
+            <section className="front-card front-card--fill">
               <header className="front-hd"><h2>Vault leaders</h2><Link href="/vault/systems">The Vault</Link></header>
-              <ul className="front-list">
+              <FillList className="front-list" fallback={8}>
                 {leaders.map(v => (
                   <li key={v.code}>
                     <Link href={v.href} className="front-mv">
-                      <span className="front-tag">{v.sport}</span>
+                      <span className={`front-tag front-tag--${v.sport.toLowerCase()}`}>{v.sport}</span>
                       <span className="front-pick"><b>{v.code}</b><small>{v.record}</small></span>
                       <span className="front-mv__n front-mv__n--up">{v.pct.toFixed(1)}%</span>
                     </Link>
                   </li>
                 ))}
-              </ul>
+              </FillList>
             </section>
           )}
         </aside>

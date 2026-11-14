@@ -5,13 +5,18 @@ import { useEffect, useState } from 'react'
 import { LIVE_SPORT_LABEL } from '@/lib/live/types'
 import { useLive } from './LiveProvider'
 import { countdown, spreadText, weatherShort } from './format'
+import { SignupLink } from '../SignupPrompt'
 
 /**
  * "Next up" bar: how many games are live right now and a countdown to the
  * next kickoff or tip, with its line. Renders nothing until the clock and the
  * feed are both on the client, so server and browser HTML never disagree.
  */
-export default function NextUp() {
+export default function NextUp({ lockedGameIds = [], signedOut = false }: {
+  /** Games with a members' pick on them, for the signed-out live hook. */
+  lockedGameIds?: string[]
+  signedOut?: boolean
+} = {}) {
   const { games, ready } = useLive()
   const [now, setNow] = useState<number | null>(null)
 
@@ -24,6 +29,7 @@ export default function NextUp() {
   if (!ready || now == null) return null
 
   const live = games.filter(g => g.state === 'in')
+  const lockedLive = signedOut ? live.filter(g => g.id && lockedGameIds.includes(g.id)).length : 0
   const next = games
     .filter(g => g.state === 'pre' && g.kickoff && new Date(g.kickoff).getTime() > now - 60_000)
     .sort((a, b) => new Date(a.kickoff!).getTime() - new Date(b.kickoff!).getTime())[0]
@@ -49,6 +55,11 @@ export default function NextUp() {
           <i className="front-live__dot" aria-hidden />
           {live.length} {live.length === 1 ? 'game' : 'games'} live
         </span>
+      )}
+      {lockedLive > 0 && (
+        <SignupLink context="home_next_live" next="/" className="front-next__ask">
+          Ed has {lockedLive === 1 ? 'a play' : `${lockedLive} plays`} on {lockedLive === 1 ? 'one' : 'them'} · see free &rarr;
+        </SignupLink>
       )}
       {next && (next.href
         ? <Link href={next.href} className="front-next__game">{nextBody}</Link>

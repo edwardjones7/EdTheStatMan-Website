@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { LIVE_SPORTS, LIVE_SPORT_LABEL, type LiveSport } from '@/lib/live/types'
 import type { NewsEntry } from '@/lib/home-feeds'
+import FillList from '../FillList'
 
 function ago(iso: string | null, now: number): string {
   if (!iso) return ''
@@ -34,10 +35,10 @@ export default function NewsCard({ news }: { news: NewsEntry[] }) {
   const list = (tab === 'all'
     ? [...news].sort((a, b) => String(b.published ?? '').localeCompare(String(a.published ?? '')))
     : news.filter(n => n.sport === tab)
-  ).slice(0, 8)
+  ).slice(0, 40) // FillList shows as many as the column has room for.
 
   return (
-    <section className="front-card">
+    <section className="front-card front-card--fill">
       <header className="front-hd">
         <h2>Latest news</h2>
         <div className="front-tabs" role="tablist" aria-label="League">
@@ -55,7 +56,7 @@ export default function NewsCard({ news }: { news: NewsEntry[] }) {
           ))}
         </div>
       </header>
-      <ul className="front-news">
+      <FillList className="front-news" fallback={8} columns={2}>
         {list.map(n => (
           <li key={n.id}>
             {(() => {
@@ -79,7 +80,7 @@ export default function NewsCard({ news }: { news: NewsEntry[] }) {
             </span>
           </li>
         ))}
-      </ul>
+      </FillList>
     </section>
   )
 }

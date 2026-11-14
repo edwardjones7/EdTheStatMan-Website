@@ -6,6 +6,7 @@
 export const FUNNEL_EVENTS = [
   'pick_view',         // a public pick page was opened
   'paywall_view',      // a lock/gate was rendered to this visitor
+  'signup_prompt_view', // a signup ask scrolled into view (once per session per placement)
   'signup_prompt_click',
   'signup_start',      // signup form focused / submitted
   'signup_complete',   // account created (server side, auth callback)

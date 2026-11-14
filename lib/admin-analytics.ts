@@ -19,6 +19,8 @@ export type Range = 'week' | 'month' | 'year'
 
 export interface FunnelStep { key: string; label: string; count: number }
 
+export interface PromptRow { context: string; views: number; clicks: number; signups: number }
+
 export interface RangeAnalytics {
   /** The selected window and the same length before it, for comparisons. */
   window: { from: string; to: string; prevFrom: string; prevTo: string }
@@ -37,6 +39,8 @@ export interface RangeAnalytics {
   bounceRate: number
   avgSessionSecs: number
   funnel: FunnelStep[]
+  /** Each signup ask: people who saw it, clicked it, and signed up after clicking it. */
+  prompts: PromptRow[]
   /** Which reads failed. A name here means the figure is unknown, not zero. */
   failed: string[]
 }
@@ -134,6 +138,51 @@ async function loadFunnelEvents(a: any, fromISO: string, toISO: string): Promise
   }
 }
 
+type PromptEvent = { id: number; event_type: string; user_id: string | null; visitor_id: string | null; meta: any }
+
+async function loadPromptEvents(a: any, fromISO: string, toISO: string): Promise<PromptEvent[]> {
+  const rows: PromptEvent[] = []
+  for (let from = 0; ; from += EVENT_PAGE) {
+    const { data, error } = await a.from('events')
+      .select('id, event_type, user_id, visitor_id, meta')
+      .in('event_type', ['signup_prompt_view', 'signup_prompt_click', 'signup_complete'])
+      .gte('created_at', fromISO).lt('created_at', toISO)
+      .order('id')
+      .range(from, from + EVENT_PAGE - 1)
+    if (error) throw new Error(error.message)
+    rows.push(...((data ?? []) as PromptEvent[]))
+    if (!data || data.length < EVENT_PAGE) return rows
+  }
+}
+
+/**
+ * Per placement, in people. A signup counts toward the ask its browser last
+ * clicked (meta.prompt, from the su_prompt cookie); signups with no click
+ * behind them are left out rather than guessed at.
+ */
+function promptTable(rows: PromptEvent[]): PromptRow[] {
+  const by = new Map<string, { views: Set<string>; clicks: Set<string>; signups: Set<string> }>()
+  const slot = (ctx: string) => {
+    let v = by.get(ctx)
+    if (!v) by.set(ctx, (v = { views: new Set(), clicks: new Set(), signups: new Set() }))
+    return v
+  }
+  for (const r of rows) {
+    const who = r.user_id ?? r.visitor_id ?? `row:${r.id}`
+    if (r.event_type === 'signup_complete') {
+      const ctx = r.meta?.prompt
+      if (typeof ctx === 'string' && ctx) slot(ctx).signups.add(who)
+      continue
+    }
+    const ctx = r.meta?.context
+    if (typeof ctx !== 'string' || !ctx) continue
+    if (r.event_type === 'signup_prompt_view') slot(ctx).views.add(who)
+    else slot(ctx).clicks.add(who)
+  }
+  return Array.from(by, ([context, v]) => ({ context, views: v.views.size, clicks: v.clicks.size, signups: v.signups.size }))
+    .sort((x, y) => y.signups - x.signups || y.clicks - x.clicks || y.views - x.views)
+}
+
 /** One person per step however many times they fired it. */
 function countPeople(rows: EventRow[], key: string): number {
   const seen = new Set<string>()
@@ -159,7 +208,7 @@ export async function getRangeAnalytics(
     rangeRes, prevViewsRes,
     seriesRes, summaryRes,
     pagesRes, referrersRes, devicesRes, countriesRes, utmRes,
-    winVisitorsRes, sourcesRes, eventsRes,
+    winVisitorsRes, sourcesRes, eventsRes, promptRes,
   ] = await Promise.all([
     a.from('page_views').select('*', { count: 'exact', head: true }).gte('created_at', fromISO).lt('created_at', toISO),
     a.from('page_views').select('*', { count: 'exact', head: true }).gte('created_at', prevFromISO).lt('created_at', fromISO),
@@ -176,6 +225,10 @@ export async function getRangeAnalytics(
       rows => ({ rows, error: null as Error | null }),
       (error: Error) => ({ rows: [] as EventRow[], error }),
     ),
+    loadPromptEvents(a, fromISO, toISO).then(
+      rows => ({ rows, error: null as Error | null }),
+      (error: Error) => ({ rows: [] as PromptEvent[], error }),
+    ),
   ])
 
   // Every read is checked. These used to fall through `?? 0`, so a broken
@@ -184,7 +237,7 @@ export async function getRangeAnalytics(
   const failed = Object.entries({
     views: rangeRes, prevViews: prevViewsRes, chart: seriesRes, summary: summaryRes,
     pages: pagesRes, referrers: referrersRes, devices: devicesRes, countries: countriesRes,
-    campaigns: utmRes, funnel: eventsRes, win: winVisitorsRes,
+    campaigns: utmRes, funnel: eventsRes, win: winVisitorsRes, prompts: promptRes,
   }).filter(([, res]) => (res as { error: unknown }).error).map(([name]) => name)
   if (failed.length) console.error(`[admin-analytics] failed reads: ${failed.join(', ')}`)
 
@@ -226,6 +279,7 @@ export async function getRangeAnalytics(
       { key: 'win', label: 'Saw /win', count: Number(winVisitorsRes.data ?? 0) },
       ...FUNNEL_STEPS.map(s => ({ ...s, count: countPeople(eventsRes.rows, s.key) })),
     ],
+    prompts: promptTable(promptRes.rows),
     failed,
   }
 }

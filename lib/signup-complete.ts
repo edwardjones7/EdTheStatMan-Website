@@ -39,6 +39,18 @@ export function isFirstSignIn(user: SignupUser | null | undefined): boolean {
 }
 
 /**
+ * The last signup ask this browser clicked (lib/track-client.ts sets it), so
+ * the admin funnel can credit the placement. Null when they came in some other
+ * way, or on another device (a magic link opened on a phone).
+ */
+function promptFrom(reqHeaders: Headers): string | null {
+  const raw = reqHeaders.get('cookie') ?? ''
+  const m = raw.match(/(?:^|;\s*)su_prompt=([^;]+)/)
+  if (!m) return null
+  try { return decodeURIComponent(m[1]).slice(0, 60) } catch { return null }
+}
+
+/**
  * Insert one `signup_complete` row for this user, unless one already exists.
  *
  * The existence check is the double-count guard: the confirmation window can in
@@ -70,7 +82,7 @@ export async function recordSignupComplete(
       path: '/auth/callback',
       visitor_id: hashVisitor(ip, ua),
       user_id: user.id,
-      meta: { provider: user.app_metadata?.provider ?? null, ...meta },
+      meta: { provider: user.app_metadata?.provider ?? null, prompt: promptFrom(reqHeaders), ...meta },
     })
   } catch {
     // Deliberately swallowed. See above.

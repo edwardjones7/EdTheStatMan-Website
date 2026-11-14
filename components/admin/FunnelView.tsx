@@ -74,6 +74,50 @@ export default function FunnelView({ people, purchases, analytics }: {
           </div>
         )}
       </Panel>
+
+      <Panel
+        title="Signup asks"
+        note="Each place on the site that asks a visitor to sign up. Seen counts people once per browser session; a signup is credited to the ask that browser last clicked, so one opened on another device (a magic link on a phone) is not counted here."
+      >
+        {failed.includes('prompts') ? <Empty>Couldn&rsquo;t load the signup asks.</Empty>
+          : (analytics.prompts ?? []).length === 0 ? <Empty>No signup asks recorded in this range yet.</Empty> : (
+          <div className="admin-table-wrap">
+            <table className="admin-table adm-sources">
+              <thead>
+                <tr>
+                  <th>Ask</th>
+                  <th>Seen</th>
+                  <th>Clicked</th>
+                  <th>Click rate</th>
+                  <th>Signed up</th>
+                </tr>
+              </thead>
+              <tbody>
+                {analytics.prompts.map(p => (
+                  <tr key={p.context}>
+                    <td className="adm-mono">{PROMPT_LABEL[p.context] ?? p.context}</td>
+                    <td>{p.views.toLocaleString()}</td>
+                    <td>{p.clicks.toLocaleString()}</td>
+                    <td>{p.views > 0 ? `${((p.clicks / p.views) * 100).toFixed(1)}%` : '—'}</td>
+                    <td>{p.signups}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Panel>
     </>
   )
+}
+
+/** Friendly names for the placements; anything unlisted shows its raw key. */
+const PROMPT_LABEL: Record<string, string> = {
+  home_card_locked: "Home · Tonight's card lock",
+  home_card_live: "Home · Tonight's card, live game",
+  home_next_live: 'Home · live games bar',
+  desk_game_locked: 'Desk game · locked pick',
+  sticky_bar: 'Phone · sticky bar',
+  follow_team: 'Follow a team',
+  vault_free_row: 'Vault · free row lock',
 }
