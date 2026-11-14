@@ -1,10 +1,6 @@
 import type { Metadata } from 'next'
-import { createClient } from '@/lib/supabase/server'
-import { DEFAULT_RESULTS } from '@/lib/site-content'
-import type { ResultsContent } from '@/lib/site-content'
 import ResultsEditor from '@/components/ResultsEditor'
 import CTASection from '@/components/CTASection'
-import RecordBreakdown from '@/components/RecordBreakdown'
 import ResultsOverview from '@/components/results/ResultsOverview'
 import ResultsLedger, { LEDGER_PAGE_SIZE, type LedgerRow } from '@/components/ResultsLedger'
 import type { TodaysBet } from '@/components/TodaysBets'
@@ -58,15 +54,6 @@ export default async function Results({ searchParams }: { searchParams: { page?:
   const picks = (await loadPublishedPicks<TodaysBet & { odds?: number | null }>())
     .sort((a, b) => sortKey(b) - sortKey(a))
 
-  if (access.isAdmin) {
-    // The editor still edits the site_content block and the rows in place;
-    // it keeps the old full-list layout on purpose.
-    const supabase = await createClient()
-    const { data } = await (supabase as any).from('site_content').select('value').eq('key', 'results').single()
-    const content: ResultsContent = { ...DEFAULT_RESULTS, ...((data?.value as object) ?? {}) }
-    return <ResultsEditor content={content} recentPicks={picks} breakdown={<RecordBreakdown rows={picks} />} />
-  }
-
   // Only graded rows are the ledger: a pending row flagged for results has no
   // result to show yet and the record does not count it either.
   const graded = picks.filter(p => ['win', 'loss', 'push'].includes(String(p.result ?? '').toLowerCase()))
@@ -90,6 +77,13 @@ export default async function Results({ searchParams }: { searchParams: { page?:
       <ResultsOverview rows={picks} month={month} sport={sport} />
 
       <ResultsLedger rows={pageRows} page={page} pageCount={pageCount} total={graded.length} />
+
+      {/* Admins see the public page above, then the grading tools. */}
+      {access.isAdmin && (
+        <section className="pf-admin" aria-label="Edit results">
+          <ResultsEditor recentPicks={picks} />
+        </section>
+      )}
 
       <CTASection membership={access.membership} />
     </main>

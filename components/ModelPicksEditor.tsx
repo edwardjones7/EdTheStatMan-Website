@@ -12,47 +12,13 @@ interface Props {
   headerContent: ModelPicksContent
 }
 
+/**
+ * The admin's pick editor, under the public Portfolio view. The header text
+ * (site_content.model_picks) is no longer editable here: the redesigned public
+ * page builds its own header from the card, so edits to it reached nobody.
+ */
 export default function ModelPicksEditor({ rows, userTier, headerContent }: Props) {
   const [editMode, setEditMode] = useState(false)
-  const [draft, setDraft] = useState<ModelPicksContent>(headerContent)
-  const [dirty, setDirty] = useState(false)
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [resetKey, setResetKey] = useState(0)
-
-  function onHeaderEdit(updates: Partial<ModelPicksContent>) {
-    setDraft(prev => ({ ...prev, ...updates }))
-    setDirty(true)
-  }
-
-  function cancel() {
-    setDraft(headerContent)
-    setDirty(false)
-    setError(null)
-    setResetKey(k => k + 1)
-    setEditMode(false)
-  }
-
-  async function save() {
-    setSaving(true)
-    setError(null)
-    try {
-      const res = await fetch('/api/admin/content', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ key: 'model_picks', value: draft }),
-      })
-      if (!res.ok) {
-        const j = await res.json()
-        throw j.error || 'Save failed'
-      }
-      window.location.href = window.location.pathname
-    } catch (e: any) {
-      setError(typeof e === 'string' ? e : 'Save failed')
-    } finally {
-      setSaving(false)
-    }
-  }
 
   return (
     <>
@@ -62,9 +28,7 @@ export default function ModelPicksEditor({ rows, userTier, headerContent }: Prop
         userTier={userTier}
         isMember={true}
         editMode={editMode}
-        headerContent={draft}
-        onHeaderEdit={onHeaderEdit}
-        resetKey={resetKey}
+        headerContent={headerContent}
       />
 
       <div style={{
@@ -78,33 +42,18 @@ export default function ModelPicksEditor({ rows, userTier, headerContent }: Prop
         gap: '8px',
       }}>
         {editMode ? (
-          <>
-            {dirty && (
-              <button
-                onClick={save}
-                disabled={saving}
-                title="Save all changes"
-                style={{ ...fab, background: 'var(--accent-teal)', color: 'var(--brand-ink)' }}
-              >
-                {saving ? '…' : '✓'}
-              </button>
-            )}
-            <button
-              onClick={cancel}
-              title="Exit edit mode"
-              style={{
-                ...fab,
-                width: dirty ? '40px' : '54px',
-                height: dirty ? '40px' : '54px',
-                fontSize: dirty ? '1rem' : '1.3rem',
-                background: dirty ? 'var(--bg-secondary)' : 'rgba(var(--brand-rgb), 0.15)',
-                color: dirty ? 'var(--text-muted)' : 'var(--accent-teal)',
-                border: dirty ? '2px solid var(--border)' : '2px solid rgba(var(--brand-rgb), 0.35)',
-              }}
-            >
-              ✕
-            </button>
-          </>
+          <button
+            onClick={() => setEditMode(false)}
+            title="Exit edit mode"
+            style={{
+              ...fab,
+              background: 'rgba(var(--brand-rgb), 0.15)',
+              color: 'var(--accent-teal)',
+              border: '2px solid rgba(var(--brand-rgb), 0.35)',
+            }}
+          >
+            ✕
+          </button>
         ) : (
           <button
             onClick={() => setEditMode(true)}
@@ -115,22 +64,7 @@ export default function ModelPicksEditor({ rows, userTier, headerContent }: Prop
           </button>
         )}
 
-        {error && (
-          <span style={{
-            background: 'rgba(var(--down-rgb), 0.92)',
-            color: '#fff',
-            fontSize: '0.72rem',
-            padding: '5px 9px',
-            borderRadius: '6px',
-            maxWidth: '150px',
-            textAlign: 'center',
-            lineHeight: 1.4,
-          }}>
-            {error}
-          </span>
-        )}
-
-        {editMode && !dirty && (
+        {editMode && (
           <span style={{
             background: 'rgba(var(--brand-rgb), 0.12)',
             border: '1px solid rgba(var(--brand-rgb), 0.25)',

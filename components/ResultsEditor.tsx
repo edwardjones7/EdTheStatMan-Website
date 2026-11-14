@@ -1,83 +1,27 @@
 'use client'
 
 import { useState } from 'react'
-import type { ResultsContent } from '@/lib/site-content'
 import type { TodaysBet } from './TodaysBets'
-import ResultsPage from './ResultsPage'
 import RecentPicksResults from './RecentPicksResults'
-import ModelPerformance from './ModelPerformance'
-import CTASection from './CTASection'
 import { IconPencil } from './Icons'
 
 interface Props {
-  content: ResultsContent
   recentPicks: TodaysBet[]
-  /** Server-rendered record breakdown (total, sport, season). */
-  breakdown?: React.ReactNode
 }
 
-export default function ResultsEditor({ content, recentPicks, breakdown }: Props) {
+/**
+ * The admin's grading tools, rendered UNDER the public results page so the
+ * admin sees exactly what visitors see. The old editable header text
+ * (site_content.results) is gone: the redesigned page does not show it, so
+ * editing it reached nobody.
+ */
+export default function ResultsEditor({ recentPicks }: Props) {
   const [editMode, setEditMode] = useState(false)
-  const [draft, setDraft] = useState<ResultsContent>(content)
-  const [dirty, setDirty] = useState(false)
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [resetKey, setResetKey] = useState(0)
-
-  function patch(updates: Partial<ResultsContent>) {
-    setDraft(prev => ({ ...prev, ...updates }))
-    setDirty(true)
-  }
-
-  function cancel() {
-    setDraft(content)
-    setDirty(false)
-    setError(null)
-    setResetKey(k => k + 1)
-    setEditMode(false)
-  }
-
-  async function save() {
-    setSaving(true)
-    setError(null)
-    try {
-      const r = await fetch('/api/admin/content', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ key: 'results', value: draft }),
-      })
-      if (!r.ok) {
-        const j = await r.json()
-        throw j.error ?? 'Save failed'
-      }
-      window.location.href = window.location.pathname
-    } catch (e: any) {
-      setError(typeof e === 'string' ? e : 'Save failed')
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  const wins   = recentPicks.filter(p => p.result === 'win').length
-  const losses = recentPicks.filter(p => p.result === 'loss').length
-  const pushes = recentPicks.filter(p => p.result === 'push').length
-  const winPct = (wins + losses) > 0 ? (wins / (wins + losses)) * 100 : 0
 
   return (
     <>
-      <ResultsPage
-        content={draft}
-        editMode={editMode}
-        onEdit={patch}
-        resetKey={resetKey}
-        picks={recentPicks}
-      />
-      {breakdown}
       <RecentPicksResults rows={recentPicks} isAdmin={true} editMode={editMode} />
-      <ModelPerformance calcStats={{ wins, losses, pushes, winPct }} picks={recentPicks} />
-      <CTASection />
 
-      {/* Pencil FAB */}
       <div style={{
         position: 'fixed',
         bottom: '28px',
@@ -89,59 +33,29 @@ export default function ResultsEditor({ content, recentPicks, breakdown }: Props
         gap: '8px',
       }}>
         {editMode ? (
-          <>
-            {dirty && (
-              <button
-                onClick={save}
-                disabled={saving}
-                title="Save all changes"
-                style={{ ...fab, background: 'var(--accent-teal)', color: 'var(--brand-ink)' }}
-              >
-                {saving ? '…' : '✓'}
-              </button>
-            )}
-            <button
-              onClick={cancel}
-              title="Exit edit mode"
-              style={{
-                ...fab,
-                width: dirty ? '40px' : '54px',
-                height: dirty ? '40px' : '54px',
-                fontSize: dirty ? '1rem' : '1.3rem',
-                background: dirty ? 'var(--bg-secondary)' : 'rgba(var(--brand-rgb), 0.15)',
-                color: dirty ? 'var(--text-muted)' : 'var(--accent-teal)',
-                border: dirty ? '2px solid var(--border)' : '2px solid rgba(var(--brand-rgb), 0.35)',
-              }}
-            >
-              ✕
-            </button>
-          </>
+          <button
+            onClick={() => setEditMode(false)}
+            title="Exit edit mode"
+            style={{
+              ...fab,
+              background: 'rgba(var(--brand-rgb), 0.15)',
+              color: 'var(--accent-teal)',
+              border: '2px solid rgba(var(--brand-rgb), 0.35)',
+            }}
+          >
+            ✕
+          </button>
         ) : (
           <button
             onClick={() => setEditMode(true)}
-            title="Edit page content"
+            title="Edit results"
             style={{ ...fab, background: 'var(--accent-teal)', color: 'var(--brand-ink)' }}
           >
             <IconPencil size={14} />
           </button>
         )}
 
-        {error && (
-          <span style={{
-            background: 'rgba(var(--down-rgb), 0.92)',
-            color: '#fff',
-            fontSize: '0.72rem',
-            padding: '5px 9px',
-            borderRadius: '6px',
-            maxWidth: '150px',
-            textAlign: 'center',
-            lineHeight: 1.4,
-          }}>
-            {error}
-          </span>
-        )}
-
-        {editMode && !dirty && (
+        {editMode && (
           <span style={{
             background: 'rgba(var(--brand-rgb), 0.12)',
             border: '1px solid rgba(var(--brand-rgb), 0.25)',

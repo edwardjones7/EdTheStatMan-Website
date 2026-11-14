@@ -3,11 +3,8 @@
 import { useState } from 'react'
 import type {
   AllSiteContent,
-  HeroContent,
-  ActionCardContent,
   FeaturesContent,
   CTAContent,
-  SystemsOverviewContent,
   FeatureCard,
 } from '@/lib/site-content'
 
@@ -19,7 +16,7 @@ type SectionKey = keyof AllSiteContent
 
 export default function AdminContentTab({ content: initialContent }: Props) {
   const [content, setContent] = useState<AllSiteContent>(initialContent)
-  const [open, setOpen] = useState<SectionKey | null>('hero')
+  const [open, setOpen] = useState<SectionKey | null>('features')
   const [saving, setSaving] = useState<SectionKey | null>(null)
   const [saved, setSaved] = useState<SectionKey | null>(null)
   const [err, setErr] = useState<string | null>(null)
@@ -75,100 +72,6 @@ export default function AdminContentTab({ content: initialContent }: Props) {
         </div>
       )}
 
-      {/* ── Hero ── */}
-      <ContentAccordion
-        id="hero"
-        label="Hero Section"
-        open={open === 'hero'}
-        onToggle={() => toggle('hero')}
-        saving={saving === 'hero'}
-        saved={saved === 'hero'}
-        onSave={() => save('hero')}
-      >
-        <Field label="Badge text" value={content.hero.badge} onChange={v => patch('hero', { badge: v })} />
-        <TwoCol>
-          <Field label="Title line 1" value={content.hero.title} onChange={v => patch('hero', { title: v })} />
-          <Field label="Title accent (gradient)" value={content.hero.titleAccent} onChange={v => patch('hero', { titleAccent: v })} />
-        </TwoCol>
-        <Field
-          label="Rotating accent phrases (one per line — first line shows on load)"
-          type="textarea"
-          value={content.hero.titleRotations.join('\n')}
-          onChange={v => patch('hero', { titleRotations: v.split('\n').map(s => s.trim()).filter(Boolean) })}
-        />
-        <Field label="Description" type="textarea" value={content.hero.description} onChange={v => patch('hero', { description: v })} />
-        <SectionDivider label="Stat 1" />
-        <TwoCol>
-          <Field label="Count" value={content.hero.stat1Count} onChange={v => patch('hero', { stat1Count: v })} />
-          <Field label="Label" value={content.hero.stat1Label} onChange={v => patch('hero', { stat1Label: v })} />
-        </TwoCol>
-        <TwoCol>
-          <Field label="Prefix (e.g. +)" value={content.hero.stat1Prefix} onChange={v => patch('hero', { stat1Prefix: v })} />
-          <Field label="Suffix (e.g. %)" value={content.hero.stat1Suffix} onChange={v => patch('hero', { stat1Suffix: v })} />
-          <Field label="Decimals" value={content.hero.stat1Decimals} onChange={v => patch('hero', { stat1Decimals: v })} />
-        </TwoCol>
-        <SectionDivider label="Stat 2" />
-        <TwoCol>
-          <Field label="Count" value={content.hero.stat2Count} onChange={v => patch('hero', { stat2Count: v })} />
-          <Field label="Suffix (e.g. -4)" value={content.hero.stat2Suffix} onChange={v => patch('hero', { stat2Suffix: v })} />
-          <Field label="Label" value={content.hero.stat2Label} onChange={v => patch('hero', { stat2Label: v })} />
-        </TwoCol>
-        <SectionDivider label="Stat 3" />
-        <TwoCol>
-          <Field label="Count" value={content.hero.stat3Count} onChange={v => patch('hero', { stat3Count: v })} />
-          <Field label="Suffix (e.g. Sports)" value={content.hero.stat3Suffix} onChange={v => patch('hero', { stat3Suffix: v })} />
-          <Field label="Label" value={content.hero.stat3Label} onChange={v => patch('hero', { stat3Label: v })} />
-        </TwoCol>
-      </ContentAccordion>
-
-      {/* ── Action Card ── */}
-      <ContentAccordion
-        id="action_card"
-        label="Today's Action Card"
-        open={open === 'action_card'}
-        onToggle={() => toggle('action_card')}
-        saving={saving === 'action_card'}
-        saved={saved === 'action_card'}
-        onSave={() => save('action_card')}
-      >
-        <TwoCol>
-          <Field label="Section label" value={content.action_card.sectionLabel} onChange={v => patch('action_card', { sectionLabel: v })} />
-          <Field label="Section heading (H2)" value={content.action_card.sectionTitle} onChange={v => patch('action_card', { sectionTitle: v })} />
-        </TwoCol>
-        <Field label="Section subtitle" value={content.action_card.sectionSubtitle} onChange={v => patch('action_card', { sectionSubtitle: v })} />
-        <SectionDivider label="Card content" />
-        <TwoCol>
-          <Field label="Date header" value={content.action_card.dateHeader} onChange={v => patch('action_card', { dateHeader: v })} />
-          <Field label="Status label" value={content.action_card.statusLabel} onChange={v => patch('action_card', { statusLabel: v })} />
-          <SelectField
-            label="Status type"
-            value={content.action_card.statusType}
-            options={['final', 'active', 'upcoming']}
-            onChange={v => patch('action_card', { statusType: v as ActionCardContent['statusType'] })}
-          />
-        </TwoCol>
-        <Field label="Main message" type="textarea" value={content.action_card.message} onChange={v => patch('action_card', { message: v })} />
-        <Field label="Highlight (trophy line)" type="textarea" value={content.action_card.highlight} onChange={v => patch('action_card', { highlight: v })} />
-        <Field label="Bankroll line" value={content.action_card.bankroll} onChange={v => patch('action_card', { bankroll: v })} />
-      </ContentAccordion>
-
-      {/* ── Systems Overview ── */}
-      <ContentAccordion
-        id="systems_overview"
-        label="Systems Overview Section"
-        open={open === 'systems_overview'}
-        onToggle={() => toggle('systems_overview')}
-        saving={saving === 'systems_overview'}
-        saved={saved === 'systems_overview'}
-        onSave={() => save('systems_overview')}
-      >
-        <TwoCol>
-          <Field label="Section label" value={content.systems_overview.label} onChange={v => patch('systems_overview', { label: v })} />
-          <Field label="Section title" value={content.systems_overview.title} onChange={v => patch('systems_overview', { title: v })} />
-        </TwoCol>
-        <Field label="Subtitle" value={content.systems_overview.subtitle} onChange={v => patch('systems_overview', { subtitle: v })} />
-        <Field label="Footer note" value={content.systems_overview.footerNote} onChange={v => patch('systems_overview', { footerNote: v })} />
-      </ContentAccordion>
 
       {/* ── Features ── */}
       <ContentAccordion
