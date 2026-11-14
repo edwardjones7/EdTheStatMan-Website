@@ -308,14 +308,19 @@ export default function AdminDashboard({ users, posts, initialTab, initialAnalyt
   // Live stats — poll every 2 min so the dashboard stays current without reloads
   useEffect(() => {
     let cancelled = false
-    const load = () =>
+    // Skipped while the tab is hidden: a dashboard left open overnight was
+    // ~720 auth + DB round trips a day for nobody. Catches up on return.
+    const load = () => {
+      if (document.visibilityState === 'hidden') return
       fetch('/api/admin/analytics/live', { cache: 'no-store' })
         .then(r => r.json())
         .then(d => { if (!cancelled && typeof d.activeNow === 'number') setLive(d) })
         .catch(() => {})
+    }
     load()
     const id = setInterval(load, 120_000)
-    return () => { cancelled = true; clearInterval(id) }
+    document.addEventListener('visibilitychange', load)
+    return () => { cancelled = true; clearInterval(id); document.removeEventListener('visibilitychange', load) }
   }, [])
 
   const stats = useMemo(() => {
