@@ -22,7 +22,7 @@ export default function FunnelView({ people, purchases, analytics }: {
     <>
       <Panel
         title="Visit to paid"
-        note="Counted in people, as a share of site visitors. People can skip steps, so a lower step can be larger than the one above it. Visitor ids reset daily, so somebody who comes back on another day counts again and the top of the funnel runs high."
+        note="Counted in people, as a share of site visitors. People can skip steps, so a lower step can be larger than the one above it. Days before Nov 14 2026 include a crawler and daily-reset visitor ids, so ranges reaching back that far start the funnel high."
       >
         {failed.includes('funnel') ? <Empty>Couldn&rsquo;t load the funnel.</Empty> : (
           <div className="admin-breakdown-list">

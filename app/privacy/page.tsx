@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 // they collect, this page has to change with them.
 export default function PrivacyPage() {
   return (
-    <LegalPage label="Legal" title="Privacy Policy" updated="October 15, 2026">
+    <LegalPage label="Legal" title="Privacy Policy" updated="November 14, 2026">
       <p>
         This explains what EdTheStatMan.com collects, why, and who it is shared with. We do not
         sell your personal information.
@@ -32,8 +32,10 @@ export default function PrivacyPage() {
         <li>
           <strong>Site usage:</strong> pages viewed, the referring site, any campaign tags in the
           link you arrived on, device type, browser and country. Visitors who are not signed in are
-          counted with an anonymous identifier that changes every day, so a visit cannot be tied to
-          you across days. If you are signed in, page views are linked to your account.
+          counted with a random anonymous identifier kept in your browser&rsquo;s local storage, so we
+          can tell how many different people visit rather than counting a returning visitor twice. It
+          holds no name, email or IP address, and clearing your browser data removes it. If you are
+          signed in, page views are linked to your account.
         </li>
         <li>
           <strong>How you found us:</strong> the first link that brought you to the site is kept in
@@ -51,7 +53,8 @@ export default function PrivacyPage() {
 
       <h2>Cookies</h2>
       <p>
-        We use cookies only to keep you signed in. Usage counting does not use cookies.
+        We use cookies only to keep you signed in. Usage counting does not use cookies; it uses the
+        anonymous identifier in local storage described above.
       </p>
 
       <h2>How we use it</h2>

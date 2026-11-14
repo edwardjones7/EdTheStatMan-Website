@@ -17,12 +17,12 @@ export default function TrafficView({ analytics, loading }: { analytics: Analyti
           label="Page views"
           value={viewsFailed ? '—' : views.toLocaleString()}
           sub={`${analytics.totalViews.toLocaleString()} all time`}
-          source="Our tracker · bots filtered by user agent"
+          source="Counted once the visitor interacts · see System health"
         />
         <Kpi
           label="Visitors"
           value={viewsFailed ? '—' : analytics.uniqueVisitors.toLocaleString()}
-          source="Ids reset daily: a person on 3 days counts 3 times"
+          source="One anonymous id per browser, counted once per range"
         />
         <Kpi
           label="Visits"

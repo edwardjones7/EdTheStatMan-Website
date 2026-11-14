@@ -115,6 +115,6 @@ export const config = {
     // api/track fires on every page view and resolves the user itself; running
     // middleware's getUser() first doubled the Auth calls for each signed-in
     // view. The page render that preceded it already refreshed the session.
-    '/((?!api/stripe/webhook|api/live|api/search|api/track|149e9513-01fa-4fb0-aad4-566afd725d1b|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!api/stripe/webhook|api/live|api/search|api/track|api/nav|149e9513-01fa-4fb0-aad4-566afd725d1b|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }

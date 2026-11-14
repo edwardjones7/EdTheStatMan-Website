@@ -135,7 +135,7 @@ export default function OverviewView({ people, purchases, peopleFailed, ops, ana
           value={viewsFailed ? '—' : analytics.viewsInRange.toLocaleString()}
           delta={viewsFailed ? undefined : <><Delta now={analytics.viewsInRange} prev={analytics.prevViews} format={n => n.toLocaleString()} /> vs {PRIOR[range]}</>}
           sub={`${analytics.uniqueVisitors.toLocaleString()} visitors`}
-          source="Our tracker · visitor ids reset daily, so visitors run high"
+          source="People who interacted · bots, admins and dev excluded from Nov 14"
         />
         <Kpi
           label="Paying members"

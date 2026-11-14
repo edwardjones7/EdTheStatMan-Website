@@ -13,10 +13,10 @@ const JOB_STATE_CLASS = {
  * is something checked in the code; delete it when the fix lands.
  */
 const LIMITS: { area: string; text: string }[] = [
-  { area: 'Visitors', text: 'Visitor ids are a hash of IP and browser that resets every day, so one person on several days counts several times. Week, month and year visitor totals run high.' },
-  { area: 'Page views', text: 'Admin accounts are only skipped on /admin pages, so our own browsing of the site is counted.' },
-  { area: 'Page views', text: 'Views are reported to /api/track, a path some ad blockers block, so a share of real visitors is missing.' },
-  { area: 'Bots', text: 'Bots are filtered by user agent only. A scraper that claims to be a normal browser is counted.' },
+  { area: 'Traffic history', text: 'Counting rules changed on Nov 14 2026. Before that, a Singapore crawler (about 5,800 views from Nov 11), local dev servers and admin browsing were counted, and visitor ids reset daily. Ranges that include those days run high.' },
+  { area: 'Visitors', text: 'A person is one anonymous id per browser. The same person on a phone and a laptop counts twice; clearing browser data starts a new id.' },
+  { area: 'Page views', text: 'A view counts once the visitor scrolls, moves the pointer, taps or types. Someone who opens a page and leaves without touching it is not counted.' },
+  { area: 'Bots', text: 'Crawlers that never interact are left out, plus known bot user agents and automated browsers. A bot built to fake mouse movement would still count.' },
   { area: 'Revenue', text: 'The purchases ledger starts on Aug 11 2026. Earlier sales are not in any figure.' },
   { area: 'Subscribers', text: 'There is no separate list yet: a subscriber is a confirmed account with email on. Bounces are not tracked.' },
 ]

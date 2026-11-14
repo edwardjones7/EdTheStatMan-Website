@@ -18,6 +18,7 @@ import {
 import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { ADMIN_FLAG_KEY } from '@/lib/track-client'
 import './admin-kit.css'
 
 type Tone = 'ok' | 'error' | 'info'
@@ -117,6 +118,9 @@ export function AdminKitProvider({ children }: { children: ReactNode }) {
   // The bar takes room at the top of the page, so nothing sits under it.
   useEffect(() => {
     document.body.classList.add('has-admin-bar')
+    // This browser belongs to an admin: it stops counting toward traffic, even
+    // after signing out (lib/track-client.ts canTrack).
+    try { localStorage.setItem(ADMIN_FLAG_KEY, '1') } catch {}
     return () => document.body.classList.remove('has-admin-bar')
   }, [])
 
