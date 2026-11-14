@@ -3979,6 +3979,20 @@ textarea.form-input {
   }
 }
 
+/* Desktop bar: the links centre on the page, not in whatever space the logo
+   and the actions leave. With flex + space-between the links sat in the gap
+   between two unequal sides and read ~30px left of centre. Equal 1fr side
+   columns put the middle column on the true centre line. */
+@media (min-width: 1341px) {
+  .nav__inner {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  }
+  .nav__logo { justify-self: start; }
+  .nav__links { flex: none; }
+  .nav__actions { justify-self: end; }
+}
+
 @media (max-width: 1024px) {
   .hero__content {
     max-width: 100%;
