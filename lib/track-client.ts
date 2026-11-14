@@ -96,17 +96,20 @@ export function isHuman(): boolean {
 }
 
 /**
- * Calls `then` once the visitor does something a person does: scroll, move
- * the pointer, touch or press a key. Scrapers that load pages and leave never
- * do, which is how one Singapore crawler made up 80% of November's "views".
+ * Calls `then` once the visitor does something a person does with a real
+ * device: move or press the pointer, turn the mouse wheel, touch the screen or
+ * press a key. Not "scroll": crawlers scroll from script to load lazy content,
+ * and the Singapore crawler got through a gate that accepted it (Nov 14 2026).
+ * A script cannot fake wheel, pointer, touch or key input without driving the
+ * browser's input layer, and anything it dispatches itself has isTrusted false.
  * Returns a cleanup function.
  */
 export function onFirstHumanSignal(then: () => void): () => void {
   if (isHuman()) { then(); return () => {} }
-  const events = ['pointermove', 'pointerdown', 'scroll', 'keydown', 'touchstart'] as const
+  const events = ['pointermove', 'pointerdown', 'wheel', 'keydown', 'touchstart'] as const
   let done = false
-  const fire = () => {
-    if (done) return
+  const fire = (e: Event) => {
+    if (done || !e.isTrusted) return
     done = true
     try { sessionStorage.setItem(HUMAN_KEY, '1') } catch {}
     events.forEach(e => window.removeEventListener(e, fire, true))
