@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { sendMagicLink } from '@/app/actions/auth'
+import { useTurnstile } from '@/components/Turnstile'
 import { authErrorMessage, type AuthErrorCode } from '@/lib/auth-errors'
 import { trackEvent } from '@/lib/track-client'
 
@@ -26,6 +27,7 @@ const COOLDOWN_S = 60
 
 export default function ResendButton({ email, next }: { email: string; next: string }) {
   const [left, setLeft] = useState(COOLDOWN_S)
+  const check = useTurnstile('verify_resend')
   const [busy, setBusy] = useState(false)
   const [sent, setSent] = useState(false)
   const [error, setError] = useState<AuthErrorCode | null>(null)
@@ -43,6 +45,8 @@ export default function ResendButton({ email, next }: { email: string; next: str
     fd.set('email', email)
     fd.set('next', next)
     try {
+      const token = await check.getToken()
+      if (token) fd.set('captchaToken', token)
       const result = await sendMagicLink(fd)
       if (result.ok) {
         setSent(true)
@@ -53,6 +57,7 @@ export default function ResendButton({ email, next }: { email: string; next: str
     } catch {
       setError('auth')
     } finally {
+      check.reset()
       setBusy(false)
       setLeft(COOLDOWN_S)
     }
@@ -62,6 +67,7 @@ export default function ResendButton({ email, next }: { email: string; next: str
     <div className="fd-resend" aria-live="polite">
       {sent && <div className="auth-success">Sent. The new link signs you straight in.</div>}
       {error && <div className="auth-error">{authErrorMessage(error)}</div>}
+      {check.widget}
       <button
         type="button"
         className="btn btn--primary fd-btn-full"

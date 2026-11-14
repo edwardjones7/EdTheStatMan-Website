@@ -23,6 +23,7 @@ export type AuthErrorCode =
   | 'browser'       // emailed link opened in a different browser (PKCE)
   | 'google'        // Google sign-in did not complete
   | 'disabled'      // the provider is switched off in the Supabase dashboard
+  | 'captcha'       // the Turnstile check failed, expired or never ran
 
 export const AUTH_ERROR_MESSAGES: Record<AuthErrorCode, string> = {
   auth: 'Something went wrong. Please try again.',
@@ -36,6 +37,7 @@ export const AUTH_ERROR_MESSAGES: Record<AuthErrorCode, string> = {
   browser: 'That link was opened in a different browser from the one you asked in. Request a new link here, in this browser, and open it on this device.',
   google: 'Google sign-in did not finish. Please try again.',
   disabled: 'That sign-in method is not available right now. Please try another.',
+  captcha: 'We could not confirm you are a person. Wait a moment for the check under the form to finish, then try again.',
 }
 
 export function isAuthErrorCode(value: unknown): value is AuthErrorCode {
@@ -56,6 +58,10 @@ export function classifyAuthError(error: { code?: string | null; message?: strin
   if (!error) return 'auth'
   const code = error.code ?? ''
   const msg = (error.message ?? '').toLowerCase()
+
+  // Supabase CAPTCHA (Authentication > Attack Protection). Checked first: its
+  // code varies by version, but the message always names the captcha.
+  if (code === 'captcha_failed' || msg.includes('captcha')) return 'captcha'
 
   switch (code) {
     case 'email_address_invalid':

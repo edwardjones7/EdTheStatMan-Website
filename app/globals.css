@@ -9202,3 +9202,9 @@ textarea.form-input {
     margin-top: 13px;
   }
 }
+
+/* Cloudflare Turnstile (components/Turnstile.tsx). "Interaction-only" keeps it
+   at zero height for most visitors; this is the room it gets when it shows. */
+.turnstile-slot { margin: 8px 0; }
+.turnstile-slot:empty { margin: 0; }
+.fd-check { margin-top: 4px; }
