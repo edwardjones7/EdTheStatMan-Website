@@ -177,6 +177,80 @@ const drafts = {
     </filter>
     <rect width="1500" height="500" filter="url(#grain6)"/>`)
   })(),
+
+  // 7. Draft 6, pushed again: the photo mirrored so the ball dropping through
+  //    the net lands bottom-right, backlit; a "Graded · Win" callout pointing
+  //    at the ball (the pick cashing); the chart in the same glass card style.
+  'g-hoop-max': (() => {
+    const pts = [[0, 236], [40, 220], [80, 206], [120, 214], [160, 192], [200, 178], [240, 186], [280, 160], [320, 144], [360, 152], [400, 100]]
+    const line = pts.map(([x, y], i) => `${i ? 'L' : 'M'}${x} ${y}`).join(' ')
+    const marks = pts.slice(1).map(([x, y], i) => {
+      const win = y < pts[i][1]
+      return `<circle cx="${x}" cy="${y}" r="${i === pts.length - 2 ? 8 : 5.5}" fill="${win ? '#35C98A' : '#FF6B6B'}" stroke="#0D1522" stroke-width="2.5"/>`
+    }).join('')
+    // Photo is 1600x900. Scaled to 500 tall (x0.5556) it is 889 wide; mirrored
+    // and placed at x=723, the net sits about x 1120-1410 and the ball about
+    // x 1330-1470, y 280-415.
+    return svg(`
+    ${ground}${grid}
+    <radialGradient id="back7" cx="0.86" cy="0.2" r="0.36"><stop offset="0" stop-color="#4C9BFF" stop-opacity="0.45"/><stop offset="0.6" stop-color="#2F7BFF" stop-opacity="0.12"/><stop offset="1" stop-color="#2F7BFF" stop-opacity="0"/></radialGradient>
+    <rect width="1500" height="500" fill="url(#back7)"/>
+    <filter id="cool7"><feColorMatrix type="saturate" values="0.8"/></filter>
+    <linearGradient id="fadeIn7" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset="0.5" stop-color="#fff" stop-opacity="0.75"/><stop offset="1" stop-color="#fff" stop-opacity="1"/></linearGradient>
+    <mask id="photoFade7"><rect x="1040" width="460" height="500" fill="url(#fadeIn7)"/></mask>
+    <g mask="url(#photoFade7)">
+      <g transform="translate(1612 0) scale(-1 1)">
+        <image href="${photo('nba')}" x="0" y="0" width="889" height="500" filter="url(#cool7)"/>
+      </g>
+      <rect x="1040" width="460" height="500" fill="#2F7BFF" fill-opacity="0.16" style="mix-blend-mode:overlay"/>
+    </g>
+    <radialGradient id="vig7" cx="0.5" cy="0.45" r="0.78"><stop offset="0.62" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity="0.42"/></radialGradient>
+    <rect width="1500" height="500" fill="url(#vig7)"/>
+    ${topRule}
+
+    <!-- The record, as a card: same glass style as the callout. -->
+    <g transform="translate(56 44)">
+      <rect width="448" height="256" rx="3" fill="#0D1522" fill-opacity="0.72" stroke="#1F2B3D"/>
+      <text x="22" y="34" font-family="Barlow" font-weight="600" font-size="14" fill="#8C9CB1" letter-spacing="2">UNITS  ·  EVERY PICK, GRADED IN PUBLIC</text>
+      <g font-family="Barlow" font-weight="600" font-size="12" letter-spacing="1.5">
+        <circle cx="330" cy="54" r="4.5" fill="#35C98A"/><text x="340" y="58" fill="#8C9CB1">WIN</text>
+        <circle cx="382" cy="54" r="4.5" fill="#FF6B6B"/><text x="392" y="58" fill="#8C9CB1">LOSS</text>
+      </g>
+      <linearGradient id="area7" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2F7BFF" stop-opacity="0.36"/><stop offset="1" stop-color="#2F7BFF" stop-opacity="0"/></linearGradient>
+      <g transform="translate(24 -22)">
+        <path d="${line} L400 252 L0 252 Z" fill="url(#area7)"/>
+        <path d="${line}" fill="none" stroke="url(#blue)" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+        <circle cx="400" cy="100" r="20" fill="#35C98A" fill-opacity="0.18"/>
+        ${marks}
+        <path d="M0 252H400" stroke="#1F2B3D" stroke-width="2"/>
+      </g>
+    </g>
+
+    <g font-family="Barlow" font-weight="600" font-size="18" fill="#6AA5FF" letter-spacing="3"><text x="580" y="98">THE RESEARCH DESK  ·  THE VAULT  ·  THE PORTFOLIO</text></g>
+    <g font-family="Barlow Semi Condensed" font-weight="800" font-size="70" fill="#F2F6FB">
+      <text x="576" y="170">Every game.</text>
+      <text x="576" y="240">Every system.</text>
+      <text x="576" y="310">Every pick, <tspan fill="url(#blue)">graded.</tspan></text>
+    </g>
+    <g font-family="Barlow" font-weight="500" font-size="23" fill="#B3C0D1"><text x="580" y="354">NFL  ·  College Football  ·  NBA  ·  College Basketball</text></g>
+    ${url(580, 374)}
+
+    <!-- The pick cashing: a callout on the ball. -->
+    <path d="M1316 438 C1336 438 1346 428 1352 412" fill="none" stroke="#35C98A" stroke-width="2" stroke-opacity="0.8"/>
+    <circle cx="1352" cy="410" r="4" fill="#35C98A"/>
+    <g transform="translate(1124 418)">
+      <rect width="192" height="40" rx="20" fill="#0B1C16" fill-opacity="0.92" stroke="#1E6B4C"/>
+      <circle cx="21" cy="20" r="11" fill="#0F3326" stroke="#35C98A"/>
+      <path d="M16 20l4 4 7-8" fill="none" stroke="#7FE0B4" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="40" y="26" font-family="Barlow" font-weight="600" font-size="15" fill="#CFF5E2" letter-spacing="1.5">GRADED  ·  WIN</text>
+    </g>
+
+    <filter id="grain7" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="11"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.05 0"/>
+    </filter>
+    <rect width="1500" height="500" filter="url(#grain7)"/>`)
+  })(),
 }
 
 const avatar = readFileSync(join(repo, 'brand/x-avatar.png')).toString('base64')
