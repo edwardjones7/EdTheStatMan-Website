@@ -1,4 +1,5 @@
-.wire { padding: 24px 0 64px; }
+/* The layout's spacer only reserves the ticker; clear the fixed nav here. */
+.wire { padding: calc(var(--nav-height) + 24px) 0 64px; }
 .wire__inner { max-width: 1320px; }
 
 .wire__hd { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 24px; margin-bottom: 20px; }
