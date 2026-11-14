@@ -297,8 +297,9 @@
 .pf-admin { border-top: 1px solid var(--border-color); }
 
 /* ---------- Results ---------- */
-.rs-grid { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 18px; align-items: start; }
+.rs-grid { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 18px; align-items: stretch; }
 .rs-sports, .rs-overall { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.rs-overall__card { flex: 1; }
 .rs-sports__grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
 .rs-sport,
 .rs-overall__card {
