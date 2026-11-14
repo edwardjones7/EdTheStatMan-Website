@@ -1,1 +1,25 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400"><defs><linearGradient id="eg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4C9BFF"/><stop offset="1" stop-color="#38BDF8"/></linearGradient></defs><rect width="400" height="400" fill="#0B1F3A"/><svg x="110" y="90" width="187" height="220" viewBox="24 16 58 68"><path d="M24 16H82L76 30H40V43H72L66 57H40V70H82L76 84H24Z" fill="url(#eg)"/></svg></svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400">
+  <defs>
+    <linearGradient id="e" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#4C9BFF"/>
+      <stop offset="1" stop-color="#38BDF8"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#2F7BFF" stop-opacity="0.30"/>
+      <stop offset="0.55" stop-color="#2F7BFF" stop-opacity="0.08"/>
+      <stop offset="1" stop-color="#2F7BFF" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0D1522"/>
+      <stop offset="1" stop-color="#060A12"/>
+    </linearGradient>
+  </defs>
+  <!-- The redesign's near-black navy. X crops this to a circle, so everything
+       that matters sits well inside r=200. -->
+  <rect width="400" height="400" fill="url(#bg)"/>
+  <circle cx="200" cy="200" r="190" fill="url(#glow)"/>
+  <!-- The Clean E (components/BrandMark.tsx MARK_E), 58x68 on the 100 grid. -->
+  <svg x="117" y="102" width="166" height="196" viewBox="24 16 58 68">
+    <path d="M24 16H82L76 30H40V43H72L66 57H40V70H82L76 84H24Z" fill="url(#e)"/>
+  </svg>
+</svg>

@@ -14,6 +14,14 @@ import { fileURLToPath } from 'node:url'
 const brand = dirname(fileURLToPath(import.meta.url))
 const root = join(brand, '..')
 const fontFiles = [
+  // The redesign's type (Nov 2026), used by x-banner.svg. Barlow is a static
+  // family, so these are the official files from google/fonts, no instancing.
+  'Barlow-Regular.ttf',
+  'Barlow-Medium.ttf',
+  'Barlow-SemiBold.ttf',
+  'BarlowSemiCondensed-Bold.ttf',
+  'BarlowSemiCondensed-ExtraBold.ttf',
+  // The terminal-era type, still used by og-cover.svg.
   'Archivo-Headline.ttf',
   'Archivo-Text.ttf',
   'Archivo-Link.ttf',
@@ -42,7 +50,7 @@ function png(svg, size, out) {
 
 writeFileSync(join(root, 'app/icon.svg'), tile)
 console.log('app/icon.svg')
-png(read('x-avatar.svg'), 400, 'brand/x-avatar.png')
+png(read('x-avatar.svg'), 800, 'brand/x-avatar.png')
 png(read('x-banner.svg'), 1500, 'brand/x-banner.png')
 png(tile, 256, 'app/icon.png')
 png(appleTile, 180, 'app/apple-icon.png')

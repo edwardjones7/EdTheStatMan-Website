@@ -1,27 +1,72 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1500" height="500" viewBox="0 0 1500 500">
-  <defs><linearGradient id="eg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4C9BFF"/><stop offset="1" stop-color="#38BDF8"/></linearGradient></defs>
-  <rect width="1500" height="500" fill="#0B1F3A"/>
-  <g fill="#12294A"><rect x="124" y="0" width="1" height="500"/><rect x="249" y="0" width="1" height="500"/><rect x="374" y="0" width="1" height="500"/><rect x="499" y="0" width="1" height="500"/><rect x="624" y="0" width="1" height="500"/><rect x="749" y="0" width="1" height="500"/><rect x="874" y="0" width="1" height="500"/><rect x="999" y="0" width="1" height="500"/><rect x="1124" y="0" width="1" height="500"/><rect x="1249" y="0" width="1" height="500"/><rect x="1374" y="0" width="1" height="500"/><rect x="1499" y="0" width="1" height="500"/></g>
-  <!-- Sample line block, top-left. Kept above y=320 so X's avatar (bottom-left) never covers it. -->
-  <g transform="translate(60 40)">
-    <g font-family="JetBrains Mono Label" font-size="20" fill="#7F93AB">
-      <text x="0" y="24">SPREAD</text><text x="150" y="24">TOTAL</text><text x="290" y="24">ML</text>
+  <!-- X header, front-page redesign (Nov 2026): near-black navy, Barlow, the
+       Clean E's blue. X lays the avatar over the bottom-left (about x 0-430,
+       y 360-500 at this scale), so nothing important sits there, and phones
+       trim a little off the top and bottom, so text stays inside y 90-420.
+       No figures: a record baked into an image goes stale. -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0A101B"/>
+      <stop offset="1" stop-color="#060A12"/>
+    </linearGradient>
+    <radialGradient id="glowR" cx="0.82" cy="0.18" r="0.55">
+      <stop offset="0" stop-color="#2F7BFF" stop-opacity="0.20"/>
+      <stop offset="1" stop-color="#2F7BFF" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowL" cx="0.18" cy="0.45" r="0.35">
+      <stop offset="0" stop-color="#38BDF8" stop-opacity="0.10"/>
+      <stop offset="1" stop-color="#38BDF8" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="blue" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#4C9BFF"/>
+      <stop offset="1" stop-color="#38BDF8"/>
+    </linearGradient>
+    <linearGradient id="area" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2F7BFF" stop-opacity="0.32"/>
+      <stop offset="1" stop-color="#2F7BFF" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1500" height="500" fill="url(#bg)"/>
+  <rect width="1500" height="500" fill="url(#glowR)"/>
+  <rect width="1500" height="500" fill="url(#glowL)"/>
+
+  <!-- Faint board grid, like the Desk's hairlines. -->
+  <g stroke="#111A28" stroke-width="1">
+    <path d="M0 100H1500M0 200H1500M0 300H1500M0 400H1500"/>
+    <path d="M100 0V500M200 0V500M300 0V500M400 0V500M500 0V500M600 0V500M700 0V500M800 0V500M900 0V500M1000 0V500M1100 0V500M1200 0V500M1300 0V500M1400 0V500"/>
+  </g>
+  <rect x="0" y="0" width="1500" height="4" fill="url(#blue)"/>
+
+  <!-- A units line climbing left to right, the Results page's chart without
+       its numbers. Kept above the avatar's corner. -->
+  <g transform="translate(90 44)">
+    <path d="M0 230 L40 214 L80 222 L120 196 L160 204 L200 172 L240 180 L280 146 L320 154 L360 118 L400 92 L400 260 L0 260 Z" fill="url(#area)"/>
+    <path d="M0 230 L40 214 L80 222 L120 196 L160 204 L200 172 L240 180 L280 146 L320 154 L360 118 L400 92" fill="none" stroke="url(#blue)" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+    <circle cx="400" cy="92" r="9" fill="#38BDF8"/>
+    <circle cx="400" cy="92" r="18" fill="#38BDF8" fill-opacity="0.18"/>
+    <path d="M0 260H400" stroke="#1F2B3D" stroke-width="2"/>
+    <g font-family="Barlow" font-weight="600" font-size="15" fill="#8C9CB1" letter-spacing="2">
+      <text x="0" y="40">UNITS, EVERY PICK GRADED IN PUBLIC</text>
     </g>
-    <g font-family="JetBrains Mono Figure" font-size="30">
-      <text x="0" y="80" fill="#FFFFFF">−3</text><text x="150" y="80" fill="#FFFFFF">46.5</text><text x="290" y="80" fill="#FFFFFF">−170</text>
-      <text x="0" y="140" fill="#3FCF8E">+1.5</text><text x="150" y="140" fill="#FF7A7A">−1</text><text x="290" y="140" fill="#3FCF8E">+15</text>
-    </g>
-    <line x1="0" y1="172" x2="420" y2="172" stroke="#24406A" stroke-width="2"/>
-    <svg x="0" y="200" width="68" height="80" viewBox="24 16 58 68"><path d="M24 16H82L76 30H40V43H72L66 57H40V70H82L76 84H24Z" fill="url(#eg)"/></svg>
   </g>
-  <g font-family="Archivo Headline" font-size="76" fill="#FFFFFF" letter-spacing="-0.5">
-    <text x="620" y="138">Every game.</text>
-    <text x="620" y="210">Every system.</text>
-    <text x="620" y="282">Every pick, graded.</text>
+
+  <!-- Headline block. -->
+  <g font-family="Barlow" font-weight="600" font-size="19" fill="#6AA5FF" letter-spacing="3.5">
+    <text x="600" y="120">THE RESEARCH DESK  ·  THE VAULT  ·  THE PORTFOLIO</text>
   </g>
-  <g font-family="Archivo Text" font-size="24" fill="#A9B8CA">
-    <text x="620" y="334">NFL, college football, NBA and college</text>
-    <text x="620" y="368">basketball research, posted daily.</text>
+  <g font-family="Barlow Semi Condensed" font-weight="800" font-size="74" fill="#F2F6FB">
+    <text x="596" y="200">Every game. Every system.</text>
+    <text x="596" y="276">Every pick, <tspan fill="url(#blue)">graded.</tspan></text>
   </g>
-  <text x="620" y="424" font-family="Archivo Link" font-size="24" fill="#7DB4FF">edthestatman.com</text>
+  <g font-family="Barlow" font-weight="500" font-size="25" fill="#B3C0D1">
+    <text x="600" y="330">NFL  ·  College Football  ·  NBA  ·  College Basketball</text>
+  </g>
+  <g transform="translate(600 360)">
+    <rect width="232" height="46" rx="2" fill="#2F7BFF"/>
+    <text x="116" y="31" text-anchor="middle" font-family="Barlow" font-weight="600" font-size="21" fill="#FFFFFF">edthestatman.com</text>
+  </g>
+  <g font-family="Barlow" font-weight="500" font-size="19" fill="#8C9CB1">
+    <text x="856" y="390">Where handicappers get sharp and bettors win.</text>
+  </g>
 </svg>
