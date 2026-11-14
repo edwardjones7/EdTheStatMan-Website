@@ -1,3 +1,4 @@
+import { withCronLog } from '@/lib/cron-log'
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { syncTargets } from '@/lib/desk-sync'
@@ -31,7 +32,7 @@ export const maxDuration = 300
  * game of the current one goes final. Syncing only the current week would leave
  * the board landing on a week nobody had fetched the lines for yet.
  */
-export async function GET(req: Request) {
+async function run(req: Request) {
   // Vercel signs its cron invocations with CRON_SECRET when the variable is
   // set. Without the check this route is a public endpoint that sweeps ESPN for
   // anyone who finds it. Same guard as the Discord sweep.
@@ -116,3 +117,5 @@ export async function GET(req: Request) {
   console.log('[desk] scheduled sync', JSON.stringify(report), `${ms}ms`)
   return NextResponse.json({ ok: true, ms, ...report })
 }
+
+export const GET = withCronLog('desk-sync', run)

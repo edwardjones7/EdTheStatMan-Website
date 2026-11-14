@@ -1,3 +1,4 @@
+import { withCronLog } from '@/lib/cron-log'
 import { NextResponse } from 'next/server'
 import { syncAllDiscordRoles } from '@/lib/discord/roles'
 
@@ -18,7 +19,7 @@ export const maxDuration = 300
  * It is also the repair path for anything the webhook missed -- a Discord
  * outage, a rate limit, a role changed by hand in the server.
  */
-export async function GET(req: Request) {
+async function run(req: Request) {
   // Vercel signs its cron invocations with CRON_SECRET when the variable is
   // set. Without the check this route is a public endpoint that hammers the
   // Discord API for anyone who finds it.
@@ -40,3 +41,5 @@ export async function GET(req: Request) {
 
   return NextResponse.json({ ok: true, ms, ...tally })
 }
+
+export const GET = withCronLog('discord-sync', run)

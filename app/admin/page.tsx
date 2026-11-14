@@ -3,7 +3,10 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getRangeAnalytics, getGlobalTotals } from '@/lib/admin-analytics'
+import { loadOps, loadPeople } from '@/lib/admin-people-server'
+import { loadProof } from '@/lib/proof'
 import AdminDashboard from '@/components/AdminDashboard'
+import type { AdminPost } from '@/components/admin/types'
 
 export const metadata: Metadata = {
   title: 'Admin Dashboard – EdTheStatMan',
@@ -11,25 +14,24 @@ export const metadata: Metadata = {
 
 const PAGE_SIZE = 1000
 
-async function fetchAllPaged<T>(
-  buildQuery: (from: number, to: number) => any,
-): Promise<T[]> {
-  let all: T[] = []
-  let from = 0
-  while (true) {
-    const { data, error } = await buildQuery(from, from + PAGE_SIZE - 1)
-    if (error || !data || data.length === 0) break
-    all = all.concat(data as T[])
-    if (data.length < PAGE_SIZE) break
-    from += PAGE_SIZE
+async function fetchPosts(admin: any): Promise<AdminPost[]> {
+  const all: AdminPost[] = []
+  for (let from = 0; ; from += PAGE_SIZE) {
+    const { data, error } = await admin
+      .from('posts')
+      .select('id, title, slug, tag, access_level, published, published_at, created_at')
+      .order('created_at', { ascending: false })
+      .range(from, from + PAGE_SIZE - 1)
+    if (error) throw new Error(error.message)
+    all.push(...((data ?? []) as AdminPost[]))
+    if (!data || data.length < PAGE_SIZE) return all
   }
-  return all
 }
 
 export default async function AdminPage({
   searchParams,
 }: {
-  searchParams: { tab?: string }
+  searchParams: { view?: string; tab?: string }
 }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -44,36 +46,35 @@ export default async function AdminPage({
 
   if (!self?.is_admin) redirect('/')
 
-  const admin = createAdminClient()
+  const admin = createAdminClient() as any
 
-  // Analytics for the default range is fetched here, in parallel with users and
-  // posts, so the dashboard paints with data. Without it the client has to
-  // hydrate and then make its own authenticated round trip before anything
-  // beyond the skeleton appears.
-  const [users, posts, rangeAnalytics, totals] = await Promise.all([
-    fetchAllPaged<any>((from, to) =>
-      (admin as any)
-        .from('profiles')
-        .select('id, email, full_name, subscription_tier, subscription_status, is_admin, stripe_customer_id, stripe_subscription_id, created_at, updated_at, last_seen_at, access_expires_at, pass_tier, pass_expires_at, sub_tier, sub_current_period_end, billing_mode, discord_user_id')
-        .order('last_seen_at', { ascending: false, nullsFirst: false })
-        .range(from, to),
-    ),
-    fetchAllPaged<any>((from, to) =>
-      (admin as any)
-        .from('posts')
-        .select('id, title, slug, tag, access_level, published, published_at, author_id, created_at, updated_at')
-        .order('created_at', { ascending: false })
-        .range(from, to),
-    ),
-    getRangeAnalytics(admin as any, 'month'),
-    getGlobalTotals(admin as any),
+  // Everything is fetched here in parallel, so the dashboard paints with data.
+  // Without it the client has to hydrate and then make its own authenticated
+  // round trip before anything beyond a skeleton appears.
+  const [peopleLoad, ops, posts, rangeAnalytics, totals, proof] = await Promise.all([
+    loadPeople(admin),
+    loadOps(admin),
+    fetchPosts(admin).catch((e: Error) => {
+      console.error(`[admin] posts load failed: ${e.message}`)
+      return null
+    }),
+    getRangeAnalytics(admin, 'month'),
+    getGlobalTotals(admin),
+    loadProof().catch((e: Error) => {
+      console.error(`[admin] records load failed: ${e.message}`)
+      return null
+    }),
   ])
 
   return (
     <AdminDashboard
-      users={users}
+      people={peopleLoad.people}
+      purchases={peopleLoad.purchases}
+      peopleError={peopleLoad.error}
+      ops={ops}
       posts={posts}
-      initialTab={searchParams.tab}
+      records={proof?.books ?? null}
+      initialView={searchParams.view ?? searchParams.tab}
       initialAnalytics={{ ...rangeAnalytics, ...totals }}
     />
   )
