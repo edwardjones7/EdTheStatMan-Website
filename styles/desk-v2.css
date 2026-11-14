@@ -272,7 +272,9 @@
   .dk .desk-card {
     display: grid;
     /* Teams capped so the lines sit beside the names, not across a gap. */
-    grid-template-columns: 150px minmax(240px, 420px) minmax(0, 1fr) 140px;
+    /* Last column fits "🔒 11 Systems/Trends" plus the arrow (~196px); at 140px
+       the tag spilled left across the divider into the ML cell. */
+    grid-template-columns: 150px minmax(240px, 420px) minmax(0, 1fr) 210px;
     align-items: center;
   }
   .dk .desk-card:hover { transform: none; }
@@ -304,7 +306,10 @@
 /* Market chips share the wide middle column evenly in row mode. */
 @media (min-width: 1100px) {
   .dk .desk-card__market { grid-template-columns: repeat(3, minmax(0, 1fr)); border-bottom: 0; align-self: stretch; }
-  .dk .desk-card__foot { justify-content: flex-end; padding-right: 14px; }
+  /* Tags sit at the left of the cell; the arrow's margin-left:auto keeps it right. */
+  .dk .desk-card__foot { justify-content: flex-start; padding-right: 14px; }
+  /* A second tag (Bets) stacks under the first instead of overflowing. */
+  .dk .desk-card__tags { flex-direction: column; align-items: flex-start; }
 }
 .dk .desk-card__foot * { white-space: nowrap; }
 

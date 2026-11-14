@@ -170,7 +170,7 @@ export function stories(board: HomeBoard | null, brief: Brief, lead: Story | nul
  * every Vault row, so the code and record are all that leave the server;
  * the rule itself stays behind the paywall.
  */
-export async function loadVaultLeaders(limit = 6, minDecisions = 300): Promise<VaultLeader[]> {
+export async function loadVaultLeaders(limit = 8, minDecisions = 250): Promise<VaultLeader[]> {
   try {
     const admin = createCachedClient([DB_TAGS.vault]) as any
     const { data, error } = await admin
