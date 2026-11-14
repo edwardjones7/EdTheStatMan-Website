@@ -112,6 +112,71 @@ const drafts = {
     </g>
     <g font-family="Barlow" font-weight="500" font-size="23" fill="#B3C0D1"><text x="580" y="352">NFL  ·  College Football  ·  NBA  ·  College Basketball</text></g>
     ${url(580, 372)}`),
+
+  // 6. Draft 5, one notch up: lit photo, W/L marks on the chart, a product
+  //    card over the photo, the E by the URL, and a little grain.
+  'f-hoop-pro': (() => {
+    // A believable run: mostly wins, a few losses. Each point after the first
+    // is marked by whether it went up (win) or down (loss).
+    const pts = [[0, 236], [40, 220], [80, 206], [120, 214], [160, 192], [200, 178], [240, 186], [280, 160], [320, 144], [360, 152], [400, 100]]
+    const line = pts.map(([x, y], i) => `${i ? 'L' : 'M'}${x} ${y}`).join(' ')
+    const marks = pts.slice(1).map(([x, y], i) => {
+      const win = y < pts[i][1]
+      return `<circle cx="${x}" cy="${y}" r="${i === pts.length - 2 ? 8 : 5.5}" fill="${win ? '#35C98A' : '#FF6B6B'}" stroke="#0A101B" stroke-width="2.5"/>`
+    }).join('')
+    return svg(`
+    ${ground}${grid}
+    <filter id="cool6"><feColorMatrix type="saturate" values="0.72"/></filter>
+    <linearGradient id="fadeIn6" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset="0.4" stop-color="#fff" stop-opacity="0.6"/><stop offset="1" stop-color="#fff" stop-opacity="1"/></linearGradient>
+    <mask id="photoFade6"><rect x="1080" width="420" height="500" fill="url(#fadeIn6)"/></mask>
+    <g mask="url(#photoFade6)">
+      <image href="${photo('nba')}" x="1080" y="0" width="420" height="500" preserveAspectRatio="xMidYMid slice" filter="url(#cool6)"/>
+      <rect x="1080" width="420" height="500" fill="#2F7BFF" fill-opacity="0.22" style="mix-blend-mode:overlay"/>
+    </g>
+    <radialGradient id="rim6" cx="0.88" cy="0.08" r="0.32"><stop offset="0" stop-color="#4C9BFF" stop-opacity="0.38"/><stop offset="1" stop-color="#4C9BFF" stop-opacity="0"/></radialGradient>
+    <rect width="1500" height="500" fill="url(#rim6)" style="mix-blend-mode:screen"/>
+    <radialGradient id="vig6" cx="0.5" cy="0.45" r="0.75"><stop offset="0.6" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity="0.45"/></radialGradient>
+    <rect width="1500" height="500" fill="url(#vig6)"/>
+    ${topRule}
+
+    <linearGradient id="area6" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2F7BFF" stop-opacity="0.34"/><stop offset="1" stop-color="#2F7BFF" stop-opacity="0"/></linearGradient>
+    <g transform="translate(80 44)">
+      <path d="${line} L400 260 L0 260 Z" fill="url(#area6)"/>
+      <path d="${line}" fill="none" stroke="url(#blue)" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+      <circle cx="400" cy="100" r="20" fill="#35C98A" fill-opacity="0.18"/>
+      ${marks}
+      <path d="M0 260H400" stroke="#1F2B3D" stroke-width="2"/>
+      <text x="0" y="40" font-family="Barlow" font-weight="600" font-size="15" fill="#8C9CB1" letter-spacing="2">UNITS, EVERY PICK GRADED IN PUBLIC</text>
+      <g transform="translate(286 284)" font-family="Barlow" font-weight="600" font-size="13" letter-spacing="1.5">
+        <circle cx="5" cy="-4" r="5" fill="#35C98A"/><text x="16" y="0" fill="#8C9CB1">WIN</text>
+        <circle cx="64" cy="-4" r="5" fill="#FF6B6B"/><text x="75" y="0" fill="#8C9CB1">LOSS</text>
+      </g>
+    </g>
+
+    <g font-family="Barlow" font-weight="600" font-size="18" fill="#6AA5FF" letter-spacing="3"><text x="580" y="98">THE RESEARCH DESK  ·  THE VAULT  ·  THE PORTFOLIO</text></g>
+    <g font-family="Barlow Semi Condensed" font-weight="800" font-size="68" fill="#F2F6FB">
+      <text x="576" y="168">Every game.</text>
+      <text x="576" y="238">Every system.</text>
+      <text x="576" y="308">Every pick, <tspan fill="url(#blue)">graded.</tspan></text>
+    </g>
+    <g font-family="Barlow" font-weight="500" font-size="23" fill="#B3C0D1"><text x="580" y="352">NFL  ·  College Football  ·  NBA  ·  College Basketball</text></g>
+    ${url(580, 372)}
+
+    <g transform="translate(1176 332)">
+      <rect width="282" height="82" rx="3" fill="#0D1522" fill-opacity="0.86" stroke="#2A3B57"/>
+      <rect width="282" height="3" fill="#35C98A"/>
+      <circle cx="30" cy="42" r="15" fill="#0F3326" stroke="#1E6B4C"/>
+      <path d="M23 42l5 5 10-11" fill="none" stroke="#7FE0B4" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="56" y="36" font-family="Barlow" font-weight="600" font-size="14" fill="#7FE0B4" letter-spacing="2">GRADED  ·  WIN</text>
+      <text x="56" y="60" font-family="Barlow" font-weight="500" font-size="17" fill="#D5DEEA">Win or lose, on the record</text>
+    </g>
+
+    <filter id="grain6" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="7"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.05 0"/>
+    </filter>
+    <rect width="1500" height="500" filter="url(#grain6)"/>`)
+  })(),
 }
 
 const avatar = readFileSync(join(repo, 'brand/x-avatar.png')).toString('base64')
