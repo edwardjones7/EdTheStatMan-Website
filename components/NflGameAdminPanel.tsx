@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import { IconPencil } from './Icons'
+import { AdminActions, useAdminKit } from './admin-kit/AdminKit'
 import { writeupBetCount } from '@/lib/nfl'
 
 interface LinkableRow {
@@ -34,17 +35,43 @@ interface Props {
   linkedTrendIds: string[]
 }
 
-export default function NflGameAdminPanel({ game, sportLabel, allSystems, allTrends, linkedSystemIds, linkedTrendIds }: Props) {
+/**
+ * "Edit game" in the admin bar; the editor opens in the wide side panel, so
+ * the page stays exactly as visitors see it.
+ */
+export default function NflGameAdminPanel(props: Props) {
+  const kit = useAdminKit()
+  if (!kit) return null
+  const linked = props.linkedSystemIds.length + props.linkedTrendIds.length
+  return (
+    <AdminActions>
+      <button
+        type="button"
+        className="akit-btn akit-btn--primary"
+        onClick={() => kit.openPanel({ title: 'Edit game research', body: <GameEditor {...props} />, wide: true })}
+      >
+        <IconPencil size={13} /> Edit game
+      </button>
+      <span className="akit-bar__meta">
+        {props.game.is_published ? 'Published' : 'Hidden from visitors'} · {linked} linked
+      </span>
+    </AdminActions>
+  )
+}
+
+function GameEditor({ game, sportLabel, allSystems, allTrends, linkedSystemIds, linkedTrendIds }: Props) {
   const router = useRouter()
-  const [open, setOpen] = useState(false)
-  const [brief, setBrief] = useState(game.brief)
+  const kit = useAdminKit()!
+  const [brief, setBriefRaw] = useState(game.brief)
   const [isPublished, setIsPublished] = useState(game.is_published)
   const [researchClosed, setResearchClosed] = useState(Boolean(game.research_closed_at))
   const [systemIds, setSystemIds] = useState<Set<string>>(new Set(linkedSystemIds))
   const [trendIds, setTrendIds] = useState<Set<string>>(new Set(linkedTrendIds))
   const [saving, setSaving] = useState(false)
-  const [message, setMessage] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
   const [betCount, setBetCount] = useState(() => writeupBetCount(game.writeup_html))
+  const dirty = () => kit.setPanelDirty(true)
+  const setBrief = (v: string) => { setBriefRaw(v); dirty() }
 
   const closedOn = game.research_closed_at
     ? new Date(game.research_closed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
@@ -54,7 +81,7 @@ export default function NflGameAdminPanel({ game, sportLabel, allSystems, allTre
     immediatelyRender: false,
     extensions: [StarterKit],
     content: game.writeup_html || '<p></p>',
-    onUpdate: ({ editor }) => setBetCount(writeupBetCount(editor.getHTML())),
+    onUpdate: ({ editor }) => { setBetCount(writeupBetCount(editor.getHTML())); dirty() },
   })
 
   function toggle(set: Set<string>, id: string, apply: (next: Set<string>) => void) {
@@ -62,11 +89,12 @@ export default function NflGameAdminPanel({ game, sportLabel, allSystems, allTre
     if (next.has(id)) next.delete(id)
     else next.add(id)
     apply(next)
+    dirty()
   }
 
   async function save() {
     setSaving(true)
-    setMessage(null)
+    setError(null)
     try {
       const patchRes = await fetch(`/api/admin/nfl-games/${game.id}`, {
         method: 'PATCH',
@@ -87,32 +115,23 @@ export default function NflGameAdminPanel({ game, sportLabel, allSystems, allTre
       })
       if (!linksRes.ok) throw new Error((await linksRes.json()).error ?? 'Saving links failed')
 
-      setMessage('Saved.')
+      kit.setPanelDirty(false)
+      kit.closePanel()
+      kit.toast('Game research saved')
       router.refresh()
     } catch (e: any) {
-      setMessage(e.message ?? 'Save failed')
+      setError(e.message ?? 'Save failed')
     } finally {
       setSaving(false)
     }
   }
 
-  if (!open) {
-    return (
-      <div style={{ margin: '16px 0' }}>
-        <button className="btn btn--outline btn--sm" onClick={() => setOpen(true)}>
-          <IconPencil size={13} /> Edit game (admin)
-        </button>
-      </div>
-    )
-  }
-
   return (
-    <div className="admin-inline-form" style={{ margin: '16px 0 28px' }}>
-      <div className="admin-inline-form__title">Edit Game — Breakdown, Brief & Links</div>
-      {message && <div style={{ marginBottom: '10px', fontSize: '0.85rem', color: message === 'Saved.' ? 'var(--accent-teal)' : 'var(--down)' }}>{message}</div>}
+    <div className="akit-form">
+      {error && <p className="akit-form__error" role="alert">{error}</p>}
 
-      <div className="admin-form-field admin-form-field--wide" style={{ marginBottom: '14px' }}>
-        <label className="admin-form-label">Brief (public teaser / SEO description)</label>
+      <div className="admin-form-field admin-form-field--wide">
+        <label className="admin-form-label">Brief (everyone can read it; also the search description)</label>
         <textarea
           className="admin-form-input"
           rows={2}
@@ -122,8 +141,8 @@ export default function NflGameAdminPanel({ game, sportLabel, allSystems, allTre
         />
       </div>
 
-      <div className="admin-form-field admin-form-field--wide" style={{ marginBottom: '14px' }}>
-        <label className="admin-form-label">Institutional breakdown (gated at the Institutional rung)</label>
+      <div className="admin-form-field admin-form-field--wide">
+        <label className="admin-form-label">Breakdown (Vault and Research Desk members)</label>
         <div className="nfl-writeup-editor">
           <EditorContent editor={editor} />
         </div>
@@ -133,7 +152,7 @@ export default function NflGameAdminPanel({ game, sportLabel, allSystems, allTre
         </p>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '16px', marginBottom: '14px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '16px' }}>
         <LinkPicker
           title={`Linked systems (${systemIds.size})`}
           kind="systems"
@@ -152,37 +171,31 @@ export default function NflGameAdminPanel({ game, sportLabel, allSystems, allTre
         />
       </div>
 
-      <label className="admin-form-check" style={{ marginBottom: '10px' }}>
-        <input type="checkbox" checked={isPublished} onChange={e => setIsPublished(e.target.checked)} />
-        <span>Published (visible on the public hub)</span>
-      </label>
+      <div className="akit-switches">
+        <label className="akit-switch">
+          <input type="checkbox" checked={isPublished} onChange={e => { setIsPublished(e.target.checked); dirty() }} />
+          <span>Published<small>Off hides this game from visitors; admins still see it.</small></span>
+        </label>
+        {/* Kept for the record, but it changes nothing today: closing only
+            ever shut linked rows to Desk members WITHOUT the Vault library,
+            and since Nov 2026 every Research Desk pass includes the Vault. */}
+        <label className="akit-switch">
+          <input type="checkbox" checked={researchClosed} onChange={e => { setResearchClosed(e.target.checked); dirty() }} />
+          <span>
+            Research closed{researchClosed && closedOn ? ` (since ${closedOn})` : ''}
+            <small>No effect on current plans: every Research Desk member also holds the Vault, so they keep the linked rows either way.</small>
+          </span>
+        </label>
+      </div>
 
-      {/* The Desk rung reads these curated rows in this game's context, which it
-          could not do in the library. Fine while the game is ahead of you; on a
-          season of played games it is the Private library handed over one
-          matchup at a time. Shut it once the game is done. Private and
-          Institutional members are unaffected -- they hold the library. */}
-      <label className="admin-form-check" style={{ marginBottom: '6px' }}>
-        <input
-          type="checkbox"
-          checked={researchClosed}
-          onChange={e => setResearchClosed(e.target.checked)}
-        />
-        <span>Research closed — Desk members can no longer read the linked rows here</span>
-      </label>
-      <p className="admin-form-hint">
-        {researchClosed
-          ? `Closed${closedOn ? ` ${closedOn}` : ''}. Research Desk members see record-only teasers on this game; Private and above are unaffected.`
-          : 'Open. Research Desk members can read every linked system and trend on this page.'}
-      </p>
-
-      <div className="admin-inline-form__actions">
-        <button className="btn btn--primary btn--sm" onClick={save} disabled={saving}>
-          {saving ? 'Saving…' : 'Save'}
-        </button>
-        <button className="btn btn--outline btn--sm" onClick={() => setOpen(false)} disabled={saving}>
-          Close
-        </button>
+      <div className="akit-form__foot">
+        <div />
+        <div>
+          <button type="button" className="akit-btn" onClick={() => kit.closePanel()} disabled={saving}>Cancel</button>
+          <button type="button" className="akit-btn akit-btn--primary" onClick={save} disabled={saving}>
+            {saving ? 'Saving…' : 'Save game'}
+          </button>
+        </div>
       </div>
     </div>
   )

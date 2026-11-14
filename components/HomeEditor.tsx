@@ -1,10 +1,11 @@
 'use client'
 
 import { useState, type ReactNode } from 'react'
+import { useRouter } from 'next/navigation'
 import type { AllSiteContent } from '@/lib/site-content'
 import Features from './Features'
 import CTASection from './CTASection'
-import { IconPencil } from './Icons'
+import { AdminActions, useAdminKit } from './admin-kit/AdminKit'
 
 interface Props {
   /**
@@ -24,42 +25,45 @@ interface Props {
   content: AllSiteContent
 }
 
+/**
+ * The homepage, with its two text sections (Features and the closing call to
+ * action) editable by admins. "Edit page text" in the admin bar outlines them
+ * and scrolls there; Save writes only the sections that changed.
+ */
 export default function HomeEditor({ content, brief, hero }: Props) {
+  const kit = useAdminKit()
+  const router = useRouter()
   const [editMode, setEditMode] = useState(false)
   const [draft, setDraft] = useState<AllSiteContent>(content)
-  const [dirty, setDirty] = useState(false)
   const [dirtyKeys, setDirtyKeys] = useState(new Set<keyof AllSiteContent>())
   const [saving, setSaving] = useState(false)
-  const [error, setError] = useState<string | null>(null)
   const [resetKey, setResetKey] = useState(0)
+  const dirty = dirtyKeys.size > 0
 
   function patch<K extends keyof AllSiteContent>(section: K, updates: Partial<AllSiteContent[K]>) {
     setDraft(prev => ({ ...prev, [section]: { ...prev[section], ...updates } }))
-    setDirty(true)
     setDirtyKeys(prev => new Set([...prev, section]))
   }
 
-  function toggleEdit() {
-    if (editMode && dirty) {
-      // Discard on toggle-off if dirty — prompt handled by the UI
-      cancel()
-    } else {
-      setEditMode(e => !e)
-    }
+  function start() {
+    setEditMode(true)
+    window.setTimeout(() => document.getElementById('home-editable')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50)
   }
 
-  function cancel() {
+  function reset() {
     setDraft(content)
-    setDirty(false)
     setDirtyKeys(new Set())
-    setError(null)
     setResetKey(k => k + 1)
     setEditMode(false)
   }
 
+  async function discard() {
+    if (dirty && kit && !(await kit.confirm({ title: 'Discard your text changes?', body: 'Nothing has been saved yet.', confirm: 'Discard', danger: true }))) return
+    reset()
+  }
+
   async function save() {
     setSaving(true)
-    setError(null)
     try {
       await Promise.all(
         [...dirtyKeys].map(key =>
@@ -70,9 +74,12 @@ export default function HomeEditor({ content, brief, hero }: Props) {
           }).then(r => r.ok ? r.json() : r.json().then(j => Promise.reject(j.error)))
         )
       )
-      window.location.href = window.location.pathname
+      setDirtyKeys(new Set())
+      setEditMode(false)
+      kit?.toast('Homepage text saved')
+      router.refresh()
     } catch (e: any) {
-      setError(typeof e === 'string' ? e : 'Save failed')
+      kit?.toast(`Couldn’t save: ${typeof e === 'string' ? e : 'unknown error'}`, 'error')
     } finally {
       setSaving(false)
     }
@@ -89,104 +96,26 @@ export default function HomeEditor({ content, brief, hero }: Props) {
       {/* The ticker is rendered globally by the root layout (editable there). */}
       {hero}
       {brief}
-      <Features        content={draft.features}          {...ep('features')} />
-      <CTASection      content={draft.cta_section}       {...ep('cta_section')} />
-
-      {/* ── Single global FAB ── */}
-      <div style={{
-        position: 'fixed',
-        bottom: '28px',
-        right: '28px',
-        zIndex: 200,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: '8px',
-      }}>
-        {editMode ? (
-          <>
-            {dirty && (
-              <button
-                onClick={save}
-                disabled={saving}
-                title="Save all changes"
-                style={{ ...fab, background: 'var(--accent-teal)', color: 'var(--brand-ink)' }}
-              >
-                {saving ? '…' : '✓'}
-              </button>
-            )}
-            <button
-              onClick={cancel}
-              title="Exit edit mode"
-              style={{
-                ...fab,
-                width: dirty ? '40px' : '54px',
-                height: dirty ? '40px' : '54px',
-                fontSize: dirty ? '1rem' : '1.3rem',
-                background: dirty ? 'var(--bg-secondary)' : 'rgba(var(--brand-rgb),0.15)',
-                color: dirty ? 'var(--text-muted)' : 'var(--accent-teal)',
-                border: dirty ? '2px solid var(--border)' : '2px solid rgba(var(--brand-rgb),0.35)',
-              }}
-            >
-              ✕
-            </button>
-          </>
-        ) : (
-          <button
-            onClick={() => setEditMode(true)}
-            title="Edit page content"
-            style={{ ...fab, background: 'var(--accent-teal)', color: 'var(--brand-ink)' }}
-          >
-            <IconPencil size={14} />
-          </button>
-        )}
-
-        {error && (
-          <span style={{
-            background: 'rgba(239,68,68,0.92)',
-            color: '#fff',
-            fontSize: '0.72rem',
-            padding: '5px 9px',
-            borderRadius: '6px',
-            maxWidth: '150px',
-            textAlign: 'center',
-            lineHeight: 1.4,
-          }}>
-            {error}
-          </span>
-        )}
-
-        {editMode && !dirty && (
-          <span style={{
-            background: 'rgba(var(--brand-rgb),0.12)',
-            border: '1px solid rgba(var(--brand-rgb),0.25)',
-            color: 'var(--accent-teal)',
-            fontSize: '0.68rem',
-            fontWeight: 600,
-            padding: '3px 8px',
-            borderRadius: '6px',
-            letterSpacing: '0.04em',
-            textTransform: 'uppercase',
-            whiteSpace: 'nowrap',
-          }}>
-            Editing
-          </span>
-        )}
+      <div id="home-editable" className={editMode ? 'akit-editable-zone' : undefined}>
+        <Features   content={draft.features}    {...ep('features')} />
+        <CTASection content={draft.cta_section} {...ep('cta_section')} />
       </div>
+
+      {kit && (
+        <AdminActions>
+          {editMode ? (
+            <>
+              <button type="button" className="akit-btn akit-btn--primary" disabled={!dirty || saving} onClick={() => void save()}>
+                {saving ? 'Saving…' : dirty ? 'Save text' : 'No changes yet'}
+              </button>
+              <button type="button" className="akit-btn" onClick={() => void discard()}>{dirty ? 'Discard' : 'Done'}</button>
+              <span className="akit-bar__meta">Click any outlined text at the bottom of the page to change it</span>
+            </>
+          ) : (
+            <button type="button" className="akit-btn akit-btn--primary" onClick={start}>Edit page text</button>
+          )}
+        </AdminActions>
+      )}
     </>
   )
-}
-
-const fab: React.CSSProperties = {
-  width: '54px',
-  height: '54px',
-  borderRadius: '50%',
-  border: 'none',
-  cursor: 'pointer',
-  fontSize: '1.3rem',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
-  transition: 'transform 0.15s',
 }

@@ -8,7 +8,9 @@ import LockedTeaserCard from './LockedTeaserCard'
 import type { LockedTeaser } from '@/lib/teaser'
 import { isPaidTier, normalizeTier, accessBadge, TIER_SHORT_LABEL, VAULT_ACCESS_OPTIONS, type Tier } from '@/lib/access'
 import { nextCode, compareCode, codeKey } from '@/lib/codes'
-import { IconLock, IconPencil } from './Icons'
+import { IconLock } from './Icons'
+import VaultEditActions from './admin-kit/VaultEditActions'
+import { useAdminKit } from './admin-kit/AdminKit'
 import RecordStrip from './RecordStrip'
 import { unlockHref } from '@/lib/unlock'
 import VaultSportTabs from './VaultSportTabs'
@@ -111,6 +113,7 @@ function parseStr(val: unknown): string {
 
 export default function SportTabsSystem({ systems, lockedCounts = {}, lockedTeasers = [], eliteLockedCounts = {}, eliteTeasers = [], userTier, isAdmin = false, teaserTiers = {}, freeLockedCounts = {}, freeTeasers = [] }: Props) {
   const router = useRouter()
+  const kit = useAdminKit()
   const pathname = usePathname()
   const searchParams = useSearchParams()
 
@@ -278,9 +281,14 @@ export default function SportTabsSystem({ systems, lockedCounts = {}, lockedTeas
   }
 
   async function deleteRow(id: string, description: string) {
-    if (!confirm(`Delete "${description || '(blank row)'}"? This cannot be undone.`)) return
+    const label = description || '(blank row)'
+    const ok = kit
+      ? await kit.confirm({ title: 'Delete this system?', body: <>&ldquo;{label}&rdquo; comes out of the Vault. This can&rsquo;t be undone.</>, confirm: 'Delete system', danger: true })
+      : confirm(`Delete "${label}"? This cannot be undone.`)
+    if (!ok) return
     const res = await fetch(`/api/admin/systems/${id}`, { method: 'DELETE' })
-    if (!res.ok) { alert('Delete failed.'); return }
+    if (!res.ok) { kit ? kit.toast('Couldn’t delete that system', 'error') : alert('Delete failed.'); return }
+    kit?.toast('Deleted the system')
     router.refresh()
   }
 
@@ -369,23 +377,36 @@ export default function SportTabsSystem({ systems, lockedCounts = {}, lockedTeas
     }
   }
 
+  // Edit on/off, add, import and clear live in the admin bar, the same place
+  // as every other page's admin actions.
+  const vaultActions = isAdmin ? (
+    <VaultEditActions
+      noun="system"
+      editing={editMode}
+      setEditing={on => { setEditMode(on); if (!on) { setFormMode('hidden'); setXlsxSheets(null) } }}
+      onAdd={openAdd}
+      addDisabled={formMode !== 'hidden'}
+      onImport={() => fileRef.current?.click()}
+      onClearAll={async () => {
+        const res = await fetch('/api/admin/systems/import', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ records: [], clearFirst: true }),
+        })
+        if (!res.ok) throw new Error('Clear failed')
+        router.refresh()
+      }}
+      total={systems.length}
+    />
+  ) : null
+
   if (systems.length === 0 && totalLocked === 0 && totalEliteLocked === 0 && !editMode) {
     return (
       <>
         <div style={{ textAlign: 'center', padding: '48px 0', color: 'var(--text-muted)' }}>
           No betting systems available yet. Check back soon.
         </div>
-        {isAdmin && (
-          <div style={{ position: 'fixed', bottom: '28px', left: '28px', zIndex: 200, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-            <button
-              onClick={() => setEditMode(true)}
-              title="Edit systems"
-              style={{ ...fabStyle, background: 'var(--accent-teal)', color: 'var(--brand-ink)', border: 'none' }}
-            >
-              <IconPencil size={14} />
-            </button>
-          </div>
-        )}
+        {vaultActions}
       </>
     )
   }
@@ -422,49 +443,15 @@ export default function SportTabsSystem({ systems, lockedCounts = {}, lockedTeas
         archiveCount={systems.filter(r => ARCHIVE_SPORTS.has(r.sport)).length + countForTab(lockedCounts, 'archive') + countForTab(freeLockedCounts, 'archive') + countForTab(eliteLockedCounts, 'archive')}
       />
 
-      {/* Admin toolbar */}
+      {vaultActions}
+      {/* The file picker the bar's Import button opens. */}
+      {isAdmin && (
+        <input ref={fileRef} type="file" accept=".xlsx,.xls" style={{ display: 'none' }} onChange={handleFileChange} />
+      )}
       {isAdmin && editMode && (
-        <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginTop: '16px', flexWrap: 'wrap' }}>
-          <button
-            className="btn btn--primary btn--sm"
-            onClick={openAdd}
-            disabled={formMode !== 'hidden'}
-          >
-            + Add Row
-          </button>
-          <button
-            className="btn btn--outline btn--sm"
-            onClick={() => fileRef.current?.click()}
-            style={{ borderColor: 'rgba(var(--brand-rgb), 0.4)', color: 'var(--accent-teal)' }}
-          >
-            &#8679; Import XLSX
-          </button>
-          <button
-            className="btn btn--outline btn--sm"
-            onClick={async () => {
-              if (!confirm('Delete ALL systems? This cannot be undone.')) return
-              await fetch('/api/admin/systems/import', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ records: [], clearFirst: true }),
-              })
-              router.refresh()
-            }}
-            style={{ borderColor: 'rgba(var(--down-rgb), 0.4)', color: 'var(--down)' }}
-          >
-            Clear All
-          </button>
-          <input
-            ref={fileRef}
-            type="file"
-            accept=".xlsx,.xls"
-            style={{ display: 'none' }}
-            onChange={handleFileChange}
-          />
-          <span style={{ marginLeft: 'auto', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
-            {allVisible.length} row{allVisible.length !== 1 ? 's' : ''} &middot; {allVisible.filter(s => s.is_active).length} active
-          </span>
-        </div>
+        <p className="akit-editing">
+          <b>Editing systems.</b> Use Edit on any row to change it. {allVisible.length} row{allVisible.length !== 1 ? 's' : ''} in this tab, {allVisible.filter(s => s.is_active).length} active.
+        </p>
       )}
 
       {/* XLSX import config panel */}
@@ -660,23 +647,9 @@ export default function SportTabsSystem({ systems, lockedCounts = {}, lockedTeas
                       {/* Admin controls strip */}
                       {isAdmin && editMode && (
                         <div className="sys-row-card__admin">
-                          <button
-                            onClick={() => openEdit(row)}
-                            style={{
-                              padding: '3px 9px', borderRadius: '10px', border: '1px solid var(--border-color)',
-                              cursor: 'pointer', fontSize: '0.7rem', background: 'transparent', color: 'var(--text-secondary)',
-                            }}
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => deleteRow(row.id, row.description)}
-                            style={{
-                              padding: '3px 9px', borderRadius: '10px', border: 'none', cursor: 'pointer',
-                              fontSize: '0.7rem', background: 'rgba(var(--down-rgb), 0.1)', color: 'var(--down)',
-                            }}
-                          >
-                            ✕
+                          <button type="button" className="akit-chip" onClick={() => openEdit(row)}>Edit</button>
+                          <button type="button" className="akit-chip akit-chip--danger" aria-label="Delete system" onClick={() => deleteRow(row.id, row.description)}>
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13" /></svg>
                           </button>
                         </div>
                       )}
@@ -919,69 +892,7 @@ export default function SportTabsSystem({ systems, lockedCounts = {}, lockedTeas
         </div>
       )}
 
-      {/* Admin FAB */}
-      {isAdmin && (
-        <div style={{
-          /* Bottom-LEFT. It moved here when EdTheStatBot's FAB took the
-             bottom-right corner; the bot is parked now, but .back-to-top has
-             taken that corner back, so this stays where it is. */
-          position: 'fixed',
-          bottom: '28px',
-          left: '28px',
-          zIndex: 200,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: '8px',
-        }}>
-          {editMode ? (
-            <button
-              onClick={() => { setEditMode(false); setFormMode('hidden'); setXlsxSheets(null) }}
-              title="Exit edit mode"
-              style={{ ...fabStyle, background: 'rgba(var(--brand-rgb), 0.15)', color: 'var(--accent-teal)', border: '2px solid rgba(var(--brand-rgb), 0.35)' }}
-            >
-              ✕
-            </button>
-          ) : (
-            <button
-              onClick={() => setEditMode(true)}
-              title="Edit systems"
-              style={{ ...fabStyle, background: 'var(--accent-teal)', color: 'var(--brand-ink)', border: 'none' }}
-            >
-              <IconPencil size={14} />
-            </button>
-          )}
-          {editMode && (
-            <span style={{
-              background: 'rgba(var(--brand-rgb), 0.12)',
-              border: '1px solid rgba(var(--brand-rgb), 0.25)',
-              color: 'var(--accent-teal)',
-              fontSize: '0.68rem',
-              fontWeight: 600,
-              padding: '3px 8px',
-              borderRadius: '6px',
-              letterSpacing: '0.04em',
-              textTransform: 'uppercase',
-              whiteSpace: 'nowrap',
-            }}>
-              Editing
-            </span>
-          )}
-        </div>
-      )}
     </>
   )
 }
 
-const fabStyle: React.CSSProperties = {
-  width: '54px',
-  height: '54px',
-  borderRadius: '50%',
-  cursor: 'pointer',
-  fontSize: '1.3rem',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
-  transition: 'transform 0.15s',
-}

@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { AdminActions, useAdminKit } from './admin-kit/AdminKit'
 
 interface Props {
   /** Which league to sync. The route sweeps that league's own season shape. */
@@ -14,14 +15,19 @@ interface Props {
   week?: number
 }
 
+/**
+ * The Desk's ESPN sync, in the admin bar. "Sync this week" is the everyday
+ * button; the two season-wide syncs are heavier and ask first. Results arrive
+ * as a toast instead of a line of text in the page.
+ */
 export default function NflAdminBar({ sport, season, seasonLabel = String(season), seasonType, week }: Props) {
   const router = useRouter()
+  const kit = useAdminKit()
   const [syncing, setSyncing] = useState(false)
-  const [message, setMessage] = useState<string | null>(null)
+  if (!kit) return null
 
-  async function runSync(body: Record<string, number | boolean | string>) {
+  async function runSync(body: Record<string, number | boolean | string>, what: string) {
     setSyncing(true)
-    setMessage(null)
     try {
       const res = await fetch('/api/admin/nfl-sync', {
         method: 'POST',
@@ -30,64 +36,39 @@ export default function NflAdminBar({ sport, season, seasonLabel = String(season
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error ?? 'Sync failed')
-      const failNote = data.failed?.length ? ` · ${data.failed.length} failed` : ''
-      const stagedNote = data.published === false ? ' · staged unpublished' : ''
-      const oddsNote = data.odds && data.odds !== 'on' ? ` · odds ${data.odds}` : ''
-      setMessage(`Synced: ${data.inserted} new, ${data.updated} updated${stagedNote}${oddsNote}${failNote}`)
+      const failNote = data.failed?.length ? `, ${data.failed.length} failed` : ''
+      const stagedNote = data.published === false ? ', staged (hidden from visitors)' : ''
+      const oddsNote = data.odds && data.odds !== 'on' ? `, odds ${data.odds}` : ''
+      kit!.toast(`${what}: ${data.inserted} new, ${data.updated} updated${stagedNote}${oddsNote}${failNote}`, data.failed?.length ? 'info' : 'ok')
       router.refresh()
     } catch (e: any) {
-      setMessage(e.message ?? 'Sync failed')
+      kit!.toast(`${what} failed: ${e.message ?? 'unknown error'}`, 'error')
     } finally {
       setSyncing(false)
     }
   }
 
+  async function season_(staged: boolean) {
+    const ok = await kit!.confirm({
+      title: staged ? `Stage the ${seasonLabel} ${sport.toUpperCase()} season?` : `Sync the whole ${seasonLabel} ${sport.toUpperCase()} season?`,
+      body: staged
+        ? 'Pulls every game from ESPN as hidden rows: you see them, visitors do not until they are published.'
+        : 'Pulls every game and line from ESPN and publishes new games straight away. It takes a while; this week only is usually enough.',
+      confirm: staged ? 'Stage season' : 'Sync season',
+    })
+    if (ok) await runSync(staged ? { season, publish: false } : { season }, staged ? 'Season staged' : 'Season sync')
+  }
+
   return (
-    <div style={{
-      display: 'flex',
-      gap: '10px',
-      alignItems: 'center',
-      flexWrap: 'wrap',
-      margin: '16px 0',
-      padding: '12px 16px',
-      background: 'var(--bg-secondary)',
-      border: '1px solid var(--border-color)',
-      borderRadius: '10px',
-    }}>
-      <span style={{
-        fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.06em',
-        textTransform: 'uppercase', color: 'var(--text-muted)',
-      }}>
-        Admin · ESPN Sync
-      </span>
-      <button
-        className="btn btn--outline btn--sm"
-        onClick={() => runSync({ season })}
-        disabled={syncing}
-      >
-        {syncing ? 'Syncing…' : `Sync full ${seasonLabel} season`}
-      </button>
-      {/* Stages the season without it appearing on the live site: new rows land
-          is_published=false, which the public pages filter out but admins see. */}
-      <button
-        className="btn btn--outline btn--sm"
-        onClick={() => runSync({ season, publish: false })}
-        disabled={syncing}
-      >
-        Sync {seasonLabel} (staged)
-      </button>
+    <AdminActions>
       {seasonType !== undefined && week !== undefined && (
-        <button
-          className="btn btn--outline btn--sm"
-          onClick={() => runSync({ season, seasonType, week })}
-          disabled={syncing}
-        >
-          Sync this week
+        <button type="button" className="akit-btn akit-btn--primary" disabled={syncing}
+          onClick={() => runSync({ season, seasonType, week }, 'This week synced')}>
+          {syncing ? 'Syncing…' : 'Sync this week'}
         </button>
       )}
-      {message && (
-        <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{message}</span>
-      )}
-    </div>
+      <button type="button" className="akit-btn" disabled={syncing} onClick={() => void season_(false)}>Sync season…</button>
+      <button type="button" className="akit-btn" disabled={syncing} onClick={() => void season_(true)}>Stage season…</button>
+    </AdminActions>
   )
 }

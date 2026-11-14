@@ -33,17 +33,14 @@ export default function EditableText({
   return (
     <Tag
       ref={ref}
-      className={className}
+      className={[className, 'akit-editable'].filter(Boolean).join(' ')}
       contentEditable
       suppressContentEditableWarning
-      onBlur={(e: React.FocusEvent<HTMLElement>) => {
-        const text = e.currentTarget.innerText
-        if (text !== value) onChange(text)
-      }}
+      // On every keystroke, not on blur: the admin bar's Save button enables
+      // as soon as something changes, instead of after clicking away first.
+      // Safe because the text node is only ever written on mount / resetKey.
+      onInput={(e: React.FormEvent<HTMLElement>) => onChange(e.currentTarget.innerText)}
       style={{
-        outline: 'none',
-        borderBottom: '1px dashed rgba(var(--brand-rgb), 0.45)',
-        borderRadius: '2px',
         cursor: 'text',
         minWidth: '20px',
         display: 'inline-block',

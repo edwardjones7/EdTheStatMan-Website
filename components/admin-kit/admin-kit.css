@@ -282,3 +282,30 @@ body.has-admin-bar { --admin-bar-h: 44px; }
   .akit-bar { gap: 8px; padding: 0 10px; }
   .akit-bar__who { display: none; }
 }
+
+/* "Editing systems / trends" line shown while a Vault editor is on. */
+.akit-editing {
+  margin: 16px 0 0;
+  padding: 10px 14px;
+  border: 1px dashed #22406F;
+  background: #0E1A2E;
+  color: var(--text-secondary);
+  font-size: 0.86rem;
+}
+.akit-editing b { color: var(--brand-text); }
+
+/* Small status text next to a page's bar actions ("Published · 4 linked"). */
+.akit-bar__meta { color: var(--text-muted); font-size: 0.8rem; white-space: nowrap; padding-left: 4px; }
+
+/* Text an admin can type into (EditableText). Visible at rest, obvious on
+   hover and focus, so it is clear what can change and where the caret is. */
+.akit-editable {
+  border-radius: 2px;
+  box-shadow: inset 0 -1px 0 rgba(106, 165, 255, 0.55);
+  transition: background-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+.akit-editable:hover { background: rgba(47, 123, 255, 0.08); }
+.akit-editable:focus { outline: 2px solid var(--brand); outline-offset: 2px; background: rgba(47, 123, 255, 0.1); }
+
+/* The homepage's editable sections while editing. */
+.akit-editable-zone { outline: 1px dashed #22406F; outline-offset: -1px; scroll-margin-top: calc(var(--nav-height) + var(--ticker-height, 0px) + var(--admin-bar-h, 0px) + 16px); }
