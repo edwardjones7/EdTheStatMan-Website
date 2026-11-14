@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { useTurnstile } from '@/components/Turnstile'
 import Link from 'next/link'
 import { sendMagicLink, signInWithPassword, signUpWithPassword } from '@/app/actions/auth'
 import { createClient } from '@/lib/supabase/client'
@@ -83,6 +84,8 @@ export default function AuthPanel({ mode, next, initialEmail = '' }: Props) {
   const statusRef = useRef<HTMLDivElement>(null)
 
   const isSignup = mode === 'signup'
+  // One check for the link form AND its resend button (components/Turnstile.tsx).
+  const check = useTurnstile(isSignup ? 'signup_link' : 'login_link')
 
   async function handleGoogle() {
     setError(null)
@@ -110,6 +113,8 @@ export default function AuthPanel({ mode, next, initialEmail = '' }: Props) {
     fd.set('email', address)
     fd.set('next', next)
     try {
+      const token = await check.getToken()
+      if (token) fd.set('captchaToken', token)
       const result = await sendMagicLink(fd)
       if (result.ok) {
         setSentTo(address)
@@ -124,6 +129,7 @@ export default function AuthPanel({ mode, next, initialEmail = '' }: Props) {
     } catch {
       setError('auth')
     } finally {
+      check.reset() // a token works once
       setBusy(null)
     }
   }
@@ -142,8 +148,13 @@ export default function AuthPanel({ mode, next, initialEmail = '' }: Props) {
   }
 
   // ---- "Check your inbox" ----------------------------------------------------
+  // The widget sits after whichever screen is showing, in the same place, so
+  // switching screens does not tear it down and the resend still has a check.
+  const checkSlot = <div className="fd-check">{check.widget}</div>
+
   if (sentTo) {
     return (
+      <>
       <div className="fd-sent" role="status" aria-live="polite" ref={statusRef} tabIndex={-1}>
         <div className="verify-icon"><IconMail size={28} /></div>
         <h2 className="fd-sent__title">Check your inbox</h2>
@@ -172,11 +183,14 @@ export default function AuthPanel({ mode, next, initialEmail = '' }: Props) {
           Use a different email
         </button>
       </div>
+      {checkSlot}
+      </>
     )
   }
 
   // ---- Start ---------------------------------------------------------------
   return (
+    <>
     <div className="auth-form fd-panel">
       <button
         type="button"
@@ -243,6 +257,8 @@ export default function AuthPanel({ mode, next, initialEmail = '' }: Props) {
         </div>
       )}
     </div>
+    {checkSlot}
+    </>
   )
 }
 
@@ -286,6 +302,7 @@ function PasswordSignup({ email, setEmail, next }: PasswordProps) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<AuthErrorCode | null>(null)
   const allPass = PASSWORD_RULES.every(r => r.test(password))
+  const check = useTurnstile('signup_password')
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -298,6 +315,8 @@ function PasswordSignup({ email, setEmail, next }: PasswordProps) {
     fd.set('password', password)
     fd.set('next', next)
     try {
+      const token = await check.getToken()
+      if (token) fd.set('captchaToken', token)
       // Success redirects (to /signup/verify, or straight to `next` when the
       // project does not require confirmation); only failures return.
       const result = await signUpWithPassword(fd)
@@ -308,6 +327,7 @@ function PasswordSignup({ email, setEmail, next }: PasswordProps) {
       if (err && typeof err === 'object' && 'digest' in err && String((err as any).digest).startsWith('NEXT_REDIRECT')) throw err
       setError('auth')
     } finally {
+      check.reset()
       setBusy(false)
     }
   }
@@ -339,6 +359,7 @@ function PasswordSignup({ email, setEmail, next }: PasswordProps) {
         )}
       </div>
       <div aria-live="polite">{error && <div className="auth-error">{authErrorMessage(error)}</div>}</div>
+      {check.widget}
       <button type="submit" className="btn btn--secondary fd-btn-full" disabled={busy}>
         {busy ? 'Creating account…' : 'Create account with password'}
       </button>
@@ -348,6 +369,7 @@ function PasswordSignup({ email, setEmail, next }: PasswordProps) {
 }
 
 function PasswordLogin({ email, setEmail, next }: PasswordProps) {
+  const check = useTurnstile('login_password')
   const [password, setPassword] = useState('')
   const [shown, setShown] = useState(false)
   const [busy, setBusy] = useState(false)
@@ -361,6 +383,8 @@ function PasswordLogin({ email, setEmail, next }: PasswordProps) {
     fd.set('email', email.trim())
     fd.set('password', password)
     try {
+      const token = await check.getToken()
+      if (token) fd.set('captchaToken', token)
       const result = await signInWithPassword(fd)
       if (result.ok) {
         // A full load, not router.push: the nav and every server component
@@ -372,6 +396,7 @@ function PasswordLogin({ email, setEmail, next }: PasswordProps) {
     } catch {
       setError('auth')
     }
+    check.reset()
     setBusy(false)
   }
 
@@ -394,6 +419,7 @@ function PasswordLogin({ email, setEmail, next }: PasswordProps) {
         </div>
       </div>
       <div aria-live="polite">{error && <div className="auth-error">{authErrorMessage(error)}</div>}</div>
+      {check.widget}
       <button type="submit" className="btn btn--secondary fd-btn-full" disabled={busy}>
         {busy ? 'Signing in…' : 'Sign in with password'}
       </button>

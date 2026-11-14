@@ -3829,6 +3829,13 @@ textarea.form-input {
   transform: translateX(0);
 }
 
+/* On a phone the side slides start past the screen edge and give the page a
+   sideways scroll until they reveal (seen on /contact). Rise instead. */
+@media (max-width: 768px) {
+  .reveal-on .reveal-left:not(.visible),
+  .reveal-on .reveal-right:not(.visible) { transform: translateY(24px); }
+}
+
 .reveal-on .reveal-scale {
   opacity: 0;
   transform: scale(0.9);
@@ -9155,7 +9162,7 @@ textarea.form-input {
   }
 }
 
-/* ============================================================================
+/* =====================================================================
    Trading terminal pass (brand refresh, Nov 2026)
    ----------------------------------------------------------------------------
    Base overrides that move the whole site at once. Page-specific restyles
@@ -9336,3 +9343,9 @@ h3, h4 {
   --bg-card-hover: #111A28;
   --bg-glass: rgba(6, 10, 18, 0.94);
 }
+
+/* Cloudflare Turnstile (components/Turnstile.tsx). "Interaction-only" keeps it
+   at zero height for most visitors; this is the room it gets when it shows. */
+.turnstile-slot { margin: 8px 0; }
+.turnstile-slot:empty { margin: 0; }
+.fd-check { margin-top: 4px; }

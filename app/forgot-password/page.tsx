@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { forgotPassword } from '@/app/actions/auth'
+import { TurnstileField } from '@/components/Turnstile'
 import { authErrorMessage } from '@/lib/auth-errors'
 import BrandMark from '@/components/BrandMark'
 
@@ -46,6 +47,7 @@ export default function ForgotPasswordPage({
                 autoComplete="email"
               />
             </div>
+            <TurnstileField action="forgot_password" />
             <button type="submit" className="btn btn--primary" style={{ width: '100%', justifyContent: 'center', marginTop: '8px' }}>
               Send Reset Link
             </button>

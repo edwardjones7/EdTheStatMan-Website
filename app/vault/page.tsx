@@ -189,7 +189,9 @@ export default async function VaultLanding() {
               <span className="vault-door__name">{door.name}</span>
               <p className="vault-door__desc">{door.desc}</p>
               <span className="vault-door__foot">
-                <span className="vault-door__free">{door.free} open to free</span>
+                <span className="vault-door__free">
+                  {door.free > 0 ? `${door.free} open to free` : 'Every record shown free'}
+                </span>
                 <span className="vault-door__go">
                   Browse <IconArrowRight size={14} />
                 </span>

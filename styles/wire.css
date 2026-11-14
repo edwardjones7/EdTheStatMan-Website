@@ -1,14 +1,15 @@
 /* The layout's spacer only reserves the ticker; clear the fixed nav here. */
 .wire { padding: calc(var(--nav-height) + 24px) 0 64px; }
-.wire__inner { max-width: 1320px; }
+.wire__inner { max-width: none; padding-left: 24px; padding-right: 24px; } /* full width, like the Desk, Vault and Portfolio */
 
 .wire__hd { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 24px; margin-bottom: 20px; }
 .wire__hd h1 { margin: 0; font-family: var(--font-heading); font-size: 2.4rem; line-height: 1; color: var(--text-heading); letter-spacing: -0.01em; }
 .wire__hd p { margin: 6px 0 0; color: var(--text-muted); }
 .wire__tabs { display: flex; flex-wrap: wrap; gap: 4px; }
+/* Square segmented tabs, matching the Desk's league tabs. */
 .wire__tabs a {
-  padding: 6px 12px;
-  border-radius: 999px;
+  padding: 7px 14px;
+  border-radius: var(--radius-sm);
   border: 1px solid var(--border-color);
   color: var(--text-secondary);
   font-family: var(--font-heading);

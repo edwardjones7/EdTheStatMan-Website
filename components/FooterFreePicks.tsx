@@ -5,7 +5,7 @@ import { useFreePicksSignup } from './useFreePicksSignup'
 
 /** The free-picks opt-in on every page. Logged-out visitors only; the layout decides that. */
 export default function FooterFreePicks() {
-  const { state, error, email, setEmail, submit } = useFreePicksSignup('footer')
+  const { state, error, email, setEmail, submit, widget } = useFreePicksSignup('footer')
 
   return (
     <section className="footer-free" aria-labelledby="footer-free-title">
@@ -20,6 +20,7 @@ export default function FooterFreePicks() {
             Check <strong>{email}</strong> for a sign-in link. Click it and you&rsquo;re on the list.
           </p>
         ) : (
+          <>
           <form className="footer-free__form" onSubmit={submit}>
             <label htmlFor="footer-free-email" className="sr-only">Email address</label>
             <input
@@ -38,6 +39,8 @@ export default function FooterFreePicks() {
               {state === 'sending' ? 'Sending…' : 'Send me free picks'}
             </button>
           </form>
+          {widget}
+          </>
         )}
         {error && <p className="footer-free__error" role="alert">{error}</p>}
         {state !== 'sent' && (

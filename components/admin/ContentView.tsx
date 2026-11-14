@@ -136,7 +136,6 @@ export default function ContentView({ posts, records, pendingPicks, startOn }: {
                     <td>
                       <div className="admin-actions">
                         <Link href={`/admin/posts/${post.id}/edit`} className="admin-action-btn">Edit</Link>
-                        <Link href={`/blog/${post.slug}`} className="admin-action-btn" target="_blank">View</Link>
                       </div>
                     </td>
                   </tr>

@@ -24,7 +24,7 @@ const DISCORD = 'https://discord.gg/rXBZkSPcJb'
  * Logged-out visitors only; the page decides that.
  */
 export default function HomeFreePicks() {
-  const { state, error, email, setEmail, submit } = useFreePicksSignup('home_free_picks')
+  const { state, error, email, setEmail, submit, widget } = useFreePicksSignup('home_free_picks')
 
   return (
     <section className="home-free" aria-labelledby="home-free-title">
@@ -39,6 +39,7 @@ export default function HomeFreePicks() {
             Check <strong>{email}</strong> for a sign-in link. Click it and you&rsquo;re on the list.
           </p>
         ) : (
+          <>
           <form className="home-free__form" onSubmit={submit}>
             <label htmlFor="home-free-email" className="sr-only">Email address</label>
             <input
@@ -57,6 +58,8 @@ export default function HomeFreePicks() {
               {state === 'sending' ? 'Sending…' : 'Send me free picks'}
             </button>
           </form>
+          {widget}
+          </>
         )}
         {error && <p className="home-free__error" role="alert">{error}</p>}
         {state !== 'sent' && (

@@ -8,7 +8,7 @@ import { useFreePicksSignup } from './useFreePicksSignup'
  * and the same endpoint as HomeFreePicks, so it lands people on the same list.
  */
 export default function HomeFreeBox() {
-  const { state, error, email, setEmail, submit } = useFreePicksSignup('home_front_rail')
+  const { state, error, email, setEmail, submit, widget } = useFreePicksSignup('home_front_rail')
 
   return (
     <section className="front-card" aria-labelledby="front-free-title">
@@ -36,6 +36,7 @@ export default function HomeFreeBox() {
                 {state === 'sending' ? 'Sending…' : 'Send'}
               </button>
             </form>
+            {widget}
             <p className="front-free__legal">
               By continuing you agree to the <Link href="/terms">Terms</Link> and <Link href="/privacy">Privacy Policy</Link>.
             </p>

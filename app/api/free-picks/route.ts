@@ -18,5 +18,6 @@ export async function POST(request: Request) {
   const formData = new FormData()
   formData.set('email', String(body?.email ?? ''))
   formData.set('next', '/portfolio')
+  if (body?.captchaToken) formData.set('captchaToken', String(body.captchaToken))
   return NextResponse.json(await sendMagicLink(formData))
 }

@@ -41,6 +41,17 @@ function readEmail(formData: FormData): string | null {
   return raw
 }
 
+/**
+ * The Turnstile token the form sent (components/Turnstile.tsx), for Supabase's
+ * CAPTCHA check. Undefined when the form sent none, which is fine until CAPTCHA
+ * is switched on in Supabase; after that Supabase rejects the call and the form
+ * says to wait for the check (auth-errors 'captcha').
+ */
+function captcha(formData: FormData): string | undefined {
+  const t = String(formData.get('captchaToken') ?? '').trim()
+  return t && t.length < 4096 ? t : undefined
+}
+
 function passwordOk(password: string): boolean {
   return (
     password.length >= 8 &&
@@ -116,6 +127,7 @@ export async function sendMagicLink(formData: FormData): Promise<AuthResult> {
     options: {
       emailRedirectTo: callbackUrl(next, 'magic'),
       shouldCreateUser: true,
+      captchaToken: captcha(formData),
     },
   })
 
@@ -134,7 +146,8 @@ export async function signInWithPassword(formData: FormData): Promise<AuthResult
   if (!password) return { ok: false, error: 'credentials' }
 
   const supabase = await createClient()
-  const { error } = await supabase.auth.signInWithPassword({ email, password })
+  // With CAPTCHA on, Supabase checks password sign-in too, not just signup.
+  const { error } = await supabase.auth.signInWithPassword({ email, password, options: { captchaToken: captcha(formData) } })
   if (error) return { ok: false, error: classifyAuthError(error) }
 
   revalidatePath('/', 'layout')
@@ -162,7 +175,7 @@ export async function signUpWithPassword(formData: FormData): Promise<AuthResult
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    options: { emailRedirectTo: callbackUrl(next, 'password') },
+    options: { emailRedirectTo: callbackUrl(next, 'password'), captchaToken: captcha(formData) },
   })
   if (error) return { ok: false, error: classifyAuthError(error) }
 
@@ -182,6 +195,7 @@ export async function login(formData: FormData) {
   const { error } = await supabase.auth.signInWithPassword({
     email: formData.get('email') as string,
     password: formData.get('password') as string,
+    options: { captchaToken: captcha(formData) },
   })
 
   if (error) {
@@ -236,6 +250,7 @@ export async function signup(formData: FormData) {
     password,
     options: {
       emailRedirectTo: `${authOrigin()}/auth/callback?next=${encodeURIComponent(next)}`,
+      captchaToken: captcha(formData),
     },
   })
 
@@ -282,6 +297,7 @@ export async function forgotPassword(formData: FormData) {
   const supabase = await createClient()
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: `${authOrigin()}/auth/callback?next=/reset-password`,
+    captchaToken: captcha(formData),
   })
 
   if (error) {
