@@ -27,7 +27,7 @@ interface Props {
 }
 
 function tone(pct: number): 'up' | 'even' | 'down' {
-  // Keyed to break-even at -110, not 50%: a 51% sport is losing money.
+  // Keyed to break-even at 1.1-to-win-1, not 50%: a 51% sport is losing money.
   return pct >= BREAK_EVEN_PCT ? 'up' : pct >= 50 ? 'even' : 'down'
 }
 
@@ -53,7 +53,7 @@ export default function ProofStrip({ proof, variant = 'full', showLedgerLink = t
   const chips = sports.filter(s => s.sport !== headline?.sport).slice(0, variant === 'compact' ? 3 : 4)
 
   const graded = (books.members?.graded ?? 0) + (books.free?.graded ?? 0)
-  const assumed = (books.members?.assumedOdds ?? 0) + (books.free?.assumedOdds ?? 0)
+  const custom = (books.members?.customStakes ?? 0) + (books.free?.customStakes ?? 0)
 
   const ledger = showLedgerLink && (
     <Link href="/portfolio/performance" className="proof__ledger">
@@ -100,9 +100,9 @@ export default function ProofStrip({ proof, variant = 'full', showLedgerLink = t
       <div className="proof__foot">
         {variant === 'full' && graded > 0 && (
           <p className="proof__note">
-            One unit per pick, at the posted odds
-            {assumed > 0 ? `; ${assumed} of ${graded} graded picks have no recorded price and are scored at -110` : ''}.
-            Break-even at -110 is {BREAK_EVEN_PCT}%.
+            Every pick risks 1.1 units to win 1
+            {custom > 0 ? ` (${custom} of ${graded} graded picks sized differently, scored as posted)` : ''}.
+            Break-even is {BREAK_EVEN_PCT}%.
           </p>
         )}
         {ledger}

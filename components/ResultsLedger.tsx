@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { PickRowActions } from '@/components/admin-kit/PickTools'
 import '@/styles/proof-win.css'
-import { bookOf, oddsOf, unitsFor, DEFAULT_ODDS } from '@/lib/records'
+import { bookOf, stakeOf, unitsFor } from '@/lib/records'
 import { BOOK_LABEL } from '@/lib/proof'
 
 /**
@@ -29,18 +29,20 @@ export interface LedgerRow {
   result: string | null
   is_free?: boolean | null
   odds?: number | null
+  risk?: string | number | null
+  win?: string | number | null
 }
 
 export const LEDGER_PAGE_SIZE = 50
 
 const RESULT_LABEL: Record<string, string> = { win: 'Win', loss: 'Loss', push: 'Push' }
 
-function unitsCell(row: LedgerRow): { text: string; assumed: boolean } | null {
+function unitsCell(row: LedgerRow): { text: string; custom: string | null } | null {
   const r = String(row.result ?? '').toLowerCase()
   if (!RESULT_LABEL[r]) return null
-  const price = oddsOf(row)
-  const u = unitsFor(r, price ?? DEFAULT_ODDS)
-  return { text: `${u > 0 ? '+' : ''}${u.toFixed(2)}`, assumed: price === null }
+  const u = unitsFor(r, row)
+  const st = stakeOf(row)
+  return { text: `${u > 0 ? '+' : ''}${u.toFixed(2)}`, custom: st.custom ? `Risked ${st.risk}u to win ${st.win}u` : null }
 }
 
 interface Props {
@@ -72,7 +74,7 @@ export default function ResultsLedger({ rows, page, pageCount, total, admin = fa
           <h2 id="ledger-heading" className="ledger__title">Every graded pick</h2>
           <p className="ledger__sub">
             {total > 0
-              ? <>Showing {first}&ndash;{last} of {total}, newest first. Units are one unit risked per pick; <span aria-hidden="true">†</span> marks a pick with no recorded price, scored at -110.</>
+              ? <>Showing {first}&ndash;{last} of {total}, newest first. Units are +1 a win and −1.1 a loss; <span aria-hidden="true">†</span> marks a pick Ed sized differently.</>
               : 'No graded picks yet.'}
           </p>
         </div>
@@ -112,7 +114,7 @@ export default function ResultsLedger({ rows, page, pageCount, total, admin = fa
                       </span>
                     </td>
                     <td data-label="Units" className="ledger__num ledger__mono">
-                      {u ? <>{u.text}{u.assumed && <span title="No recorded price; scored at -110">†</span>}</> : '—'}
+                      {u ? <>{u.text}{u.custom && <span title={u.custom}>†</span>}</> : '—'}
                     </td>
                     {admin && <td data-label="Admin"><PickRowActions id={String(row.id)} compact /></td>}
                   </tr>

@@ -1,9 +1,9 @@
 // Shapes for /portfolio/performance: running-units series and the monthly
 // calendar. Pure, over rows already in hand, and on the same lib/records.ts
-// maths (unitsFor at the recorded price, -110 when none) as every other number
+// maths (unitsFor: +1u a win, -1.1u a loss, unless the pick sets its own) as every other number
 // on the page, so the charts always end on the totals printed beside them.
 
-import { oddsOf, unitsFor, DEFAULT_ODDS, type RecordSource } from './records'
+import { unitsFor, type RecordSource } from './records'
 
 type Graded = 'win' | 'loss' | 'push'
 
@@ -14,7 +14,7 @@ function gradeOf(r: RecordSource): Graded | null {
 
 export function unitsOf(r: RecordSource): number {
   const g = gradeOf(r)
-  return g ? unitsFor(g, oddsOf(r) ?? DEFAULT_ODDS) : 0
+  return g ? unitsFor(g, r) : 0
 }
 
 const ISO = /^\d{4}-\d{2}-\d{2}/

@@ -10,7 +10,7 @@ import { getAccess } from '@/lib/access-server'
 import { atLeastTier } from '@/lib/access'
 import { rowMinTier } from '@/lib/gate'
 import { buildProof, BOOK_LABEL } from '@/lib/proof'
-import { oddsOf, unitsFor, DEFAULT_ODDS } from '@/lib/records'
+import { unitsFor } from '@/lib/records'
 import { buildCard, buildHistory, dayLabel, type PortfolioGame, type PortfolioSource } from '@/lib/portfolio'
 import { trackPick, type TrackGame } from '@/lib/live/track'
 import type { PickTrack } from '@/lib/live/types'
@@ -136,14 +136,14 @@ export default async function Portfolio() {
 
   // Graded picks are public: the results ledger shows every one, bet and all,
   // to every visitor. So the recent list is the same for everyone.
-  const history = buildHistory(rows, () => true, r => unitsFor(String(r.result).toLowerCase(), oddsOf(r) ?? DEFAULT_ODDS))
+  const history = buildHistory(rows, () => true, r => unitsFor(String(r.result), r as any))
 
   // Running units on the members' card, for the chart in the rail.
   let run = 0
   const membersSeries = rows
     .filter(r => r.show_on_results === true && !(r as any).is_free && ['win', 'loss', 'push'].includes(String(r.result ?? '').toLowerCase()))
     .sort((a, b) => String(a.date ?? '').localeCompare(String(b.date ?? '')))
-    .map(r => (run = Math.round((run + unitsFor(String(r.result).toLowerCase(), oddsOf(r) ?? DEFAULT_ODDS)) * 100) / 100))
+    .map(r => (run = Math.round((run + unitsFor(String(r.result), r as any)) * 100) / 100))
   const proof = buildProof(rows as any)
   const books = (['members', 'free'] as const).map(k => ({ key: k, stat: proof.books[k] })).filter(b => b.stat)
 

@@ -67,6 +67,7 @@ export default async function Results({ searchParams }: { searchParams: { page?:
     .map(p => ({
       id: p.id, date: p.date, sport: p.sport, bet: p.bet, line: p.line, vig: p.vig,
       opponent: p.opponent, result: p.result, is_free: p.is_free, odds: p.odds ?? null,
+      risk: p.risk ?? null, win: p.win ?? null,
     }))
 
   const month = parseMonth(searchParams.month, nyToday().slice(0, 7))

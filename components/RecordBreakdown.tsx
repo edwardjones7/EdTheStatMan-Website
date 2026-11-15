@@ -64,8 +64,9 @@ export default function RecordBreakdown({ rows }: { rows: RecordSource[] }) {
           </div>
           <p className="rb-meta">
             {graded(total)} graded{total.from ? ` since ${shortDate(total.from)}` : ''}
-            {total.assumedOdds > 0 ? ` · ${total.assumedOdds} scored at -110 (no recorded price)` : ''}
-            {` · break-even at -110 is ${BREAK_EVEN_PCT}%`}
+            {` · +1u a win, −1.1u a loss`}
+            {total.customStakes > 0 ? ` (${total.customStakes} sized differently)` : ''}
+            {` · break-even is ${BREAK_EVEN_PCT}%`}
           </p>
           {bookKeys.length > 1 && (
           <ul className="rb-books">

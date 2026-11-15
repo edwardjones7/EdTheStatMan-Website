@@ -22,6 +22,7 @@ export interface NotifiablePick {
   date: string | null
   sport: string | null
   risk: string | null
+  win?: string | null
   bet: string | null
   line: string | null
   min_tier?: string | null

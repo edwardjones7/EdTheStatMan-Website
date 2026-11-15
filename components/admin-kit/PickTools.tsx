@@ -207,7 +207,7 @@ function PickEditor({ row }: { row?: TodaysBet }) {
     }
   }
 
-  const field = (k: 'date' | 'sport' | 'bet' | 'line' | 'vig' | 'opponent', label: string, placeholder: string, hint?: string) => (
+  const field = (k: 'date' | 'sport' | 'bet' | 'line' | 'vig' | 'opponent' | 'risk' | 'win', label: string, placeholder: string, hint?: string) => (
     <label className="akit-field">
       <span>{label}</span>
       <input value={form[k]} placeholder={placeholder} onChange={e => set(k, e.target.value)} />
@@ -228,6 +228,8 @@ function PickEditor({ row }: { row?: TodaysBet }) {
         {field('line', 'Line', '-3.5')}
         {field('vig', 'Closing line', '-4')}
         {field('opponent', 'Opponent', 'Broncos')}
+        {field('risk', 'Units risked', '1.1', 'A loss costs this. Blank means 1.1.')}
+        {field('win', 'Units to win', '1', 'A win pays this. Blank means 1.')}
         <label className="akit-field">
           <span>Who can see it</span>
           <select value={form.min_tier} onChange={e => set('min_tier', e.target.value as Tier)}>

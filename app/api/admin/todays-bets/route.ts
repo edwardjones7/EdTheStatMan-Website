@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { notifyNewPick } from '@/lib/notify'
 import { hasPickEngineColumns } from '@/lib/picks/columns'
-import { engineColumnsFromBody } from '@/lib/picks/admin-columns'
+import { engineColumnsFromBody, stakeColumnsFromBody } from '@/lib/picks/admin-columns'
 import { pickSlug } from '@/lib/picks/slug'
 import { gameIdPatch } from '@/lib/picks/game-match'
 
@@ -50,6 +50,8 @@ export async function POST(req: Request) {
   const body = await req.json()
   const access = accessColumns(body)
   if ('error' in access) return NextResponse.json({ error: access.error }, { status: 400 })
+  const stake = stakeColumnsFromBody(body)
+  if ('error' in stake) return NextResponse.json({ error: stake.error }, { status: 400 })
 
   // picks_01_engine.sql columns, when they exist: a stable slug (minted now,
   // never recomputed -- lib/picks/slug.ts), the save time, the source, and the
@@ -75,12 +77,12 @@ export async function POST(req: Request) {
     ...gameCol,
     date:            body.date            || null,
     sport:           body.sport           || null,
-    risk:            body.risk            || null,
+    risk:            stake.risk,
     bet:             body.bet             || null,
     line:            body.line            || null,
     vig:             body.vig             || null,
     opponent:        body.opponent        || null,
-    win:             body.win             || null,
+    win:             stake.win,
     result:          body.result          || 'pending',
     note:            body.note            || null,
     is_active:       body.is_active       ?? true,

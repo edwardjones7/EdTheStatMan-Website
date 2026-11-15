@@ -53,7 +53,7 @@ export default function BookCards({ proof, rows }: { proof: ProofData; rows: Rec
                 </div>
                 <p className="book-card__meta">
                   {s.graded} graded{s.from ? ` since ${shortDate(s.from)}` : ''}
-                  {s.assumedOdds > 0 ? ` · ${s.assumedOdds} scored at -110 (no recorded price)` : ''}
+                  {s.customStakes > 0 ? ` · ${s.customStakes} sized differently` : ''}
                 </p>
                 {sports.length > 0 && (
                   <ul className="book-card__sports">

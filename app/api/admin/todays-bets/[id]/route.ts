@@ -4,7 +4,7 @@ import { TIER_RANK, normalizeTier, type Tier } from '@/lib/access'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { hasPickEngineColumns } from '@/lib/picks/columns'
-import { engineColumnsFromBody } from '@/lib/picks/admin-columns'
+import { engineColumnsFromBody, stakeColumnsFromBody } from '@/lib/picks/admin-columns'
 import { gameIdPatch } from '@/lib/picks/game-match'
 
 async function assertAdmin() {
@@ -49,6 +49,8 @@ export async function PUT(req: Request, context: { params: Promise<{ id: string 
   const body = await req.json()
   const access = accessColumns(body)
   if ('error' in access) return NextResponse.json({ error: access.error }, { status: 400 })
+  const stake = stakeColumnsFromBody(body)
+  if ('error' in stake) return NextResponse.json({ error: stake.error }, { status: 400 })
 
   // odds / market only when the body carries them: the current editor sends
   // neither, and writing null for "not sent" would wipe the price an approved
@@ -63,12 +65,12 @@ export async function PUT(req: Request, context: { params: Promise<{ id: string 
     ...gameCol,
     date:            body.date            || null,
     sport:           body.sport           || null,
-    risk:            body.risk            || null,
+    risk:            stake.risk,
     bet:             body.bet             || null,
     line:            body.line            || null,
     vig:             body.vig             || null,
     opponent:        body.opponent        || null,
-    win:             body.win             || null,
+    win:             stake.win,
     result:          body.result          || 'pending',
     note:            body.note            || null,
     is_active:       body.is_active       ?? true,

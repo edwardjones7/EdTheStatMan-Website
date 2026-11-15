@@ -162,8 +162,8 @@ export default function ResultsOverview({ rows, month, sport }: { rows: Row[]; m
             )}
             <p className="rs-note">
               {total.from ? `Since ${shortDate(total.from)}. ` : ''}
-              One unit risked per pick{total.assumedOdds > 0 ? `; ${total.assumedOdds} with no recorded price scored at −110` : ''}.
-              Break-even at −110 is {BREAK_EVEN_PCT}%.
+              A win is +1 unit and a loss is −1.1{total.customStakes > 0 ? `, except ${total.customStakes} picks Ed sized differently, scored as posted` : ''}.
+              Break-even is {BREAK_EVEN_PCT}%.
             </p>
           </div>
         </aside>

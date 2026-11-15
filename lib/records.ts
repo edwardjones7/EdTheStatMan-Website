@@ -11,12 +11,12 @@
  * Only rows flagged show_on_results count, the same rule as publishedRecord()
  * in lib/brief.ts.
  *
- * UNITS. One unit risked per pick. A win at American odds `o` returns o/100
- * units when o > 0 and 100/|o| when o < 0; a loss costs 1; a push is 0. When a
- * pick has no recorded price it is graded at -110, and `assumedOdds` counts
- * how many, so every surface can say so. Posted odds come from the `odds`
- * column (picks_01_engine.sql) when present, otherwise from `line` only when
- * `line` is unmistakably a price ("-115", "+130") rather than a spread.
+ * UNITS. Flat, whatever the price: a win is +1u, a loss is -1.1u, a push is 0
+ * (risk 1.1 to win 1, the standard -110 bet). Ed can set his own amounts on a
+ * pick in the editor (todays_bets.risk / todays_bets.win, units, free text so
+ * "2" and "2u" both read), and a pick that carries them is graded on them
+ * instead; `customStakes` counts how many, so every surface can say so. Posted
+ * odds (oddsOf) are display only and never move the units.
  */
 
 export type Book = 'free' | 'members'
@@ -28,8 +28,12 @@ export interface RecordSource {
   result: string | null
   is_free?: boolean | null
   show_on_results?: boolean | null
-  /** American odds at posting, when recorded (picks_01_engine.sql). */
+  /** American odds at posting, when recorded (picks_01_engine.sql). Display only. */
   odds?: number | null
+  /** Units risked on this pick, as typed in the editor. Blank means 1.1. */
+  risk?: string | number | null
+  /** Units this pick wins, as typed in the editor. Blank means 1. */
+  win?: string | number | null
 }
 
 export interface PickRecord {
@@ -41,20 +45,22 @@ export interface PickRecord {
   units: number
   /** Units won per unit risked, as a percent. */
   roi: number
-  /** Graded picks that had no recorded price and were scored at -110. */
-  assumedOdds: number
+  /** Graded picks scored on amounts Ed entered rather than the flat 1.1 / 1. */
+  customStakes: number
   /** First and last graded dates (YYYY-MM-DD), for "since ..." lines. */
   from: string | null
   to: string | null
 }
 
-export const DEFAULT_ODDS = -110
-/** Win rate needed to break even at -110. */
+/** Units a pick risks, and wins, when the editor leaves them blank. */
+export const DEFAULT_RISK = 1.1
+export const DEFAULT_WIN = 1
+/** Win rate needed to break even risking 1.1 to win 1 (the -110 price). */
 export const BREAK_EVEN_PCT = 52.38
 /** Fewer decisions than this and a sport's record is noise, not a result. */
 export const MIN_DECISIONS = 5
 
-const EMPTY: PickRecord = { w: 0, l: 0, p: 0, pct: 0, units: 0, roi: 0, assumedOdds: 0, from: null, to: null }
+const EMPTY: PickRecord = { w: 0, l: 0, p: 0, pct: 0, units: 0, roi: 0, customStakes: 0, from: null, to: null }
 
 /** A price, or null. Only reads `line` when it cannot be a spread or total. */
 export function oddsOf(row: Pick<RecordSource, 'odds' | 'line'>): number | null {
@@ -67,10 +73,35 @@ export function oddsOf(row: Pick<RecordSource, 'odds' | 'line'>): number | null 
   return Math.abs(n) >= 100 ? n : null
 }
 
-export function unitsFor(result: string, odds: number): number {
-  if (result === 'win') return odds > 0 ? odds / 100 : 100 / Math.abs(odds)
-  if (result === 'loss') return -1
-  return 0
+/** A unit amount as typed ("1.1", "2u", "1.5 units"), or null when blank or unreadable. */
+export function unitAmount(v: unknown): number | null {
+  if (typeof v === 'number') return Number.isFinite(v) && v > 0 && v <= 100 ? v : null
+  const m = String(v ?? '').trim().match(/^\+?(\d+(?:\.\d+)?|\.\d+)\s*(?:u|units?)?$/i)
+  if (!m) return null
+  const n = Number(m[1])
+  return n > 0 && n <= 100 ? n : null
+}
+
+export interface Stake {
+  risk: number
+  win: number
+  /** True when either amount came from the pick rather than the default. */
+  custom: boolean
+}
+
+/** What a pick risks and wins, in units: the editor's amounts, else 1.1 / 1. */
+export function stakeOf(row: Pick<RecordSource, 'risk' | 'win'>): Stake {
+  const risk = unitAmount(row.risk)
+  const win = unitAmount(row.win)
+  return { risk: risk ?? DEFAULT_RISK, win: win ?? DEFAULT_WIN, custom: risk !== null || win !== null }
+}
+
+/** Units a graded pick returned: +win, -risk, or 0 for a push or anything ungraded. */
+export function unitsFor(result: string, row: Pick<RecordSource, 'risk' | 'win'> = {}): number {
+  const r = String(result).toLowerCase()
+  if (r !== 'win' && r !== 'loss') return 0
+  const st = stakeOf(row)
+  return r === 'win' ? st.win : -st.risk
 }
 
 function gradedOnly(rows: RecordSource[]): (RecordSource & { r: string })[] {
@@ -86,16 +117,16 @@ function gradedOnly(rows: RecordSource[]): (RecordSource & { r: string })[] {
 export function computeRecord(rows: RecordSource[]): PickRecord {
   const graded = gradedOnly(rows)
   if (graded.length === 0) return { ...EMPTY }
-  let w = 0, l = 0, p = 0, units = 0, assumed = 0, risked = 0
+  let w = 0, l = 0, p = 0, units = 0, custom = 0, risked = 0
   let from: string | null = null, to: string | null = null
   for (const g of graded) {
     if (g.r === 'win') w++
     else if (g.r === 'loss') l++
     else p++
-    const price = oddsOf(g)
-    if (price === null) assumed++
-    units += unitsFor(g.r, price ?? DEFAULT_ODDS)
-    if (g.r !== 'push') risked++
+    const st = stakeOf(g)
+    if (st.custom) custom++
+    units += unitsFor(g.r, g)
+    if (g.r !== 'push') risked += st.risk
     if (g.date) {
       if (!from || g.date < from) from = g.date
       if (!to || g.date > to) to = g.date
@@ -107,7 +138,7 @@ export function computeRecord(rows: RecordSource[]): PickRecord {
     pct: decisions ? (w / decisions) * 100 : 0,
     units: Math.round(units * 100) / 100,
     roi: risked ? Math.round((units / risked) * 1000) / 10 : 0,
-    assumedOdds: assumed,
+    customStakes: custom,
     from, to,
   }
 }

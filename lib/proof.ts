@@ -21,8 +21,6 @@ import {
   formatRecord,
   formatUnits,
   BREAK_EVEN_PCT,
-  DEFAULT_ODDS,
-  oddsOf,
   unitsFor,
   type Book,
   type PickRecord,
@@ -40,7 +38,8 @@ export interface ProofStat {
   /** "+9.4u" */
   units: string
   unitsValue: number
-  assumedOdds: number
+  /** Graded picks scored on Ed's own unit amounts rather than 1.1 / 1. */
+  customStakes: number
   graded: number
   from: string | null
   to: string | null
@@ -74,7 +73,7 @@ function stat(r: PickRecord): ProofStat {
     pct: r.pct,
     units: formatUnits(r.units),
     unitsValue: r.units,
-    assumedOdds: r.assumedOdds,
+    customStakes: r.customStakes,
     graded: r.w + r.l + r.p,
     from: r.from,
     to: r.to,
@@ -158,7 +157,7 @@ export const BOOK_LABEL: Record<Book, string> = {
 /**
  * Running units for the headline record, pick by pick, for the chart beside
  * it. The same rows, the same book, the same date window and the same maths
- * (unitsFor at the recorded price, -110 when none) as the headline itself, so
+ * (unitsFor: +1u a win, -1.1u a loss, unless the pick sets its own) as the headline itself, so
  * the line always ends on the number printed above it.
  */
 export function headlineSeries(rows: RecordSource[], proof: ProofData): number[] {
@@ -177,7 +176,7 @@ export function headlineSeries(rows: RecordSource[], proof: ProofData): number[]
     .sort((a, b) => String(a.date ?? '').localeCompare(String(b.date ?? '')))
   let u = 0
   return graded.map(r => {
-    u += unitsFor(String(r.result).toLowerCase(), oddsOf(r) ?? DEFAULT_ODDS)
+    u += unitsFor(String(r.result), r)
     return Math.round(u * 100) / 100
   })
 }
