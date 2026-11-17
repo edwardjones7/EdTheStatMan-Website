@@ -1237,3 +1237,68 @@ a.front-next__game:hover b { color: var(--brand-text); }
   white-space: nowrap;
 }
 .front-next__ask:hover { background: rgba(var(--down-rgb), 0.24); color: var(--text-heading); }
+
+/* ---------- Scores strip on phones: one thin bar ----------
+   Desktop chips are four lines tall; on a phone that ate a third of the
+   first screen. Below 768px each game is one line (AWAY 23 BAL 20 Final),
+   the line row only shows before kickoff, and the league tabs collapse into
+   a native picker. The picker is 16px so iOS does not zoom on tap. */
+.front-strip__pick { display: none; }
+@media (max-width: 768px) {
+  .front-strip__tabs,
+  .front-strip__league small { display: none; }
+  .front-strip__league { padding: 0 10px 0 0; gap: 0; }
+  .front-strip__league b { font-size: 0.74rem; white-space: nowrap; }
+  .front-strip__pick { position: relative; display: inline-flex; align-items: center; gap: 6px; }
+  .front-strip__pick select {
+    appearance: none;
+    -webkit-appearance: none;
+    margin: 0;
+    padding: 4px 16px 4px 0;
+    border: 0;
+    background: transparent;
+    color: var(--text-heading);
+    font-family: var(--font-heading);
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+  }
+  .front-strip__pick select:focus-visible { outline: 2px solid var(--brand-text); outline-offset: 2px; }
+  .front-strip__pick::after {
+    content: '';
+    position: absolute;
+    right: 3px;
+    top: 50%;
+    width: 0;
+    height: 0;
+    margin-top: -2px;
+    border: 4px solid transparent;
+    border-top-color: var(--text-muted);
+    pointer-events: none;
+  }
+  .front-strip__pick:has(.front-live__dot)::after { right: 16px; }
+  .front-strip__pick .front-live__dot { order: 2; }
+
+  .front-strip__chips { scrollbar-width: none; }
+  .front-strip__chips::-webkit-scrollbar { display: none; }
+  .front-chip {
+    width: auto;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 9px 12px;
+    font-size: 0.8rem;
+    white-space: nowrap;
+  }
+  .front-chip__row { gap: 5px; }
+  /* Records before kickoff: no room. Scores stay. */
+  .front-chip__row > span:not(.front-chip__sc):not(.front-chip__ln) { display: none; }
+  /* The line row: only the spread, and only before kickoff. */
+  .front-chip > .front-chip__row:last-of-type { display: none; }
+  .front-chip[data-state='pre'] > .front-chip__row:last-of-type { display: flex; }
+  .front-chip__ln { font-size: 0.74rem; }
+  /* State last (Final / 3rd 4:12 / 8:15 PM); drop broadcast and weather. */
+  .front-chip__t { order: 9; font-size: 0.7rem; }
+  .front-chip__t > span + span { display: none; }
+}

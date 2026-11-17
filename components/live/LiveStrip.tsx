@@ -92,8 +92,8 @@ function Chip({ g }: { g: LiveGame }) {
   )
   const label = `${g.away.abbrev} at ${g.home.abbrev}, ${stateText(g)}`
   return g.href
-    ? <Link href={g.href} className={`front-chip${live ? ' is-live' : ''}`} aria-label={label}>{body}</Link>
-    : <div className={`front-chip${live ? ' is-live' : ''}`} aria-label={label}>{body}</div>
+    ? <Link href={g.href} className={`front-chip${live ? ' is-live' : ''}`} data-state={g.state} aria-label={label}>{body}</Link>
+    : <div className={`front-chip${live ? ' is-live' : ''}`} data-state={g.state} aria-label={label}>{body}</div>
 }
 
 /**
@@ -129,7 +129,7 @@ export default function LiveStrip({ seed, seedSport, seedTitle, seedHref, seedGa
           </Link>
           <div className="front-strip__chips" tabIndex={0} role="region" aria-label={`${seedTitle} lines`}>
             {seed.map(r => (
-              <Link key={r.id} href={r.href} className="front-chip">
+              <Link key={r.id} href={r.href} className="front-chip" data-state="pre">
                 <span className="front-chip__t"><span>{r.short}</span>{r.broadcast && <span>{r.broadcast.split(',')[0]}</span>}</span>
                 <span className="front-chip__row"><b><TeamLogo sport={seedSport} abbrev={r.awayAbbrev} size={14} />{r.awayAbbrev}</b><span>{r.awayRecord ?? ''}</span></span>
                 <span className="front-chip__row"><b><TeamLogo sport={seedSport} abbrev={r.homeAbbrev} size={14} />{r.homeAbbrev}</b><span>{r.homeRecord ?? ''}</span></span>
@@ -163,6 +163,18 @@ export default function LiveStrip({ seed, seedSport, seedTitle, seedHref, seedGa
               </button>
             ))}
           </div>
+          {/* Phones get one thin bar: a compact league picker instead of the tabs. */}
+          <label className="front-strip__pick">
+            <span className="sr-only">League</span>
+            <select value={active} onChange={e => setPicked(e.target.value as LiveSport)}>
+              {tabs.map(s => (
+                <option key={s} value={s}>
+                  {LIVE_SPORT_LABEL[s]}{liveCount(s) > 0 ? ` · ${liveCount(s)} live` : ''}
+                </option>
+              ))}
+            </select>
+            {live > 0 && <i className="front-live__dot" aria-hidden />}
+          </label>
           <small>{live > 0 ? `${live} live · ` : ''}{list.length} games</small>
         </div>
         <div className="front-strip__chips" tabIndex={0} role="region" aria-label={`${LIVE_SPORT_LABEL[active]} scores`}>
