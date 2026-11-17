@@ -185,7 +185,7 @@ export function buildPreview(p: PreviewInput): string[] {
 
   // 4. What is on the page.
   const desk: string[] = []
-  if (p.linkedCount > 0) desk.push(`${p.linkedCount} Vault ${p.linkedCount === 1 ? 'system or trend fits' : 'systems and trends fit'} this matchup; they are listed below.`)
+  if (p.linkedCount > 0) desk.push(`${p.linkedCount} Vault ${p.linkedCount === 1 ? 'system or trend fits' : 'systems and trends fit'} this matchup.`)
   if (p.betsCount > 0) desk.push(`Ed has ${p.betsCount === 1 ? 'a play' : `${p.betsCount} plays`} on this game.`)
   if (desk.length) out.push(desk.join(' '))
 
