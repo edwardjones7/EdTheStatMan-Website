@@ -121,7 +121,10 @@ export default async function Portfolio() {
 
   // Gated here: visible picks copied field by field, locked ones reduced to
   // sport + game (lib/portfolio.ts).
-  const days = buildCard(rows, canSee, games)
+  // A locked pick a free account would open goes to the free signup, not /win:
+  // free -> paid converts far better than stranger -> paid.
+  const freeOpens = (b: PortfolioSource) => rowMinTier(b as any, 'portfolio') === 'retail'
+  const days = buildCard(rows, canSee, games, new Date(), freeOpens)
 
   // Live tracking, built here and only for visible picks, so a locked pick's
   // side and number never reach the browser (lib/live/track.ts).
@@ -149,6 +152,8 @@ export default async function Portfolio() {
 
   const total = days.reduce((n, d) => n + d.picks.length, 0)
   const locked = days.reduce((n, d) => n + d.picks.filter(p => p.kind === 'locked').length, 0)
+  const lockedFree = days.reduce((n, d) => n + d.picks.filter(p => p.kind === 'locked' && p.free).length, 0)
+  const lockedPaid = locked - lockedFree
   const sports = Array.from(new Set(days.flatMap(d => d.picks.map(p => p.sport))))
   const title = days.length === 0 ? 'No open plays' : days[0].isToday ? 'Today’s card' : `Card for ${dayLabel(days[0].date)}`
 
@@ -163,7 +168,7 @@ export default async function Portfolio() {
                 <h1>{title}</h1>
                 <p>
                   {total > 0
-                    ? <>{total} {total === 1 ? 'play' : 'plays'}{sports.length ? ` · ${sports.join(', ')}` : ''}{locked > 0 ? ` · ${locked} locked` : ''}. Scores and cover status update live while games are on.</>
+                    ? <>{total} {total === 1 ? 'play' : 'plays'}{sports.length ? ` · ${sports.join(', ')}` : ''}{lockedFree > 0 ? ` · ${lockedFree} free with an account` : ''}{lockedPaid > 0 ? ` · ${lockedPaid} members only` : ''}. Scores and cover status update live while games are on.</>
                     : 'The card goes up the night before. Alerts go out by email, push and Discord when it does.'}
                 </p>
               </div>
@@ -184,7 +189,7 @@ export default async function Portfolio() {
               </section>
             )}
 
-            {!isMember && locked === 0 && total > 0 && (
+            {!isMember && lockedPaid === 0 && total > 0 && (
               <section className="pf-panel pf-empty">
                 <p>The members&rsquo; card carries the rest of Ed&rsquo;s plays, every one graded in public.</p>
                 <Link href="/win" className="pf-btn">See plans</Link>

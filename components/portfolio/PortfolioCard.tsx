@@ -108,6 +108,7 @@ function VisibleTile({ pick, live, status }: { pick: VisiblePick; live: LiveGame
 
 function LockedTile({ pick, live }: { pick: LockedPick; live: LiveGame | undefined }) {
   const g = pick.game
+  if (pick.free) return <FreeLockedTile pick={pick} live={live} />
   return (
     <article className="pf-tile pf-tile--locked">
       <header className="pf-tile__top">
@@ -121,6 +122,31 @@ function LockedTile({ pick, live }: { pick: LockedPick; live: LiveGame | undefin
       </div>
       <p className="pf-meta">The side and the number are on the members&rsquo; card.</p>
       <Link href="/win" className="pf-unlock">Unlock this play</Link>
+    </article>
+  )
+}
+
+/**
+ * A free pick shown to a signed-out visitor. Deliberately NOT the paid tile:
+ * it is marked Free and goes to the free signup (straight back here after),
+ * because getting a stranger to a free account is the step that converts.
+ */
+function FreeLockedTile({ pick, live }: { pick: LockedPick; live: LiveGame | undefined }) {
+  const g = pick.game
+  return (
+    <article className="pf-tile pf-tile--free">
+      <header className="pf-tile__top">
+        <span className="pf-tag">{pick.sport}</span>
+        <When game={g} live={live} />
+        <svg className="pf-lock pf-lock--open" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden><rect x="4" y="11" width="16" height="10" rx="2" /><path d="M8 11V7a4 4 0 0 1 7.75-1.4" /></svg>
+      </header>
+      {g && <Matchup game={g} live={live} />}
+      <div className="pf-bet pf-bet--locked">
+        <span className="pf-tag pf-tag--free-pick">Free pick</span>
+        <b>{g ? <>Free play on {g.away} @ {g.home}</> : <>Free play · {pick.sport}</>}</b>
+      </div>
+      <p className="pf-meta">Yours with a free account. No card, takes a minute.</p>
+      <Link href="/signup?next=%2Fportfolio" className="pf-unlock pf-unlock--free">Get this pick free</Link>
     </article>
   )
 }

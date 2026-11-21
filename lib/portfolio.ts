@@ -67,6 +67,12 @@ export interface LockedPick {
   key: string
   sport: string
   game: PortfolioGame | null
+  /**
+   * A free account opens it. Only ever true for a signed-out visitor (anyone
+   * signed in already holds the free rung), and it says which door to send
+   * them through: the free signup, not the paid plans.
+   */
+  free: boolean
 }
 
 export type CardPick = VisiblePick | LockedPick
@@ -118,6 +124,7 @@ export function buildCard(
   canSee: (r: PortfolioSource) => boolean,
   games: Map<string, PortfolioGame>,
   now: Date = new Date(),
+  freeOpens: (r: PortfolioSource) => boolean = () => false,
 ): CardDay[] {
   const today = nyToday(now)
   return cardDates(rows, today).map(date => {
@@ -145,11 +152,13 @@ export function buildCard(
         }
       }
       n++
-      return { kind: 'locked', key: `${date}-${n}`, sport: sportOf(row.sport), game }
+      return { kind: 'locked', key: `${date}-${n}`, sport: sportOf(row.sport), game, free: freeOpens(row) }
     })
-    // Visible first, then the locked stand-ins, so the card reads top-down as
-    // "what you have" then "what you are missing".
-    picks.sort((a, b) => (a.kind === b.kind ? 0 : a.kind === 'visible' ? -1 : 1))
+    // Visible first, then the free locked stand-ins, then the paid ones, so the
+    // card reads top-down as "what you have", "what a free account gets you",
+    // "what the membership adds".
+    const rank = (p: CardPick) => (p.kind === 'visible' ? 0 : p.free ? 1 : 2)
+    picks.sort((a, b) => rank(a) - rank(b))
     return { date, isToday: date === today, picks }
   })
 }

@@ -256,6 +256,20 @@
   text-decoration: none;
 }
 .pf-unlock:hover { background: var(--brand-hover); color: var(--brand-ink); }
+/* Same box for the free and paid buttons, so the two tiles line up. */
+.pf-unlock { min-width: 148px; text-align: center; box-sizing: border-box; }
+
+/* A free pick a signed-out visitor can open with an account. Green, solid and
+   unlocked-looking on purpose, so it never reads as the paid lock above. */
+.pf-tile--free {
+  background: linear-gradient(180deg, rgba(var(--up-rgb), 0.07), var(--bg-card));
+  border-color: rgba(var(--up-rgb), 0.45);
+}
+.pf-tag--free-pick { align-self: center; background: rgba(var(--up-rgb), 0.16); color: var(--up); }
+.pf-lock--open { color: var(--up); }
+.pf-tile--free .pf-bet--locked b { color: var(--text-heading); }
+.pf-unlock--free { background: var(--up); color: #06140D; }
+.pf-unlock--free:hover { background: #4ED89C; color: #06140D; }
 
 /* ---------- Below the card ---------- */
 .pf-lower { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 18px; align-items: start; }
