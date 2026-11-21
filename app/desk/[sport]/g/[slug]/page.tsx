@@ -231,6 +231,8 @@ export default async function NflGamePage({ params }: { params: { sport: string;
         locked: canSee ? false : pub.locked,
         bet: canSee ? row.bet ?? null : pub.bet,
         odds: canSee ? pub.odds ?? oddsOf({ odds: row.odds ?? null, line: row.line ?? null }) : pub.odds,
+        line: canSee ? betLineText(row.line, row.bet) : null,
+        units: canSee ? unitsText(row.risk, row.win) : null,
         result: pub.result,
         note: canSee ? row.note ?? null : pub.note,
       }
@@ -665,6 +667,10 @@ interface GameBet {
   locked: boolean
   bet: string | null
   odds: number | null
+  /** The spread/total number ("+4", "-6"), null when locked or already in the bet text. */
+  line: string | null
+  /** "1.08u to win 1u", null when locked or not entered. */
+  units: string | null
   result: 'pending' | 'win' | 'loss' | 'push'
   note: string | null
 }
@@ -672,6 +678,32 @@ interface GameBet {
 function oddsText(odds: number | null): string | null {
   if (odds === null || odds === undefined || !Number.isFinite(odds)) return null
   return odds > 0 ? `+${odds}` : String(odds)
+}
+
+/**
+ * todays_bets.line holds the spread on most rows ("+4") but a price on some
+ * ("-110"). A price is already shown as odds, and a bet typed as "Chiefs -3.5"
+ * already carries its number, so either way the line would only repeat.
+ */
+function betLineText(line: unknown, bet: unknown): string | null {
+  const l = String(line ?? '').trim()
+  if (!l) return null
+  const n = Number(l)
+  if (Number.isFinite(n) && Math.abs(n) >= 100) return null
+  if (String(bet ?? '').includes(l)) return null
+  return l
+}
+
+function unitsNum(v: unknown): string | null {
+  const n = Number(String(v ?? '').trim().replace(/u(nits?)?$/i, ''))
+  return String(v ?? '').trim() && Number.isFinite(n) && n > 0 ? `${n}u` : null
+}
+
+function unitsText(risk: unknown, win: unknown): string | null {
+  const r = unitsNum(risk)
+  const w = unitsNum(win)
+  if (r && w) return `${r} to win ${w}`
+  return r ?? (w ? `to win ${w}` : null)
 }
 
 /** What is being bet on this game: Ed's free picks and the Portfolio picks. */
@@ -691,9 +723,11 @@ function BetsSection({ bets }: { bets: GameBet[] }) {
             ) : (
               <Link href={`/picks/${encodeURIComponent(b.key)}`} className="game-bets__bet">
                 {b.bet ?? 'Pick'}
+                {b.line && <span className="game-bets__line">{b.line}</span>}
                 {oddsText(b.odds) && <span className="game-bets__odds">{oddsText(b.odds)}</span>}
               </Link>
             )}
+            {!b.locked && b.units && <span className="game-bets__units">{b.units}</span>}
             {b.result !== 'pending' && (
               <span className={`game-bets__result is-${b.result}`}>{b.result.toUpperCase()}</span>
             )}

@@ -628,6 +628,22 @@ a.game-bets__bet:hover {
   color: var(--text-secondary);
 }
 
+/* Same weight as the team so "Raptors +4" reads as one bet. */
+.game-bets__line {
+  font-family: var(--font-mono);
+  font-weight: 700;
+}
+
+.game-bets__units {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  padding: 2px 8px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
 .game-bets__result {
   margin-left: auto;
   font-family: var(--font-mono);
