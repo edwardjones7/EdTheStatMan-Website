@@ -11,12 +11,19 @@
  * Only rows flagged show_on_results count, the same rule as publishedRecord()
  * in lib/brief.ts.
  *
- * UNITS. Flat, whatever the price: a win is +1u, a loss is -1.1u, a push is 0
- * (risk 1.1 to win 1, the standard -110 bet). Ed can set his own amounts on a
- * pick in the editor (todays_bets.risk / todays_bets.win, units, free text so
- * "2" and "2u" both read), and a pick that carries them is graded on them
- * instead; `customStakes` counts how many, so every surface can say so. Posted
- * odds (oddsOf) are display only and never move the units.
+ * UNITS. Flat, whatever the price, and set per book:
+ *   members' card  risk 1.1 to win 1 (the standard -110 bet)
+ *   free picks     risk 0.44 to win 0.4, about 40% of a full bet (Ed, Nov 2026)
+ * A push is 0. Ed can set his own amounts on a pick in the editor
+ * (todays_bets.risk / todays_bets.win, units, free text so "2" and "2u" both
+ * read), and a pick that carries them is graded on them instead; `customStakes`
+ * counts picks sized off their book's default, so every surface can say so.
+ * Posted odds (oddsOf) are display only and never move the units.
+ *
+ * NEVER MIX THE BOOKS in a record. Ed: "I want the Free Picks record to stand
+ * on its own." A record, chart or calendar is computed over one book's rows,
+ * and the free book is shown as its own record beside the members' card, never
+ * folded into a total with it.
  */
 
 export type Book = 'free' | 'members'
@@ -52,9 +59,18 @@ export interface PickRecord {
   to: string | null
 }
 
-/** Units a pick risks, and wins, when the editor leaves them blank. */
+/** Units a members' pick risks, and wins, when the editor leaves them blank. */
 export const DEFAULT_RISK = 1.1
 export const DEFAULT_WIN = 1
+/** Units a free pick risks, and wins, when the editor leaves them blank: about
+ *  40% of a full bet, at the same 1.1-to-1 price, so break-even is unchanged. */
+export const FREE_RISK = 0.44
+export const FREE_WIN = 0.4
+
+/** The blank-field stake for a pick's book. */
+export function defaultStake(row: Pick<RecordSource, 'is_free'>): { risk: number; win: number } {
+  return row.is_free ? { risk: FREE_RISK, win: FREE_WIN } : { risk: DEFAULT_RISK, win: DEFAULT_WIN }
+}
 /** Win rate needed to break even risking 1.1 to win 1 (the -110 price). */
 export const BREAK_EVEN_PCT = 52.38
 /** Fewer decisions than this and a sport's record is noise, not a result. */
@@ -85,19 +101,20 @@ export function unitAmount(v: unknown): number | null {
 export interface Stake {
   risk: number
   win: number
-  /** True when either amount came from the pick rather than the default. */
+  /** True when the pick is sized off its book's default (1.1 / 1, or 0.44 / 0.4 free). */
   custom: boolean
 }
 
-/** What a pick risks and wins, in units: the editor's amounts, else 1.1 / 1. */
-export function stakeOf(row: Pick<RecordSource, 'risk' | 'win'>): Stake {
-  const risk = unitAmount(row.risk)
-  const win = unitAmount(row.win)
-  return { risk: risk ?? DEFAULT_RISK, win: win ?? DEFAULT_WIN, custom: risk !== null || win !== null }
+/** What a pick risks and wins, in units: the editor's amounts, else its book's default. */
+export function stakeOf(row: Pick<RecordSource, 'risk' | 'win' | 'is_free'>): Stake {
+  const d = defaultStake(row)
+  const risk = unitAmount(row.risk) ?? d.risk
+  const win = unitAmount(row.win) ?? d.win
+  return { risk, win, custom: risk !== d.risk || win !== d.win }
 }
 
 /** Units a graded pick returned: +win, -risk, or 0 for a push or anything ungraded. */
-export function unitsFor(result: string, row: Pick<RecordSource, 'risk' | 'win'> = {}): number {
+export function unitsFor(result: string, row: Pick<RecordSource, 'risk' | 'win' | 'is_free'> = {}): number {
   const r = String(result).toLowerCase()
   if (r !== 'win' && r !== 'loss') return 0
   const st = stakeOf(row)

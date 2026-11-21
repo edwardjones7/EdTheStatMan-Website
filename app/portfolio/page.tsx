@@ -138,8 +138,10 @@ export default async function Portfolio() {
   }
 
   // Graded picks are public: the results ledger shows every one, bet and all,
-  // to every visitor. So the recent list is the same for everyone.
-  const history = buildHistory(rows, () => true, r => unitsFor(String(r.result), r as any))
+  // to every visitor. So the recent list is the same for everyone. Members'
+  // card only: free picks are their own record (the rail's Free picks line),
+  // never part of the Portfolio's.
+  const history = buildHistory(rows, r => !r.is_free, r => unitsFor(String(r.result), r as any))
 
   // Running units on the members' card, for the chart in the rail.
   let run = 0

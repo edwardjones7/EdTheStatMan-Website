@@ -531,3 +531,8 @@
   .ledger__table td:nth-child(7) { color: var(--text-muted); font-size: 0.85rem; white-space: nowrap; }
   .ledger__table td.ledger__pick { min-width: 180px; }
 }
+
+/* Free picks: their own record on /portfolio/performance, kept visibly apart
+   from the members' card above it (same green as the free tiles). */
+.rs-label--free { margin-top: 6px; color: var(--up); }
+.rs-overall__card.rs-free { flex: none; border-color: rgba(var(--up-rgb), 0.35); }

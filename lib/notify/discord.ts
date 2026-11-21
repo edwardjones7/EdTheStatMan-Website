@@ -6,7 +6,7 @@
 
 import type { NotifiablePick, PickAudience } from './audience'
 import { renderPick } from './message'
-import { unitAmount, DEFAULT_RISK, DEFAULT_WIN } from '@/lib/records'
+import { stakeOf } from '@/lib/records'
 
 const BRAND_COLOR = 0x2dd4bf
 
@@ -41,10 +41,11 @@ export async function sendDiscord(
   // line in Discord gave the audience we most want on the site no reason to
   // visit it. Sport and risk are context, not the pick.
   if (pick.sport) fields.push({ name: 'Sport', value: pick.sport, inline: true })
-  // Units only when Ed sized the pick off the standard 1.1 to win 1.
-  const risk = unitAmount(pick.risk), win = unitAmount(pick.win)
-  if (risk !== null || win !== null) {
-    fields.push({ name: 'Units', value: `${risk ?? DEFAULT_RISK}u to win ${win ?? DEFAULT_WIN}u`, inline: true })
+  // Units only when Ed sized the pick off its book's default (1.1 to win 1,
+  // or 0.44 to win 0.4 for a free pick).
+  const st = stakeOf({ risk: pick.risk, win: pick.win, is_free: audience === 'retail' })
+  if (st.custom) {
+    fields.push({ name: 'Units', value: `${st.risk}u to win ${st.win}u`, inline: true })
   }
 
   const roleId = roleIdFor(audience)

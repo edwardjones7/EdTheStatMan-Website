@@ -100,11 +100,16 @@ export function selectSlateDate(rows: BriefSource[], today: string): string | nu
   return dates.find(d => d >= today) ?? dates[dates.length - 1]
 }
 
-/** The published record. Only rows Ed has flagged for the public results page. */
+/**
+ * The published members' card record. Only rows Ed has flagged for the public
+ * results page, and never a free pick: free picks are their own book
+ * (lib/records.ts) and must not move the Portfolio's record.
+ */
 export function publishedRecord(rows: BriefSource[]): BriefRecord | null {
   let w = 0, l = 0, p = 0
   for (const r of rows) {
     if (r.show_on_results !== true) continue
+    if (r.is_free) continue
     switch (String(r.result ?? '').toLowerCase()) {
       case 'win': w++; break
       case 'loss': l++; break

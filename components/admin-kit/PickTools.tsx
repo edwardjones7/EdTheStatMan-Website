@@ -15,6 +15,7 @@
 import { useEffect, useMemo, useState, useSyncExternalStore } from 'react'
 import { useRouter } from 'next/navigation'
 import { normalizeTier, PICK_ACCESS_OPTIONS, type Tier } from '@/lib/access'
+import { FREE_RISK, FREE_WIN } from '@/lib/records'
 import type { TodaysBet } from '@/components/TodaysBets'
 import { AdminActions, useAdminKit, type AdminKit } from './AdminKit'
 
@@ -228,8 +229,16 @@ function PickEditor({ row }: { row?: TodaysBet }) {
         {field('line', 'Line', '-3.5')}
         {field('vig', 'Closing line', '-4')}
         {field('opponent', 'Opponent', 'Broncos')}
-        {field('risk', 'Units risked', '1.1', 'A loss costs this. Blank means 1.1.')}
-        {field('win', 'Units to win', '1', 'A win pays this. Blank means 1.')}
+        {/* Blank means the book's default: a free pick is about 40% of a full bet. */}
+        {form.min_tier === 'retail'
+          ? <>
+              {field('risk', 'Units risked', String(FREE_RISK), `Free pick. A loss costs this. Blank means ${FREE_RISK}.`)}
+              {field('win', 'Units to win', String(FREE_WIN), `Free pick. A win pays this. Blank means ${FREE_WIN}.`)}
+            </>
+          : <>
+              {field('risk', 'Units risked', '1.1', 'A loss costs this. Blank means 1.1.')}
+              {field('win', 'Units to win', '1', 'A win pays this. Blank means 1.')}
+            </>}
         <label className="akit-field">
           <span>Who can see it</span>
           <select value={form.min_tier} onChange={e => set('min_tier', e.target.value as Tier)}>

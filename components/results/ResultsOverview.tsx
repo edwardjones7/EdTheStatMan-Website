@@ -1,16 +1,18 @@
 import Link from 'next/link'
 import UnitsChart from '@/components/UnitsChart'
 import {
+  bookOf,
   computeRecord,
-  recordsByBook,
   sportSeasonBreakdown,
+  FREE_RISK,
+  FREE_WIN,
   formatRecord,
   formatUnits,
   BREAK_EVEN_PCT,
   type PickRecord,
   type RecordSource,
 } from '@/lib/records'
-import { BOOK_LABEL, shortDate } from '@/lib/proof'
+import { shortDate } from '@/lib/proof'
 import { nyToday } from '@/lib/brief'
 import { calendarMonth, unitsSeries } from '@/lib/results'
 
@@ -18,6 +20,12 @@ import { calendarMonth, unitsSeries } from '@/lib/results'
  * The top of /portfolio/performance: each sport as its own story first (record,
  * win rate, units, its own running line), the whole record beside it and never
  * hidden, then the running-units chart and a month calendar.
+ *
+ * MEMBERS' CARD ONLY. Every sport card, the overall card, the chart and the
+ * calendar are the Portfolio's own record. Free picks are their own book, sized
+ * smaller (lib/records.ts), and get their own card in the side column; they are
+ * never added into a Portfolio number. The ledger below still lists both, each
+ * marked with its book.
  *
  * Server component over rows already in hand. Every number comes from
  * lib/records.ts (via lib/results.ts for the series), the same maths as the
@@ -55,10 +63,10 @@ function level(u: number): 1 | 2 | 3 {
   return a >= 2.5 ? 3 : a >= 1 ? 2 : 1
 }
 
-export default function ResultsOverview({ rows, month, sport }: { rows: Row[]; month: string; sport: string | null }) {
+export default function ResultsOverview({ rows: allRows, month, sport }: { rows: Row[]; month: string; sport: string | null }) {
+  const rows = allRows.filter(r => bookOf(r) === 'members')
+  const free = computeRecord(allRows.filter(r => bookOf(r) === 'free'))
   const total = computeRecord(rows)
-  const books = recordsByBook(rows)
-  const bookKeys = (['members', 'free'] as const).filter(b => graded(books[b]) > 0)
   const sports = sportSeasonBreakdown(rows)
   const sportRows = (s: string) => rows.filter(r => String(r.sport ?? '').trim().toUpperCase() === s)
 
@@ -89,8 +97,9 @@ export default function ResultsOverview({ rows, month, sport }: { rows: Row[]; m
         <span className="pf-kick">Live track record</span>
         <h1>Model results</h1>
         <p>
-          Every graded pick, win or lose. Each sport is its own record, so it leads; the total
-          across all of them sits beside it, and the full log is underneath.
+          Every graded pick on the members&rsquo; card, win or lose. Each sport is its own record,
+          so it leads; the card&rsquo;s total sits beside it. Free picks keep a record of their own,
+          and the full log of both is underneath.
         </p>
       </header>
 
@@ -137,7 +146,7 @@ export default function ResultsOverview({ rows, month, sport }: { rows: Row[]; m
         </section>
 
         <aside className="rs-overall" aria-labelledby="rs-overall-hd">
-          <h2 id="rs-overall-hd" className="rs-label">All sports, every pick</h2>
+          <h2 id="rs-overall-hd" className="rs-label">Members&rsquo; card, all sports</h2>
           <div className="pf-panel rs-overall__card">
             <div className="rs-sport__big">
               <b>{formatRecord(total)}</b>
@@ -148,24 +157,34 @@ export default function ResultsOverview({ rows, month, sport }: { rows: Row[]; m
               <div><dt>ROI</dt><dd>{total.roi > 0 ? '+' : total.roi < 0 ? '−' : ''}{Math.abs(total.roi).toFixed(1)}%</dd></div>
               <div><dt>Graded</dt><dd>{graded(total)}</dd></div>
             </dl>
-            {bookKeys.length > 1 && (
-              <ul className="rs-seasons rs-books">
-                {bookKeys.map(b => (
-                  <li key={b}>
-                    <span>{BOOK_LABEL[b]}</span>
-                    <span>{formatRecord(books[b])}</span>
-                    <span className={`rs-tone--${tone(books[b].pct)}`}>{books[b].pct.toFixed(1)}%</span>
-                    <span className={books[b].units >= 0 ? 'pf-up' : 'pf-down'}>{minus(formatUnits(books[b].units))}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
             <p className="rs-note">
               {total.from ? `Since ${shortDate(total.from)}. ` : ''}
               A win is +1 unit and a loss is −1.1{total.customStakes > 0 ? `, except ${total.customStakes} picks Ed sized differently, scored as posted` : ''}.
               Break-even is {BREAK_EVEN_PCT}%.
             </p>
           </div>
+
+          {graded(free) > 0 && (
+            <>
+              <h2 className="rs-label rs-label--free">Free picks</h2>
+              <div className="pf-panel rs-overall__card rs-free">
+                <div className="rs-sport__big">
+                  <b>{formatRecord(free)}</b>
+                  <span className={free.units >= 0 ? 'pf-up' : 'pf-down'}>{minus(formatUnits(free.units))}</span>
+                </div>
+                <dl className="rs-sport__stats">
+                  <div><dt>Win rate</dt><dd className={`rs-tone--${tone(free.pct)}`}>{free.pct.toFixed(1)}%</dd></div>
+                  <div><dt>ROI</dt><dd>{free.roi > 0 ? '+' : free.roi < 0 ? '−' : ''}{Math.abs(free.roi).toFixed(1)}%</dd></div>
+                  <div><dt>Graded</dt><dd>{graded(free)}</dd></div>
+                </dl>
+                <p className="rs-note">
+                  {free.from ? `Since ${shortDate(free.from)}. ` : ''}
+                  Its own record, never counted in the members&rsquo; card. A free pick is about 40% of a
+                  full bet: +{FREE_WIN} units a win, −{FREE_RISK} a loss{free.customStakes > 0 ? ` (${free.customStakes} sized differently, scored as posted)` : ''}.
+                </p>
+              </div>
+            </>
+          )}
         </aside>
       </div>
 

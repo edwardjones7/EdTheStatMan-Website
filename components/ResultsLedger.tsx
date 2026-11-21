@@ -74,7 +74,7 @@ export default function ResultsLedger({ rows, page, pageCount, total, admin = fa
           <h2 id="ledger-heading" className="ledger__title">Every graded pick</h2>
           <p className="ledger__sub">
             {total > 0
-              ? <>Showing {first}&ndash;{last} of {total}, newest first. Units are +1 a win and −1.1 a loss; <span aria-hidden="true">†</span> marks a pick Ed sized differently.</>
+              ? <>Showing {first}&ndash;{last} of {total}, newest first. Members&rsquo; picks are +1 a win and −1.1 a loss; free picks, about 40% of a full bet, are +0.4 and −0.44. <span aria-hidden="true">†</span> marks a pick Ed sized differently.</>
               : 'No graded picks yet.'}
           </p>
         </div>
